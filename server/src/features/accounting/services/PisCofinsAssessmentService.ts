@@ -39,6 +39,7 @@ import {
   isPeriodoPisCofins,
   mesDoPeriodo,
   modalidadeDoRegime,
+  exigirLinhaPisCofinsVigente,
   parametrosDoMes,
   periodoDoMes,
   type OrigemSaldoAnterior,
@@ -334,14 +335,16 @@ export class PisCofinsAssessmentService {
   private async calcular(scope: AccountingScope, input: PisCofinsPreviewInput): Promise<Calculo> {
     const { anoCalendario: ano, periodo } = input;
     const m = mesDoPeriodo(periodo);
+    // Onda 3.2 #9: o fim da vigência é da LINHA `PIS_COFINS`; a recusa dela vem ANTES do perfil (quem apura ano revogado lê a revogação).
+    const linhasLegais = await this.legalParams.fotografia(['PIS_COFINS', 'CODIGO_RECEITA']);
+    const tabela = tabelaPisCofinsDe(linhasLegais);
+    exigirLinhaPisCofinsVigente(tabela, ano, periodo);
     const perfil = await this.companyProfileRepo.findByYear(scope, ano);
     if (!perfil) throw new ValidationError(`perfil fiscal da empresa de ${ano} ausente — cadastre-o antes de apurar PIS/Cofins.`);
     const modalidade = modalidadeDoRegime(perfil.regime); // SIMPLES/MEI ⇒ 400 (DAS)
-    const linhasLegais = await this.legalParams.fotografia(['PIS_COFINS', 'CODIGO_RECEITA']);
     const janela = janelaDoPeriodo(ano, periodo);
     const parametros = parametrosUsados(linhasLegais, janela.de, janela.ate);
-    const tabela = tabelaPisCofinsDe(linhasLegais);
-    parametrosDoMes(tabela, ano, periodo, modalidade); // ≥ 2027-01 ⇒ 400 (a função pura repete; aqui a recusa vem antes de ler o razão)
+    parametrosDoMes(tabela, ano, periodo, modalidade); // por modalidade (a função pura repete; a recusa vem antes de ler o razão)
     if (perfil.ecfIndRecReceita === '1') {
       throw new ValidationError('regime de caixa (ecf.indRecReceita = 1): PIS/Cofins seguem o critério do IRPJ/CSLL e o caixa está fora (IN RFB 2.121/2022 art. 127; ADR-INCR-PIS-COFINS D6).');
     }

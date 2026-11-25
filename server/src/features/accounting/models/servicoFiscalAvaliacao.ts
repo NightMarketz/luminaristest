@@ -1,4 +1,4 @@
-import { linhasEmVigor, type LinhaLegal } from '../../legalParameters/models/legalParameter';
+import { inicioDeVigencia, linhasEmVigor, type LinhaLegal } from '../../legalParameters/models/legalParameter';
 import { CBS_REFERENCIA_NAO_PUBLICADA, tabelaIbsCbsDe, type ParametroIbsCbs } from './ibsCbsParams';
 
 /**
@@ -114,7 +114,13 @@ export function alertaPacote(pacoteFatoGerador: string | null, regime: string): 
 
 // ─── Item 32 — IBS/CBS de 2027 do serviço (redução de 60 % do Anexo III só com NBS de saúde e finalidade ≠ ESTETICA) ─────────
 
-export const IBS_CBS_REDUCAO_NBS_DESDE = '2027-01-01';
+/**
+ * Onda 3.2 #7 (dono, chat, 24/11/2026): o início da redução do Anexo III (LC 214 art. 130) é o menor `vigenteDesde` das linhas
+ * de `IBS_CBS_REDUCAO_NBS` (hoje 2027-01-01), não um literal. Sem linha ⇒ `ParametroLegalAusenteError` (fail-closed).
+ */
+export function inicioReducaoNbs(linhas: readonly LinhaLegal[], dataConsultada: string): string {
+  return inicioDeVigencia(linhas, 'IBS_CBS_REDUCAO_NBS', null, dataConsultada);
+}
 
 export interface CargaIbsCbsServico {
   cargaBp: number | null; // null = alíquota de 2027 não publicada (DRAFT) ou data antes de 2027
@@ -145,13 +151,14 @@ export function reducaoNbsVigente(cNBS: string | null, data: string, linhas: rea
 export function cargaIbsCbsDoServico(servico: { cNBS: string | null; finalidade: string | null }, data: string, linhas: readonly LinhaLegal[]): CargaIbsCbsServico {
   const memoria: string[] = [];
   const avisos: string[] = [];
+  const inicioNbs = inicioReducaoNbs(linhas, data);
   const red = reducaoNbsVigente(servico.cNBS, data, linhas);
   const nbsSaude = red !== null && red.valorInt !== null;
   const aplica = nbsSaude && (servico.finalidade ?? 'ESTETICA') !== 'ESTETICA';
   const reducaoBp = aplica ? red!.valorInt! : 0;
   if (nbsSaude) memoria.push(`NBS ${servico.cNBS} no Anexo III (${red!.fonte})${aplica ? `: redução de ${reducaoBp / 100}%` : ': finalidade estética ⇒ alíquota cheia (F-EF-11 a)'}`);
-  if (data < IBS_CBS_REDUCAO_NBS_DESDE) {
-    avisos.push(`carga de IBS/CBS por item só a partir de ${IBS_CBS_REDUCAO_NBS_DESDE} (LC 214 art. 130 e Anexo III).`);
+  if (data < inicioNbs) {
+    avisos.push(`carga de IBS/CBS por item só a partir de ${inicioNbs} (LC 214 art. 130 e Anexo III).`);
     return { cargaBp: null, cheiaBp: null, nbsSaude, reducaoBp, avisos, memoria };
   }
   const tabela = tabelaIbsCbsDe(linhas);

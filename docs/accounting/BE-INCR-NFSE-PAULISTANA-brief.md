@@ -19,6 +19,39 @@
 > Paulistana ao Simples, ao MEI e a quem **sair** do Simples; sobra a PJ de SP capital em regime normal que não passou pelo
 > Simples. E a prefeitura **não tem homologação**: só um método de teste em produção que não gera nota.
 
+> **Ratificação 24/11:** R1–R7 e F-PBA-1..7 ratificados, todos (a) ([[D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS]]). Os forks F-PBA citados abaixo
+> já não travam nada; o texto fica como registro do que dependia de cada um.
+>
+> **EMENDA PAÍS NA BORDA (24/11/2026)** — [`ADR-PAIS-NA-BORDA`](../adr/ADR-PAIS-NA-BORDA.md) (Proposed).
+> - **Autorização:** dono, 24/11, à pergunta *"Esses BRIEFs seguem como foram escritos ou já nascem pela regra?"*: **"Já
+>   nascem pela regra"** (D-2026-11-24-FORKS-DA-CAIXA-E-PAIS-NA-BORDA §6). O `executa` de 24/11 (§4 da mesma cédula)
+>   continua e vale para **este BRIEF emendado**. **Divergência registrada** com a regra 1 da `sessao-planejamento`
+>   ("não edita spec existente"): a edição no lugar foi mandada pela tarefa e pela §6.
+> - **O que muda:** a NFS-e de São Paulo é instância brasileira (municipal) inteira, então todo arquivo novo vai para
+>   `server/src/features/accounting/paises/br/**`, com os nomes de hoje (F-PBA-2 a). O centro só ganha a coluna
+>   `numberingScheme` na `FiscalDocumentSequence` (F-PBA-1 a). As colunas novas de `FiscalProfile` e `ServiceFiscalProfile`
+>   vão para os satélites 1:1 `BrFiscalProfile` e `BrServiceFiscalProfile` (R4), escritos por rota da borda (F-PBA-4 a).
+>
+> | Antes (21/11) | Depois (24/11) |
+> |---|---|
+> | `server/src/lib/paulistana/**` (PR-1, bibliotecas puras) | `server/src/features/accounting/paises/br/models/nfse/paulistana/**` (F-PBA-3 a; folha, `L6`) |
+> | `server/src/features/accounting/dfe/paulistana/**` (PR-M, PR-4) | `server/src/features/accounting/paises/br/dfe/paulistana/**` |
+> | `FiscalProfile.{nfseSistema, nfseEmissao, paulistanaSemSimplesDesde20261101, rpsSerie, pacoteCodigoServicoSp}` | satélite `BrFiscalProfile` (1:1 com `FiscalProfile`), mesmas colunas; `nfseEmissao` é o do ADL-14 da X10i (quem chega primeiro cria, no satélite; lacuna `L-20261124-035405-9b71`) |
+> | `ServiceFiscalProfile.codigoServicoSp` | satélite `BrServiceFiscalProfile.codigoServicoSp` |
+> | campos novos em `FiscalProfileDto.ts` / `ServiceFiscalProfileDto.ts` | DTOs da borda `paises/br/dtos/{BrFiscalProfileDto,BrServiceFiscalProfileDto}.ts`, rotas `PUT /api/accounting/fiscal-profile/br` e `PUT /api/accounting/service-fiscal-profiles/:serviceRef/br` (+ os GET) |
+> | `FiscalDocumentSequence.numeracao` | `FiscalDocumentSequence.numberingScheme` (centro, inglês); valores `''` e `'RPS_SP'` |
+> | `PAULISTANA_ENDPOINTS` (sem caminho) | `paises/br/dfe/paulistana/paulistanaEndpoints.ts` |
+>
+> - **Forks novos que travam PRs deste BRIEF** (ADR §6, RATIFICAÇÃO PENDENTE): F-PBA-1 e F-PBA-2 (nomes, todo código);
+>   F-PBA-3 (PR-1); F-PBA-4 (PR-2); F-PBA-5 (PR-2, PR-M, PR-4). O PR-0 (só ADRs) não depende de nenhum.
+> - **Escopo `LEGADO_BR` usado** (ADR §3.1, ramo a do F-PBA-5): `features/accounting/dfe/**` (seleção, resolução do
+>   adaptador, protocolo e hosts do assinador), `services/FiscalDocumentEmissionService.ts` (renderizador),
+>   `services/FiscalDocumentLifecycleService.ts` (evento `cancelamentoMunicipal`), `services/FiscalProfileService.ts` (volta a
+>   `NACIONAL` na troca de regime, na mesma tx) e `models/issCompetencia.ts` (`locaisDoPayload`). O
+>   `controllers/fiscalDocumentController.ts` é camada de aplicação (F-PBA-3 a) e não precisa do escopo.
+> - **Pré-requisito:** o item 0 da guarda (ADR §3: `P1`, `P2`, G1–G5) entra no 1º PR de código emendado; se o PR-1 deste
+>   BRIEF for o primeiro, ele o carrega. Sem o G2, o DTO da borda fica fora do snapshot de shape.
+
 ## 0. Formulário (contexto fixo)
 
 - **Item a planejar:** nó novo `NFSE-PAULISTANA` (nome já usado na proposta F4 de
@@ -97,7 +130,7 @@ validação externa (§7) e não entra na implementação antes dela.
    `ADR-ASSINADOR-LOCAL` §7 passa a nomear a Paulistana como 3º cliente do assinador. *Teste:* `plano-vault.mjs check` 0 e
    links do ADR resolvem.
 
-### PR-1 — bibliotecas puras do RPS (sem I/O)
+### PR-1 — bibliotecas puras do RPS (sem I/O; em `features/accounting/paises/br/models/nfse/paulistana/`, F-PBA-3 a)
 
 2. **[fork:F-NSP-4] `RpsSpPayloadSchema` (Zod `.strict()`, leiaute 2)** espelha o `tpRPS` v2 + `IBSCBS` do XSD
    `schemas-reformatributaria-v02-8` (§4.1). *Teste:* as fixtures oficiais de exemplo do leiaute 2 validam; campo extra ⇒
@@ -131,14 +164,14 @@ validação externa (§7) e não entra na implementação antes dela.
 
 ### PR-2 — perfil, roteamento por unidade, numeração
 
-9. **[fork:F-NSP-1] [pend-ext §7 itens 1 e 7] Campo `nfseSistema: 'NACIONAL' | 'PAULISTANA'` no `FiscalProfile`** (default `NACIONAL`), com
+9. **[fork:F-NSP-1] [pend-ext §7 itens 1 e 7] Campo `nfseSistema: 'NACIONAL' | 'PAULISTANA'` no satélite `BrFiscalProfile`** (1:1 com o `FiscalProfile` da unidade, R4; criado aqui se ainda não existir; linha ausente = `NACIONAL`), escrito por `PUT /api/accounting/fiscal-profile/br` (rota, controller, `BrFiscalProfileService` e repositório da borda, mesma policy do perfil; F-PBA-4 a), com
    guarda na escrita: `PAULISTANA` exige `codMun = '3550308'`, `regimeTributario ≠ 'SIMPLES'`, `inscricaoMunicipal`
    preenchida e **nenhuma linha do `CompanyFiscalProfile` (regime por `anoCalendario`) com `regime = SIMPLES` de 2027 em
    diante** (o § 2º fala só dos incisos II e IV: *"inclusive na hipótese de as pessoas de que tratam os incisos II e IV virem
    a ser posteriormente desenquadradas do Simples Nacional"*); se a linha de **2026** for `SIMPLES`, exige ainda a declaração explícita
    `paulistanaSemSimplesDesde20261101 = true` (o operador declara que a PJ saiu do Simples antes de 01/11/2026 — § 2º do
    art. 1º-A; a linha anual não diz o mês; ambiguidade 1 do dossiê). Recusa com 400 nomeado. Mudar o regime para
-   `SIMPLES` com `nfseSistema = PAULISTANA` volta a unidade para `NACIONAL` na mesma tx e audita. *Teste:* as recusas
+   `SIMPLES` com `nfseSistema = PAULISTANA` volta a unidade para `NACIONAL` na mesma tx e audita (o `FiscalProfileService`, legado BR no escopo `LEGADO_BR`, chama o repositório do satélite com o `tx`). *Teste:* as recusas
    (município, regime atual, IM, ano ≥ 2027 no Simples, 2026 no Simples sem declaração). Ex-MEI fora do Simples não
    é barrado (o § 2º não cita o inciso I); fica como pendência (§7 item 7); a troca de regime.
 10. **[fork:F-NSP-1] Seleção por documento:** a NFS-e de uma unidade com `nfseSistema = PAULISTANA` resolve o adaptador
@@ -147,19 +180,19 @@ validação externa (§7) e não entra na implementação antes dela.
     (`resolveEmissorFor`, DFE-MANUAL item 9). *Teste:* duas unidades na mesma instância, uma de cada sistema, emitem cada
     uma pelo seu adaptador; `off` ⇒ 409 com o motivo.
     **F-NSP-2b (a):** dentro da Paulistana, o campo por unidade `nfseEmissao: 'portal' | 'automatica'` (o mesmo do
-    ADL-14 da emenda X10i; quem chegar primeiro à `main` cria, o outro reusa) escolhe o adaptador: `automatica` ⇒
+    ADL-14 da emenda X10i; quem chegar primeiro à `main` cria, **no satélite `BrFiscalProfile`**, e o outro reusa) escolhe o adaptador: `automatica` ⇒
     `paulistana`; `portal` ⇒ `paulistana-manual` (PR-M). *Teste:* as quatro combinações sistema × emissão resolvem o
     adaptador certo.
 11. **[fork:F-NSP-12] Código de serviço municipal** (5 dígitos, Anexo I da IN SF/SUREM 8/2011) em
-    `ServiceFiscalProfile.codigoServicoSp` e no `FiscalProfile.pacoteCodigoServicoSp` (pacote, espelho do `pacoteCTribNac`).
+    `BrServiceFiscalProfile.codigoServicoSp` (satélite 1:1 do `ServiceFiscalProfile`, escrito por `PUT /api/accounting/service-fiscal-profiles/:serviceRef/br`) e no `BrFiscalProfile.pacoteCodigoServicoSp` (pacote, espelho do `pacoteCTribNac`).
     Ausente ⇒ faltante nomeado no `preview` e 409 no `emit` (mesmo padrão dos faltantes do D1f). **[pend-ext]** a validação
     contra a tabela oficial entra quando a tabela estiver no repositório (§7 item 2). *Teste:* faltante nomeado; 5 dígitos.
 12. **[direto] Agrupamento:** um RPS por grupo de `cTribNac` (a chave única do `FiscalDocument` não muda). Linhas do
     mesmo `cTribNac` com `codigoServicoSp` diferentes ⇒ faltante `codigo_servico_sp_divergente` (o RPS tem um só
     `CodigoServico`). *Teste:* duas linhas, dois códigos SP, mesmo `cTribNac` ⇒ faltante.
-13. **[fork:F-NSP-5] Série do RPS** = `FiscalProfile.rpsSerie Int` (default 1, escrita como texto no XML, ≤ 5
+13. **[fork:F-NSP-5] Série do RPS** = `BrFiscalProfile.rpsSerie Int` (default 1, escrita como texto no XML, ≤ 5
     caracteres); `FiscalDocument.serie Int` não muda. *Teste:* série 1 ⇒ `<SerieRPS>1</SerieRPS>` e `"1    "` na cadeia.
-14. **[fork:F-NSP-6] Numeração do RPS** na `FiscalDocumentSequence` com a coluna nova `numeracao` na chave
+14. **[fork:F-NSP-6] Numeração do RPS** na `FiscalDocumentSequence` com a coluna nova `numberingScheme` (centro, inglês, F-PBA-1 a) na chave
     (`''` = DPS/NF-e como hoje · `'RPS_SP'`), migração aditiva com default `''`; consumida na tx do `SENT`
     (`numbersDps: false`). *Teste:* DPS e RPS da mesma unidade e série não compartilham contador; migração sobre base com
     sequências existentes não muda nenhum `last`.
@@ -182,7 +215,7 @@ validação externa (§7) e não entra na implementação antes dela.
     `VersaoSchema` + `MensagemXML` em CDATA, [D04 §4.3.1]) e manda em `envelopeB64`, como hoje. Se o protocolo `rest` da
     X10i (ADL-3) já estiver em `main`, entra com `protocolo: 'soap12'`. *Teste:* tarefa com `servico` novo valida no schema.
 17. **[direto] Lista de hosts:** `nfews.prefeitura.sp.gov.br` entra na lista que o assinador aceita, gerada de uma tabela
-    `PAULISTANA_ENDPOINTS` no código (molde `sefazHosts.ts`/`ADN_HOSTS`, F-ADN-12 a); o endereço antigo
+    `PAULISTANA_ENDPOINTS` (`paises/br/dfe/paulistana/paulistanaEndpoints.ts`) (molde `sefazHosts.ts`/`ADN_HOSTS`, F-ADN-12 a); o endereço antigo
     `nfe.prefeitura.sp.gov.br` **não** entra (não aceita o leiaute 2). *Teste:* o JSON commitado bate com o gerado.
 18. **[direto] `selectDfeAssinador` aceita o parceiro `paulistana`** (hoje só `sefaz`), com `local` como único valor
     válido (`psc` desligado: a Paulistana exige o mTLS com o certificado do contribuinte, que o PSC não abre). *Teste:*
@@ -225,16 +258,16 @@ validação externa (§7) e não entra na implementação antes dela.
     (Route → Controller → Service, policy de quem emite, DTO `.strict()`), devolve `Sucesso`/erros/alertas. `ambiente =
     'homologacao'` com o adaptador `paulistana` ⇒ porta desabilitada com o motivo *"a Prefeitura de São Paulo não tem
     homologação; use o teste de envio"*. *Teste:* rota responde sem gravar nada; `homologacao` ⇒ 409 nomeado.
-26. **[direto] `FakePaulistanaServer`** (molde `FakePscServer.ts`): SOAP 1.2 com os métodos do item 16, valida a
+26. **[direto] `FakePaulistanaServer`** (`paises/br/dfe/paulistana/__tests__/`, molde `FakePscServer.ts`): SOAP 1.2 com os métodos do item 16, valida a
     assinatura da mensagem e a cadeia do RPS com a chave do certificado de teste, simula 217 no reenvio e 1647/394.
     *Teste:* é o oráculo dos testes 20–25; nenhum teste fala com a prefeitura.
 27. **[direto] Relatório de ISS e IBS/CBS veem a nota:** `locaisDoPayload` (`models/issCompetencia.ts:83`) lê também o
     `RpsSpPayload` (`cLocPrestacao`; `cLocEmi` = `codMun` da unidade) — hoje devolveria `null` e o município sairia vazio;
     `assertTpAmb` não se aplica ao RPS (o adaptador só existe em produção). *Teste:* uma NFS-e Paulistana autorizada entra
     no `findForIssReport` com município 3550308 e no `findForIbsCbs`.
-28. **[direto] Gates do diff:** snapshot de shape dos DTOs novos (`__dto-shapes__.json`), `auditCanonical.ts` com os
+28. **[direto] Gates do diff:** snapshot de shape dos DTOs novos, inclusive os da borda (`__dto-shapes__.json`, com o G2 do item 0), `auditCanonical.ts` com os
     eventTypes novos (`fiscal.paulistana.teste_envio`, troca de `nfseSistema`), `docs.paths.ts` + guard de path-count do
-    openapi para a rota do item 25, `check:arch`, `tsc` dos dois lados (tipo FE gerado). Sem i18n (sem tela).
+    openapi para a rota do item 25 e as duas rotas dos satélites (itens 9 e 11), `check:arch` (`P1` sem violação fora do escopo `LEGADO_BR`), `tsc` dos dois lados (tipo FE gerado). Sem i18n (sem tela).
 
 ### PR-M — modo manual da Paulistana (F-NSP-2 b; não depende do assinador local)
 
@@ -288,7 +321,7 @@ PR-2, PR-3 e PR-4 são vermelhos (schema, contrato do assinador, emissão) ⇒ r
 ### 4.1 `RpsSpPayloadSchema` (PR-1; forma final = XSD `schemas-reformatributaria-v02-8`, insumo ausente §8)
 
 ```ts
-// lib/paulistana/rpsSp.ts — leiaute 2. Valores em centavos (string), BigInt-safe; o XML escreve "205.00".
+// features/accounting/paises/br/models/nfse/paulistana/rpsSp.ts — leiaute 2. Valores em centavos (string), BigInt-safe; o XML escreve "205.00".
 const Cents = z.string().regex(/^\d{1,15}$/);
 export const RpsSpPayloadSchema = z.object({
   layout: z.literal('RPS_SP_V2'),                                // discriminador no payloadJson (item 27)
@@ -335,21 +368,39 @@ function renderNfse(montagem: MontagemNfse, perfil: FiscalProfileView): NfseRend
 ### 4.3 Perfil e numeração (PR-2)
 
 ```prisma
-model FiscalProfile {
-  // …
-  nfseSistema                          String  @default("NACIONAL") // NACIONAL | PAULISTANA (F-NSP-1)
-  nfseEmissao                          String  @default("portal")   // portal | automatica — o mesmo do ADL-14 da X10i (F-NSP-2b a); quem chegar primeiro cria
-  paulistanaSemSimplesDesde20261101    Boolean @default(false)       // declaração do operador (IN 10/2011 art. 1º-A § 2º)
-  rpsSerie                             Int     @default(1)           // F-NSP-5
-  pacoteCodigoServicoSp                String?                        // F-NSP-12
+// Satélites do país (R4 do ADR-PAIS-NA-BORDA): um por model do centro; quem chega primeiro cria (a ponte do DP acrescenta
+// simplesCppForaDoDas no BrFiscalProfile; o ADL-14 da X10i usa o nfseEmissao).
+model BrFiscalProfile {
+  id                                 String        @id @default(cuid())
+  fiscalProfileId                    String        @unique
+  fiscalProfile                      FiscalProfile @relation(fields: [fiscalProfileId], references: [id], onDelete: Cascade)
+  nfseSistema                        String  @default("NACIONAL") // NACIONAL | PAULISTANA (F-NSP-1)
+  nfseEmissao                        String  @default("portal")   // portal | automatica — o do ADL-14 da X10i (F-NSP-2b a)
+  paulistanaSemSimplesDesde20261101  Boolean @default(false)       // declaração do operador (IN 10/2011 art. 1º-A § 2º)
+  rpsSerie                           Int     @default(1)           // F-NSP-5
+  pacoteCodigoServicoSp              String?                        // F-NSP-12
+  createdAt                          DateTime @default(now())
+  updatedAt                          DateTime @updatedAt
+  @@map("br_fiscal_profiles")
 }
-model ServiceFiscalProfile { /* … */ codigoServicoSp String? } // 5 dígitos, Anexo I IN 8/2011
+model BrServiceFiscalProfile {
+  id                     String               @id @default(cuid())
+  serviceFiscalProfileId String               @unique
+  serviceFiscalProfile   ServiceFiscalProfile @relation(fields: [serviceFiscalProfileId], references: [id], onDelete: Cascade)
+  codigoServicoSp        String? // 5 dígitos, Anexo I IN 8/2011
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  @@map("br_service_fiscal_profiles")
+}
 model FiscalDocumentSequence {
   // …
-  numeracao String @default("") // '' (DPS/NF-e) | 'RPS_SP'  (F-NSP-6)
-  @@id([userId, unitId, kind, ambiente, numeracao, serie])
+  numberingScheme String @default("") // '' (DPS/NF-e) | 'RPS_SP'  (F-NSP-6; centro, inglês)
+  @@id([userId, unitId, kind, ambiente, numberingScheme, serie])
 }
 ```
+
+Linha ausente no satélite = os defaults acima (o leitor devolve o padrão; não há backfill). Soft-delete não se aplica: a
+linha morre com o perfil (`Cascade`), como morreriam os campos que ela substitui.
 
 ### 4.4 Protocolo do assinador (PR-3; acréscimo ao `v1`, como o §4.1 da emenda X10i)
 
@@ -447,24 +498,33 @@ item 2). Depois da ratificação, o F-NSP-7 (a) ficou realizado como lote síncr
 
 ## 10. Write-set
 
+Caminhos depois da emenda de 24/11. `BR` = `server/src/features/accounting/paises/br`.
+
 - **PR-0:** `docs/adr/ADR-INCR-DFE-EMISSAO-PARCEIRO.md`, `docs/adr/ADR-ASSINADOR-LOCAL.md`.
-- **PR-1:** `server/src/lib/paulistana/**`, `server/src/lib/paulistana/__tests__/**`, `server/src/lib/paulistana/__fixtures__/**`.
-- **PR-2:** `server/prisma/schema.prisma`, `server/prisma/migrations/**`, `server/src/features/accounting/dtos/FiscalProfileDto.ts`,
-  `server/src/features/accounting/dtos/ServiceFiscalProfileDto.ts`, `server/src/features/accounting/services/FiscalProfileService.ts`,
-  `server/src/features/accounting/services/ServiceFiscalProfileService.ts`, `server/src/features/accounting/dfe/resolveEmissor.ts`,
-  `server/src/features/accounting/dfe/selectDfeEmissor.ts`, `server/src/features/accounting/repositories/FiscalDocumentRepository.ts`,
+- **PR-1:** `BR/models/nfse/paulistana/**` (com `__tests__/**` e `__fixtures__/**`).
+- **PR-2:** `server/prisma/schema.prisma`, `server/prisma/migrations/**`, `BR/dtos/BrFiscalProfileDto.ts`,
+  `BR/dtos/BrServiceFiscalProfileDto.ts`, `BR/services/BrFiscalProfileService.ts`, `BR/services/BrServiceFiscalProfileService.ts`,
+  `BR/repositories/{IBrFiscalProfileRepository,BrFiscalProfileRepository,IBrServiceFiscalProfileRepository,BrServiceFiscalProfileRepository}.ts`,
+  `server/src/controllers/brFiscalProfileController.ts`, `server/src/features/accounting/services/FiscalProfileService.ts`,
+  `server/src/features/accounting/dfe/resolveEmissor.ts`, `server/src/features/accounting/dfe/selectDfeEmissor.ts`,
+  `server/src/features/accounting/repositories/FiscalDocumentRepository.ts`,
   `server/src/features/accounting/services/FiscalDocumentEmissionService.ts`.
-- **PR-M:** `server/src/features/accounting/dfe/paulistana/PaulistanaManualEmissor.ts`, `server/src/features/accounting/dfe/DfeEmissorPort.ts`,
-  `server/src/features/accounting/dtos/FiscalProfileDto.ts`, `server/src/features/accounting/dtos/FiscalDocumentDto.ts`,
-  `server/src/controllers/fiscalDocumentController.ts`, `server/src/features/accounting/models/issCompetencia.ts`,
-  `server/src/features/accounting/dfe/resolveEmissor.ts`, `server/src/features/accounting/services/FiscalDocumentEmissionService.ts`,
-  `server/src/features/accounting/services/FiscalDocumentLifecycleService.ts`, `server/src/lib/paulistana/**`.
+- **PR-M:** `BR/dfe/paulistana/PaulistanaManualEmissor.ts`, `server/src/features/accounting/dfe/DfeEmissorPort.ts`,
+  `server/src/features/accounting/dtos/FiscalDocumentDto.ts`, `server/src/controllers/fiscalDocumentController.ts`,
+  `server/src/features/accounting/models/issCompetencia.ts`, `server/src/features/accounting/dfe/resolveEmissor.ts`,
+  `server/src/features/accounting/services/FiscalDocumentEmissionService.ts`,
+  `server/src/features/accounting/services/FiscalDocumentLifecycleService.ts`, `BR/models/nfse/paulistana/**`.
 - **PR-3:** `server/src/features/accounting/dtos/DfeSignerDto.ts`, `server/src/features/accounting/dtos/dfeSigner.schema.json`,
-  `server/src/features/accounting/dfe/local/**`, `server/src/features/accounting/dfe/selectDfeAssinador.ts`.
-- **PR-4:** `server/src/features/accounting/dfe/paulistana/**`, `server/src/features/accounting/dfe/DfeEmissorPort.ts`,
+  `server/src/features/accounting/dfe/local/**`, `server/src/features/accounting/dfe/selectDfeAssinador.ts`,
+  `BR/dfe/paulistana/paulistanaEndpoints.ts`.
+- **PR-4:** `BR/dfe/paulistana/**`, `server/src/features/accounting/dfe/DfeEmissorPort.ts`,
   `server/src/features/accounting/models/issCompetencia.ts`, `server/src/features/accounting/services/FiscalDocumentEmissionService.ts`,
   `server/src/features/accounting/services/FiscalDocumentLifecycleService.ts`, `server/src/controllers/fiscalDocumentController.ts`,
   `server/src/routes/dfe.ts`, `server/src/routes/docs/nfe.paths.ts`, `docs/accounting/RUNBOOK-NFSE-PAULISTANA.md`.
+- **Item 0 da guarda (só se o PR-1 for o 1º PR de código emendado):** `server/.dependency-cruiser.cjs`,
+  `docs/adr/ADR-ARCH-BOUNDARIES.md`, `server/src/features/accounting/dtos/__tests__/dtoShapeSnapshot.test.ts`,
+  `server/src/features/accounting/__tests__/atomicUntil.boundary.test.ts`.
 - **Choke points (PAR-001):** `server/src/lib/factory.ts`, `server/src/routes/accounting.ts`, `server/src/routes/docs.paths.ts`,
+  `server/src/routes/docs/accounting.fiscal-profile.paths.ts` (ou o arquivo de paths do perfil fiscal, conferir),
   `server/public/openapi.json`, `server/src/features/accounting/audit/auditCanonical.ts`,
   `server/src/features/accounting/dtos/__tests__/__dto-shapes__.json`, `server/prisma/schema.prisma`.

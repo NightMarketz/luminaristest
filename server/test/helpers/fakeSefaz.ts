@@ -77,6 +77,8 @@ export interface FakeSefazControle {
   cStatAutorizacao: string | null;
   /** Processa e autoriza, mas derruba a conexão sem responder (resposta perdida, E-8). */
   perderRespostaAutorizacao: boolean;
+  /** cStat forçado na consulta de protocolo (ex.: '110' denegada, '301'/'302', '108'); null = o estado real da nota. */
+  cStatConsulta: string | null;
   /** cStat forçado no evento de cancelamento (ex.: '501'). */
   cStatEvento: string | null;
   /** cStat forçado na inutilização. */
@@ -97,6 +99,7 @@ export class FakeSefaz {
   public readonly controle: FakeSefazControle = {
     cStatAutorizacao: null,
     perderRespostaAutorizacao: false,
+    cStatConsulta: null,
     cStatEvento: null,
     cStatInutilizacao: null,
     atrasoMs: 0,
@@ -209,6 +212,12 @@ export class FakeSefaz {
     if (servico === 'NFeConsultaProtocolo4') {
       const chave = /<chNFe>(\w{44})<\/chNFe>/.exec(msg)?.[1] ?? '';
       const a = this.autorizadas.get(chave);
+      const forcadoConsulta = this.controle.cStatConsulta;
+      if (forcadoConsulta) {
+        const xMotivo = forcadoConsulta === '110' || forcadoConsulta === '301' || forcadoConsulta === '302' ? 'Uso Denegado' : 'Rejeicao forcada pelo teste';
+        const prot = ['110', '301', '302'].includes(forcadoConsulta) ? this.protNFe(chave, forcadoConsulta, xMotivo, '<nProt>135260000000001</nProt>') : '';
+        return `<retConsSitNFe xmlns="${NS}" versao="4.00"><cStat>${forcadoConsulta}</cStat><xMotivo>${xMotivo}</xMotivo>${prot}</retConsSitNFe>`;
+      }
       if (!a) return `<retConsSitNFe xmlns="${NS}" versao="4.00"><cStat>217</cStat><xMotivo>Rejeicao: NF-e nao consta na base de dados da SEFAZ</xMotivo></retConsSitNFe>`;
       return `<retConsSitNFe xmlns="${NS}" versao="4.00"><cStat>100</cStat><xMotivo>Autorizado o uso da NF-e</xMotivo>${this.protNFe(chave, '100', 'Autorizado o uso da NF-e', `<nProt>${a.nProt}</nProt><digVal>${a.digVal}</digVal>`)}</retConsSitNFe>`;
     }

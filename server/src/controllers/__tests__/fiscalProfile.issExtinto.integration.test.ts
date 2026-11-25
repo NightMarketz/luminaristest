@@ -43,7 +43,9 @@ describe('PUT /api/accounting/fiscal-profile — issAliquotaBp a partir de 2033'
     hoje('2033-01-01T12:00:00-03:00');
     const comValor = await put({ issAliquotaBp: 300 });
     expect(comValor.status).toBe(400);
-    expect(comValor.body.error.fieldErrors.issAliquotaBp).toEqual([ISS_EXTINTO_MENSAGEM]);
+    // Onda 3.2 #4: o fim do ISS é a linha da ISS_LIMITE — a checagem saiu do DTO para o serviço (ValidationError nomeado).
+    expect(comValor.body.code).toBe('ISS_EXTINTO');
+    expect(comValor.body.message).toContain(ISS_EXTINTO_MENSAGEM);
     expect(JSON.stringify(comValor.body)).not.toContain('Sem linha vigente');
     const nulo = await put({ issAliquotaBp: null });
     expect(nulo.status).toBe(200);

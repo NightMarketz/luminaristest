@@ -1,6 +1,6 @@
 import type { Prisma } from 'generated/prisma';
 import type { EventBinding } from '../../accountingBinding/dtos/AccountingBindingDto';
-import type { BindingScope } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
 import type { IRoleOverrideSource } from '../../accountingBinding/services/BindingCompileService';
 import type { IRoleAccountOverrideRepository } from '../repositories/IRoleAccountOverrideRepository';
 import { KIT_REGISTRY } from '../registry';

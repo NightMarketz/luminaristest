@@ -23,7 +23,8 @@
  */
 import { ForbiddenError, ValidationError } from '../../../lib/errors';
 import type { KitInstallation, KitUpgradeRun } from 'generated/prisma';
-import type { BindingScope, IAccountingBindingRepository } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import type { IAccountingBindingRepository } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
 import type { BindingCompileService } from '../../accountingBinding/services/BindingCompileService';
 import type { SectorKitV1 } from '../dtos/SectorKitDto';
 import {

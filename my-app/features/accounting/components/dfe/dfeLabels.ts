@@ -15,6 +15,7 @@ export const STATUS_LABEL: Record<FiscalDocumentStatus, string> = {
   PENDING_SIGNATURE: 'Aguardando reautorização do assinador',
   CONTINGENCY: 'Emitida em contingência, aguardando transmissão',
   CANCEL_ANALYSIS: 'Cancelamento em análise pelo fisco',
+  DENIED: 'Uso denegado pela SEFAZ (número consumido)',
 };
 
 export const PENDENCIA_LABEL: Record<FiscalDocumentPendencia, string> = {

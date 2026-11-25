@@ -130,3 +130,24 @@ describe('DfePollScheduler — passo de eventos da NFS-e (BE-INCR-DFE-EVENTOS PR
     expect(alert).toHaveBeenCalledWith(expect.objectContaining({ source: 'dfe_poll', event: 'job_failed', error: 'listParaEventos: database is locked' }));
   });
 });
+
+describe('DfePollScheduler — o job desistiu de consultar documento (Onda 4 / 4.1)', () => {
+  const desistiu = (ids: string[]): PollSummary => ({ total: 3, updated: 2, skipped: 0, failed: 1, gaveUp: ids.length, gaveUpIds: ids });
+
+  it('gaveUp > 0 ⇒ job.completed em warn e UM alerta remoto com os ids (a nota segue SENT/PROCESSING: alguém precisa olhar)', async () => {
+    const log = { event: jest.fn() };
+    const alert = jest.fn();
+    await new DfePollScheduler({ poll: async () => desistiu(['doc-x']), log, alert }).runOnce();
+    expect(log.event).toHaveBeenCalledWith('warn', 'job.completed', 'dfe_poll_pending', expect.objectContaining({ gaveUp: 1 }));
+    expect(alert).toHaveBeenCalledTimes(1);
+    expect(alert).toHaveBeenCalledWith(
+      expect.objectContaining({ source: 'dfe_poll', event: 'reconcile_summary', pollGaveUp: 1, pollGaveUpDocumentIds: ['doc-x'] }),
+    );
+  });
+
+  it('controle: tick sem desistência não alerta por isso', async () => {
+    const alert = jest.fn();
+    await new DfePollScheduler({ poll: async () => ({ total: 1, updated: 1, skipped: 0, failed: 0 }), log: { event: jest.fn() }, alert }).runOnce();
+    expect(alert).not.toHaveBeenCalled();
+  });
+});

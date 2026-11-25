@@ -1,3 +1,4 @@
+import { roundReaisToCents } from '../../../lib/decimalMoney';
 import { ValidationError } from '../../../lib/errors';
 import { MAX_CENTS } from '../../accounting/models/money';
 
@@ -34,7 +35,7 @@ export function centsFromReais(value: unknown, context: string): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     throw new ValidationError(`Valor inválido para ${context}: não é um número finito.`);
   }
-  const cents = Math.round(value * 100);
+  const cents = roundReaisToCents(value); // arredondamento do `lib/decimalMoney` (hoje Math.round(value*100); CENTAVOS-EXATOS)
   if (!Number.isSafeInteger(cents)) {
     throw new ValidationError(`Valor fora da faixa segura de centavos (${context}).`);
   }

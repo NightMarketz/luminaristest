@@ -23,7 +23,7 @@ import prisma from '../lib/prisma';
 import { KIT_REGISTRY } from '../features/sectorKits/registry';
 import { KitInstallStepFailedError } from '../features/sectorKits/models/kitInstallTypes';
 import { reloadAccountingMappersSerialized } from '../features/accountingBinding/runtime/mapperReload';
-import type { BindingScope } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../features/accountingBinding/public/bindingScope.types';
 
 export interface InstallSectorKitArgs {
   ownerUserId: string;

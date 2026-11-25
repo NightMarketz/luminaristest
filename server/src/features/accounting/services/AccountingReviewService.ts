@@ -62,7 +62,8 @@ import type { IReferentialMappingRepository } from '../repositories/IReferential
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
 import type { IAuditRepository } from '../repositories/IAuditRepository';
-import type { ActiveAccountant, IAccountingPolicy } from '../policies/IAccountingPolicy';
+import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
+import type { ActiveAccountant } from '../models/AccountantAssignment.model';
 import type { IAccountantAssignmentRepository } from '../repositories/IAccountantAssignmentRepository';
 import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';

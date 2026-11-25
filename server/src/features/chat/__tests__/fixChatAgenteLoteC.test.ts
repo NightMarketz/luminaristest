@@ -5,7 +5,8 @@
  *
  * Cada `it` afirma o comportamento correto; antes do fix falha na asserção final.
  */
-import { KnowledgeGraphService, type KnowledgeGraphData } from '../services/KnowledgeGraphService';
+import { KnowledgeGraphService } from '../services/KnowledgeGraphService';
+import type { KnowledgeGraphData } from '../models/KnowledgeGraph.model';
 import { ChatInstanceService } from '@/features/chatInstances/services/ChatInstanceService';
 import type { UserContext } from '@/types/UserContext';
 import { Role } from '@/features/users/models/User.model';

@@ -5,8 +5,8 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { isValidDateOnly, scopeToday, toUtcDayNumber, dayNumberFromDateOnly, dateOnlyFromDayNumber } from '../models/dates';
 import {
-  loadOutstandingPayables,
-  loadOutstandingReceivables,
+  outstandingLinesFromPayables,
+  outstandingLinesFromReceivables,
   type OutstandingLine,
 } from '../models/outstandingLines';
 import type { AccountingReportService } from './AccountingReportService';
@@ -151,8 +151,8 @@ export class CashForecastReportService {
     const horizonEndDay = asOfDay + CASH_FORECAST_HORIZON_DAYS;
 
     const [payables, receivables] = await Promise.all([
-      loadOutstandingPayables(scope, this.payableRepo),
-      loadOutstandingReceivables(scope, this.receivableRepo),
+      this.payableRepo.findOutstanding(scope).then(outstandingLinesFromPayables),
+      this.receivableRepo.findOutstanding(scope).then(outstandingLinesFromReceivables),
     ]);
 
     // F-CF2→a: saldo inicial derivado do razão (mesma fonte que o tie-out da Aging já usa).

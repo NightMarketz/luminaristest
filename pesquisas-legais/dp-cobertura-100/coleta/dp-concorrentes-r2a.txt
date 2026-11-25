@@ -1,0 +1,174 @@
+DP/FOLHA - RODADA R2A (leitura crua, sem classificação)
+Data: 2026-11-14
+Legenda: aberta = página aberta por WebFetch (conteúdo lido); snippet = só resultado de busca (WebSearch), página não aberta.
+Formato: - item — URL — aberta|snippet
+
+=====================================================
+1. QUESTOR
+=====================================================
+- "Folha de Pagamento | Questor Docs" (título da seção; sem árvore nem itens de menu) — https://docs.questor.com.br/pt-br/Produtos/Gest%C3%A3oCont%C3%A1bil/FolhadePagamento/ — aberta
+- "trabalhador contrato intermitente" (subpágina; contrato intermitente, rescisão indenizada e férias indenizadas) — https://docs.questor.com.br/pt-br/Produtos/GestãoContábilCloud/FolhadePagamento/Intermitente/trabalhador-contrato-intermitente — snippet
+- "Transferência de funcionários entre empresas" — https://docs.questor.com.br/pt-br/Produtos/Gest%C3%A3oCont%C3%A1bil/FolhadePagamento/Transfer%C3%AAncia/transferencia-entre-empresas — snippet (rodada anterior)
+- Robô de folha: automatiza rotinas de folha, DCTFWeb, férias e 13º — URL de listagem Questor no Sympla / busca — snippet (busca genérica; não confirmado no docs)
+- docs.questor.com.br/pt-br/ — HTTP 404, não lido
+- Não encontrado nas fontes abertas: títulos de admissão, férias, rescisão, 13º, eSocial, ponto, SST, benefícios, pensão como páginas do docs.
+Itens abertos: 1 (título). Snippets: 2. Inacessível: docs.questor.com.br/pt-br/ (404).
+
+=====================================================
+2. ALTERDATA
+=====================================================
+- Índice do menu "Departamento Pessoal" (título) — https://ajuda.alterdata.com.br/wdp/ — aberta
+  Obs.: a página é a boas-vindas DP; único tópico de navegação listado: "Primeiros Passos - DP"
+- Índice do menu lateral "Folha" / "Cálculo da Folha" / "Cálculo do Adiantamento" / "Centro de Aprendizagem" — https://ajuda.alterdata.com.br/wdp/calculo-da-folha-31295485.html — aberta
+- "Folha" > "Cálculo da Folha": férias e rescisão citadas como pré-requisito (calcular antes da folha) — https://ajuda.alterdata.com.br/wdp/calculo-da-folha-31295485.html — aberta
+- Títulos do índice de eSocial: "FP140 - eSocial - Passo a Passo - Base de Conhecimento - Social"; "Tema: eSocial" — https://ajuda.alterdata.com.br/display/BDCSN/FP140+-+eSocial+-+Passo+a+Passo — aberta (sem índice de folha no menu)
+- Rotinas de ponto/folha no app ePessoal: "recibos de folha, férias, 13º salário, informe de rendimentos" — https://www.alterdata.com.br/contabil/ponto-eletronico — aberta
+- Ponto: "Integração nativa ao DP Alterdata"; "Espelhamento automático de cargos, departamentos, admissões e rescisões" — https://www.alterdata.com.br/contabil/ponto-eletronico — aberta
+- Ponto: "agendamento de férias" (app ePessoal); "crédito do trabalhador" — https://www.alterdata.com.br/contabil/ponto-eletronico — aberta
+- Ponto: "Configure turnos complexos, parametrize regras sindicais e gerencie folgas"; "Aprove atestados médicos, justifique ausências e lance férias"; "relatórios AEJ e AFDT" — https://www.alterdata.com.br/contabil/ponto-eletronico — aberta
+- Ponto: "Monitore índices de assiduidade, atrasos e volume de horas extras" — https://www.alterdata.com.br/contabil/ponto-eletronico — aberta
+- Pré-requisito: "calcular férias e rescisão antes da folha; lançar faltas, horas extras, comissões" — https://ajuda.alterdata.com.br/wdp/calculo-da-folha-31295485.html — snippet (rodada anterior)
+- FP3218 importação de dados eSocial; FP140+ passo a passo; FP3347 evento S-2306 — URLs da rodada anterior — snippet
+- Não encontrados no índice aberto: 13º, pensão, consignado, PLR, SST, contabilização como itens de menu.
+Itens abertos: 11 (inclui títulos de índice). Snippets: 4. Inacessível: nenhum.
+
+=====================================================
+3. DOMÍNIO FOLHA (Thomson Reuters)
+=====================================================
+- "Domínio One: Inclui módulos de Contabilidade, Folha, Fiscal e portais" — https://www.dominiosistemas.com.br/ — aberta
+- "Domínio Portal do Empregado" (módulo adicional, sem descrição) — https://www.dominiosistemas.com.br/ — aberta
+- Menu Calendário Contábil: "eSocial", "FGTS Digital" — https://www.dominiosistemas.com.br/ — aberta
+- Menu Calendário Contábil: "DIRF", "EFD-Reinf" (não associado à folha pela página) — https://www.dominiosistemas.com.br/ — aberta
+- "Benefícios" (em Serviços Financeiros, sem descrição) — https://www.dominiosistemas.com.br/ — aberta
+- https://www.dominiosistemas.com.br/folha-de-pagamento/ — sem conteúdo de folha; leitura retornou só itens da home — aberta (sem novos itens)
+- Central de suporte https://suporte.dominioatendimento.com/central/faces/index.html — não aberta (rodada anterior)
+Itens abertos: 6 (itens de menu/módulo; nenhum rotina de folha detalhada). Snippets: 0 nesta rodada. Inacessível: nenhum nesta rodada para o site principal; central de suporte não aberta.
+Não encontrado: férias, rescisão, 13º, ponto, SST, admissão como itens do site oficial aberto.
+
+=====================================================
+4. TOTVS (RM / Protheus)
+=====================================================
+RM:
+- https://tdn.totvs.com/x/WCDvH — HTTP 403 (TDN árvore), não lido
+- https://tdn.totvs.com/display/public/LRM/FOP — HTTP 403 (rodada anterior)
+- https://tdn.totvs.com.br/ — nada lido (não tentado nesta rodada; busca mostrou URLs de TDN abaixo)
+- Rotinas Protheus SIGAGPE (trecho de nome, na busca): GPEM020 "Cálculo da Folha de Pagamento" — https://tdn.totvs.com/x/ASklD (árvore; não aberta) — snippet
+- GPEM030: caminho "Miscelânea / Cálculos / Férias" (boletim "GPE BT Diferenca Media Ferias") — https://tdn.totvs.com.br/download/attachments/73074495/GPE_BT_Diferenca_Media_Ferias_%20BRA_TGNVOT.pdf?api=v2 — snippet
+- GPEM040: caminho "Miscelânea / Cálculos / Rescisão" (boletim "GPE Calculo da Rescisao") — https://tdn.totvs.com.br/download/attachments/26315023/GPE_Calculo%20_da_Rescisao_TDUFRQ.pdf?api=v2 — snippet
+- GPEM013: desoneração da folha (boletim de 2012) — https://tdn.totvs.com.br/download/attachments/59441854/GPE_BT_Desoneracao_Folha_%20BRA_TFJWCN.pdf?api=v2 — snippet (rodada anterior)
+- GPEM010: não encontrado nas fontes lidas
+- Funções eSocial: "FR0230" (relatórios legais de férias); "FR5030" (geração de programação de rescisão) — URL de origem não confirmada (citado em resultado de busca de terceiro, Grupo Módulos) — snippet
+- Provisão de férias e 13º ("GPE - Provisao de ferias e 13o salario - novos tratamentos") — https://tdn.totvs.com.br/download/attachments/364914692/GPE%20-%20Provisao%20de%20ferias%20e%2013o%20salario%20-%20novos%20tratamentos.pdf?api=v2 — snippet
+- Rescisão e GRRF ("Tema Rescisao e GRRF") — https://tdn.totvs.com.br/download/attachments/758497581/Tira%20Duvidas%20Suporte%20RH%20Protheus%20-%20Tema%20Rescisao%20e%20GRRF%20270422.pdf?api=v2 — snippet
+- Liberação do recibo de férias no portal — https://tdn.totvs.com/download/attachments/201750386/GPE_BT_Liberacao%20do%20recibo%20de%20ferias%20no%20portal_BRA_TS6031.pdf?api=v2 — snippet
+- Alteração no cálculo de férias (ang. TFDERG) — https://tdn.totvs.com.br/download/attachments/73082284/gpe_bt_alteracao%20no%20calculo_de%20ferias_ang_tfderg.doc.pdf?api=v2 — snippet
+- Rescisão: "Avos" com férias sobre aviso indenizado; campos RG_DFERAVI e RG_TPAVISO — https://tdn.totvs.com.br/download/attachments/42044167/GPE_BT_Dias_Ferias_Aviso_Indenizado_%20BRA_TEXPAU.pdf?api=v2 — snippet
+- Férias: campo RH_DATABAS (início do período aquisitivo ativo) — https://tdn.totvs.com/download/attachments/73074495/ — snippet (mesmo boletim de GPEM030)
+- Eventos eSocial S-1200/S-1210/S-1299 e S-2500 (RM) — URLs da rodada anterior — snippet
+- Árvore Protheus eSocial "eSocial | Protheus - Entregas Legais" — https://tdn.totvs.com/x/T_JUE — HTTP 404 nesta rodada (rodada anterior: snippet de árvore)
+- Página comercial de folha: https://www.totvs.com/rh/folha-de-pagamento/ — HTTP 402
+- Boletim "MFP BT eSocial BRA HCM eSocial 11a Entrega" — https://tdn.totvs.com/download/attachments/201726713/MFP_BT_eSocial_BRA_HCM_eSocial_11a_Entrega.pdf?api=v2 — snippet (não aberto)
+- Boletim "eSocial 12 1 8" — https://tdn.totvs.com.br/download/attachments/242385546/eSocial_12_1_8.pdf?api=v2 — snippet (não aberto)
+Itens abertos: 0 (TOTVS: tudo inacessível aberto ou só snippet nesta rodada; TDN 403/404/402 nas páginas-chave).
+Itens snippet: 14 (incluindo GPEM020/030/040, FR0230/FR5030 e boletins).
+Não encontrado: lista oficial atual de módulos RM e Protheus; GPEM010 com função; férias/rescisão/ponto/SST como nome de módulo com página aberta.
+
+=====================================================
+5. FORTES TECNOLOGIA
+=====================================================
+- Home https://www.fortestecnologia.com.br/ — aberta
+- "Fortes RH": "Integra Fortes RH, Pessoal, Ponto, Colabore (app do colaborador) e BI em um só fluxo" — https://www.fortestecnologia.com.br/solucoes/fortes-rh/ (URL citada na home; página não aberta) — aberta (home)
+- "Fortes Pessoal": "Folha de pagamento, eSocial, ponto eletrônico e benefícios dos clientes do escritório, tudo conectado." — https://www.fortestecnologia.com.br/solucoes/fortes-pessoal/ — aberta (home)
+- "Fortes Ponto": "Integre RH, folha, ponto, benefícios e o app do colaborador com a gestão de pessoas da Fortes." — https://www.fortestecnologia.com.br/solucoes/fortes-ponto/ — aberta (home)
+- "Fortes Colabore": "Colabore (app do colaborador)" — https://www.fortestecnologia.com.br/solucoes/fortes-colabore/ — aberta (home)
+- "Fortes BI": "Business Intelligence Fortes BI" — https://www.fortestecnologia.com.br/solucoes/fortes-bi/ — aberta (home)
+- "Fortes Total Contador": "Contábil, fiscal e pessoal integrados, com automação e planos sob medida para o seu escritório." — https://www.fortestecnologia.com.br/solucoes/total-contador/ — aberta (home)
+- "Departamento Pessoal (DP)" como nome de área em diagrama, sem funcionalidades — https://www.fortestecnologia.com.br/ — aberta
+- "Gestão da NR-1" sob Recursos Humanos, sem detalhe — https://www.fortestecnologia.com.br/ — aberta
+- Módulos sem link/descrição (só diagrama): Fortes Benefícios, Fortes Conecta, Fortes Gestão, Fortes Doc, Conta Digital, Conta Digital de Salário — https://www.fortestecnologia.com.br/ — aberta
+- FortesPay: integração de pagamento com folha, com Somapay (imprensa, late 2023) — https://www.latamfintech.co/articles/brazilian-fintech-somapay-and-fortes-tecnologia-join-forces-to-integrate-payments-into-payroll-management — snippet (rodada anterior)
+- App Colabore (loja) — https://apps.apple.com/us/app/id1457030048 — snippet (rodada anterior)
+- fortes.com.br aponta para empresa diferente (rodada anterior) — não usado
+- Férias, rescisão, 13º, SST: não encontrados na home aberta.
+Itens abertos: 9 (produtos/linhas da home). Snippets: 2. Inacessível: nenhum no domínio correto.
+
+=====================================================
+6. PONTOMAIS / TANGERINO (ponto)
+=====================================================
+PONTOMAIS (VR) — site: https://www.pontomais.com.br/ — aberta
+- Ponto: "Registro Simples"; "Ponto Offline"; "PontoREP"; "Ponto por WhatsApp"; "Reconhecimento Facial"; "QR Code" — https://www.pontomais.com.br/ — aberta
+- "Relatório de Ocorrências: marcação ímpar, ponto faltante ou batida durante férias" — https://www.pontomais.com.br/ — aberta
+- "Assinatura eletrônica" do espelho de ponto, sem certificado A1/A3 — https://www.pontomais.com.br/ — aberta
+- "Controle de Ponto, Escala e Férias e Folgas" — https://www.pontomais.com.br/ — aberta
+- Banco de horas: "Banco de horas, previsão de extras, frequência e atrasos" — https://www.pontomais.com.br/ — aberta
+- Portaria 671: "permitir o registro do ponto digital"; "salva as informações de jornada... na nuvem" — https://www.pontomais.com.br/ — aberta
+- Folha: "Exportação direta dos dados de jornada para os sistemas de folha"; "integra com diversos sistemas de folha" — https://www.pontomais.com.br/ — aberta
+- Holerite: "comprovante de pagamento do salário" — https://www.pontomais.com.br/ — aberta
+- "Departamento pessoal": não encontrado na página
+- Pontomais em busca (rodada anterior): não encontrado
+
+TANGERINO — https://www.tangerino.com.br/ — ERRO TLS (certificado não bate com o host; rede responde com certificado Azion). Não lido.
+- Banco de horas e relatório de horas (terceiros: comparativo Makrosystem/B2Bstack e Sólides) — https://www.b2bstack.com.br/compare/accura-employee-h-r-portal-vs-tangerino ; https://makrosystem.com.br/blog/ja-conhece-o-metodo-tangerino/ — snippet (terceiros, não oficial)
+- Tangerino: "saldo de banco de horas" e "acompanhamento em tempo real" — mesmas fontes — snippet
+- Tangerino + folha: nenhum detalhe confirmado — snippet (não encontrado)
+Itens abertos: 10 (Pontomais). Snippets: 4 (Tangerino, terceiros). Inacessível: tangerino.com.br (TLS).
+
+=====================================================
+7. SANKHYA (Gestão de Pessoas / Pessoas+)
+=====================================================
+- https://www.sankhya.com.br/gestao-de-pessoas/ — HTTP 404 (rodada anterior)
+- Home https://www.sankhya.com.br/ — aberta (menu com links de Gestão de Pessoas)
+- Página de solução: https://www.sankhya.com.br/software-de-gestao-erp/erp-para-gestao-de-pessoas/ — aberta
+  - "Folha de Pagamento": "automatize cálculos e simplifique as rotinas do RH e do Departamento Pessoal" — mesma URL — aberta
+  - "Gestão de Ponto": "controle jornadas, escalas e horas extras" — mesma URL — aberta
+  - "Benefícios": "ofereça mais liberdade aos colaboradores e mais controle para o RH" — mesma URL — aberta
+  - "Admissão Digital e Saúde Ocupacional": "digitalize processos... garanta conformidade" — mesma URL — aberta
+  - "Recrutamento e Seleção"; "Educação Corporativa | LMS"; "People Analytics" — mesma URL — aberta
+  - "Segurança do Trabalho": "ASO, PGR e PCMSO de forma digital" — mesma URL — aberta
+  - "Registro de ponto": "integrado ao eSocial" — mesma URL — aberta
+  - "Inconformidade no eSocial": "Envios automáticos e conformidade total com o eSocial." — mesma URL — aberta
+- Página Pessoas+ (folha): https://www.sankhya.com.br/software-de-gestao-erp/erp-para-gestao-de-pessoas/produtos/pessoas-mais/ — aberta
+  - "Controle de férias, rescisões e afastamentos" — aberta
+  - "Conformidade com o eSocial e obrigações legais" — aberta
+  - "Gere e envie arquivos com segurança" (eSocial) — aberta
+  - "Automatize os cálculos conforme regras da empresa" — aberta
+  - "Auditor de Folha" (funcionalidade nativa; identifica erros em tempo real) — aberta
+  - "Deploy Agent" (implantação com histórico de dados) — aberta
+  - "BIA" (análises de folha) — aberta
+  - "Holerites, comprovantes e solicitações via app e portal" — aberta
+  - "Usuários e permissões no Portal RH" — aberta
+  - "Integração com RH, financeiro e contábil" — aberta
+  - "Regras e cálculos por centro de custo" — aberta
+  - "Automação de rotinas de RH" — aberta
+  - Não citados: 13º, pensão, consignado, admissão/rescisão em detalhe — aberta
+- Página Pontotel "sistema de folha de pagamento" (empresa do grupo Sankhya; NÃO é página Sankhya): https://www.pontotel.com.br/sistema-de-folha-de-pagamento/ — aberta
+  - "Integração com eSocial, DIRF, RAIS e demais obrigações" — aberta
+  - "Admissão digital" (listada como recurso da solução Sankhya RH) — aberta
+  - "Cálculo automático de salários, horas extras, descontos e encargos" — aberta
+  - "Emissão de holerites, recibos e relatórios gerenciais" — aberta
+  - Férias: "recibos de férias"; "históricos de pagamentos, férias e benefícios" — aberta
+  - Rescisão: "rescisões" entre documentos digitais emitidos — aberta
+  - "Gestão de frequência integrada" à folha; "Integração com controle de ponto" — aberta
+  - "Gestão de ASO, PGR e PCMSO em um único sistema" — aberta
+  - "People Analytics em tempo real" — aberta
+  - 13º salário: não aparece na página — aberta
+  - Pensão, consignado: não aparecem — aberta
+- Página 13º salário (artigo, categoria Gestão Financeira; título: "13º salário: como calcular, quem tem direito e prazos de 2026"): https://www.sankhya.com.br/gestao-de-negocios/13-salario/ — rodada anterior: snippet (não aberta nesta rodada)
+- Cases de folha (Grupo GVC; Jockey Club): https://www.sankhya.com.br/gestao-de-negocios/sala-de-imprensa/grupo-gvc-automatiza-gestao-com-a-sankhya-e-reduz-em-53-o-tempo-de-fechamento-de-folha/ — snippet (URL do link na home)
+- Rotinas de Sankhya RH via menu (Recrutamento e Seleção; Gestão de Ponto; Educação Corporativa | LMS; Folha de Pagamento; Benefícios; Admissão Digital e Saúde Ocupacional) — aberta
+Itens abertos: ~24 (linhas de conteúdo lidas em páginas oficiais). Snippets: 2.
+Não encontrado nas fontes abertas: 13º como módulo próprio, pensão, consignado, PLR; rescisão como item próprio.
+
+=====================================================
+RESUMO DE ITENS
+=====================================================
+Questor: abertos 1 / snippets 2 / inacessível: docs.questor.com.br/pt-br/ (404)
+Alterdata: abertos 11 / snippets 4 / inacessível: nenhum
+Domínio: abertos 6 / snippets 0 / inacessível: central de suporte (não aberta na rodada anterior)
+TOTVS: abertos 0 / snippets 14 / inacessível: tdn.totvs.com/x/WCDvH (403), tdn.totvs.com/display/public/LRM/FOP (403), tdn.totvs.com/x/T_JUE (404), totvs.com/rh/folha-de-pagamento/ (402)
+Fortes: abertos 9 / snippets 2 / inacessível: nenhum no domínio correto
+Pontomais: abertos 10 / snippets 0
+Tangerino: abertos 0 / snippets 4 (terceiros) / inacessível: tangerino.com.br (erro TLS)
+Sankhya: abertos ~24 / snippets 2 / inacessível: sankhya.com.br/gestao-de-pessoas/ (404 rodada anterior)
+
+Lacunas da leitura (para registro): Questor sem índice aberto de folha; TOTVS sem página oficial aberta nesta rodada (GPEM010 sem função); Tangerino sem página oficial lida.

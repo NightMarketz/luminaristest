@@ -1,0 +1,95 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Mediador - Extrato Termo Aditivo de Convenção Coletiva",
+      "url": "https://mediador.trabalho.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR060354%2F2026",
+      "url_final": "https://mediador.trabalho.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR060354%2F2026",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:27:06-03:00",
+      "sha256": "4cffc1b6614ca07abb662323161534275c85aa9dc79efd02a3983ad5acd943f6",
+      "arquivo": "docs/D01_ResumoVisualizar.html",
+      "texto": "docs/D01_ResumoVisualizar.txt",
+      "bytes": 76661,
+      "sha256_texto": "1749b0906855cafdb0e803ee52cbf3a2415e050ade67dc03b0aced385497d02b",
+      "captura": {
+        "anterior": {
+          "slug": "parecer-salao-sp-4-pessoas",
+          "id": "D58",
+          "baixado_em": "2026-11-20T19:25:50-03:00",
+          "sha256_texto": "1749b0906855cafdb0e803ee52cbf3a2415e050ade67dc03b0aced385497d02b"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Mediador - Extrato Convenção Coletiva",
+      "url": "https://mediador.trabalho.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR008673%2F2026",
+      "url_final": "https://mediador.trabalho.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR008673%2F2026",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:27:07-03:00",
+      "sha256": "fb294bbe5afb49233d701cd8fc6fe06c52fb5aa5f685c03ebf0a8ebf35ad02b6",
+      "arquivo": "docs/D02_ResumoVisualizar.html",
+      "texto": "docs/D02_ResumoVisualizar.txt",
+      "bytes": 261147,
+      "sha256_texto": "3d0e597bcf186b7a09bffb28282700e2e54ac219d80318a4dfd0c1648bae2ca3",
+      "captura": {
+        "anterior": {
+          "slug": "parecer-salao-sp-4-pessoas",
+          "id": "D56",
+          "baixado_em": "2026-11-20T19:24:28-03:00",
+          "sha256_texto": "3d0e597bcf186b7a09bffb28282700e2e54ac219d80318a4dfd0c1648bae2ca3"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Mediador (MTE) — Consultar Instrumentos Coletivos Registrados: buscas por categoria 'barbeiro' e 'pedicure' (convenções) e 'cabeleireiro'/'barbeiro' (termos aditivos), UF SP, vigentes, em 24/11/2026",
+      "url": "https://mediador.trabalho.gov.br/sistemas/mediador/ConsultarInstColetivo",
+      "url_final": "https://mediador.trabalho.gov.br/sistemas/mediador/ConsultarInstColetivo",
+      "orgao": "Órgãos federais (MTE - Mediador)",
+      "baixado_em": "2026-11-24T01:30:39-03:00",
+      "sha256": "97f8262cb524aaf70d28a1fb9192512a16157f691edeb5026f47ccf805e9ccb2",
+      "arquivo": "docs/D03_mediador-busca-sp-vigentes-navegador.txt",
+      "texto": "docs/D03_mediador-busca-sp-vigentes-navegador.txt",
+      "bytes": 5501,
+      "alertas": [
+        "resultado das buscas lido no navegador embutido (innerText do bloco 'Resultado:'), espaços em branco normalizados; o SHA-256 foi calculado no navegador sobre o mesmo texto e conferido"
+      ]
+    },
+    {
+      "id": "D04",
+      "titulo": "Lei nº 12.592 de 18/01/2012",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2012/lei-12592-2012-01-18.md",
+      "url_final": "https://github.com/ctresb/leis/blob/a31cf3cd12073c7b195933a53e733b85c00cfe02/federal/leis-ordinarias/2012/lei-12592-2012-01-18.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2012-01-18;12592",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "a31cf3cd12073c7b195933a53e733b85c00cfe02",
+      "alertas": [],
+      "baixado_em": "2026-11-24T01:32:03-03:00",
+      "sha256": "ae4c4aae44ba1bd08493c05fd82e366cdd2f3bf263b93383f93b1f936541fd00",
+      "arquivo": "docs/D04_lei-12592-2012-01-18.md",
+      "texto": "docs/D04_lei-12592-2012-01-18.txt",
+      "bytes": 7614,
+      "sha256_texto": "31185ae8508e1a64836cd8a4e6bee29072f2c9c6492fb7ae78ac0eb935c8f2ba",
+      "captura": {
+        "anterior": {
+          "slug": "insumos-salao-sp",
+          "id": "D07",
+          "baixado_em": "2026-11-20T19:17:04-03:00",
+          "sha256_texto": "31185ae8508e1a64836cd8a4e6bee29072f2c9c6492fb7ae78ac0eb935c8f2ba"
+        },
+        "tipo": "IGUAL"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "salao-cct-pisos-2026",
+  "pergunta": "Qual é o piso salarial de 2026/2027 por função na CCT SP006651/2026 (salões de beleza, SP capital), cl. 4ª e 5ª, no texto de 2026 registrado no Mediador? Barbeiro e pedicure ficam em qual grupo de piso?",
+  "criado": "2026-11-24T01:27:04-03:00"
+}

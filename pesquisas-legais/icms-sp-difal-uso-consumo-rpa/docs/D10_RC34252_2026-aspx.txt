@@ -1,0 +1,217 @@
+RC 34252/2026 
+
+Você talvez esteja tentando acessar este site de um navegador seguro no servidor. Habilite os scripts e recarregue esta página.
+
+ Ativar o modo mais acessível 
+
+ Desativar o modo mais acessível 
+
+ Comando para Ignorar Faixa de Opções 
+
+ Ir para o conteúdo principal 
+
+ Desligar Animações 
+
+ Ligar Animações 
+
+Hidden 
+
+Parece que seu navegador não possui JavaScript habilitado. Ative o JavaScript e tente novamente.
+
+/governosp 
+
+/governosp 
+
+ Seu navegador não tem suporte a JavaScript ou está desativado! 
+
+ Você está em: Skip Navigation LinksLegislação > RC 34252/2026 
+
+ Pesquisa de Opinião 
+
+ Hidden 
+
+ > 
+
+ Compartilhar: 
+
+ Cancelar OK 
+
+Compartilhar Caderno .
+
+ Compartilhar: 
+
+ Cancelar OK 
+
+ Busca Avançada 
+
+ Atos Publicados recentemente 
+
+ Ato Data Publicação 
+
+ + Veja mais 
+
+ Atos mais consultados 
+
+ Ato Visualizações 
+
+ + Veja mais 
+
+ RCs Publicados recentemente 
+
+ Ato Data Publicação 
+
+ + Veja mais 
+
+ Indivídual 
+
+ Caderno
+
+ Audio do Texto 
+
+ Notas 
+
+Redações anteriores
+
+ Imprimir 
+
+ Grupo 
+
+ Anexos 
+
+ Novo Ato 
+
+ Nome 
+
+ RC 34252/2026 
+
+ Tipo 
+
+ Subtipo 
+
+ Respostas de Consultas 
+
+ Nº do Ato 
+
+ Data do Ato 
+
+ Data da Publicação 
+
+ 34.252 
+
+ 21/09/2026 
+
+ 22/09/2026 
+
+ Data de Republicação 
+
+ Data da Revogação 
+
+ Envio Informativo 
+
+ Destaques do DOE 
+
+ Não 
+
+ Ato Anterior 
+
+ Ato Posterior 
+
+ Ano da Formulação 
+
+ 2.026 
+
+ ICMS 
+
+ Apuração do imposto 
+
+ DIFAL 
+
+ Ementa 
+
+ <div class='sefazElement-EmentaRC'><p>ICMS – Diferencial de al&#237;quotas – Aquisi&#231;&#227;o interestadual de m&#225;quinas, aparelhos e equipamentos industriais – Conv&#234;nio ICMS 52/1991 – Redu&#231;&#227;o de base de c&#225;lculo.</p><p>I. O recolhimento do imposto relacionado ao diferencial de al&#237;quotas &#233; exig&#237;vel quando a al&#237;quota interna do Estado de S&#227;o Paulo, considerada a carga tribut&#225;ria efetiva decorrente do Conv&#234;nio ICMS 52/1991, for superior &#224; al&#237;quota interestadual aplic&#225;vel &#224; opera&#231;&#227;o.</p></div> 
+
+ Observação 
+
+ 200 caracteres restantes. 
+
+ Conteúdo 
+
+ Última atualização em: 19/11/2026 14:25 
+
+Conteúdo da Página
+
+RESPOSTA À CONSULTA TRIBUTÁRIA 34252/2026, de 21 de setembro de 2026.
+
+Publicada no Diário Eletrônico em 22/09/2026
+
+Ementa
+
+ICMS – Diferencial de alíquotas – Aquisição interestadual de máquinas, aparelhos e equipamentos industriais – Convênio ICMS 52/1991 – Redução de base de cálculo.
+
+I. O recolhimento do imposto relacionado ao diferencial de alíquotas é exigível quando a alíquota interna do Estado de São Paulo, considerada a carga tributária efetiva decorrente do Convênio ICMS 52/1991, for superior à alíquota interestadual aplicável à operação.
+
+Relato
+
+1. A Consulente, cuja atividade econômica principal declarada no Cadastro de Contribuintes do ICMS do Estado de São Paulo (CADESP) corresponde ao “transporte rodoviário coletivo de passageiros, sob regime de fretamento, intermunicipal, interestadual e internacional” (CNAE 49.29-9/02), informa não ser optante pelo Simples Nacional e relata que pretende adquirir de fornecedor localizado no Estado de Santa Catarina um compressor de ar de parafuso, classificado no código 8414.80.12 da Nomenclatura Comum do Mercosul (NCM), destinado à integração em seu ativo imobilizado.
+
+2. De acordo com seu entendimento, a referida mercadoria está abrangida pela redução da base de cálculo prevista no artigo 12 do Anexo II do RICMS/2000 (Convênio ICMS 52/1991). Afirma, ainda, não ter dúvidas quanto à aplicabilidade do benefício ao diferencial de alíquotas (DIFAL), tendo em vista que a cláusula quinta do próprio Convênio ICMS 52/1991 determina expressamente sua aplicação nessa hipótese.
+
+3. Sustenta que a referida cláusula prevê de forma expressa a aplicação da redução de base de cálculo na apuração do diferencial de alíquotas, de modo a assegurar que a carga tributária final corresponda aos percentuais estabelecidos para as operações internas. Acrescenta que o artigo 13, § 6º, inciso II, da Lei Complementar 87/1996 determina a utilização da alíquota prevista para a operação ou prestação interna para fins de determinação da base de cálculo da operação ou prestação no Estado de destino. Menciona também o disposto no artigo 37, inciso VI, do RICMS/2000, segundo o qual, nas hipóteses de diferencial de alíquotas, a base de cálculo corresponde ao valor da operação sujeito à incidência do imposto neste Estado.
+
+4. Nesse contexto, questiona, em síntese, como deve ser determinada a alíquota interna a ser considerada no cálculo do diferencial de alíquotas devido ao Estado de São Paulo na aquisição interestadual de bem destinado ao seu ativo imobilizado, contemplado pelo benefício previsto no artigo 12 do Anexo II do RICMS/2000. Especificamente, indaga se a recomposição dessa base de cálculo do imposto devido ao Estado de São Paulo deve considerar a alíquota interna nominal, com posterior aplicação da redução de base de cálculo, ou diretamente a carga tributária efetiva prevista para as operações internas beneficiadas.
+
+Interpretação
+
+5. Preliminarmente, cumpre observar que a classificação de determinado produto nos códigos da NCM é de inteira responsabilidade do contribuinte, devendo, em caso de dúvida, consultar a Receita Federal do Brasil (RFB), razão pela qual é pressuposto da presente resposta que a classificação ora informada pela Consulente está correta.
+
+6. Ainda em caráter preliminar, adota-se a premissa de que o produto objeto da presente consulta enquadra-se, por sua descrição e código da NCM, no subitem 11.1 do Anexo I do Convênio ICMS 52/1991, que contempla os “compressores de ar de parafuso”, classificados no código 8414.80.12 da NCM.
+
+6.1. Isso porque (i) os anexos do Convênio ICMS 52/1991 possuem natureza taxativa, englobando, portanto, unicamente os produtos neles descritos, quando classificados nos correspondentes códigos da NCM (descrição e código), e (ii) as normas do Convênio ICMS 52/1991 estão internalizadas, na legislação paulista, no artigo 12 do Anexo II do RICMS/2000.
+
+7. Caso as premissas adotadas não se confirmem, a Consulente poderá retornar com nova consulta, na qual deverá trazer todos os elementos para o integral conhecimento da situação, bem como cumprir os requisitos previstos nos artigos 510 e seguintes do RICMS/2000.
+
+8. Isso posto, observa-se que o artigo 2º, inciso VI, e § 5º do RICMS/2000 prevê o fato gerador relacionado à entrada, em estabelecimento de contribuinte, de mercadoria oriunda de outro Estado destinada a uso ou consumo ou ao ativo imobilizado.
+
+9. Assim, como regra, nas aquisições destinadas a uso ou consumo ou ao ativo imobilizado, o contribuinte deve recolher, em favor do Estado de São Paulo, a diferença de imposto decorrente da aplicação das alíquotas interna e interestadual, nos termos do artigo 2°, inciso VI e § 5º, do RICMS/2000, devendo ser adotado o procedimento previsto no artigo 117, incisos I e II, e § 1º, do RICMS/2000.
+
+10. Quanto à base de cálculo, o artigo 37, inciso VI, do RICMS/2000 estabelece que ela corresponde ao valor da operação sujeito ao imposto neste Estado. Por sua vez, o artigo 49 do mesmo Regulamento determina que o montante do imposto integra sua própria base de cálculo, inclusive na hipótese de entrada prevista no artigo 2º, inciso VI. Essas disposições devem ser interpretadas em conjunto com o artigo 13, § 6º, inciso II, da Lei Complementar 87/1996 e com a disciplina específica da redução de base de cálculo aplicável à mercadoria.
+
+11. Ocorre, porém, que a cláusula quinta do Convênio ICMS 52/1991 dispõe que, para fins de “exigência do ICMS devido em razão do diferencial de alíquota, o Estado onde se localiza o destinatário dos produtos de que trata este Convênio reduzirá a base de cálculo do imposto de tal forma que a carga tributária total corresponda aos percentuais estabelecidos nas Cláusulas primeira e segunda para as respectivas operações internas”.
+
+12. A menção à redução da base de cálculo do ICMS nas operações internas, para efeito da exigência do ICMS correspondente ao diferencial de alíquotas, torna clara a intenção dos Estados em considerar, no cálculo do diferencial de alíquotas e nos casos estabelecidos nesse Convênio, o percentual correspondente à carga tributária efetiva nas operações internas como referência para a alíquota interna. Isso não representa alteração da alíquota nominal, mas a consideração dos efeitos da redução de base de cálculo na apuração do diferencial.
+
+13. Sendo assim, será considerada a alíquota interna (carga efetiva) de 8,80% (cláusula quinta do Convênio ICMS 52/1991 c/c artigo 12, inciso II, do Anexo II do RICMS/2000) no cálculo do diferencial de alíquotas no caso da aquisição interestadual das mercadorias beneficiadas com a redução de base de cálculo do imposto prevista no artigo 12 do Anexo II do RICMS/2000, especificamente quando se tratar de mercadoria arrolada no subitem 11.1 do Anexo I do Convênio ICMS 52/1991 (“compressores de ar de parafuso”, classificada no código 8414.80.12 da NCM).
+
+14. Quanto à formação da base de cálculo, o artigo 37, § 11, combinado com o artigo 49 do RICMS/2000, deve ser interpretado em conjunto com a disciplina do benefício. A inclusão do próprio imposto no valor da operação beneficiada pelo artigo 12 do Anexo II deve considerar a carga tributária efetiva de 8,80%. Aplicando-se esse entendimento à hipótese em análise, em conjunto com a cláusula quinta do Convênio ICMS 52/1991, esse é o percentual a considerar na recomposição do valor da operação sujeito ao imposto neste Estado, e não a alíquota nominal com posterior aplicação da redução.
+
+15. Por fim, convém recordar que o DIFAL somente é devido ao Estado de São Paulo quando a alíquota interna deste Estado, considerada, na hipótese em análise, a carga tributária efetiva de 8,80%, for superior à alíquota interestadual aplicável à operação.
+
+16. Com essas orientações, consideram-se respondidas as dúvidas apresentadas.
+
+A Resposta à Consulta Tributária aproveita ao consulente nos termos da legislação vigente. Deve-se atentar para eventuais alterações da legislação tributária.
+
+Comentário
+
+ Gravar Comentário Cancelar 
+
+ Localize Nossas Unidades 
+
+ Buscar 
+
+ Hidden 
+
+ Secretaria da Fazenda e Planejamento do Estado de São Paulo - Av. Rangel Pestana, 300 - São Paulo / SP - 01017-911 – CNPJ: 46.377.222/0001-29 - Fale Conosco: 0800-170110 Política de Privacidade Termos de Uso | Versão 1.0.124.0 
+
+ Governo do Estado de São Paulo Fazenda e Planejamento 
+
+ hidden 
+
+Parece que seu navegador não possui JavaScript habilitado. Ative o JavaScript e tente novamente.
+
+ Ouvidoria 
+
+ Transparência 
+
+ SIC 
+
+Versão 1.0.124.0

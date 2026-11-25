@@ -1,0 +1,180 @@
+DP - rodada 3c (leitor) - coleta crua - 2026-11-14
+Grau: [OF] = lido em fonte oficial nesta rodada (URL citada). [OF-listagem] = titulo/data lidos na pagina oficial, sem o texto do item. [AC] = dossie local (D01..D11 em pesquisas-legais/dp-cobertura-100/docs). [SEC] = fonte nao oficial, so pista. SEM FONTE OFICIAL ACHADA = nada oficial lido.
+Status por item: RESOLVIDO | PARCIAL | SEM FONTE OFICIAL ACHADA | DIVERGENTE.
+Extrator: pdftotext nao foi necessario; legal.py baixar gravou .txt. Acentos podem sair como artefato.
+Fontes-chave: D01 MOS S-1.3 consolidada ate NO 12/2026 (430 pag.); D02 NT S-1.3 07/2026 rev. 20/10/2026; D08 Manual EFD-Reinf v2.8 (agosto/2026); D09 Manual DCTFWeb jan/2025; D10/D11 Manual do Empregador Domestico (versao 23/12/2022); D05 Manual FGTS Digital v1.50 (20/03/2026).
+
+================================================================
+ITEM 1 - eSocial: totalizadores, prazos, reabertura (S-1298/S-1299), S-2299, tabelas
+================================================================
+
+1.1 [RESOLVIDO] Tabelas do eSocial 1 a 30 (nomes). Fonte: D01 MOS, secao "10. Eventos do eSocial" (txt l.858-893), [OF] https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/mos-s-1-3-consolidada-ate-a-no-s-1-3-12-2026.pdf
+  Lista: T01 Categorias de Trabalhadores; T02 Financiamento da Aposentadoria Especial e Reducao do Tempo de Contribuicao; T03 Natureza das Rubricas da Folha de Pagamento; T04 Codigos e Aliquotas de FPAS/Terceiros; T05 Tipos de Inscricao; T06 Paises; T07 Tipos de Dependente; T08 Classificacao Tributaria; T09 Tipos de Arquivo do eSocial; T10 Tipos de Lotacao Tributaria; T11 Compatibilidade Categoria x Classif. Tributaria x Lotacao; T12 Compatibilidade Lotacao x Classif. Tributaria; T13 Parte do corpo atingida; T14 Agente causador do Acidente de Trabalho; T15 Agente causador/Situacao geradora de doenca profissional; T16 EXCLUIDO no MOS; T17 Descricao da Natureza da Lesao; T18 Motivos de Afastamento; T19 Motivos de Desligamento; T20 Tipos de Logradouros; T21 Codigos de incidencia tributaria da rubrica para IRRF; T22 Compatibilidade FPAS x Classif. Tributaria; T23 Relacionamento tipo de valor FGTS, Categoria, Origem, Codigo de incidencia FGTS e condicao; T24 Agentes Nocivos e Atividades - Aposentadoria Especial; T25 Tipos de Beneficios; T26 Motivos de Cessacao de Beneficios; T27 Procedimentos Diagnosticos; T28 Treinamentos, Capacitacoes, Exercicios simulados e outras anotacoes; T29 Codigos de Receita - Reclamatoria Trabalhista; T30 Formas de Tributacao para Rendimentos de Beneficiarios no Exterior.
+  Pagina oficial "Tabelas do eSocial" (gov.br/esocial/pt-br/documentacao-tecnica/tabelas-do-esocial) devolveu HTTP 404 em 14/11/2026. O Anexo I - Tabelas da NT 07/2026 rev. nao foi localizado por URL.
+  Mudancas de tabela na NT 07/2026 rev. (D02, item 3.1 e 3.4-3.6): T01 codigo [313] (descricao); T03 codigos [4052, 4053, 9928, 9929] (salario-paternidade); T18 codigos [46-53] e descricao de [18, 20, 47, 48, 51]; T29 codigo [166451] (contribuicao adicional SENAI).
+
+1.2 [PARCIAL] S-1207 (Beneficios - entes publicos, RPPS). Prazo: "ate dia 15 do mes subsequente" (r2b, MOS l.6569). Totalizador: SEM FONTE OFICIAL ACHADA. S-1207 nao aparece nas listas de retorno de S-5001/S-5003 lidas no MOS.
+
+1.3 [PARCIAL] S-1260 (Comercializacao da producao rural PF). [OF] MOS txt l.7346-7355, lido nesta rodada: "Prazo de envio: este evento deve ser transmitido até o dia 15 (quinze) do mês subsequente ao mês de referência do evento. O envio deste evento deve ocorrer antes do envio do correspondente evento S-1270". Totalizador de retorno: nao verificado (SEM FONTE OFICIAL ACHADA).
+
+1.4 [RESOLVIDO] S-1270 (Avulsos nao portuarios). Prazo [OF] MOS txt l.7489-7500: "até o dia 15 (quinze) do mês subsequente ao mês de referência"; antes do S-1299. Totalizador: "Totaliza, também, os valores de FGTS declarados no evento S-1270" - trecho da secao S-5013 (MOS txt l.16004). Destino: S-5013 (FGTS consolidado).
+
+1.5 [RESOLVIDO] S-1280 (Informacoes complementares). Prazo (r2b, MOS l.7553): ate dia 15 do mes subsequente, postergado a dia util. Totalizador: fatores de origem S-1280 (Fator Mes, Fator 13o, Indicador de substituicao, Percentual de reducao, RAT/FAP) usados no calculo do S-5011 (MOS txt l.15606-15612, secao S-5011).
+
+1.6 [RESOLVIDO] S-1298 (reabertura). MOS txt l.7658-7676 [OF]: "Prazo de envio: a reabertura pode ser realizada a qualquer tempo." "Este evento não pode ser excluído. Para tornar o evento de reabertura sem efeito, deve ser enviado novo evento de fechamento." Efeito: "O envio deste evento não afeta os valores processados pelo envio do evento S-1299 anterior (S-5011)... Só o novo fechamento ... processa o novo cálculo". Obriga novo S-1299 apos o envio das modificacoes.
+
+1.7 [RESOLVIDO] S-1299 (fechamento). Prazo: ate dia 15 do mes subsequente (r2b, MOS l.7710). Totalizadores: S-5011, S-5012, S-5013 (MOS txt l.1758-1760: "os eventos totalizadores do declarante (S-5011, S-5012 e S-5013) são gerados após o fechamento da folha").
+
+1.8 [RESOLVIDO] S-2210 (CAT). Prazo: 1o dia util seguinte a ocorrencia; em morte, de imediato (r2b, MOS l.8912). Totalizador: nenhum S-5xxx citado nas secoes SST lidas (ausencia por busca textual no MOS, grau [OF] negativo).
+
+1.9 [RESOLVIDO] S-2220 (monitoramento da saude). Prazo: ate dia 15 do mes subsequente a emissao do ASO (r2b, MOS l.9087). Totalizador: ausencia por busca textual, como 1.8.
+
+1.10 [RESOLVIDO] S-2221 (exame toxicologico). Prazo: ate dia 15 do mes subsequente ao exame; toxicologico pre-admissional: ate dia 15 do mes subsequente a admissao (r2b, MOS l.9172). Totalizador: ausencia por busca textual.
+
+1.11 [RESOLVIDO] S-2240 (agentes nocivos). Prazo: ate dia 15 do mes subsequente ao inicio da obrigatoriedade de SST ou ingresso (r2b, MOS l.9937). Totalizador: ausencia por busca textual. Relacao com S-1200 por Tabela 02 e Tabela 24 (MOS txt l.2033-2043).
+
+1.12 [RESOLVIDO] S-2299 -> totalizadores. Prazo: ate 10 dias contados do desligamento (r2b, MOS l.10331). Retorno: S-5001 e S-5003 (r2b, MOS l.14555 e l.14988). S-5002 nao listado para S-2299 (S-5002 e de pagamentos, S-1210).
+
+1.13 [DIVERGENTE] S-1295, S-1300, S-2245, S-2250, S-2260, S-2280. Resumo de busca/pagina HTML do leiaute cita esses codigos; o MOS consolidado NO 12/2026 (0 ocorrencias) e a NT 07/2026 rev. (0 ocorrencias) nao os citam. Exclusao do layout S-1.3: SEM FONTE OFICIAL ACHADA (so fontes secundarias). Nao afirmar exclusao nem vigencia.
+
+================================================================
+ITEM 2 - eSocial: NO/NT, cronograma, XSD, ambiente, S-2200/S-2205, eventos 2027
+================================================================
+
+2.1 [RESOLVIDO] Nota Orientativa mais recente: NO S-1.3 12/2026 ("Alteracoes da versao MOS S-1.3 consolidada ate a NO S-1.3 12.2026"). Listagem em [OF-listagem] https://www.gov.br/esocial/pt-br/documentacao-tecnica (lida em 14/11/2026). MOS consolidado ate NO 12/2026 (D01).
+
+2.2 [RESOLVIDO] Nota Tecnica mais recente: NT S-1.3 07/2026 rev. 20/10/2026 (D02, PDF). URL: https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-07-2026-rev-20-10-2026.pdf . Revisoes listadas no gov.br: rev. 24/09/2026 e rev. 20/10/2026. NT 06/2026 rev. 09/04/2026 e anterior, anteriores. Ementa lida: "Ajustes dos Leiautes Versao S-1.3" (NT 07/2026). Objetivo (D02 p.2): "apresentar os ajustes dos leiautes do eSocial que se fazem necessarios."
+
+2.3 [PARCIAL] Cronograma de implantacao por item (D02, itens 3.1-3.6), produção restrita (PR) e produção (P) e XSD:
+  - 3.1 ja implantado (XSD: nao ha): S-2500, S-5002, T01 [313], T29 [166451].
+  - 3.2 PR 25/09/2026; P 29/09/2026 (XSD: nao ha): S-2410, S-2416.
+  - 3.3 PR 13/10/2026; P 26/10/2026; XSD 26/10/2026: S-1202, S-2200, S-2205, S-2230, S-2231, S-2299, S-2300, S-2410, S-2420, S-2500, S-8200.
+  - 3.4 PR 09/11/2026; P 23/11/2026; XSD 23/11/2026: S-1000, S-1010, S-1210, S-2200, S-2206, S-2299, S-2501, REGRAS.
+  - 3.5 PR 07/12/2026; P 14/12/2026; XSD 14/12/2026: S-1000 (indSiafi), S-1010, S-2500, S-2501, S-5001, S-5011, T03, T18.
+  - 3.6 P 18/01/2027; XSD 18/01/2027: S-8200 (grupo observacoes).
+  Datas de PR/P dos itens 3.2 a 3.6 sao as do documento; a pagina gov.br lista XSD em 26/10/2026, 23/11/2026, 14/12/2026 e 18/01/2027 (texto da pagina de documentacao tecnica, lido). Fontes secundarias (AmdJus, Jornal Contabil) dao datas de 13/10 e 26/10 e 23/11 e 14/12 que conferem; nao usadas como fonte.
+  Ponto de nota: NT 07/2026 rev. cita "Lei 15.371/2026" como motivo de alteracao de descricoes de T18 (item 3.5). Lei 15.371/2026 nao lida nesta rodada.
+
+2.4 [PARCIAL] Cronograma geral de obrigatoriedade por grupo para 2027 (o "Cronograma de implantacao" do portal): SEM FONTE OFICIAL ACHADA lida. A pagina do cronograma nao foi acessada com texto.
+
+2.5 [RESOLVIDO] S-2200 e S-2205 - campo infoCota. D02 item 3.3 [OF]: "Campo {infoCota} – alterada validação. O campo deixará de ser informado." Vigencia: PR 13/10/2026; P 26/10/2026. Mesma NT, S-2200 e S-2205.
+
+2.6 [PARCIAL] Eventos novos previstos para 2027 / IBS-CBS na folha. NT 07/2026 rev. (D02, texto integral lido) nao cita IBS, CBS, reforma tributaria nem cria evento novo. MOS consolidado (D01) nao foi pesquisado por "IBS"/"CBS" nesta rodada. Resultado: nenhum leiaute oficial lido prevê IBS/CBS na folha.
+
+2.7 [RESOLVIDO] Esquemas XSD publicados (listagem gov.br, lida): "até NT 06/2026 - produção em 13/02/2026"; "até NT 06/2026 - produção em 27/04/2026"; "até NT 06/2026 - CNPJ alfanumerico - produção em 01/07/2026"; "até NT 07/2026 rev. - produção em 26/10/2026", "23/11/2026", "14/12/2026", "18/01/2027".
+
+================================================================
+ITEM 3 - eSocial Domestico, MEI, segurado especial, CPF dependente
+================================================================
+
+3.1 [PARCIAL] Manual de Orientacao do eSocial para o Empregador Domestico (D11, PDF). Versao no proprio texto: "Manual do Empregador Doméstico - Versão 23/12/2022". Listagem gov.br: publicado 07/03/2023. URL: https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/manual_de_orientacao_do_esocial_para_o_empregador_domestico.pdf/@@display-file/file . Sumario lido (secoes 3.x cadastro; 4 Folha/Recebimentos e Pagamentos, 4.3 Emitir Guia / DAE; 5 Afastamentos; 5.2 Ferias). Versao 2026 (atualizacao informada por fonte secundaria em 09/01/2026): SEM FONTE OFICIAL ACHADA (nao localizada no gov.br).
+  Eventos/rotinas descritos no manual de 2022 (sem numero de evento): cadastro do trabalhador; folha mensal (4.1) com fechamento (4.2) e Guia DAE (4.3); afastamentos temporarios (5.1); ferias (5.2); desligamento.
+
+3.2 [DIVERGENTE] Prazo do DAE do empregador domestico.
+  - [OF] gov.br/pt-br/servicos/emitir-dae-para-pagamento-do-empregador-domestico (ultima modificacao 29/07/2026): "Todos os tributos e encargos trabalhistas do empregador doméstico posteriores a outubro de 2015" devem ser pagos pelo DAE. A pagina NAO informa dia de vencimento.
+  - [AC] D11 (manual 2022), l.3169-3174: "O DAE emitido dentro do prazo normal de pagamento sempre virá com a data de vencimento..." (sem dia). l.3380: "O prazo também é até 07 de julho" (contexto de parcelamento/calamidade, nao vencimento geral).
+  - [SEC] fonte secundaria: DAE vence dia 20 do mes seguinte (manual atualizado de 09/01/2026); outra fonte de outubro/2026 diz dia 7. Conflitantes; nao confirmados no texto oficial.
+  Leitura pendente: manual de 2026 ou regra da RFB/eSocial com o dia.
+
+3.3 [SEM FONTE OFICIAL ACHADA] MEI e Segurado especial no eSocial. Listagem gov.br mostra "Manual do Usuario - eSocial WEB MEI" (publicado 23/12/2022; URL https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/manual-do-usuario-esocial-web-mei.pdf/view), NAO baixado. "Manual do Segurado Especial": sem PDF localizado (pagina https://www.gov.br/esocial/pt-br/segurado-especial/manual-do-segurado-especial nao lida).
+
+================================================================
+ITEM 4 - EFD-Reinf: versao, eventos R-xxxx, periodicidade, NT
+================================================================
+
+4.1 [RESOLVIDO] Versao do Manual de Orientacao do Desenvolvedor: 2.8, "Agosto de 2026". Historico (D08): "25/08/2026 2.8 - Adequações para utilização de CNPJ alfanumérico"; "01/10/2025 2.7" (sem modelo sincrono); publicacao gov.br "Publicado em 28/08/2026 10:22". URL: https://www.gov.br/sped/pt-br/assuntos/escrituracoes-digitais/efd-reinf/manuais-e-documentos-tecnicos/manualorientacaodesenvolvedor-reinf-v2-8.pdf/@@display-file/file (D08_file.pdf, D08_file.txt). Ressalva: e versao do MANUAL; a versao do LEIAUTE/XSD nao foi localizada (SEM FONTE OFICIAL ACHADA para "versao do leiaute vigente 2026").
+
+4.2 [RESOLVIDO] Eventos citados no manual 2.8 (D08, contagem de ocorrencias): R-1000, R-1050, R-1070, R-2010, R-2020, R-2030, R-2040, R-2050, R-2055, R-2060, R-2098, R-2099, R-3010, R-4000, R-4010, R-4020, R-4040, R-4080, R-4099, R-5011. Ressalva: o manual cita os eventos em secoes de servico/consulta e nao traz tabela completa de periodicidade; lista por ocorrencia, nao por leiaute.
+
+4.3 [PARCIAL] Quais tocam folha/INSS/IRRF/CPRB e periodicidade. Lido: R-2010 = "Retenção Contribuição Previdenciária – Serviços Tomados" (D08 l.1647); R-2099 = "Fechamento dos Eventos Periódicos" (D08 l.1575, fechamento dos periodicos do periodo). Demais R-2xxx/R-4xxx: descricao nao lida no manual 2.8 (SEM FONTE OFICIAL lida para cada um). CPRB: nao verificado.
+
+4.4 [RESOLVIDO] Eventos fora do manual 2.8: R-9000, R-2070, R-2080, R-2090 nao aparecem no manual 2.8 (busca textual). Nao afirmar vigencia ou exclusao sem o leiaute.
+
+4.5 [SEM FONTE OFICIAL ACHADA] Notas Tecnicas EFD-Reinf 01/2026, 02/2026, 03/2026 (CNPJ alfanumerico, versao 2.1.2). Pistas: http://sped.rfb.gov.br/arquivo/show/8070 ; .../8180 ; resumo de busca (SEC): producao a partir de julho/2026, data a comunicar. Nao lidas.
+
+================================================================
+ITEM 5 - DCTFWeb (manual oficial)
+================================================================
+
+5.1 [RESOLVIDO] Manual da DCTFWeb - atualizacao janeiro/2025 (D09, PDF, 11,4 MB). URL: https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/manuais/manual-dctfweb/manual-dctfweb-atualizacao-janeiro2025_versao_final.pdf . Secoes (sumario lido): 1 O que e DCTFWeb (1.1 Roteiro de envio; 1.2 Fluxo); 2 Quem esta obrigado (2.1 Inicio de obrigatoriedade; 2.2 Dispensa); 3 Tributos declarados; 4 Como apresentar (4.2 Prazo; 4.3 Ausencia de informacoes); 5 Penalidades (MAED, multas, acrescimos); 6 Acesso; 7 Tela inicial; 8 Classificacoes (categoria, origem, tipo, situacao); 9 Tabela de vinculacao; 10 Edicao; 11 Dados cadastrais; 12 Creditos vinculaveis (12.1 Salario-familia; 12.2 Salario-maternidade; 12.3 Retencoes; 12.5 Exclusao; 12.6 Suspensao; 12.7 Parcelamento; 12.8 Compensacao; 12.9 Pagamento); 13 Relatorios; 14 Transmissao (14.5 Transmissao imediata da declaracao); 17 Retificacao (17.1 originada no eSocial, EFD-Reinf ou MIT).
+
+5.2 [RESOLVIDO] Prazo (manual, item 4.2, [OF]): "de regra, tem periodicidade mensal e deve ser transmitida pela Internet até as 23h59min59s ... do último dia útil do mês seguinte ao da ocorrência dos fatos geradores". 13o salario (anual): "transmitida uma vez por ano até o dia 20 de dezembro". Espetaculo desportivo (diaria): 2o dia util apos o evento.
+
+5.3 [RESOLVIDO] Relacao com eSocial/EFD-Reinf: (a) fluxo do item 1.2 - envio pelo e-CAC ou "Envio direto pelo eSocial" (fechamento do eSocial, encerramento do MIT, depois DCTFWeb); (b) item 14.5 "forma mais simplificada de transmissão da DCTFWeb, feita diretamente do eSocial"; (c) item 17.1 retificacao originada no eSocial/EFD-Reinf/MIT. Atributo de origem: "Os dados que alimentam a DCTFWeb Diaria são originados da EFD-Reinf" (item 4.2).
+
+5.4 [RESOLVIDO] Codigos de receita da folha citados no manual (secao 12.4/12.9/9 e 12.5.2, [OF]): 1082-01 CP Segurados - Empregados/Avulsos; 1099-01 CP Segurados - Contribuintes Individuais 11%; 1138-01 CP Patronal - Empregados/Avulsos; 1170-01 CP Terceiros - Salario-Educacao; 2096 Contribuicao Segurados - Lancamento de Oficio (nao deduz 1138-01 nem 1170-01: "incompatíveis", D09 l.1945-1956); 1162-01 e 1141-06 (mao de obra, prestador, D09 l.1243); 1082-01 usado no S-5011 (D09 l.2782). DARF numerado: nao localizado como secao propria.
+
+5.5 [SEM FONTE OFICIAL ACHADA] Texto da IN RFB 2.237/2024 (DCTFWeb). Link normas.receita (idAto=141910) devolveu apenas titulo "Normas" via WebFetch. Texto do artigo de prazo: NAO lido.
+
+5.6 [DIVERGENTE] Prazo DCTFWeb mensal: manual (5.2 acima) diz "ultimo dia util do mes seguinte". Pista de busca da rodada 2b (SEC) diz "dia 25 do mes seguinte" e outra versao de art. 6 da IN 2.237 diz "ultimo dia util". O manual e fonte oficial lida; a IN nao. Resolver lendo o texto da IN 2.237 (ver 5.5).
+
+5.7 [SEM FONTE OFICIAL ACHADA] IN RFB 2.342/2026: busca nao encontrou. Nao confirmada.
+
+================================================================
+ITEM 6 - FGTS Digital: sumario (D05 manual v1.50, 20/03/2026)
+================================================================
+
+6.1 [RESOLVIDO] Sumario do Manual de Orientacao do FGTS Digital v1.50 (304 pag.; "CONFORME PORTARIA MTE Nº 240, DE 29 DE FEVEREIRO DE 2024"). URL: https://www.gov.br/trabalho-e-emprego/pt-br/servicos/empregador/fgtsdigital/manual-e-documentacao-tecnica/manual-do-orientacao-do-fgts-digital-versao-1-50-20-03-2026.pdf (D05). Modulos:
+  Cap. I - Informacoes gerais: 1 Apresentacao (p.5); 2 Producao limitada (p.6); 3 Quem esta obrigado (MEI/SE p.7; domestico p.8; orgaos publicos p.8; deposito judicial p.8); 4 FGTS Digital x SEFIP: quando utilizar (p.9); 5 Bases de dados: 5.1 eSocial (5.1.1 folha anual 13o p.10; 5.1.3 composicao dos debitos p.14; 5.1.4 regras de processamento do S-5003 p.21; 5.1.5 processamento do S-5503 (processo trabalhista, em implantacao) p.31; 5.1.7 competencia de apuracao x referencia p.33; 5.1.8 remuneracoes de periodos anteriores p.34; 5.1.9 multa complementar pos-contrato p.35); 5.2 autodeclaracao no historico de remuneracoes para fins rescisorios (p.36); 5.3 consignado Credito do Trabalhador (p.39-43); 6 Parcelamento (p.45; 6.1.1 calamidade p.48; 6.2 especial p.48); 7 Pagamento via PIX (p.49); 8 Conta virtual do empregador (p.51).
+  Cap. II - Utilizacao do sistema: 1 Acesso (p.51; senha p.53; certificado p.53; perfis p.53); 1.4 Dados do empregador (p.55); 1.5 Procuracoes (p.60); 1.6 Central de noticias (p.62); 2 Central de mensagens (p.62); 3 Gestao de guias (p.66): 3.1.1 Guia rapida (mensal p.70; rescisoria p.72; consignado p.75; mista p.76); 3.1.2 Guia parametrizada (p.84); 3.1.3 Guia de notificacao (p.113); 3.1.4 Relatorios (p.132); 3.1.5 Consignados vencidos (p.135); 3.1.6 Guias em lote (em implantacao, p.138); 3.2 Consulta de guias (p.138); 4 Remuneracoes para fins rescisorios (p.149; metodo 1 p.156; metodo 2 p.172; casos especiais p.174); 5 Consultas do empregador (p.199; vinculos p.199; competencias de referencia p.206; pendencias p.210 em implantacao; guias p.210; conta virtual p.211); 6 Parcelamento de debitos (p.212; especial p.242); 7 Estornos/restituicoes/CVE (7.2 estornos p.267; 7.4 restituicoes p.277; 7.5 CVE p.279).
+
+6.2 [PARCIAL] GFIP/SEFIP ainda usada para acao trabalhista. Texto lido (D05 l.12701, no capitulo "4. FGTS Digital x SEFIP", fora do sumario de 6.1): "trabalhistas ocorrerão via guias GFIP 650/660, até que seja publicada ...". Frase incompleta na leitura; a condicao final nao foi lida. Pendente: completar a frase e localizar a secao de processo trabalhista.
+
+================================================================
+ITEM 7 - Documentos digitais e autoatendimento (empregador)
+================================================================
+
+7.1 [RESOLVIDO] Lei 14.063/2020, art. 4 (tipos de assinatura eletronica). [OF] https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2020/lei/L14063.htm (lei de 23/09/2020, DOU 24/09/2020): simples = "a que permite identificar o seu signatário" (inc. I, a); avancada = "a que utiliza certificados não emitidos pela ICP-Brasil ou outro meio de comprovação da autoria" (inc. II); qualificada = "a que utiliza certificado digital" (inc. III); §1: qualificada "é a que possui nível mais elevado de confiabilidade".
+
+7.2 [PARCIAL] Art. 5 §1 (uso em documentos sem sigilo). [OF]: simples admitida em interacao com ente publico de menor impacto; qualificada "admitida em qualquer interação eletrônica com ente público". Regra refere-se a INTERACAO COM ENTE PUBLICO, nao a contrato trabalhista entre particulares. Aplicacao a DP: nao confirmada.
+
+7.3 [SEM FONTE OFICIAL ACHADA] Holerite digital: norma do MTE sobre emissao/assinatura de holerite. Busca retornou apenas fontes de mercado e artigo tecnico (SEC). Nao lido texto de portaria do MTE.
+
+7.4 [SEM FONTE OFICIAL ACHADA] Prazo de guarda e validade de documentos trabalhistas em meio digital (incl. registro de ponto e holerite). Nao achado em texto oficial lido nesta rodada (ver tambem r2b item 2 para REP).
+
+7.5 [DIVERGENTE] "Presuncao legal de autenticidade" da assinatura qualificada: fonte secundaria afirma; a Lei 14.063 art. 4 §1 (lida acima) diz "nível mais elevado de confiabilidade", sem a palavra presuncao. Prevalece o texto da lei.
+
+7.6 [SEM FONTE OFICIAL ACHADA] CTPS Digital: nao pesquisado nesta rodada. Consolidada MTE 1/2025 (D03, lida em rodada 2b) diz que o registro de empregados "passou a ser exclusivamente eletrônico" (fonte secundaria; nao conferida no texto).
+
+================================================================
+ITEM 8 - Beneficios: PAT (Decreto 10.854/2021 e alteracoes)
+================================================================
+
+8.1 [RESOLVIDO] Decreto 12.712, de 11/11/2025 (altera o Decreto 10.854/2021, PAT). Publicado em 12/11/2025 (DOU, conforme a pagina). [OF] https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/decreto/D12712.htm . Artigos lidos (texto via WebFetch, resumo literal):
+  - art. 3: "São vedados quaisquer benefícios vinculados à saúde do trabalhador" que nao se relacionem diretamente com saude e seguranca alimentar (atividade fisica, plano de saude, cursos).
+  - art. 174 §1: arranjos com mais de 500 mil trabalhadores "deverão ser obrigatoriamente abertos".
+  - art. 174 §4: "vedado o estabelecimento de quaisquer critérios de exclusividade aos arranjos de pagamento abertos".
+  - art. 177: interoperabilidade plena, com compartilhamento da rede credenciada.
+  - art. 182-B I e II: MDR ate 3,6%; tarifa de intercambio ate 2%; art. 182-B paragrafo unico: vedada cobranca de taxas/tarifas/encargos alem dos limites.
+  - art. 182-C: liquidacao financeira "no prazo de até quinze dias corridos, contado da data da transação".
+  - art. 182-D: prazos contados da publicacao (I: 180 dias, arranjos >500 mil; III e IV: 90 dias, taxas e liquidacao; II e paragrafo unico: 360 dias, interoperabilidade e contratos com entes).
+  - art. 182-E: sancoes do art. 3-A, I a III, da Lei 6.321/1976.
+  - art. 182-F caput: vedado "qualquer tipo de deságio ou descontos sobre o valor contratado" nas facilitadoras.
+
+8.2 [DIVERGENTE] Vedacao de pagamento em dinheiro. Decreto 12.712 (8.1) NAO trata de dinheiro. Fonte gov.br (perguntas e respostas maio/2026, lida so por busca - [SEC]) diz que o Decreto 10.854/2021 veda expressamente o pagamento em dinheiro. Texto do Decreto 10.854/2021 NAO lido nesta rodada. Pendente.
+
+8.3 [SEM FONTE OFICIAL ACHADA] Portabilidade do beneficio: Decreto 12.712 nao tem dispositivo sobre portabilidade (lido). Fonte secundaria diz que e solicitada pelo trabalhador e gratuita. Pendente: Portaria MTE/regulamentacao.
+
+8.4 [PARCIAL] Prazos com datas em 2026. O decreto fixa prazos em dias da publicacao (8.1, art. 182-D). Datas calculadas por esta rodada (NAO oficiais, contagem simples a partir de 12/11/2025): 180 dias = ~11/05/2026; 90 dias = ~10/02/2026; 360 dias = ~07/11/2026. Conferir a contagem e a regulamentacao antes de usar.
+
+8.5 [SEM FONTE OFICIAL ACHADA] Portarias do PAT citadas por fontes secundarias: Portaria MTP 672/2021 (regulamentacao), Portaria MTE 1.707/2024 (vedacoes), Portaria Interministerial MTE/MF 30 de 15/05/2026 (Comite Gestor - CGEPAT). Nenhuma foi lida em texto oficial. Pagina gov.br do PAT com "perguntas e respostas maio2026" (PDF) e "portaria-comite-gestor.pdf" identificadas por busca, nao lidas. Decreto 10.854/2021 em texto: nao lido.
+
+================================================================
+RESUMO DE CONTAGEM (r3c)
+================================================================
+Total de entradas: 47.
+RESOLVIDO: 24
+PARCIAL: 8
+SEM FONTE OFICIAL ACHADA: 10
+DIVERGENTE: 5
+
+Por item: 1 (13 entradas): 10 resolvidas, 2 parciais, 1 divergente. 2 (6): 4 resolvidas, 1 parcial, 1 sem fonte. 3 (3): 1 parcial, 1 divergente, 1 sem fonte. 4 (5): 3 resolvidas, 1 parcial, 1 sem fonte. 5 (7): 4 resolvidas, 2 sem fonte, 1 divergente. 6 (2): 1 resolvida, 1 parcial. 7 (6): 1 resolvida, 1 parcial, 3 sem fonte, 1 divergente. 8 (5): 1 resolvida, 1 parcial, 2 sem fonte, 1 divergente.
+
+Divergencias principais (fonte oficial lida x fonte secundaria/pista):
+  (a) S-1295/S-1300/S-2245/S-2250/S-2260/S-2280 (1.13).
+  (b) prazo DCTFWeb mensal: manual "ultimo dia util do mes seguinte" x pista "dia 25" da IN 2.237 (5.6).
+  (c) prazo DAE domestico: sem dia oficial; secundarias dizem 20 ou 7 (3.2).
+  (d) vedacao de dinheiro no PAT: decreto 12.712 nao trata; fonte gov.br por busca diz que o 10.854 veda (8.2).
+  (e) "presuncao de autenticidade" da assinatura qualificada: lei diz "nivel mais elevado de confiabilidade" (7.5).
+
+Lacunas registradas: 0. As 10 entradas SEM FONTE OFICIAL ACHADA e as 8 PARCIAIS estao listadas acima para o despachante decidir o que fazer.

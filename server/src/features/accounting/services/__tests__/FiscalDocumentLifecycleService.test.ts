@@ -130,6 +130,7 @@ function makeService(opts: { docs?: Record<string, ReturnType<typeof baseDoc>> }
     findById: jest.fn(async (_scope: unknown, id: string) => (docsById[id] ? { ...docsById[id], attempts: [] } : null)),
     findByPartnerRef: jest.fn(async (ref: string) => Object.values(docsById).find((d) => d.partnerRef === ref) ?? null),
     listPending: jest.fn(async () => Object.values(docsById).filter((d) => d.status === 'SENT' || d.status === 'PROCESSING')),
+    updatePollState: jest.fn(async () => true),
     // stateful no status: a drenagem da pendência (DFE-ANEXO-PENDENTE) relê o documento depois da autorização.
     transition: jest.fn(async (_scope: unknown, id: string, data: { status: string }) => {
       if (docsById[id]) docsById[id] = { ...docsById[id], status: data.status };
@@ -187,8 +188,9 @@ beforeEach(() => {
 });
 
 describe('isValidResultTransition — item 24, tabela pura (mutation target)', () => {
-  it('SENT/PROCESSING aceitam AUTHORIZED, REJECTED, PROCESSING', () => {
+  it('SENT/PROCESSING aceitam AUTHORIZED, REJECTED, PROCESSING e DENIED (uso denegado)', () => {
     for (const from of ['SENT', 'PROCESSING'] as const) {
+      expect(isValidResultTransition(from, 'DENIED')).toBe(true);
       expect(isValidResultTransition(from, 'AUTHORIZED')).toBe(true);
       expect(isValidResultTransition(from, 'REJECTED')).toBe(true);
       expect(isValidResultTransition(from, 'PROCESSING')).toBe(true);
@@ -200,8 +202,8 @@ describe('isValidResultTransition — item 24, tabela pura (mutation target)', (
   });
 
   it('estados terminais (AUTHORIZED/REJECTED/CANCELLED) não aceitam nenhuma transição de resultado', () => {
-    for (const from of ['AUTHORIZED', 'REJECTED', 'CANCELLED'] as const) {
-      for (const to of ['SENT', 'PROCESSING', 'AUTHORIZED', 'REJECTED', 'CANCELLED'] as const) {
+    for (const from of ['AUTHORIZED', 'REJECTED', 'CANCELLED', 'DENIED'] as const) {
+      for (const to of ['SENT', 'PROCESSING', 'AUTHORIZED', 'REJECTED', 'CANCELLED', 'DENIED'] as const) {
         expect(isValidResultTransition(from, to)).toBe(false);
       }
     }
@@ -324,6 +326,21 @@ describe('FiscalDocumentLifecycleService — consultarUm (itens 24-25)', () => {
     await service.consultarUm(SCOPE, 'doc-1');
     expect(repo.transition).toHaveBeenCalledWith(SCOPE, 'doc-1', expect.objectContaining({ status: 'REJECTED', errorsJson: JSON.stringify(result.errors) }), expect.anything());
     expect(auditService.append).toHaveBeenCalledWith(expect.anything(), SCOPE, expect.objectContaining({ eventType: 'dfe.rejected', payload: expect.objectContaining({ errorCodes: JSON.stringify(['E123']) }) }));
+  });
+
+  it('DENIED (uso denegado, L-20261124-054021-cbc8): terminal, grava errorsJson e audita dfe.denied — nunca dfe.rejected', async () => {
+    const { service, repo, auditService } = makeService();
+    const result: EmissaoResult = { status: 'DENIED', partnerRef: 'ref-1', errors: [{ code: '110', message: 'Uso Denegado' }] };
+    mockPort.consultar.mockResolvedValueOnce(result);
+    await service.consultarUm(SCOPE, 'doc-1');
+    expect(repo.transition).toHaveBeenCalledWith(SCOPE, 'doc-1', expect.objectContaining({ status: 'DENIED', errorsJson: JSON.stringify(result.errors) }), expect.anything());
+    expect(auditService.append).toHaveBeenCalledWith(expect.anything(), SCOPE, expect.objectContaining({ eventType: 'dfe.denied', payload: expect.objectContaining({ errorCodes: JSON.stringify(['110']) }) }));
+    expect(auditService.append).not.toHaveBeenCalledWith(expect.anything(), SCOPE, expect.objectContaining({ eventType: 'dfe.rejected' }));
+  });
+
+  it('DENIED não é reenviável (o número foi consumido; só REJECTED/PENDING_SIGNATURE reenviam)', async () => {
+    const { service } = makeService({ docs: { 'doc-1': baseDoc({ status: 'DENIED' }) } });
+    await expect(service.reenviar(SCOPE, 'doc-1')).rejects.toThrow(/reenvio_bloqueado/);
   });
 
   it('porta desabilitada -> 400 nomeado, porta nunca chamada', async () => {
