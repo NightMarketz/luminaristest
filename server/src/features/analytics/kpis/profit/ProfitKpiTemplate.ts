@@ -4,7 +4,7 @@
  * Defines the 18 profit and margin KPIs with display metadata.
  */
 
-import type { AnalyticsTemplate } from '../../core/models';
+import type { AnalyticsTemplate } from '../../models';
 import { registerTemplate } from '../../core';
 
 export const profitKpiTemplate: AnalyticsTemplate = {

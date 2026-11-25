@@ -4,7 +4,7 @@
  * Counts occurrences of values in a select field.
  */
 
-import type { AnalyticsTemplate } from '../../core/models';
+import type { AnalyticsTemplate } from '../../models';
 import { registerTemplate } from '../../core';
 
 export const statusDistributionTemplate: AnalyticsTemplate = {

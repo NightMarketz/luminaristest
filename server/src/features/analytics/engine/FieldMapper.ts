@@ -5,7 +5,7 @@
  * Combines template defaults, configuration params, and field mappings.
  */
 
-import type { AnalyticsConfiguration } from '../core/models/AnalyticsConfiguration';
+import type { AnalyticsConfiguration } from '../models/AnalyticsConfiguration';
 import { getTemplate } from '../core';
 
 /**

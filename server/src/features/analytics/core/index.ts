@@ -6,7 +6,7 @@
  */
 
 // Models
-export * from './models';
+export * from '../models';
 
 // Registries
 export {

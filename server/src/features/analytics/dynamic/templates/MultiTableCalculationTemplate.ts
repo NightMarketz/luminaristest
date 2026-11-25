@@ -4,7 +4,7 @@
  * Combines data from multiple tables with custom formulas.
  */
 
-import type { AnalyticsTemplate } from '../../core/models';
+import type { AnalyticsTemplate } from '../../models';
 import { registerTemplate } from '../../core';
 
 export const multiTableCalculationTemplate: AnalyticsTemplate = {

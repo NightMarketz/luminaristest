@@ -5,7 +5,7 @@
  * Templates define the structure and requirements for analytics configurations.
  */
 
-import type { AnalyticsTemplate } from './models/AnalyticsTemplate';
+import type { AnalyticsTemplate } from '../models/AnalyticsTemplate';
 import { logger } from '@/lib/logger';
 
 // =============================================================================

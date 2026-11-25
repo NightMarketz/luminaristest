@@ -4,7 +4,7 @@
  * Aggregates values by time period.
  */
 
-import type { AnalyticsTemplate } from '../../core/models';
+import type { AnalyticsTemplate } from '../../models';
 import { registerTemplate } from '../../core';
 
 export const temporalAggregationTemplate: AnalyticsTemplate = {

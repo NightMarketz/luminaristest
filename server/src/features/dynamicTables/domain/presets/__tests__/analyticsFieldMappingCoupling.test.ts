@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { tablePresetSuites } from '..';
 import { composeSuiteDefaultTables } from '../modules/moduleSelection';
-import type { AnalyticsConfiguration } from '@/features/analytics/core/models/AnalyticsConfiguration';
+import type { AnalyticsConfiguration } from '@/features/analytics/models/AnalyticsConfiguration';
 import {
   buildUniverses,
   cloneTable,

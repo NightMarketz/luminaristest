@@ -6,7 +6,7 @@
 
 import { logger } from '@/lib/logger';
 import { analyticsService } from '../services/AnalyticsService';
-import type { AnalyticsPresetGroup, ChartPreset } from '../core/models/ChartPreset';
+import type { AnalyticsPresetGroup, ChartPreset } from '../models/ChartPreset';
 import { getFactory } from '@/lib/factory';
 import { getProcessor, type TableDataRow, type ChartDataPoint } from '../core';
 import type { UserContext } from '@/types/UserContext';

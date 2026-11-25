@@ -7,4 +7,4 @@
  * mora em `core/models/` (dono, questionário, 24/11/2026: "Porta em analytics/public"). Consequência: policy, model e
  * DTO de outra feature não podem importar este arquivo (`L5`/`L6`).
  */
-export type { AnalyticsConfiguration } from '../core/models/AnalyticsConfiguration';
+export type { AnalyticsConfiguration } from '../models/AnalyticsConfiguration';

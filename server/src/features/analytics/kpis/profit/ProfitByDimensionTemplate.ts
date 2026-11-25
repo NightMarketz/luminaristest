@@ -4,7 +4,7 @@
  * Analyzes profit, cost, or margin by a specific dimension.
  */
 
-import type { AnalyticsTemplate } from '../../core/models';
+import type { AnalyticsTemplate } from '../../models';
 import { registerTemplate } from '../../core';
 
 export const profitByDimensionTemplate: AnalyticsTemplate = {

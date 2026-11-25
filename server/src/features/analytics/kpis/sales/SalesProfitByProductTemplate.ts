@@ -5,7 +5,7 @@
  * Gold Standard: metricFormats, metricHigherIsBetter, metricDescriptions, metricAnalysis defined.
  */
 
-import type { AnalyticsTemplate } from '../../core/models';
+import type { AnalyticsTemplate } from '../../models';
 import { registerTemplate } from '../../core';
 
 export const salesProfitByProductOverTimeTemplate: AnalyticsTemplate = {

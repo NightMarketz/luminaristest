@@ -4,7 +4,7 @@
  * Defines the 14 cost KPIs with display metadata.
  */
 
-import type { AnalyticsTemplate } from '../../core/models';
+import type { AnalyticsTemplate } from '../../models';
 import { registerTemplate } from '../../core';
 
 export const costKpiTemplate: AnalyticsTemplate = {

@@ -4,7 +4,7 @@
  * Calculates values based on a formula with mapped variables.
  */
 
-import type { AnalyticsTemplate } from '../../core/models';
+import type { AnalyticsTemplate } from '../../models';
 import { registerTemplate } from '../../core';
 
 export const formulaCalculationTemplate: AnalyticsTemplate = {
