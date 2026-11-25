@@ -67,11 +67,16 @@ export type OutboundPolicy = Pick<OutboundOptions, 'timeoutMs' | 'retry' | 'dead
  * 1f43/9f14). Cada ponto com retry vem como PAR `{maxAttempts, deadlineMs}`: `maxAttempts: 2` e `deadlineMs = 2 × timeout
  * + 5 s` (5 s = `Retry-After` capado em 4 s + 1 s), de modo que o prazo é só o teto de segurança e nunca corta uma
  * tentativa no meio — com `maxAttempts: 3` o wrapper faria uma 3ª tentativa truncada (lacuna 83be). Ponto de 1 tentativa:
- * o timeout já é o teto, sem deadline. O mesmo `getCharge` tem política diferente no webhook (o MP espera 22 s) e no job.
+ * o timeout já é o teto, sem deadline. ÚNICA exceção à fórmula: o `pscDiscovery` (dono: "15 s no total", 1 prazo só) tem
+ * `deadlineMs = timeoutMs`: também é o par `{maxAttempts: 2, deadlineMs}`, mas a 2ª tentativa só acontece se a 1ª falhou
+ * RÁPIDO (5xx/429 ou erro de rede imediato) e o backoff cabe no que resta dos 15 s; a 1ª que estoura o timeout consome o
+ * prazo e não há 2ª. O mesmo `getCharge` tem política diferente no webhook (o MP espera 22 s) e no job.
  * PROVISÓRIAS até haver medida (proposta §7): os prazos de criar/cancelar ordem do MP (`MP_ORDER_DEADLINE_MS`) e o da
  * SEFAZ — mude só aqui.
  */
 const RETRY_ONCE: OutboundRetryPolicy = { maxAttempts: 2 };
+/** Folga do prazo de um ponto de 2 tentativas além de `2 × timeout`: `Retry-After` capado em 4 s + 1 s. */
+export const RETRY_BACKOFF_MARGIN_MS = 5_000;
 /** SEFAZ SOAP: prazo TOTAL de cada chamada (conexão + resposta), no `SefazSoapClient` (não usa `outboundFetch`). PROVISÓRIO
  *  (linha 11 da tabela): sem SLA oficial nem medida por UF — curto ⇒ contingência AUTO cedo + órfã; longo ⇒ balcão preso. */
 export const SEFAZ_CALL_TOTAL_MS = 30_000;
@@ -94,8 +99,8 @@ export const OUTBOUND_POLICY = {
   mpReportPost: { timeoutMs: 60_000 },
   /** GET da cotação PTAX. */
   bcbPtax: { timeoutMs: 10_000, retry: RETRY_ONCE, deadlineMs: BCB_PTAX_DEADLINE_MS },
-  /** GET certificate-discovery do PSC: prazo explícito de 15 s no total, sem `signal` do chamador. */
-  pscDiscovery: { timeoutMs: PSC_DISCOVERY_TIMEOUT_MS, deadlineMs: PSC_DISCOVERY_TIMEOUT_MS },
+  /** GET certificate-discovery do PSC: prazo explícito de 15 s no total (exceção à fórmula, ver acima), sem `signal` do chamador. */
+  pscDiscovery: { timeoutMs: PSC_DISCOVERY_TIMEOUT_MS, retry: RETRY_ONCE, deadlineMs: PSC_DISCOVERY_TIMEOUT_MS },
 } as const satisfies Record<string, OutboundPolicy>;
 
 const DEFAULT_RETRY = { maxAttempts: 3, baseDelayMs: 250, maxDelayMs: 4_000 } as const;

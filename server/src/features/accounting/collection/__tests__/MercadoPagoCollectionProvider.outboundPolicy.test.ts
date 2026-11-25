@@ -33,7 +33,7 @@ describe('tabela OUTBOUND_POLICY (valores ratificados 24/11/2026)', () => {
     expect(P.mpReportGet).toEqual({ timeoutMs: 60_000, retry: { maxAttempts: 2 }, deadlineMs: 125_000 });
     expect(P.mpReportPost).toEqual({ timeoutMs: 60_000 });
     expect(P.bcbPtax).toEqual({ timeoutMs: 10_000, retry: { maxAttempts: 2 }, deadlineMs: 25_000 });
-    expect(P.pscDiscovery).toEqual({ timeoutMs: 15_000, deadlineMs: 15_000 });
+    expect(P.pscDiscovery).toEqual({ timeoutMs: 15_000, retry: { maxAttempts: 2 }, deadlineMs: 15_000 });
   });
 
   it('o deadline de um ponto com 2 tentativas comporta 2 × timeout + a espera máxima (Retry-After 4 s + 1 s)', () => {

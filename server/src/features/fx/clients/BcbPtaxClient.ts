@@ -1,5 +1,5 @@
 import { isValidDateOnly } from '../../accounting/models/dates';
-import { OUTBOUND_POLICY, outboundFetch } from '../../../lib/outboundHttp';
+import { OUTBOUND_POLICY, RETRY_BACKOFF_MARGIN_MS, outboundFetch } from '../../../lib/outboundHttp';
 import type { IPtaxClient } from '../ports/IPtaxClient';
 import {
   BcbPtaxResponseSchema,
@@ -11,6 +11,8 @@ import {
 
 export const BCB_PTAX_BASE_URL = 'https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata';
 const DEFAULT_TIMEOUT_MS = OUTBOUND_POLICY.bcbPtax.timeoutMs;
+/** Maior `timeoutMs` por tentativa que ainda cabe 2 tentativas inteiras no prazo total da política. */
+const MAX_TIMEOUT_MS = (OUTBOUND_POLICY.bcbPtax.deadlineMs - RETRY_BACKOFF_MARGIN_MS) / 2;
 
 /** Falha de chamada ou de payload do BCB. O job loga e tenta de novo no tick seguinte (item 23). */
 export class PtaxClientError extends Error {
@@ -31,7 +33,15 @@ export class BcbPtaxClient implements IPtaxClient {
   constructor(
     private readonly baseUrl: string = BCB_PTAX_BASE_URL,
     private readonly timeoutMs: number = DEFAULT_TIMEOUT_MS,
-  ) {}
+  ) {
+    // Invariante da política (ver `OUTBOUND_POLICY`): o prazo total comporta 2 tentativas inteiras + a folga do backoff; um
+    // `timeoutMs` maior truncaria a 2ª tentativa em silêncio.
+    if (!Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > MAX_TIMEOUT_MS) {
+      throw new RangeError(
+        `BcbPtaxClient: timeoutMs=${timeoutMs} viola 2 × timeoutMs + ${RETRY_BACKOFF_MARGIN_MS} ms <= prazo total (${OUTBOUND_POLICY.bcbPtax.deadlineMs} ms); aceito: 0 < timeoutMs <= ${MAX_TIMEOUT_MS} ms.`,
+      );
+    }
+  }
 
   async fetchClosing(currency: PtaxCurrency, fromDate: string, toDate: string): Promise<PtaxClosingQuote[]> {
     if (!isValidDateOnly(fromDate) || !isValidDateOnly(toDate)) throw new PtaxClientError(`Intervalo inválido: '${fromDate}'..'${toDate}'.`);

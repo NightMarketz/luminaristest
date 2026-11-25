@@ -97,3 +97,76 @@ describe('BcbPtaxClient.fetchClosing (item 22)', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * Onda 4 / 4.2 (ressalvas 3 e 7 do revisor, PR #1395) — o prazo TOTAL (`deadlineMs` 25 s) da política `bcbPtax` chega ao
+ * wrapper e CORTA a chamada: o relógio (`Date.now`) é adiantado dentro do fetch falso, sem esperar 25 s de verdade.
+ */
+describe('BcbPtaxClient — prazo total da política (deadlineMs de ponta a ponta)', () => {
+  const realFetch = global.fetch;
+  const realNow = Date.now.bind(Date);
+  let skew = 0;
+  /** `fetch` falso que responde 503 e adianta o relógio em `adianta[n]` ms na n-ésima chamada. */
+  const fetch503 = (adianta: number[]) => {
+    let n = 0;
+    const mock = jest.fn(async () => {
+      skew += adianta[n] ?? 0;
+      n += 1;
+      return new Response('{}', { status: 503 });
+    });
+    global.fetch = mock as unknown as typeof fetch;
+    return mock;
+  };
+  const consulta = () => new BcbPtaxClient().fetchClosing('USD', '2026-09-24', '2026-09-28');
+
+  beforeEach(() => {
+    skew = 0;
+    jest.spyOn(Date, 'now').mockImplementation(() => realNow() + skew);
+  });
+  afterEach(() => {
+    global.fetch = realFetch;
+    jest.restoreAllMocks();
+  });
+
+  it('controle: 503 rápido ⇒ 2 tentativas (a política tem retry de 1 vez)', async () => {
+    const mock = fetch503([]);
+    await expect(consulta()).rejects.toThrow(/503/);
+    expect(mock).toHaveBeenCalledTimes(2);
+  });
+
+  it('1ª tentativa consome quase todo o prazo de 25 s ⇒ NÃO há 2ª (o backoff não cabe no que resta)', async () => {
+    const mock = fetch503([24_950]);
+    await expect(consulta()).rejects.toThrow(/503/);
+    expect(mock).toHaveBeenCalledTimes(1);
+  });
+
+  it('1ª tentativa consome 20 s ⇒ a 2ª recebe só o que resta do prazo (≤ 5 s), não os 10 s do timeout', async () => {
+    const abortTimeout = jest.spyOn(AbortSignal, 'timeout');
+    const mock = fetch503([20_000]);
+    await expect(consulta()).rejects.toThrow(/503/);
+    expect(mock).toHaveBeenCalledTimes(2);
+    // O último `AbortSignal.timeout` criado é o que governa a 2ª tentativa: ≤ o que resta do prazo, não os 10 s do timeout.
+    const ultimo = abortTimeout.mock.calls.at(-1)?.[0] ?? 0;
+    expect(ultimo).toBeGreaterThan(0);
+    expect(ultimo).toBeLessThanOrEqual(5_000);
+  });
+});
+
+describe('BcbPtaxClient — guarda do timeoutMs (invariante 2 × timeout + 5 s <= prazo total)', () => {
+  it('aceita o padrão e o teto exato (10 s); testes com timeout curto continuam valendo', () => {
+    expect(() => new BcbPtaxClient()).not.toThrow();
+    expect(() => new BcbPtaxClient('https://bcb.test', 10_000)).not.toThrow();
+    expect(() => new BcbPtaxClient('https://bcb.test', 5)).not.toThrow();
+  });
+
+  it('recusa timeout acima do teto (a 2ª tentativa seria truncada em silêncio) com erro claro', () => {
+    expect(() => new BcbPtaxClient('https://bcb.test', 10_001)).toThrow(RangeError);
+    expect(() => new BcbPtaxClient('https://bcb.test', 15_000)).toThrow(/timeoutMs=15000 viola 2 × timeoutMs \+ 5000 ms <= prazo total \(25000 ms\)/);
+  });
+
+  it('recusa timeout não positivo ou não finito', () => {
+    for (const ruim of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(() => new BcbPtaxClient('https://bcb.test', ruim)).toThrow(RangeError);
+    }
+  });
+});
