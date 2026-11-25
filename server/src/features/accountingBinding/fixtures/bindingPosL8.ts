@@ -1,7 +1,7 @@
 import type { AccountingBindingV1 } from '../dtos/AccountingBindingDto';
 import { AccountingBindingV1Schema } from '../dtos/AccountingBindingDto';
 import type { ChartAccountSnapshot } from '../dtos/CompileBindingDto';
-import { computeCompiledFromHash } from '../services/BindingCompileService';
+import { computeCompiledFromHash } from '../domain/compiledFromHash';
 import { codigoPosL8 } from '../../accounting/fixtures/ChartOfAccountsFixture';
 
 /**
