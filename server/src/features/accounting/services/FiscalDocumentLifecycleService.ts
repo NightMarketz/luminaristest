@@ -257,7 +257,7 @@ const PENDING_DRAIN_LIMIT = 50;
 /**
  * Onda 4 / 4.1 — `dfe_poll_pending` não repete para sempre o documento cuja consulta falha. Falha seguida => `pollAttempts++`
  * e backoff exponencial (2 min ... 1 h, mesmo molde do dreno de anexo, F-PA-6) em `nextPollAt`; no teto (ou em erro
- * permanente) => `pollGaveUpAt` + alerta. O documento NAO muda de status: REJECTED libera o `reenviar` com o MESMO numero,
+ * permanente) => alerta e, só depois da entrega dele (lacuna 2374), `pollGaveUpAt`. O documento NAO muda de status: REJECTED libera o `reenviar` com o MESMO numero,
  * e so a SEFAZ dizendo "nao consta" (o caminho 217, `NAO_CONSTA_MAX_CONSULTAS`) autoriza isso. A consulta manual
  * (`consultarUm`) continua valendo e, se der certo, devolve o documento ao polling.
  */

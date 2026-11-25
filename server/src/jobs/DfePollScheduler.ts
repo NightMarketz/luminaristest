@@ -74,14 +74,14 @@ export class DfePollScheduler {
    */
   private async alertarComMarcador(tipo: AlertaDePoll, payload: AlertPayload, documentIds: readonly string[]): Promise<void> {
     const entrega = await this.entregarAlerta(payload);
-    if (entrega === 'failed') {
-      logger.warn('dfe_poll_pending: webhook não entregou o alerta — marcador não gravado, o próximo tick realerta', { tipo, documentIds });
-      return;
-    }
+    // `failed` já saiu como `alert.failed` (o webhook loga a si mesmo); aqui só não se grava o marcador.
+    if (entrega === 'failed') return;
     try {
       await this.confirmarAlertas(tipo, documentIds);
     } catch (error) {
-      logger.error('dfe_poll_pending: alerta entregue mas a confirmação do marcador falhou — o próximo tick realerta (duplicado, nunca perdido)', {
+      this.log.event('error', 'job.failed', JOB, {
+        job: JOB,
+        fase: 'confirmar_alerta',
         tipo,
         documentIds,
         error: error instanceof Error ? error.message : String(error),

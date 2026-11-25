@@ -219,9 +219,10 @@ describe('DfePollScheduler — marcador "já alertei" só depois da entrega do w
   });
 
   it('a confirmação que lança não derruba o tick nem os outros alertas (vira log; o marcador fica para o realerta)', async () => {
-    const { scheduler, entregarAlerta, confirmarAlertas } = montarEntrega({ ...DESISTIU, ...ADIADO, gaveUp: 1, gaveUpIds: ['doc-d'] } as PollSummary);
+    const { scheduler, log, entregarAlerta, confirmarAlertas } = montarEntrega({ ...DESISTIU, ...ADIADO, gaveUp: 1, gaveUpIds: ['doc-d'] } as PollSummary);
     confirmarAlertas.mockRejectedValueOnce(new Error('database is locked'));
     await expect(scheduler.runOnce()).resolves.toMatchObject({ total: 1 });
+    expect(log.event).toHaveBeenCalledWith('error', 'job.failed', 'dfe_poll_pending', expect.objectContaining({ fase: 'confirmar_alerta', tipo: 'desistencia', error: 'database is locked' })); // OBS-R8
     expect(entregarAlerta).toHaveBeenCalledTimes(2);
     expect(confirmarAlertas).toHaveBeenCalledTimes(2);
   });
