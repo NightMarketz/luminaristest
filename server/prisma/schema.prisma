@@ -2412,7 +2412,12 @@ model FiscalDocument {
   pollAttempts            Int                     @default(0)
   nextPollAt              DateTime?
   pollGaveUpAt            DateTime?
-  pollLastError           String? // truncado a 500
+  pollLastError           String? // truncado a 500 — só a mensagem da última falha
+  // Lacuna 6e13 — episódio de adiamento por transporte indisponível (assinador local fora; adia sem gastar tentativa):
+  // `pollDeferredSince` = 1º adiamento do episódio, `pollAlertedAt` = quando o alerta do episódio saiu (1 por episódio). Outra
+  // falha da consulta ou o sucesso encerram o episódio (os dois voltam a null).
+  pollDeferredSince       DateTime?
+  pollAlertedAt           DateTime?
   createdById             String?
   createdAt               DateTime                @default(now())
   updatedAt               DateTime                @updatedAt
