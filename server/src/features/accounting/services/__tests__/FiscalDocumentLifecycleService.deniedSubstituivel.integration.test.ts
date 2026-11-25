@@ -68,9 +68,13 @@ async function nota(inicial: Inicial = 'PROCESSING', saleId?: string) {
 const row = (id: string) => prisma.fiscalDocument.findUniqueOrThrow({ where: { id } });
 const HORA = 3_600_000;
 let relogio = Date.now() + 10 * HORA;
-const tick = () => {
+/** Um tick como o `DfePollScheduler` faz: varre e, com o alerta entregue, confirma o marcador (`pollGaveUpAt`, lacuna 2374). */
+const tick = async () => {
   relogio += 2 * HORA;
-  return service.pollPendingOnce(new Date(relogio));
+  const now = new Date(relogio);
+  const t = await service.pollPendingOnce(now, { now });
+  await service.confirmarAlertaDePoll('desistencia', t.gaveUpIds ?? [], now);
+  return t;
 };
 const consultaDevolve = (id: string, r: (ref: string) => EmissaoResult) =>
   mockPort.consultar.mockImplementation(async (ref: string): Promise<EmissaoResult> => (ref.startsWith(id) ? r(ref) : { status: 'PROCESSING', partnerRef: ref, errors: [] }));
@@ -182,8 +186,22 @@ describe('DENIED substituível + consulta que termina (PR-0)', () => {
   });
 
   describe('Bloco C — consulta inválida (itens 10-11, F-DEN-2 a)', () => {
+    it('sem a entrega do alerta o pollGaveUpAt não é gravado (lacuna 2374): o documento espera o backoff teto, não volta no tick seguinte', async () => {
+      const d = await nota();
+      consultaDevolve(d.id, (ref) => ({ status: 'PROCESSING', partnerRef: ref, errors: [{ code: '252', message: 'x' }] }));
+      relogio += 2 * HORA;
+      const now = new Date(relogio);
+      const t = await service.pollPendingOnce(now, { now });
+      expect(t.gaveUpIds).toEqual([d.id]); // desistiu na 1ª ocorrência: o alerta é devido
+      const r = await row(d.id);
+      expect(r.pollGaveUpAt).toBeNull();
+      expect(r.nextPollAt!.getTime()).toBe(now.getTime() + HORA);
+      await service.confirmarAlertaDePoll('desistencia', [d.id], now);
+      expect((await row(d.id)).pollGaveUpAt).not.toBeNull();
+    });
+
     it.each(['252', '226', '236', '526', '562', '561', '613'])(
-      'cStat %s ⇒ 1ª rodada: pollGaveUpAt gravado, gaveUp conta, failed conta (NÃO skipped); o documento segue PROCESSING e sai da fila',
+      'cStat %s ⇒ 1ª rodada: gaveUp e failed contam (NÃO skipped), alerta entregue grava pollGaveUpAt; o documento segue PROCESSING e sai da fila',
       async (cStat) => {
         const d = await nota();
         consultaDevolve(d.id, (ref) => ({ status: 'PROCESSING', partnerRef: ref, errors: [{ code: cStat, message: 'a SEFAZ disse isso' }] }));
