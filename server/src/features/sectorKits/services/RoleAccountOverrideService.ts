@@ -21,7 +21,7 @@
  */
 import { ForbiddenError, RoleOverrideCompileDraftError } from '../../../lib/errors';
 import type { Prisma, RoleAccountOverride } from 'generated/prisma';
-import type { BindingScope } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
 import type { ActivationChartPort } from '../../accountingBinding/services/BindingActivationService';
 import type { BindingCompileService, CompileBindingResult } from '../../accountingBinding/services/BindingCompileService';
 import { ROLE_ALLOWED_NATURES, baseRole } from '../../accountingBinding/services/BindingValidationService';

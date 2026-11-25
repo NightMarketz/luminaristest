@@ -6,7 +6,7 @@
 import prisma from '@/lib/prisma';
 import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
-import type { BindingScope } from '@/features/accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '@/features/accountingBinding/public/bindingScope.types';
 import { KitUpgradeService } from '@/features/sectorKits/services/KitUpgradeService';
 import { KIT_REGISTRY } from '@/features/sectorKits/registry';
 import { parseArgs, runUpgrade } from '@/jobs/upgradeSectorKitsCli';

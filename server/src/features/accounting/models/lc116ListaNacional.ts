@@ -10,8 +10,6 @@
  * BE-INCR-LEGAL-PARAMS PR-2 as linhas são dado de plataforma (`LC116_SERVICO`); versão nova do leiaute = linhas novas.
  */
 import { linhasVigentesDaTabela, type LinhaLegal } from '../../legalParameters/models/legalParameter';
-import { linhasEmCacheSincrono } from '../../legalParameters/services/legalParameterCache';
-import { hojeDateOnly } from '../../legalParameters/models/hoje';
 export interface Lc116ServicoNacional {
   /** nº da linha na aba da fonte (ordinal). */
   linha: number;
@@ -36,14 +34,6 @@ export function listaLc116De(linhas: readonly LinhaLegal[], data: string): Lista
       return [l.chave, { linha: v.linha, codigo: l.chave, descricao: v.descricao, li: v.li, grupo: v.grupo }];
     }),
   );
-}
-
-/**
- * Emenda §9 L-8 (dono, 07/10: "DTO lê o cache síncrono") — a lista vigente HOJE, lida do cache de parâmetros legais
- * (aquecido no boot). Só para o DTO Zod estático; serviço monta a fotografia (F-LP-4 a).
- */
-export function listaLc116DoCache(hoje: string = hojeDateOnly()): ListaLc116 {
-  return listaLc116De(linhasEmCacheSincrono('LC116_SERVICO'), hoje);
 }
 
 /** `cTribNac` válido = existe na lista nacional vigente (6 dígitos, zero à esquerda). */

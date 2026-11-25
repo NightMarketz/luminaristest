@@ -1,7 +1,7 @@
 import { KitInstallService } from '../../features/sectorKits/services/KitInstallService';
 import { SectorKitPolicy } from '../../features/sectorKits/policies/SectorKitPolicy';
 import type { IKitInstallationRepository } from '../../features/sectorKits/repositories/IKitInstallationRepository';
-import type { BindingScope } from '../../features/accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../../features/accountingBinding/public/bindingScope.types';
 
 const findFirstAccountingBinding = jest.fn();
 const findManyAccount = jest.fn();

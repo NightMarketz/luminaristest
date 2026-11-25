@@ -6,7 +6,7 @@
  * − 0,1 p.p. (art. 347), linha DRAFT sem valor até a resolução do Senado (art. 349 I). Sem linha PUBLISHED vigente ⇒
  * `SemLinhaVigenteError` (400) com mensagem nomeada.
  */
-import { SemLinhaVigenteError, linhaLegalVigente, linhasEmVigor, type LinhaLegal } from '../../legalParameters/models/legalParameter';
+import { ParametroLegalAusenteError, SemLinhaVigenteError, linhaLegalVigente, linhasEmVigor, type LinhaLegal } from '../../legalParameters/models/legalParameter';
 
 export type TributoConsumo = 'IBS' | 'CBS';
 export type ChaveIbsCbs = 'ALIQUOTA' | 'ALIQUOTA_UF' | 'ALIQUOTA_MUN';
@@ -77,4 +77,38 @@ export function vencimentoIbsCbsDe(linhas: readonly LinhaLegal[], tributo: Tribu
     return { regra: null, linhaId: vigente.id, valor: vigente.valorTexto ?? '∅' };
   }
   return { regra: vigente.valorTexto as RegraVencimentoIbsCbs, fonte: vigente.fonte };
+}
+
+/**
+ * Onda 3.2 (fatia 3; dono 24/11) — o marco "a apuração de IBS/CBS começa" como LINHA, no lugar do literal `2027-01-01` em
+ * código. A linha é a obrigação `OBRIGACAO_REGIME/IBS_CBS_APURACAO` dos regimes de apuração regular (a do Simples/MEI diz
+ * `NAO_SE_APLICA` — optante recolhe no DAS, LC 214 art. 41 § 1º — e não define o início da apuração): LC 214 arts. 41 § 1º,
+ * 43 e 45 § 6º e Decreto 12.955/2026 art. 44 § 6º; antes dela nada se apura (F-IBS-7 b, dispensa do art. 348 § 1º). O
+ * `IBS_CBS/<tributo>/VENCIMENTO` NÃO serve: é a regra do prazo de recolhimento (Decreto 12.955 art. 45), não o início.
+ * O marco é o menor `vigenteDesde` das linhas em vigor (PUBLISHED, não substituídas); mudar a data = trocar a linha.
+ * Sem nenhuma linha ⇒ `null` (fail-closed: quem consome recusa ou não credita — nunca um default em código).
+ */
+export const OBRIGACAO_IBS_CBS_APURACAO = 'IBS_CBS_APURACAO';
+const REGIMES_FORA_DA_APURACAO_REGULAR: ReadonlySet<string> = new Set(['SIMPLES', 'MEI']);
+
+export function inicioApuracaoIbsCbs(linhas: readonly LinhaLegal[]): string | null {
+  let menor: string | null = null;
+  for (const l of linhasEmVigor(linhas)) {
+    if (l.tabela !== 'OBRIGACAO_REGIME' || l.chave !== OBRIGACAO_IBS_CBS_APURACAO) continue;
+    if (l.discriminador !== null && REGIMES_FORA_DA_APURACAO_REGULAR.has(l.discriminador)) continue;
+    if (menor === null || l.vigenteDesde < menor) menor = l.vigenteDesde;
+  }
+  return menor;
+}
+
+/** `competencia` (AAAA-MM) cai antes do mês em que a apuração começa? Sem linha do marco ⇒ 400 (`exigirInicioApuracaoIbsCbs`). */
+export function antesDoInicioDaApuracaoIbsCbs(linhas: readonly LinhaLegal[], competencia: string): boolean {
+  return competencia < exigirInicioApuracaoIbsCbs(linhas, `${competencia}-01`).slice(0, 7);
+}
+
+/** Como `inicioApuracaoIbsCbs`, mas sem linha ⇒ `ParametroLegalAusenteError` (400 nomeado) — para quem recusa o pedido. */
+export function exigirInicioApuracaoIbsCbs(linhas: readonly LinhaLegal[], dataConsultada: string): string {
+  const inicio = inicioApuracaoIbsCbs(linhas);
+  if (inicio === null) throw new ParametroLegalAusenteError('OBRIGACAO_REGIME', dataConsultada, OBRIGACAO_IBS_CBS_APURACAO);
+  return inicio;
 }

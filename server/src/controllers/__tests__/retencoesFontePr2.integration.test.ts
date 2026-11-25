@@ -297,6 +297,28 @@ describe('RETENCOES-FONTE PR-2 — retenções feitas no AP', () => {
     expect((await titulo(agregado.id)).status).toBe('CANCELLED');
   });
 
+  it('Onda 2.1 / item 21: razão do PAYMENT já estornado (commit 1 sozinho) + CSRF da parcela viva ⇒ reconcilePayables conclui: estorna a CSRF no razão, encolhe o agregado e devolve o bruto', async () => {
+    const t = (await criarTitulo(cp.B, 'NF-B21', 100_000, '2026-10-05')).body.data.id as string;
+    const p = await pagar(t, 95_350, '2026-10-06');
+    const agregado = (await tituloImposto('595207-202610'))!;
+    const settlement = await prisma.journalEntry.findFirstOrThrow({ where: { userId: dono.id, sourceType: 'ap.payment', sourceId: p.body.data.id } });
+    // Falha injetada SEM mock: só o reverseEntry real do pagamento (commit 1); o subrazão e o razão da CSRF ficam como estavam.
+    await getFactory().getPostingService().reverseEntry(scope(), { unitId: UNIT, lancamentoId: settlement.id, reversalPostingDate: '2026-10-07', reason: 'crash entre os dois commits', automaticWriter: true });
+    expect((await retencoes(t)).some((x) => x.status === 'ACTIVE')).toBe(true);
+
+    const out = await getFactory().getPayableService().reconcilePayables(scope());
+    expect([out.failed, out.blocked]).toEqual([0, 0]);
+    expect(out.reversalsCompleted).toBeGreaterThanOrEqual(1);
+    const row = await titulo(t);
+    expect([row.status, Number(row.paidCents)]).toEqual(['OPEN', 0]);
+    expect((await prisma.payablePayment.findUniqueOrThrow({ where: { id: p.body.data.id } })).status).toBe('CANCELLED');
+    expect((await retencoes(t)).every((x) => x.status === 'REVERSED')).toBe(true);
+    expect((await titulo(agregado.id)).status).toBe('CANCELLED');
+    const tw = (await retencoes(t))[0];
+    const baixaCsrf = await prisma.journalEntry.findFirstOrThrow({ where: { userId: dono.id, sourceType: 'ap.withholding', sourceId: tw.settlementId! } });
+    expect(baixaCsrf.reversedById).not.toBeNull(); // o razão da CSRF também foi estornado pelo re-drive
+  });
+
   it('item 21: o reconcile refaz o lançamento WITHHOLDING que faltou, idempotente', async () => {
     const real = PostingService.prototype.postEntry;
     const spy = jest.spyOn(PostingService.prototype, 'postEntry').mockImplementation(function (this: PostingService, s, input) {

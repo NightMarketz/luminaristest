@@ -1,0 +1,409 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:24:21-03:00",
+      "sha256": "434cd429d6b8c78537692e7fa28d8e353df907409b763d46ea2302ff266cf959",
+      "arquivo": "docs/D01_lcp214-htm.html",
+      "texto": "docs/D01_lcp214-htm.txt",
+      "bytes": 5403923,
+      "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3",
+      "captura": {
+        "anterior": {
+          "slug": "icms-revenda-regime-normal-sp",
+          "id": "D17",
+          "baixado_em": "2026-11-21T16:59:14-03:00",
+          "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei nº 12.592 de 18/01/2012",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2012/lei-12592-2012-01-18.md",
+      "url_final": "https://github.com/ctresb/leis/blob/a31cf3cd12073c7b195933a53e733b85c00cfe02/federal/leis-ordinarias/2012/lei-12592-2012-01-18.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2012-01-18;12592",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "a31cf3cd12073c7b195933a53e733b85c00cfe02",
+      "alertas": [],
+      "baixado_em": "2026-11-24T01:24:29-03:00",
+      "sha256": "ae4c4aae44ba1bd08493c05fd82e366cdd2f3bf263b93383f93b1f936541fd00",
+      "arquivo": "docs/D02_lei-12592-2012-01-18.md",
+      "texto": "docs/D02_lei-12592-2012-01-18.txt",
+      "bytes": 7614,
+      "sha256_texto": "31185ae8508e1a64836cd8a4e6bee29072f2c9c6492fb7ae78ac0eb935c8f2ba",
+      "captura": {
+        "anterior": {
+          "slug": "insumos-salao-sp",
+          "id": "D07",
+          "baixado_em": "2026-11-20T19:17:04-03:00",
+          "sha256_texto": "31185ae8508e1a64836cd8a4e6bee29072f2c9c6492fb7ae78ac0eb935c8f2ba"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Resolução CGSN nº 140, de 22 de maio de 2018",
+      "url": "rfb:92278",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/92278/visao/multivigente",
+      "id_normativo": "rfb:92278",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-24T01:24:30-03:00",
+      "sha256": "158a09df9d0832b58264f9a0f625f75b9238563c44c967c7b5ea03bde5f48cb3",
+      "arquivo": "docs/D03_rfb-92278-multivigente.json",
+      "texto": "docs/D03_rfb-92278-multivigente.txt",
+      "bytes": 1465038,
+      "sha256_texto": "b5a0230413794b2737aa224e5fd3b8cfbd7bd87a28642b2649e4236a64b094f3",
+      "anexos": [
+        {
+          "nome": "Anexo I .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48430"
+        },
+        {
+          "nome": "Anexo II .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48431"
+        },
+        {
+          "nome": "Anexo III .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48432"
+        },
+        {
+          "nome": "Anexo IV .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48433"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48446"
+        },
+        {
+          "nome": "Anexo VI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48458"
+        },
+        {
+          "nome": "Anexo VI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/50966"
+        },
+        {
+          "nome": "Anexo VII .pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48436"
+        },
+        {
+          "nome": "Anexo VII.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/50967"
+        },
+        {
+          "nome": "Anexo VII.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54769"
+        },
+        {
+          "nome": "Anexo VII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/58338"
+        },
+        {
+          "nome": "Anexo VIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48459"
+        },
+        {
+          "nome": "Anexo IX.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48460"
+        },
+        {
+          "nome": "Anexo X .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48439"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48461"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/52778"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54307"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54308"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54995"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/59531"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/64455"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/77593"
+        },
+        {
+          "nome": "Anexo XI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/81177"
+        },
+        {
+          "nome": "Anexo XII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/58339"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "simulacao-montador-unico",
+          "id": "D03",
+          "baixado_em": "2026-11-21T17:01:16-03:00",
+          "sha256_texto": "b5a0230413794b2737aa224e5fd3b8cfbd7bd87a28642b2649e4236a64b094f3"
+        },
+        "tipo": "IGUAL"
+      },
+      "alertas": [
+        "alteração com vigência futura: Alterado(a) pelo(a) Resolução CGSN nº 190, de 4 de agosto de 2026, a partir de 01/01/2027 (rfb:152832)",
+        "alteração com vigência futura: Alterado(a) pelo(a) Resolução CGSN nº 195, de 21 de outubro de 2026, a partir de 01/01/2027 (rfb:154194)",
+        "24 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D04",
+      "titulo": "Resolução CGSN nº 190, de 4 de agosto de 2026",
+      "url": "rfb:152832",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/152832/visao/multivigente",
+      "id_normativo": "rfb:152832",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-24T01:24:30-03:00",
+      "sha256": "9d1b3419c37266069da0ff3eb51292886279aac4674436e4e540b1bbf57dce6b",
+      "arquivo": "docs/D04_rfb-152832-multivigente.json",
+      "texto": "docs/D04_rfb-152832-multivigente.txt",
+      "bytes": 401679,
+      "sha256_texto": "7abf091d0d84b78c9bb164c0e430b9f04420ec8bf87870829dd223aa84707ad7",
+      "anexos": [
+        {
+          "nome": "Anexo I.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85769"
+        },
+        {
+          "nome": "Anexo II.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85770"
+        },
+        {
+          "nome": "Anexo III.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85771"
+        },
+        {
+          "nome": "Anexo IV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85775"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85773"
+        },
+        {
+          "nome": "Anexo Único.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85784"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "ciclo-fiscal-prazos",
+          "id": "D09",
+          "baixado_em": "2026-11-21T16:10:17-03:00",
+          "sha256_texto": "7abf091d0d84b78c9bb164c0e430b9f04420ec8bf87870829dd223aa84707ad7"
+        },
+        "tipo": "IGUAL"
+      },
+      "alertas": [
+        "6 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D05",
+      "titulo": "d12955",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12955.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12955.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:24:33-03:00",
+      "sha256": "2c81441eff158c2c733c058896a8b865ee097e0afe84408fb080f4b882394908",
+      "arquivo": "docs/D05_d12955-htm.html",
+      "texto": "docs/D05_d12955-htm.txt",
+      "bytes": 3184515,
+      "sha256_texto": "fdd17260256d367e90aaa8f51c289974e9c97078b68b0810b55927533f18671f",
+      "captura": {
+        "anterior": {
+          "slug": "insumos-salao-sp",
+          "id": "D11",
+          "baixado_em": "2026-11-20T19:17:17-03:00",
+          "sha256_texto": "fdd17260256d367e90aaa8f51c289974e9c97078b68b0810b55927533f18671f"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "Resolução CGSN nº 195, de 21 de outubro de 2026",
+      "url": "rfb:154194",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154194/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/154194/visao/multivigente",
+      "id_normativo": "rfb:154194",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-24T01:25:54-03:00",
+      "sha256": "744914843138b566449799d31c8bb6264fa34bd58fc7222babf23c60968b0579",
+      "arquivo": "docs/D06_rfb-154194-multivigente.json",
+      "texto": "docs/D06_rfb-154194-multivigente.txt",
+      "bytes": 12515,
+      "sha256_texto": "9ccdd0719d69bddf4f1164f18513d7fa735e3c65e9ff65a2fff1862b1df23287",
+      "captura": {
+        "anterior": {
+          "slug": "simples-6-02-6-03-fator-r",
+          "id": "D06",
+          "baixado_em": "2026-11-24T01:25:17-03:00",
+          "sha256_texto": "9ccdd0719d69bddf4f1164f18513d7fa735e3c65e9ff65a2fff1862b1df23287"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "D07_anexo_i-sefin_adn-dps_nfse-snnfse-v1-01-20260209-xlsx",
+      "url": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/anexo_i-sefin_adn-dps_nfse-snnfse-v1-01-20260209.xlsx",
+      "url_final": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/anexo_i-sefin_adn-dps_nfse-snnfse-v1-01-20260209.xlsx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:28:04-03:00",
+      "sha256": "de5bc492959eadc8bfa7540e16939995924f2188f743648eaf84d3b31e9eeb7c",
+      "arquivo": "docs/D07_anexo_i-sefin_adn-dps_nfse-snnfse-v1-01-20260209-xlsx.html",
+      "texto": "docs/D07_anexo_i-sefin_adn-dps_nfse-snnfse-v1-01-20260209-xlsx.txt",
+      "bytes": 215196,
+      "sha256_texto": "f9844a4c0f89a3486933ef4fb5b29572b0ba984ca5b3e10ddc895ef468cfa97f",
+      "captura": {
+        "anterior": {
+          "slug": "emissao-mei-me-por-tipo",
+          "id": "D08",
+          "baixado_em": "2026-10-29T10:43:33-03:00",
+          "sha256_texto": "f9844a4c0f89a3486933ef4fb5b29572b0ba984ca5b3e10ddc895ef468cfa97f"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "D08_anexovi-leiautesrn_rtc_ibscbs-v1-04-01-nt009-xlsx",
+      "url": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/anexovi-leiautesrn_rtc_ibscbs-v1-04-01-nt009.xlsx",
+      "url_final": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/anexovi-leiautesrn_rtc_ibscbs-v1-04-01-nt009.xlsx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:28:04-03:00",
+      "sha256": "103a150dd6f56ec8edcaa3a453b59a1b0e096d7cd5025d7bd06a387f141ddf39",
+      "arquivo": "docs/D08_anexovi-leiautesrn_rtc_ibscbs-v1-04-01-nt009-xlsx.html",
+      "texto": "docs/D08_anexovi-leiautesrn_rtc_ibscbs-v1-04-01-nt009-xlsx.txt",
+      "bytes": 296297,
+      "sha256_texto": "92128f335e71a8b5dced4e9324cc8476c225d1baae986cd47d136c6ecbecb290",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D09",
+      "titulo": "D09_nota-tecnica-009-se-cgnfs-e-v-1-01-pdf",
+      "url": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/nota-tecnica-009-se-cgnfs-e-v-1-01.pdf",
+      "url_final": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/nota-tecnica-009-se-cgnfs-e-v-1-01.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:28:07-03:00",
+      "sha256": "cc86c9402e317e84eb3a9f48bbd5e0b8e3dcd84f2645700190c84d45bf1ea58e",
+      "arquivo": "docs/D09_nota-tecnica-009-se-cgnfs-e-v-1-01-pdf.pdf",
+      "texto": "docs/D09_nota-tecnica-009-se-cgnfs-e-v-1-01-pdf.txt",
+      "bytes": 703145,
+      "sha256_texto": "0905526f399133e569d4fecfa6836295946fabce79bb0f3d81de224db84156c1",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D10",
+      "titulo": "D10_nt-004-se-cgnfse-novo-layout-rtc-v2-00-20251210-pdf",
+      "url": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/producao-restrita/nt-004-se-cgnfse-novo-layout-rtc-v2-00-20251210.pdf",
+      "url_final": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/producao-restrita/nt-004-se-cgnfse-novo-layout-rtc-v2-00-20251210.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:28:09-03:00",
+      "sha256": "707524b2110a3af55a232110ead632abe14d745a60307f8dcc062ec220d4058f",
+      "arquivo": "docs/D10_nt-004-se-cgnfse-novo-layout-rtc-v2-00-20251210-pdf.pdf",
+      "texto": "docs/D10_nt-004-se-cgnfse-novo-layout-rtc-v2-00-20251210-pdf.txt",
+      "bytes": 666084,
+      "sha256_texto": "950a0b9b3db6b17748ce32f59cd17458c10529218419f36c32f49ac786d7f8a4",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D11",
+      "titulo": "D11_nt-007-se-cgnfse-v1-0-pdf",
+      "url": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/nt-007-se-cgnfse-v1-0.pdf",
+      "url_final": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/nt-007-se-cgnfse-v1-0.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:28:10-03:00",
+      "sha256": "24e46b39fcf73d40b8241147b2c0607159893fd5934f16f63f3103343972cf05",
+      "arquivo": "docs/D11_nt-007-se-cgnfse-v1-0-pdf.pdf",
+      "texto": "docs/D11_nt-007-se-cgnfse-v1-0-pdf.txt",
+      "bytes": 377947,
+      "sha256_texto": "5e047185e8239b739ca0ba6a89ee0048bd599d8b0a402ced17330b5d50b2baa4",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D12",
+      "titulo": "Atualizações e Implantações — Portal da Nota Fiscal de Serviço eletrônica",
+      "url": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/atualizacoes-e-implantacoes",
+      "url_final": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/atualizacoes-e-implantacoes",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:34:21-03:00",
+      "sha256": "5814027431d90f625373d4eabf7e62e3727ea5bf7fb2beaa0589583afffe1641",
+      "arquivo": "docs/D12_atualizacoes-e-implantacoes.html",
+      "texto": "docs/D12_atualizacoes-e-implantacoes.txt",
+      "bytes": 93562,
+      "sha256_texto": "86879326b9865e2eec588b59ceb4cb6f55c1077e42b58718d1dd073dbb2004cc",
+      "captura": {
+        "anterior": {
+          "slug": "vigilancia-2026-10-31-paa-nfse",
+          "id": "D02",
+          "baixado_em": "2026-10-31T12:40:17-03:00",
+          "sha256_texto": "d6956d30d9df3ffbfbd414512bd1b81bcad416047ff2612ab556217a661750bd"
+        },
+        "tipo": "TEXTO_MUDOU",
+        "citado_em": [
+          {
+            "slug": "vigilancia-2026-10-31-paa-nfse",
+            "id": "D02"
+          }
+        ],
+        "diferencas": [
+          "+ mei ",
+          "+ enem ",
+          "+ imposto de renda "
+        ]
+      },
+      "alertas": [
+        "TEXTO MUDOU desde 2026-10-31. Dossiês que citaram a versão anterior: vigilancia-2026-10-31-paa-nfse D02. Conferir se a conclusão deles ainda vale"
+      ]
+    }
+  ],
+  "buscas": [],
+  "slug": "nfse-2027-salao-parceiro-cbs-ibs",
+  "pergunta": "O leiaute da NFS-e nacional para 2027 permite separar as cotas do salão-parceiro e do profissional-parceiro? O salão responde pela CBS/IBS do parceiro pessoa física (LC 214 art. 24 × Lei 12.592 art. 1º-A § 3º)?",
+  "criado": "2026-11-24T01:20:27-03:00"
+}

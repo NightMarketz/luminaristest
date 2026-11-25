@@ -68,6 +68,7 @@ export class DfePollScheduler {
       const e = summary.eventos;
       if (
         summary.failed > 0 ||
+        (summary.gaveUp ?? 0) > 0 ||
         (summary.attachments?.failed ?? 0) > 0 ||
         (c && c.failed + c.orfasFalharam + c.pertoDoPrazo + c.vencidas > 0) ||
         (e && e.failed + e.ignorados + e.substituidasFora > 0)
@@ -75,6 +76,19 @@ export class DfePollScheduler {
         this.log.event('warn', 'job.completed', JOB, { job: JOB, ...summary });
       } else {
         this.log.event('info', 'job.completed', JOB, { job: JOB, ...summary });
+      }
+      // Onda 4 / 4.1: o job desistiu de consultar documento(s) (teto de falhas seguidas ou erro permanente). O documento segue
+      // SENT/PROCESSING — alguém precisa consultar na mão ou investigar. Alerta só no tick em que desistiu (não repete: o
+      // documento sai da fila do poll).
+      if ((summary.gaveUp ?? 0) > 0) {
+        this.alert({
+          source: 'dfe_poll',
+          event: 'reconcile_summary',
+          timestamp: new Date().toISOString(),
+          job: JOB,
+          pollGaveUp: summary.gaveUp,
+          pollGaveUpDocumentIds: summary.gaveUpIds ?? [],
+        });
       }
       // X10a PR-9 (decisões 6, 7 e 9): NFC-e off-line perto do prazo/vencida ou órfã não resolvida ⇒ alerta remoto.
       // C3: no máximo 1 vez por nota, por evento e por dia — o tick de 2 min repetia o mesmo aviso ~720 vezes por dia.

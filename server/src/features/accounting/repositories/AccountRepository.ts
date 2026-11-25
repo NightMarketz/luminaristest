@@ -82,6 +82,26 @@ export class AccountRepository implements IAccountRepository {
     });
   }
 
+  public async findDeletedByCode(
+    scope: AccountingScope,
+    code: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Account | null> {
+    return (tx ?? prisma).account.findFirst({
+      where: { ...accountingScopeWhere(scope), code, deletedAt: { not: null } },
+    });
+  }
+
+  public async softDeleteReleasingCode(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<Account> {
+    const client = tx ?? prisma;
+    const { userId, unitId } = accountingScopeWhere(scope);
+    const row = await client.account.findFirstOrThrow({ where: { id, userId, unitId } });
+    return client.account.update({
+      where: { id, userId, unitId },
+      data: { deletedAt: row.deletedAt ?? new Date(), code: `${row.code}#deleted#${id}` },
+    });
+  }
+
   public async setRequiresDimension(
     scope: AccountingScope,
     id: string,

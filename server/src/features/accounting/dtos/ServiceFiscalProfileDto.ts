@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { isLc116Codigo, listaLc116DoCache } from '../models/lc116ListaNacional';
 import { isIndOp, IND_OP_DEFAULT_SALAO } from '../models/indOp';
 
 /**
  * BE-INCR-DFE (nó X10b, BRIEF item 8) — perfil fiscal DO SERVIÇO (F-DFE-6 a). `.strict()`.
  * Cada regra cita o leiaute da DPS (Anexo I v1.01) ou o anexo transcrito:
- *  - `cTribNac` 6 dígitos [195] e ∈ lista nacional (models/lc116ListaNacional.ts, aba MUN.INCID_INFO.SERV.)
+ *  - `cTribNac` 6 dígitos [195]; ∈ lista nacional (models/lc116ListaNacional.ts, aba MUN.INCID_INFO.SERV.) é conferido no
+ *    ServiceFiscalProfileService.upsert (MODULE-BOUNDARIES PR-1a (`L6`; dono, questionário, 24/11: "Vai para o service", revoga a L-8 do BE-INCR-LEGAL-PARAMS))
  *  - `cTribMun` 3 dígitos [196] · `cNBS` 9 dígitos [198] (Anexo B) · `cIndOp` ∈ Anexo C [339]
  *  - `cLocPrestacao` IBGE 7 [192]; null => FiscalProfile.codMun · `xDescServ` ≤ 1000 [197]
  *  - `cClassTrib` 6 dígitos (IBS-CBS-2027 PR-1, F-IBS-10 a); null => FiscalProfile.ibsCbsClassTrib na emissão
@@ -25,7 +25,7 @@ export const HOSPITALAR_SO_TERAPEUTICA = 'HOSPITALAR_SO_TERAPEUTICA_COM_FUNDAMEN
 export const UpsertServiceFiscalProfileSchema = z
   .object({
     unitId: z.string().min(1),
-    cTribNac: z.string().regex(/^\d{6}$/).refine((c) => isLc116Codigo(c, listaLc116DoCache()), 'cTribNac fora da lista nacional de serviços (Anexo I MUN.INCID_INFO.SERV.)'),
+    cTribNac: z.string().regex(/^\d{6}$/),
     cTribMun: z.string().regex(/^\d{3}$/).nullable().optional(),
     cNBS: z.string().regex(/^\d{9}$/).nullable().optional(),
     cIndOp: z.string().regex(/^\d{6}$/).refine(isIndOp, 'cIndOp fora da tabela de indicadores de operação (Anexo C)').default(IND_OP_DEFAULT_SALAO),

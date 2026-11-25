@@ -9,7 +9,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO_V2, SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
+import { LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO_V2, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { SemLinhaVigenteError, type LegalParameterTabela, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
 import { issAliquotaMinBp } from '../issLimite';
@@ -102,7 +102,7 @@ describe('item 8 — alíquota do regime normal com o fator (F-ISS-1 a)', () => 
 });
 
 describe('itens 10, 11 e 13 no cálculo do DAS (3ª faixa do Anexo III, serviço 06.01, R$ 50.000 no PA)', () => {
-  const LINHAS = legalParamsSeedRows(SIMPLES_SEED_FILES);
+  const LINHAS = legalParamsSeedRows([...SIMPLES_SEED_FILES, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL]);
   const hist = (comp: string) => {
     const [y, m] = comp.split('-').map(Number);
     return Array.from({ length: 24 }, (_, k) => ({ competencia: new Date(Date.UTC(y, m - 2 - k, 1)).toISOString().slice(0, 7), receitaBrutaCents: 5_000_000, folhaCents: null }));

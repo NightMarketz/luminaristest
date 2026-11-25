@@ -1,4 +1,4 @@
-import type { BindingScope } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
 import type { ISectorKitPolicy } from './ISectorKitPolicy';
 
 /**
