@@ -20,7 +20,9 @@ export const INUT_MAX_NUMEROS = 10_000n;
  * é descartada pela SEFAZ (`[VG-REJ-DESCARTADA]`, MOC VG §5.1.6) — dono, 26/10: "REJECTED não bloqueia".
  * PENDING_SIGNATURE (X10a PR-7, F-PSC-6 a) ocupa: a nota guarda o número para sair com ele depois da reautorização.
  * CONTINGENCY (X10a PR-9) ocupa: a NFC-e off-line já tem número e DANFE; sai com ele quando o job a transmitir.
- * DENIED (uso denegado, cStat 110/301/302) ocupa: a denegada recebe protocolo e CONSOME o número (MOC 7.0 VG §5.1.6, Tab. 5-4) — ao contrário da rejeitada.
+ * DENIED (uso denegado, cStat 110/301/302) ocupa — ASSUMIDO, não confirmado: a premissa é que a denegada recebe protocolo e CONSOME o número,
+ *   ao contrário da rejeitada (MOC 7.0 VG §5.1.6, Tab. 5-4, citação não conferida no texto; o acervo ctresb/leis não traz "denegada").
+ *   Decisão do dono 25/11/2026: manter a lógica e confirmar no gate `D-DFE-DENIED-MOC` (docs/plano/gates).
  * CANCEL_ANALYSIS (X11 PR-3) ocupa: é nota autorizada à espera da análise fiscal do cancelamento (só existe na NFS-e).
  */
 export const STATUS_QUE_OCUPAM_NUMERO: readonly FiscalDocumentStatus[] = ['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'CANCELLED', 'PENDING_SIGNATURE', 'CONTINGENCY', 'CANCEL_ANALYSIS', 'DENIED'];
