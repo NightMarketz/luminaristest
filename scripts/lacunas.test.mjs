@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
 import {
   adicionar, arquivoDe, grupos, instalar, listar, marcarDreno, mudar, paradas, porArquivo, prDaLacuna, pulso, sincronizar,
-  triar, validarLocal,
+  idLivre, integradosDosTitulos, triar, validarLocal,
   VERSAO,
 } from './lacunas.mjs';
 
@@ -296,4 +296,71 @@ test('grupos liga por arquivo e por rodada, transitivamente; isolada fica fora',
   assert.deepEqual(gs[0].arquivos, ['P.ts', 'Q.tsx']);
   assert.deepEqual(gs[0].rodadas, ['fe-13-11']);
   assert.equal(c.rodada, 'fe-13-11');
+});
+
+// L-…-d68b: gravar o destino de uma lacuna parada não pode zerar o relógio de `list --paradas`.
+test('set no mesmo estado regrava o destino sem zerar o relógio das paradas nem contar como despacho', () => {
+  const dir = nova();
+  const velha = adicionar(base, dir, new Date('2026-11-10T12:00:00Z'));
+  const agora = new Date('2026-11-21T12:00:00Z');
+  mudar(velha.id, { estado: 'aberta', destino: 'grupo X → próximo maestro' }, dir, new Date('2026-11-20T12:00:00Z'));
+  assert.equal(listar(dir)[0].destino, 'grupo X → próximo maestro');
+  assert.deepEqual(paradas(dir, { agora }).map((l) => l.id), [velha.id], 'continua parada há 11 dias');
+  assert.equal(paradas(dir, { agora })[0].idadeDias, 11);
+  // em-sessao regravada no mesmo estado também não vira "despacho de hoje" no pulso
+  const s = adicionar({ ...base, local: 's.ts:1' }, dir, new Date('2026-11-10T12:00:00Z'));
+  mudar(s.id, { estado: 'em-sessao', destino: 'sessão a' }, dir, new Date('2026-11-10T13:00:00Z'));
+  mudar(s.id, { estado: 'em-sessao', destino: 'sessão a (nota)' }, dir, new Date('2026-11-20T13:00:00Z'));
+  assert.equal(pulso(dir, agora).ultimoDespacho, '2026-11-10T13:00:00.000Z');
+  // mudar a classe é transição de verdade: zera o relógio
+  mudar(velha.id, { estado: 'aberta', destino: 'fork respondido', classe: 'debito' }, dir, new Date('2026-11-21T11:00:00Z'));
+  assert.deepEqual(paradas(dir, { agora }).map((l) => l.id).filter((id) => id === velha.id), []);
+});
+
+// L-…-a82c: a `aberta` que já traz o campo `pr` de um PR mergeado também resolve (ou sai em `conferir`).
+test('sincronizar olha a aberta com campo pr: PR mergeado vai a conferir (nunca resolve sozinho), PR fechado não mexe', () => {
+  const dir = nova();
+  const toca = adicionar({ ...base, local: 'a.ts:1', pr: '20' }, dir);
+  const naoToca = adicionar({ ...base, local: 'b.ts:1', pr: '21' }, dir);
+  const fechado = adicionar({ ...base, local: 'c.ts:1', pr: '22' }, dir);
+  const semPr = adicionar({ ...base, local: 'd.ts:1' }, dir);
+  const prs = new Map([['20', { state: 'MERGED', mergedAt: '2026-11-21T10:00:00Z' }], ['21', { state: 'MERGED' }], ['22', { state: 'CLOSED' }]]);
+  const arquivosDoPr = (n) => ({ 20: ['a.ts'], 21: ['x.ts'] })[n] ?? [];
+  const r = sincronizar(dir, { prs, arquivosDoPr });
+  assert.deepEqual(r.resolvidas, [], 'o pr de uma aberta pode ser o PR onde o achado nasceu: não resolve sozinha');
+  assert.deepEqual(r.conferir.map((c) => c.id).sort(), [toca.id, naoToca.id].sort());
+  assert.deepEqual(r.reabertas, []);
+  assert.deepEqual(r.semPr, [], 'aberta sem PR é o normal, não é pendência');
+  const est = Object.fromEntries(listar(dir).map((l) => [l.id, l.estado]));
+  assert.equal(est[toca.id], 'aberta');
+  assert.equal(est[naoToca.id], 'aberta');
+  assert.equal(est[fechado.id], 'aberta');
+  assert.equal(est[semPr.id], 'aberta');
+});
+
+// L-…-cbc8 e L-…-2969: PR de ramo fechado sem merge cujo conteúdo entrou pela integração não reabre a lacuna.
+test('PR fechado que um commit de integração da main cita conta como integrado, não como fechado sem merge', () => {
+  const dir = nova();
+  const integra = adicionar({ ...base, local: 'a.ts:1' }, dir);
+  mudar(integra.id, { estado: 'em-pr', destino: 'x', pr: '30' }, dir);
+  const abandonado = adicionar({ ...base, local: 'b.ts:1' }, dir);
+  mudar(abandonado.id, { estado: 'em-pr', destino: 'x', pr: '31' }, dir);
+  const prs = new Map([['30', { state: 'CLOSED' }], ['31', { state: 'CLOSED' }]]);
+  const integrados = integradosDosTitulos([
+    'integração: Onda 4 e DFe denegado (#30, #1351) (#1378)', 'fix: coisa (#31)', 'docs: integração do manual (#32)',
+  ]);
+  assert.deepEqual([...integrados].sort(), ['1351', '1378', '30'], 'só título que COMEÇA por integração conta');
+  const r = sincronizar(dir, { prs, arquivosDoPr: () => ['a.ts'], integrados });
+  assert.deepEqual(r.resolvidas, [integra.id]);
+  assert.deepEqual(r.reabertas, [abandonado.id]);
+  assert.match(listar(dir).find((l) => l.id === integra.id).destino, /integrado na main/);
+});
+
+// L-…-42c9: sufixo aleatório repetido no mesmo segundo não pode derrubar o add (EEXIST).
+test('idLivre sorteia de novo quando o nome já existe na pasta', () => {
+  const dir = nova();
+  writeFileSync(join(dir, 'L-20261125-120000-aaaa.json'), '{}');
+  const sorteios = ['aaaa', 'aaaa', 'bbbb'];
+  assert.equal(idLivre(dir, '20261125-120000', () => sorteios.shift()), 'L-20261125-120000-bbbb');
+  assert.throws(() => idLivre(dir, '20261125-120000', () => 'aaaa'), /sem id livre/);
 });

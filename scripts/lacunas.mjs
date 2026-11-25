@@ -26,6 +26,7 @@
 //        --por-arquivo: lacunas não finais agrupadas por arquivo (o maestro não abre duas sessões no mesmo arquivo)
 //   node scripts/lacunas.mjs show <id>
 //   node scripts/lacunas.mjs set <id> --estado <estado> --destino "<sessão / PR / pergunta / motivo>" [--pr <n>]
+//        (mesmo estado e sem --classe: só regrava o destino; não zera o relógio de --paradas nem conta como despacho)
 //        (--estado em-pr exige --pr, ou um pr já gravado na lacuna) [--classe <classe>]
 //        (fork respondido: `set <id> --estado aberta --classe <a que a resposta definiu> --destino "dono, <data>: <resposta>"`)
 //   node scripts/lacunas.mjs triar [--simular]   (fork, gate e geração > 2 abertos → com-dono; o passo 0 do maestro)
@@ -60,7 +61,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
 
-export const VERSAO = 7;
+export const VERSAO = 8;
 const EU = fileURLToPath(import.meta.url);
 export const CLASSES = ['defeito', 'debito', 'spec', 'feature', 'fork', 'gate'];
 export const ESTADOS = ['aberta', 'em-sessao', 'em-pr', 'resolvida', 'com-dono', 'descartada'];
@@ -238,7 +239,7 @@ export function adicionar(campos, dir = pasta(), agora = new Date()) {
     }
   }
   const stamp = agora.toISOString().replace(/[-:]/g, '').slice(0, 15).replace('T', '-');
-  const id = `L-${stamp}-${randomBytes(2).toString('hex')}`;
+  const id = idLivre(dir, stamp);
   const l = {
     id, criada: agora.toISOString(), estado: 'aberta', geracao,
     local: campos.local, classe: campos.classe, ...matriz, oQue: campos.oQue, evidencia: campos.evidencia,
@@ -252,8 +253,22 @@ export function adicionar(campos, dir = pasta(), agora = new Date()) {
   return { ...l, avisos };
 }
 
-// Desde quando a lacuna está no estado atual: a última transição do histórico, não a criação.
-function desde(l) { return new Date(l.historico?.at(-1)?.em ?? l.criada); }
+// Id = timestamp (s) + 2 bytes aleatórios. Duas lacunas no mesmo segundo podiam sortear o mesmo sufixo e o `wx` dava
+// EEXIST (L-…-42c9: derrubou o CI 'Scripts – node --test' no #1405). Sorteia de novo até achar um nome livre na pasta.
+export function idLivre(dir, stamp, sorteio = () => randomBytes(2).toString('hex')) {
+  for (let i = 0; i < 64; i++) {
+    const id = `L-${stamp}-${sorteio()}`;
+    if (!existsSync(join(dir, `${id}.json`))) return id;
+  }
+  throw new Error(`sem id livre para ${stamp} depois de 64 sorteios`);
+}
+
+// Desde quando a lacuna está no estado atual: a última transição do histórico, não a criação. Entrada `semTransicao`
+// (só regravou o destino no mesmo estado, L-…-d68b) não zera o relógio.
+function desde(l) {
+  const h = (l.historico ?? []).filter((x) => !x.semTransicao);
+  return new Date(h.at(-1)?.em ?? l.criada);
+}
 
 // `dias` sobrescreve o limite de todos os estados; sem ele, vale LIMITES_DIAS.
 export function paradas(dir = pasta(), { dias, agora = new Date(), limites = LIMITES_DIAS } = {}) {
@@ -308,24 +323,35 @@ export function prDaLacuna(l, prs) {
   return '';
 }
 
-// prs: Map(número → { state: OPEN|MERGED|CLOSED, mergedAt }); arquivosDoPr(n) → caminhos que o PR toca.
+// prs: Map(número → { state: OPEN|MERGED|CLOSED, mergedAt }); arquivosDoPr(n) → caminhos que o PR toca;
+// integrados: Set dos números de PR citados em commits de integração da main (um PR de ramo fechado sem merge cujo
+// conteúdo entrou na main pelo PR `integração: …` de cima — L-…-cbc8 e L-…-2969 foram reabertos por engano).
 // PR mergeado só resolve a lacuna se tocar o arquivo dela: o #1240 mergeou sem tocar o arquivo da L-…-8a05 e ela teve
 // de ser reaberta à mão. Mergeado sem tocar fica como está e sai em `conferir`.
-export function sincronizar(dir, { prs, arquivosDoPr, simular = false, agora = new Date() }) {
+// Também olha a `aberta` que já traz o campo `pr` (L-…-a82c): se o PR mergeou, a lacuna sai em `conferir` (não resolve
+// sozinha: o `pr` dela pode ser o PR onde o achado nasceu).
+export function sincronizar(dir, { prs, arquivosDoPr, integrados = new Set(), simular = false, agora = new Date() }) {
   const r = { resolvidas: [], reabertas: [], promovidas: [], conferir: [], semPr: [] };
-  for (const l of listar(dir).filter((x) => x.estado === 'em-pr' || x.estado === 'em-sessao')) {
+  for (const l of listar(dir).filter((x) => x.estado === 'em-pr' || x.estado === 'em-sessao' || (x.estado === 'aberta' && x.pr))) {
     const n = prDaLacuna(l, prs);
-    if (!n) { r.semPr.push(l.id); continue; }
+    if (!n) { if (l.estado !== 'aberta') r.semPr.push(l.id); continue; }
     const p = prs.get(n);
     if (!p) continue;
     const arq = arquivoDe(l.local);
+    const porIntegracao = p.state === 'CLOSED' && integrados.has(n);
     let mud = null;
-    if (p.state === 'MERGED') {
+    if ((p.state === 'MERGED' || porIntegracao) && l.estado === 'aberta') {
+      // `pr` numa lacuna `aberta` costuma ser o PR onde o achado apareceu ("resto fora do PR"), não o que o corrige:
+      // mergeou, então um humano confere o diff; resolver sozinho fecharia lacuna que o PR citou e não tocou.
+      r.conferir.push({ id: l.id, pr: n, arquivo: arq });
+    } else if (p.state === 'MERGED' || porIntegracao) {
       if (arquivosDoPr(n).includes(arq)) {
-        mud = { estado: 'resolvida', destino: `PR #${n} mergeado em ${String(p.mergedAt ?? '').slice(0, 10)} (sincronizar)` };
+        mud = porIntegracao
+          ? { estado: 'resolvida', destino: `PR #${n} integrado na main por commit de integração (sincronizar)` }
+          : { estado: 'resolvida', destino: `PR #${n} mergeado em ${String(p.mergedAt ?? '').slice(0, 10)} (sincronizar)` };
         r.resolvidas.push(l.id);
       } else r.conferir.push({ id: l.id, pr: n, arquivo: arq });
-    } else if (p.state === 'CLOSED') {
+    } else if (p.state === 'CLOSED' && l.estado !== 'aberta') {
       mud = { estado: 'aberta', destino: `PR #${n} fechado sem merge (sincronizar): volta à fila` };
       r.reabertas.push(l.id);
     } else if (p.state === 'OPEN' && l.estado === 'em-sessao') {
@@ -335,6 +361,16 @@ export function sincronizar(dir, { prs, arquivosDoPr, simular = false, agora = n
     if (mud && !simular) mudar(l.id, { ...mud, pr: n }, dir, agora);
   }
   return r;
+}
+
+// Números de PR citados nos títulos de commit que começam por "integração" (squash de um PR de integração).
+export function integradosDosTitulos(titulos) {
+  const out = new Set();
+  for (const t of titulos) {
+    if (!/^integra[cç][aã]o\b/i.test(t)) continue;
+    for (const m of t.matchAll(/#(\d{2,6})\b/g)) out.add(m[1]);
+  }
+  return out;
 }
 
 // Pulso do despacho: a caixa só anda se uma sessão maestro rodar o passo 3b. O último `em-sessao` gravado é o sinal
@@ -351,7 +387,7 @@ export function pulso(dir = pasta(), agora = new Date()) {
   const todas = listar(dir);
   const conta = {};
   for (const l of todas) conta[l.estado] = (conta[l.estado] ?? 0) + 1;
-  const despachos = todas.flatMap((l) => (l.historico ?? []).filter((h) => h.estado === 'em-sessao').map((h) => h.em));
+  const despachos = todas.flatMap((l) => (l.historico ?? []).filter((h) => h.estado === 'em-sessao' && !h.semTransicao).map((h) => h.em));
   const ultimo = despachos.sort().at(-1) ?? null;
   const diasSemDespacho = ultimo ? Math.floor((agora - new Date(ultimo)) / 86_400_000) : null;
   let marca = null;
@@ -401,8 +437,10 @@ export function mudar(id, { estado, destino, pr, classe }, dir = pasta(), agora 
     l.pr = n;
   }
   if (estado === 'em-pr' && !l.pr) throw new Error('em-pr exige --pr <n>: sem o número a lacuna não se liga ao PR');
+  // Mesmo estado e mesma classe: só regrava o destino (d68b). A entrada fica no histórico, mas não conta como transição.
+  const semTransicao = estado === l.estado && classe === undefined;
   l.estado = estado; l.destino = destino;
-  l.historico.push({ em: agora.toISOString(), estado, destino, ...(l.pr ? { pr: l.pr } : {}), ...(classe ? { classe } : {}) });
+  l.historico.push({ em: agora.toISOString(), estado, destino, ...(l.pr ? { pr: l.pr } : {}), ...(classe ? { classe } : {}), ...(semTransicao ? { semTransicao: true } : {}) });
   writeFileSync(join(dir, `${id}.json`), JSON.stringify(l, null, 2));
   return l;
 }
@@ -572,7 +610,13 @@ function main() {
       if (!cache.has(n)) cache.set(n, gh(['pr', 'diff', n, '--name-only']).split(/\r?\n/).filter(Boolean));
       return cache.get(n);
     };
-    const r = sincronizar(pasta(), { prs, arquivosDoPr, simular: !!f.simular });
+    // Commits de integração da main citam os PRs de ramo no título ("integração: Onda 4 (#1345, #1349) (#1378)").
+    let integrados = new Set();
+    try {
+      const subj = execFileSync('git', ['log', 'origin/main', '--since=60.days', '--format=%s'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+      integrados = integradosDosTitulos(subj.split(/\r?\n/));
+    } catch { /* sem origin/main: só o estado do GitHub decide */ }
+    const r = sincronizar(pasta(), { prs, arquivosDoPr, integrados, simular: !!f.simular });
     console.log(`resolvidas ${r.resolvidas.length} · reabertas ${r.reabertas.length} · em-sessao→em-pr ${r.promovidas.length}` +
       ` · sem número de PR ${r.semPr.length}${f.simular ? ' (simulação: nada gravado)' : ''}`);
     for (const c of r.conferir) console.log(`conferir: ${c.id} · PR #${c.pr} mergeado sem tocar ${c.arquivo}`);
