@@ -209,7 +209,7 @@
  *       description: >-
  *         O job `dfe_poll_pending` desiste de consultar o documento SENT/PROCESSING depois de 8 falhas seguidas (ou erro
  *         permanente) e alerta (`poll.gaveUpAt` na view). Este POST zera a desistência, a contagem de tentativas e o backoff;
- *         o documento NÃO muda de status e não é consultado na hora (o próximo tick o pega). Documento que o job não
+ *         o documento NÃO muda de status e não é consultado na hora (volta à fila em 1 a 2 ticks: `listPending` exige `updatedAt < agora − DFE_POLL_AFTER_MS`). Documento que o job não
  *         abandonou, ou já terminal, não é alterado — devolve a view atual.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]

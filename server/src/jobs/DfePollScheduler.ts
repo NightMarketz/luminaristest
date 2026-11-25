@@ -71,6 +71,7 @@ export class DfePollScheduler {
         (summary.gaveUp ?? 0) > 0 ||
         (summary.transporteAdiadoAlerta ?? 0) > 0 ||
         (summary.attachments?.failed ?? 0) > 0 ||
+        (summary.fasesFalharam?.length ?? 0) > 0 ||
         (c && c.failed + c.orfasFalharam + c.pertoDoPrazo + c.vencidas > 0) ||
         (e && e.failed + e.ignorados + e.substituidasFora > 0)
       ) {
@@ -117,6 +118,19 @@ export class DfePollScheduler {
           contingenciaVencidas: conta('VENCIDA'),
           contingenciaOrfasFalharam: conta('ORFA_FALHOU'),
           contingenciaAlertas: novas,
+        });
+      }
+      // L1 do #1392: fase posterior ao poll lançou (já registrada em `job.failed` pelo job). Alerta POR ÚLTIMO — os alertas de
+      // desistência/adiamento acima dependem só do poll e não podem esperar nem se perder por causa dela.
+      const fases = summary.fasesFalharam ?? [];
+      if (fases.length > 0) {
+        this.alert({
+          source: 'dfe_poll',
+          event: 'job_failed',
+          timestamp: new Date().toISOString(),
+          job: JOB,
+          fases: fases.map((f) => f.fase),
+          error: fases.map((f) => f.error).join(' | '),
         });
       }
       return summary;

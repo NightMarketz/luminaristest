@@ -328,6 +328,32 @@ describe('Onda 4 / 4.1 — polling de DF-e: teto, backoff e sem head-of-line (SQ
     expect((await row(d.id)).pollAlertedAt).toBeNull();
   });
 
+  it('lacuna 6e13: a DESISTÊNCIA (erro permanente) também encerra o episódio — o documento abandonado não guarda início nem "alertado" velhos', async () => {
+    const d = await pendente('episodio-desiste');
+    portaCom(d.id, () => new DfeTransporteIndisponivelError('dfe_assinador_sem_dispositivo', 'caixa desligada'));
+    await tick({ avanco: HORA });
+    await tick({ avanco: HORA }); // 1 h de episódio ⇒ alertou
+    const aberto = await row(d.id);
+    expect(aberto.pollDeferredSince).not.toBeNull();
+    expect(aberto.pollAlertedAt).not.toBeNull();
+
+    // agora o erro é permanente (o schema recusa o dado): o job desiste NA 1ª vez, pelo ramo de desistência de `registrarFalhaDePoll`
+    portaCom(d.id, () => {
+      try {
+        z.object({ x: z.string() }).parse({});
+      } catch (e) {
+        return e as Error;
+      }
+      return new Error('inalcançável');
+    });
+    const t = await tick({ avanco: HORA });
+    expect(t.gaveUp).toBe(1);
+    const fim = await row(d.id);
+    expect(fim.pollGaveUpAt).not.toBeNull();
+    expect(fim.pollDeferredSince).toBeNull();
+    expect(fim.pollAlertedAt).toBeNull();
+  });
+
   it('lacuna ff2f: a janela de 1 h do alerta — sondada com o documento de volta à fila ANTES de 1 h (nextPollAt zerado à mão): 30 min e 1 h−1 ms não alertam; 1 h alerta', async () => {
     const d = await pendente('janela-1h');
     portaCom(d.id, () => new DfeTransporteIndisponivelError('dfe_assinador_sem_dispositivo', 'caixa desligada'));

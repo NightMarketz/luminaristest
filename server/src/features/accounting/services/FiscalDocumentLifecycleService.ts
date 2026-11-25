@@ -203,6 +203,12 @@ export interface PollPendingOptions {
   now?: Date;
 }
 
+/** Fase do tick do `dfe_poll_pending` (depois do poll) que lançou; o tick segue e o scheduler alerta (L1 do #1392). */
+export interface FaseFalhou {
+  fase: string;
+  error: string;
+}
+
 export interface PollSummary {
   total: number;
   updated: number;
@@ -225,6 +231,8 @@ export interface PollSummary {
   contingencia?: ContingenciaTickSummary;
   /** BE-INCR-DFE-EVENTOS (PR-2, item 18) — eventos do fisco aplicados às NFS-e autorizadas no mesmo tick. */
   eventos?: EventosTickSummary;
+  /** L1 do #1392 — fases posteriores ao poll que lançaram neste tick (contingência, eventos, anexos). Ausente se nenhuma. */
+  fasesFalharam?: FaseFalhou[];
 }
 
 // BE-INCR-DFE-ANEXO-PENDENTE F-PA-6 (a): teto de 10 tentativas, backoff exponencial de 2 min até 1 h.
@@ -366,7 +374,8 @@ export class FiscalDocumentLifecycleService {
   /**
    * POST /api/nfe/dfe/documents/:id/rearmar-polling (lacunas cf36/3cf5, dono 25/11) — devolve ao job o documento que ele
    * abandonou (`pollGaveUpAt`, teto de tentativas): zera desistência, contagem e backoff, sem consultar agora e sem mudar o
-   * status (o destino da nota segue da SEFAZ). O que o job não abandonou (ou já é terminal) não é mexido: devolve a view atual.
+   * status (o destino da nota segue da SEFAZ). A gravação bumpa `updatedAt` e `listPending` exige `updatedAt < agora − DFE_POLL_AFTER_MS`
+   * (padrão 2 min): o documento volta à fila em 1 a 2 ticks, não no próximo. O que o job não abandonou (ou já é terminal) não é mexido: devolve a view atual.
    * Se a consulta voltar a falhar, o teto conta de novo a partir de zero.
    */
   async rearmarPoll(scope: AccountingScope, documentId: string): Promise<FiscalDocumentView> {
@@ -490,7 +499,7 @@ export class FiscalDocumentLifecycleService {
    * Lacuna 92c5 — adia por transporte indisponível (1 h, sem tentativa) e guarda o episódio nas colunas `pollDeferredSince`
    * (1º adiamento) e `pollAlertedAt` (lacuna 6e13); `pollLastError` é só a mensagem. `true` => este tick deve alertar: o
    * episódio dura `POLL_TRANSPORTE_ALERTA_APOS_MS` ou mais e o alerta ainda não saiu. Só devolve `true` se o marcador
-   * "alertado" foi gravado — se a gravação falha, o próximo tick tenta de novo (melhor um alerta repetido que nenhum).
+   * "alertado" foi gravado — se a gravação falha, o próximo tick tenta de novo (melhor um alerta atrasado que nenhum).
    */
   private async adiarPorTransporte(scope: AccountingScope, doc: FiscalDocument, message: string, now: Date): Promise<boolean> {
     const anterior = doc.pollDeferredSince ? { desde: doc.pollDeferredSince, alertado: doc.pollAlertedAt != null } : null;

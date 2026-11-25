@@ -131,7 +131,7 @@ export interface FiscalDocumentView {
   /**
    * Lacunas cf36/6e13 (dono 25/11) — estado do polling (`dfe_poll_pending`) do documento: `gaveUpAt` preenchido = o job parou de
    * consultar (teto de tentativas) até o re-arme (`POST …/rearmar-polling`); `deferredSince`/`alertedAt` = episódio de adiamento
-   * por transporte indisponível (assinador local fora). ISO 8601 ou `null`; sem PII (`lastError` leva só o código da falha).
+   * por transporte indisponível (assinador local fora). ISO 8601 ou `null`. `lastError` é a mensagem da última falha: erro de transporte leva `código: mensagem`; os demais devolvem `error.message` cru (até 500 caracteres, p.ex. `ZodError.message`) — dado do próprio tenant, nunca de outra conta.
    */
   poll: { attempts: number; gaveUpAt: string | null; lastError: string | null; deferredSince: string | null; alertedAt: string | null };
 }
