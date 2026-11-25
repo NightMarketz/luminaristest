@@ -1,5 +1,5 @@
 import type { Prisma } from 'generated/prisma';
-import type { IUser } from '../../users/models/User.model';
+import type { IUser } from '../../users/public/user.types';
 import type { AuditService } from '../../accounting/services/AuditService';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import { TeammateReadSchema, type TeammateCreateInput, type TeammateRead, type TeammateUpdateInput } from '../dtos/TeammatesDto';

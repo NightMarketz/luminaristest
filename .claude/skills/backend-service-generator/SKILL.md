@@ -6,7 +6,7 @@ allowed-tools: Read, Grep, Glob, Write, Edit
 compatibility: Claude Code; requer o monorepo Luminaris (server/ com Prisma + tsc + lib/factory.ts e lib/errors.ts). Sem efeitos externos — apenas gera/edita arquivos no repositório.
 metadata:
   governance-skill-id: "SKL-BACKEND-SVC"
-  governance-version: "1.0.0"
+  governance-version: "1.1.0"
   governance-status: "validated"
   governance-owner: "engineering"
   governance-last-evaluated: "2026-06-25"
@@ -32,7 +32,7 @@ Cada item abaixo é uma REGRA DE GERAÇÃO (o `luminaris-reviewer` cobra exatame
 - [ ] **[SVC-003] Cross-tenant = `NotFoundError`, NÃO `ForbiddenError`** — recurso de outro usuário deve parecer inexistente (anti-enumeration).
 - [ ] **[SVC-004] DI por construtor:** `constructor(private <resource>Repository: I<Resource>Repository, private <resource>Policy: I<Resource>Policy) {}`. **Nunca** `new <Resource>Repository()`/`new <Resource>Policy()` dentro do service.
 - [ ] **[SVC-005] ZERO `prisma.*` direto** — todo acesso a dados via `this.<resource>Repository`. **ZERO Express / `res.json` / imports de HTTP** — o service é agnóstico a transporte.
-- [ ] **[SVC-006] Actor `actor: IUser | null`** em todo método público — importe `IUser` de `../../users/models/User.model` (NÃO `@prisma/client`).
+- [ ] **[SVC-006] Actor `actor: IUser | null`** em todo método público — importe `IUser` de `../../users/public/user.types` (NÃO `@prisma/client`, nem `users/models/` direto: a `M1` do `npm run check:arch` barra `models/` de outra feature).
 - [ ] **[SVC-007] Registro em `lib/factory.ts`:** repo e policy instanciados ANTES do service; getter `get<Resource>Service()` exposto.
 - [ ] **[SVC-008] Service que chama `PostingService.postEntry` (com ou sem subrazão) nasce com o cabeçalho `atomicUntil`** (primeiro JSDoc do arquivo, 5 linhas: `atomicUntil:`, `commit 1 — razão`, `commit 2 — subrazão`, `reconcile —`, `fora da tx —`) e com os 3 testes por linha (gate falha in-tx · commit 2 falha → reconcile converge · reconcile 2× idempotente). Razão e subrazão são **2 commits** — nunca "mesma tx", nunca compensação `try/catch`. Contrato §2.3 (`AC-2.3-1`/`AC-2.3-2`); template literal na etapa 9 abaixo.
 - [ ] **[SVC-009] Não registra e relança — a borda registra** (Contrato §2.4, OBS-R5). Um `catch` do service que só converte o erro (para o tipado de `lib/errors`) ou o deixa subir **não** chama `logger.*`: quem registra é a borda (`handleApiError`, o `catch` do `runOnce` de um job, ou o `catch` que decide seguir). Registrar e relançar duplica a linha.
@@ -71,7 +71,7 @@ server/src/features/users/policies/IUserPolicy.ts
 
 ## ⭐ Exemplo de referência canônico (espelhe este arquivo)
 
-**Variante clássica (CRUD com Repository + Policy próprios):** `server/src/features/users/services/UserService.ts` — Service perfeito: **policy-check ANTES de qualquer acesso a dados** em todo método (`canCreate`/`canListAll`/`canView`/`canUpdate`/`canDelete`), erros tipados de `lib/errors` (`ForbiddenError`/`NotFoundError`/`UnauthorizedError`/`ValidationError`/`ServiceError`), DI 100% por construtor (repo + policy injetados, zero `new`), DTO guards (`isCreateUserDto`/`isUpdateUserDto`) antes de persistir, `actor: IUser | null` de `../models/User.model` (nunca `@prisma/client`), ZERO `prisma.*` direto, ZERO Express. Leia-o ANTES de gerar.
+**Variante clássica (CRUD com Repository + Policy próprios):** `server/src/features/users/services/UserService.ts` — Service perfeito: **policy-check ANTES de qualquer acesso a dados** em todo método (`canCreate`/`canListAll`/`canView`/`canUpdate`/`canDelete`), erros tipados de `lib/errors` (`ForbiddenError`/`NotFoundError`/`UnauthorizedError`/`ValidationError`/`ServiceError`), DI 100% por construtor (repo + policy injetados, zero `new`), DTO guards (`isCreateUserDto`/`isUpdateUserDto`) antes de persistir, `actor: IUser | null` de `../models/User.model` (nunca `@prisma/client`; esse caminho só vale dentro da feature `users` — service de outra feature importa de `../../users/public/user.types`, SVC-006), ZERO `prisma.*` direto, ZERO Express. Leia-o ANTES de gerar.
 
 **Variante DynamicTable (orquestra `DynamicTableService`, CRM/ERP schema-driven):** `server/src/features/crm/services/CrmPipelineService.ts` — orquestração perfeita: injeta `DynamicTableService` + `IDynamicTableRepository` (só para resolver tabela), resolve por **`internalName`** (`'leads'`/`'leadProposals'`/`'leadActivities'`) nunca por `[0]`, **sem policy própria** (delega a `DynamicTableService`), `NotFoundError` quando o preset/tabela não está instalado, HTTP-agnóstico (`UserContext`), escritas múltiplas atômicas via `dynamicTableService.runInTransaction(async (tx) => …)` passando `{ tx }` em cada write. Use este exemplar quando a lógica opera sobre tabelas dinâmicas/preset; veja também `CrmAnalyticsService.ts` e `server/src/features/chat/services/LuminarisAgentService.ts`.
 
@@ -82,7 +82,7 @@ server/src/features/users/policies/IUserPolicy.ts
 3. Métodos públicos: `create<Resource>`, `get<Resource>ById`, `getAll<Resource>s`, `update<Resource>`, `delete<Resource>`
 4. Cada método: verificar policy ANTES de acessar repository
 5. Erros tipados de `lib/errors`: `ServiceError`, `ForbiddenError`, `NotFoundError`, `UnauthorizedError`, `ValidationError`
-6. Actor: sempre aceitar `actor: IUser | null` como parâmetro — importe `IUser` de `../../users/models/User.model` (NÃO de `@prisma/client`). O controller passa o retorno de `getUserContextFromRequest(req)` (um `UserContext`), que é estruturalmente atribuível a `IUser` — sem cast.
+6. Actor: sempre aceitar `actor: IUser | null` como parâmetro — importe `IUser` de `../../users/public/user.types` (NÃO de `@prisma/client`, nem de `users/models/` direto). O controller passa o retorno de `getUserContextFromRequest(req)` (um `UserContext`), que é estruturalmente atribuível a `IUser` — sem cast.
 7. Registrar em `lib/factory.ts`:
    - Adicionar import do Repository, Policy e Service
    - Instanciar no constructor de `ApplicationFactory`
@@ -147,7 +147,7 @@ cd server && npx tsc --noEmit
 - Nunca `new <Resource>Repository()`/`new <Resource>Policy()` dentro do service — dependências entram só por construtor (DI via factory)
 - Nunca importe Express nem chame `res.json()` — o service é agnóstico a HTTP; quem formata resposta é o controller
 - Cross-tenant retorna `NotFoundError`, não `ForbiddenError` — recurso de outro usuário deve parecer inexistente (evita enumeration attack)
-- Importe `IUser` de `../../users/models/User.model`, nunca de `@prisma/client` — o `UserContext` do controller é estruturalmente atribuível a `IUser`
+- Importe `IUser` de `../../users/public/user.types`, nunca de `@prisma/client` nem de `users/models/` (regra `M1`) — o `UserContext` do controller é estruturalmente atribuível a `IUser`
 - **Nunca injete um serviço Prisma first-class (`PostingService`…) numa orchestration service que opera DynamicTable** — integração cross-módulo sobe a controller/serviço de integração (§2.1). Se você está acoplando dois domínios numa orchestration service, o design está errado.
 - **Nunca tente razão + subrazão na "mesma tx", nem compense com `try/catch` + delete** — `postEntry` abre a própria tx raiz; o padrão é 2 commits + reconcile declarado no cabeçalho `atomicUntil` (§2.3, `SVC-008`). Não invente engine/fila/plugin para isso: motor de domínio é decisão rejeitada (`docs/adr/ADR-DOMAIN-MOTOR-rejected.md`).
 - **Nunca `logger.error(...)` seguido de `throw` no service** — a borda registra (`SVC-009`, OBS-R5); a linha sai duplicada.

@@ -13,8 +13,8 @@ import prisma from '@/lib/prisma';
 import type { Prisma } from 'generated/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { AccountingBindingRepository } from '@/features/accountingBinding/repositories/AccountingBindingRepository';
-import { resolveBindingScope } from '@/features/accountingBinding/scope/BindingScope';
-import type { BindingScope } from '@/features/accountingBinding/scope/BindingScope';
+import { resolveBindingScope } from '@/features/accountingBinding/models/BindingScope';
+import type { BindingScope } from '@/features/accountingBinding/models/BindingScope';
 import { AccountingBindingPolicy } from '@/features/accountingBinding/policies/AccountingBindingPolicy';
 import type { IAccountingBindingPolicy } from '@/features/accountingBinding/policies/IAccountingBindingPolicy';
 import {

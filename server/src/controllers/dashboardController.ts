@@ -28,7 +28,7 @@ import { Role } from '@/features/users/models/User.model';
 import { ISchemaField } from '@/features/dynamicTables/models/DynamicTable.model';
 import { keyToPascalCase } from '@/features/dynamicTables/presets/PresetManager';
 import { SECTOR_BINDING_REGISTRY } from '@/features/accountingBinding/fixtures/sectorBindingRegistry';
-import { resolveBindingScope } from '@/features/accountingBinding/scope/BindingScope';
+import { resolveBindingScope } from '@/features/accountingBinding/models/BindingScope';
 import { reloadAccountingMappersSerialized } from '@/features/accountingBinding/runtime/mapperReload';
 import { OnboardingAccountingResultSchema } from '@/features/accountingBinding/dtos/ActivateDefaultBindingDto';
 import type { ActivateDefaultBindingResult, OnboardingAccountingResult } from '@/features/accountingBinding/dtos/ActivateDefaultBindingDto';

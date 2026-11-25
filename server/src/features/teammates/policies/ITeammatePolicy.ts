@@ -1,4 +1,4 @@
-import type { IUser } from '../../users/models/User.model';
+import type { IUser } from '../../users/public/user.types';
 
 /** Autorização do teammate. Decisão booleana pura, sem acesso a dado. */
 export interface ITeammatePolicy {

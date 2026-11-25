@@ -32,7 +32,7 @@
 - Auth check: call `this.policy.canXxx(actor, targetId?)` before any data access
 - Factory registration: Add to `lib/factory.ts` constructor + getter method `get<Resource>Service()`
 - Interface: Create `I<Resource>Service.ts` only if the service has complex public API or is injected into other services
-- Actor param: services accept `actor: IUser | null` (import `IUser` from `features/users/models/User.model`, NOT `@prisma/client`); `UserContext` from the controller is structurally assignable to `IUser`
+- Actor param: services accept `actor: IUser | null` (import `IUser` from `features/users/public/user.types`, NOT `@prisma/client` and not `users/models/` directly; the `Role` enum comes from the same file); `UserContext` from the controller is structurally assignable to `IUser`
 - Never import prisma directly — always via repository
 - **Prisma model types** (in repositories/interfaces) import from `'generated/prisma'`, NEVER `@prisma/client` (the project uses a custom Prisma output path)
 
@@ -77,15 +77,15 @@ For DynamicTable-backed domains (leads, ERP, CRM) the service orchestrates `Dyna
 
 ## Backend Feature Folder Contract
 
-> Gate: `cd server && npm run check:arch` (rules `M1`, `M1a`, `M3`, `D2`; decision in `docs/adr/ADR-MODULE-BOUNDARIES.md` §10–§11).
+> Gate: `cd server && npm run check:arch` (rules `M1`, `M1a`, `M3`, `M4`, `D2`; decision in `docs/adr/ADR-MODULE-BOUNDARIES.md` §10–§11).
 
 - Layer folders of `server/src/features/<resource>/`: `services/`, `repositories/`, `policies/`, `models/`, `dtos/`, `domain/`, `ports/`, `adapters/`, `public/`. New feature code goes into one of them — no loose file and no new ad-hoc folder at the feature root
 - Pure logic (calculation, mapping, static table): `server/src/features/<resource>/domain/` — never imports a repository, service, controller, route, `lib/prisma` or Express
 - Interface of something external to the feature: `server/src/features/<resource>/ports/`; its implementation: `server/src/features/<resource>/adapters/`
 - Cross-feature import: only `server/src/features/<other>/public/**`. Never `<other>/repositories/`, `services/`, `models/` or `dtos/`
-- Missing public file: create it in the **target** feature in the same change — types in `public/<name>.types.ts`, functions or executable ports in `public/<name>.ts`. `public/` only re-exports; it never imports `repositories/`
+- Missing public file: create it in the **target** feature in the same change — types (and enums or constants that live in `models/`) in `public/<name>.types.ts`, functions or executable ports in `public/<name>.ts`. `public/` only re-exports; it never imports `repositories/`, and a `public/<name>.types.ts` imports only the `models/` and `dtos/` of its own feature (rule `M4`)
 - Policies, models and DTOs import from another feature only `public/<name>.types.ts`
-- Reference: `server/src/features/accountingBinding/public/bindingScope.ts` and `bindingScope.types.ts`
+- Reference: `server/src/features/accountingBinding/public/bindingScope.ts` and `bindingScope.types.ts`; `server/src/features/users/public/user.types.ts` (`IUser` and `Role`)
 
 ## Frontend Page Contract
 

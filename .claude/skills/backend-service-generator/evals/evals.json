@@ -41,7 +41,7 @@
         "contains:ForbiddenError",
         "contains:NotFoundError",
         "regex:actor:\\s*IUser\\s*\\|\\s*null",
-        "regex:from ['\"]\\.\\./\\.\\./users/models/User\\.model['\"]",
+        "regex:from ['\"]\\.\\./\\.\\./users/public/user\\.types['\"]",
         "regex:get(?:Invoice)?Service\\b",
         "absent:prisma.",
         "@InvoiceService.ts::absent:new InvoiceRepository("

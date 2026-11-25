@@ -81,7 +81,7 @@ Regras normativas da camada Service, cada uma coberta por pelo menos um caso de 
 - `SVC-003` — cross-tenant retorna `NotFoundError`, não `ForbiddenError` (anti-enumeration) — caso `edge-1`.
 - `SVC-004` — DI 100% por construtor (repo + policy injetados), zero `new <Resource>Repository()`/`Policy()`.
 - `SVC-005` — zero `prisma.*` direto e zero Express/HTTP no service (agnóstico a transporte).
-- `SVC-006` — `actor: IUser | null` importado de `../../users/models/User.model`, nunca `@prisma/client`.
+- `SVC-006` — `actor: IUser | null` importado de `../../users/public/user.types`, nunca `@prisma/client` nem `users/models/` direto.
 - `SVC-007` — registro em `lib/factory.ts`: repo/policy antes do service + getter `get<Resource>Service()`.
 - `SVC-008` — service que chama `postEntry` (com ou sem subrazão) nasce com o cabeçalho `atomicUntil` (5 linhas) + 3 testes por linha; 2 commits + reconcile, nunca "mesma tx" (Contrato §2.3) — caso `happy-2`. Verificador real = `server/src/features/accounting/__tests__/atomicUntil.boundary.test.ts` (PR-B, GAP-MAP fila 9) — gate `static` desde 2026-10-01.
 - `SVC-009` — não registra e relança: o `catch` que converte ou deixa subir não chama `logger.*`; a borda registra

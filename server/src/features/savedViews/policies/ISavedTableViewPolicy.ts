@@ -1,4 +1,4 @@
-import { IUser } from '../../users/models/User.model';
+import { IUser } from '../../users/public/user.types';
 
 /**
  * Authorization contract for SavedTableView. All checks are pure boolean

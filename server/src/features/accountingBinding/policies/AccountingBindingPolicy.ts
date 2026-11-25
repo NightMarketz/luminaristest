@@ -1,4 +1,4 @@
-import type { BindingScope } from '../scope/BindingScope';
+import type { BindingScope } from '../models/BindingScope';
 import type { IAccountingBindingPolicy } from './IAccountingBindingPolicy';
 
 /**

@@ -8,7 +8,7 @@ import type {
 import { DEFAULT_SECTOR_KEY, SECTOR_BINDING_REGISTRY } from '../fixtures/sectorBindingRegistry';
 import type { IAccountingBindingPolicy } from '../policies/IAccountingBindingPolicy';
 import type { IAccountingBindingRepository } from '../repositories/IAccountingBindingRepository';
-import type { BindingScope } from '../scope/BindingScope';
+import type { BindingScope } from '../models/BindingScope';
 import type { KitInstallService } from '../../sectorKits/services/KitInstallService';
 import { KitInstallStepFailedError } from '../../sectorKits/models/kitInstallTypes';
 import { BindingSectorConflictError } from '../models/bindingSectorConflict';

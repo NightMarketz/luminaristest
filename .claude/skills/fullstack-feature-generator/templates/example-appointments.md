@@ -5,7 +5,7 @@ Exemplo concreto de saída gerada por `fullstack-feature-generator appointments 
 > **Convenções de import verificadas por compilação real (`npx tsc --noEmit` verde):**
 > - Tipos de model Prisma: `import { Appointment } from 'generated/prisma'` — **NUNCA `@prisma/client`** (o projeto gera em `generated/prisma`, resolvido via baseUrl)
 > - Instância Prisma: `import prisma from '../../../lib/prisma'` (default export)
-> - `IUser` e `Role`: de `../../users/models/User.model` — **NÃO `@prisma/client`**
+> - `IUser` e `Role`: de `../../users/public/user.types` — **NÃO `@prisma/client`**, nem `users/models/` direto (regra `M1` do `npm run check:arch`)
 > - Services recebem `actor: IUser | null` (não `UserContext`); o controller passa `getUserContextFromRequest(req)` diretamente (atribuível a `IUser`)
 > - `handleApiError(error, res)` — ordem `(error, res)`, de `../lib/apiUtils`
 
@@ -112,9 +112,9 @@ export class AppointmentRepository implements IAppointmentRepository {
 ## 4. Policy (`features/appointments/policies/AppointmentPolicy.ts`)
 
 ```typescript
-// IUser e Role vivem na feature de users (User.model re-exporta o enum Role) — NÃO usar @prisma/client
-import type { IUser } from '../../users/models/User.model';
-import { Role } from '../../users/models/User.model';
+// IUser e Role vivem na feature de users e saem por users/public/user.types — NÃO usar @prisma/client
+import type { IUser } from '../../users/public/user.types';
+import { Role } from '../../users/public/user.types';
 
 export class AppointmentPolicy {
   canCreate(actor: IUser | null): boolean {
@@ -144,7 +144,7 @@ export class AppointmentPolicy {
 // Convenção real do repo: services recebem `actor: IUser | null` (NÃO UserContext).
 // O controller passa o retorno de getUserContextFromRequest() — UserContext é
 // estruturalmente atribuível a IUser, então não precisa de cast.
-import type { IUser } from '../../users/models/User.model';
+import type { IUser } from '../../users/public/user.types';
 
 async getById(actor: IUser | null, id: string) {
   const item = await this.repository.findById(id, actor?.id ?? '');

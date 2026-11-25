@@ -31,7 +31,8 @@
         "regex:canListAll[\\s\\S]*Role\\.ADMIN",
         "regex:actor\\??\\.id\\s*===\\s*\\w*[Oo]wner\\w*\\s*\\|\\|\\s*actor\\??\\.role\\s*===\\s*Role\\.ADMIN",
         "regex::\\s*boolean",
-        "contains:User.model",
+        "contains-code:users/public/user.types",
+        "absent-code:users/models/User.model",
         "absent:@prisma/client"
       ]
     },

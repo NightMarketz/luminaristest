@@ -1,6 +1,6 @@
 import { UserContext } from '../../../types/UserContext';
 import { IDashboardLayout } from '../models/DashboardLayout.model';
-import { Role } from '../../../features/users/models/User.model';
+import { Role } from '../../../features/users/public/user.types';
 import { IDashboardLayoutPolicy } from './IDashboardLayoutPolicy';
 
 /**

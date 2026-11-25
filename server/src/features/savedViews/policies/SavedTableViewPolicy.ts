@@ -1,4 +1,4 @@
-import { IUser, Role } from '../../users/models/User.model';
+import { IUser, Role } from '../../users/public/user.types';
 import { ISavedTableViewPolicy } from './ISavedTableViewPolicy';
 
 /**

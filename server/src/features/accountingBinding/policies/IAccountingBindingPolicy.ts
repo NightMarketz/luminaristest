@@ -1,4 +1,4 @@
-import type { BindingScope } from '../scope/BindingScope';
+import type { BindingScope } from '../models/BindingScope';
 
 /**
  * Contrato de autorização do módulo `accountingBinding` (Corpo C, item 9/15 do BRIEF). Mesmo

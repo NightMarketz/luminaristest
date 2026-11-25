@@ -9,7 +9,8 @@
 const TEST = '(__tests__|\\.test\\.ts$)';
 const PRISMA = '^src/lib/prisma\\.ts$';
 // ADR-MODULE-BOUNDARIES §10, F-MBE-3 (a): arquivo de `public/` que NÃO é `*.types.ts` é porta executável. Policy e
-// models/dtos não a importam (L5/L6); o `*.types.ts` é só tipo e passa.
+// models/dtos não a importam (L5/L6); o `*.types.ts` passa: carrega tipo, enum e constante de `models/` e `dtos/` da
+// própria feature e não importa mais nada (regra M4).
 const PUBLIC_EXEC = '^src/features/[^/]+/public/(?!.*\\.types\\.ts$)';
 const FEATURE_LOGIC = '^src/features/[^/]+/(?!models/).+';
 const FISCAL_LIB =
@@ -201,6 +202,17 @@ module.exports = {
         'do import, não a dependência). Nasce em 0: nunca entra no known-violations.',
       from: { path: '^src/features/[^/]+/public/', pathNot: TEST },
       to: { path: '/repositories/' },
+    },
+    {
+      name: 'M4-public-types-only-models-dtos',
+      severity: 'error',
+      comment:
+        'Dono, questionário, 24/11 ("Tudo em user.types.ts"): `public/<nome>.types.ts` reexporta tipo, enum e ' +
+        'constante de `models/` e `dtos/` da própria feature e não importa mais nada. É o arquivo que a L5/L6 deixam ' +
+        'policy, model e dto importarem pelo nome; sem esta regra ele vira porta para código executável. Nasce em 0: ' +
+        'nunca entra no known-violations.',
+      from: { path: '^src/features/([^/]+)/public/.*\\.types\\.ts$', pathNot: TEST },
+      to: { pathNot: '^src/features/$1/(models|dtos)/' },
     },
     {
       name: 'D2-domain-is-pure',
