@@ -1,0 +1,141 @@
+fonte: https://portalin.inss.gov.br/in/594 (Portal da Legislação do INSS; texto renderizado pelo pacote https://portalin.inss.gov.br/main.11d20173ec4bc58ac2aa.js)
+norma: Instrução Normativa PRES/INSS nº 128, de 28 de março de 2022 — arts. 272 a 285 (Capítulo da aposentadoria especial: formulários, Subseção I Do LTCAT, Subseção II Do PPP)
+versao_texto: compilada pelo portal do INSS (mostra a redação anterior anotada com '(alterado pela …)' seguida da redação vigente; convenção conferida contra a IN PRES/INSS 170/2024, D22)
+baixado_em: 2026-11-25T16:49:43-03:00
+sha256 do pacote: 561e4f85b0990677c85f599230af87098b9cc7b415ac66bc62ce0523a336c72c
+extração: literais de texto do template Angular (scratchpad ext2.py); sem OCR
+
+Art. 272. São considerados formulários de reconhecimento de períodos laborados em atividades especiais, legalmente previstos:
+I - os antigos formulários de reconhecimento de períodos laborados em condições especiais emitidos até 31 de dezembro de 2003; e
+II - o Perfil Profissiográfico Previdenciário – PPP – emitido a partir de 1º de janeiro de 2004.  (alterado pela Instrução Normativa PRES/INSS nº 170, de 4 de Julho de 2024)
+II - o Perfil Profissiográfico Previdenciário – PPP – emitido a partir de 18 de julho de 2002.
+§ 1º Na hipótese do inciso I do caput poderá ser exigida a apresentação do Laudo Técnico de Condições Ambientais do Trabalho – LTCAT, na forma do art. 276.
+§ 2º Em relação ao Perfil Profissiográfico Previdenciário – PPP, será válida a apresentação de documento eletrônico previsto no eSocial para esta finalidade.
+Art. 273. Os formulários indicados no art. 272 serão aceitos quando emitidos:
+I - pela empresa, no caso de segurado empregado;
+II - pela cooperativa de trabalho ou de produção, no caso de cooperado filiado;
+III - pelo órgão gestor de mão de obra - OGMO - ou pelo sindicato da categoria no caso de trabalhador avulso portuário a ele vinculado que exerça suas atividades na área dos portos organizados;
+IV - pelo sindicato da categoria no caso de trabalhador avulso portuário a ele vinculado que exerça suas atividades na área dos terminais de uso privado; e
+V - pelo sindicato da categoria no caso de trabalhador avulso não portuário a ele vinculado.
+Parágrafo único. Quando houver prestação de serviço mediante cessão ou empreitada de mão de obra de cooperativa de trabalho ou empresa contratada, os formulários mencionados no art. 272 emitidos por elas, terão como base os laudos técnicos de condições ambientais de trabalho emitidos pela empresa contratante, quando o serviço for prestado em estabelecimento da contratante.  (alterado pela Instrução Normativa PRES/INSS nº 188, de 8 de Julho de 2025)
+Parágrafo único. A cooperativa de trabalho e a empresa contratada para prestar serviços mediante cessão ou empreitada de mão de obra emitirão os formulários mencionados no art. 272 com base nos laudos técnicos de condições ambientais de trabalho emitidos pela empresa contratante, quando o serviço for prestado em estabelecimento da contratante.
+Art. 274. Para caracterizar o exercício de atividade em condições especiais que prejudiquem a saúde, o segurado empregado ou o trabalhador avulso deverão apresentar os seguintes documentos:
+I - para períodos laborados até 28 de abril de 1995, véspera da publicação da Lei nº 9.032:
+a) para períodos enquadráveis por categoria profissional:
+1. Carteira Profissional - CP - ou Carteira de Trabalho e Previdência Social - CTPS, ficha ou livro de registro de empregado, no caso do segurado empregado, e certificado do OGMO ou sindicato da categoria acompanhado de documento contemporâneo que comprove o exercício de atividade, no caso do trabalhador avulso; ou
+2. formulários de reconhecimento de períodos laborados em condições especiais, dispostos no art. 272;
+b) para períodos enquadráveis por agentes prejudiciais à saúde:
+1. os antigos formulários de reconhecimento de períodos laborados em condições especiais emitidos até 31 de dezembro de 2003, e quando se tratar de exposição ao agente físico ruído, será obrigatória a apresentação, também, do Laudo Técnico que embasou o preenchimento do formulário; ou
+2. Perfil Profissiográfico Previdenciário – PPP – emitido a partir de 1º de janeiro de 2004;  (alterado pela Instrução Normativa PRES/INSS nº 170, de 4 de Julho de 2024)
+2. PPP, emitido a partir de 18 de julho de 2002;
+II - para períodos laborados entre 29 de abril de 1995, data da publicação da Lei nº 9.032, a 13 de outubro de 1996, véspera da publicação da Medida Provisória nº 1.523:
+a) os antigos formulários de reconhecimento de períodos laborados em condições especiais emitidos até 31 de dezembro de 2003, e quando se tratar de exposição ao agente físico ruído, será obrigatória a apresentação, também, do Laudo Técnico que embasou o preenchimento do formulário; ou
+b) Perfil Profissiográfico Previdenciário – PPP emitido a partir de 1 de janeiro de 2004;  (alterado pela Instrução Normativa PRES/INSS nº 170, de 4 de Julho de 2024)
+b) PPP, emitido a partir de 18 de julho de 2002;
+III - para períodos laborados entre 14 de outubro de 1996, data da publicação da Medida Provisória nº 1.523, e 31 de dezembro de 2003, data estabelecida pelo INSS em conformidade com o determinado pelo § 3º do art. 68 do RPS:
+a) os antigos formulários de comprovação de períodos laborados em atividades especiais emitidos até 31 de dezembro de 2003 e LTCAT para exposição a qualquer agente prejudicial à saúde ou demais demonstrações ambientais arroladas no inciso V do caput do art. 277; ou
+b) Perfil Profissiográfico Previdenciário – PPP – emitido a partir de 1º de janeiro de 2004;  (alterado pela Instrução Normativa PRES/INSS nº 170, de 4 de Julho de 2024)
+b) PPP, emitido a partir de 18 de julho de 2002;
+IV - para períodos laborados a partir de 1º de janeiro de 2004, o documento a ser apresentado deverá ser o PPP, conforme estabelecido por meio da Instrução Normativa INSS/DC nº 99, de 2003, em cumprimento ao § 3º do art. 68 do RPS.  (alterado pela Instrução Normativa PRES/INSS nº 170, de 4 de Julho de 2024)
+IV - para períodos laborados a partir de 1º de janeiro de 2004, o documento a ser apresentado deverá ser o PPP, conforme estabelecido na Instrução Normativa nº 99 INSS/DC, de 5 de dezembro de 2003, observado o disposto no § 3º do art. 68 do RPS;
+§ 1º Para períodos laborados até 28 de abril de 1995, não será exigida a apresentação dos formulários indicados nas alíneas “a” e “b” do inciso I do caput, quando o enquadramento ocorrer por categoria profissional, nos casos em que não for necessária nenhuma outra informação sobre a atividade exercida, além da constante na CTPS para realização do enquadramento.
+§ 2º Nas hipóteses dos incisos II, III e IV do caput deverá ser exigida a documentação comprobatória do exercício da função ou atividade, disposta no item 1 da alínea “a” do inciso I do caput.  (revogado pela Instrução Normativa PRES/INSS nº 141, de 6 de Dezembro de 2022)
+Art. 275. Para fins de caracterização de atividade especial exercida como segurado contribuinte individual em condições especiais, a comprovação da efetiva exposição aos agentes prejudiciais à saúde será realizada mediante a apresentação dos seguintes documentos, observado o disposto no art. 263:
+I - por categoria profissional: documentos que comprovem, ano a ano, a habitualidade na atividade arrolada para enquadramento, estando dispensado de apresentar o formulário legalmente previsto no art. 272 para reconhecimento de períodos alegados como especiais; ou
+II - por efetiva exposição a agentes prejudiciais a saúde: somente ao contribuinte individual cooperado filiado à cooperativa de trabalho ou de produção, mediante apresentação dos formulários de comprovação de atividade especiais, emitidos pela cooperativa, observado quanto aos formulários o disposto nos incisos III e IV do caput do art. 274.
+Subseção I
+Do LTCAT
+Art. 276. Quando da apresentação de LTCAT, serão observados os seguintes elementos informativos básicos constitutivos:
+I - se individual ou coletivo;
+II - identificação da empresa;
+III - identificação do setor e da função;
+IV - descrição da atividade;
+V - identificação do agente prejudicial à saúde, arrolado na Legislação Previdenciária;
+VI - localização das possíveis fontes geradoras;
+VII - via e periodicidade de exposição ao agente prejudicial à saúde;
+VIII - metodologia e procedimentos de avaliação do agente prejudicial à saúde;
+IX - descrição das medidas de controle existentes;
+X - conclusão do LTCAT;
+XI - assinatura e identificação do médico do trabalho ou engenheiro de segurança do trabalho; e
+XII - data da realização da avaliação ambiental.
+Art. 277. Para complementar ou substituir o LTCAT, quando for o caso, serão aceitos, desde que informem os elementos básicos relacionados no art. 276, os seguintes documentos:
+I - laudos técnico-periciais realizados na mesma empresa, emitidos por determinação da Justiça do Trabalho, em ações trabalhistas, individuais ou coletivas, acordos ou dissídios coletivos, ainda que o segurado não seja o reclamante, desde que relativas ao mesmo setor, atividades, condições e local de trabalho;
+II - laudos emitidos pela Fundação Jorge Duprat Figueiredo de Segurança e Medicina do Trabalho - FUNDACENTRO;
+III - laudos emitidos por órgãos da Secretaria de Trabalho do Ministério do Trabalho e Previdência - MTP;
+IV - laudos individuais acompanhados de:
+a) autorização escrita da empresa para efetuar o levantamento, quando o responsável técnico não for seu empregado;
+b) nome e identificação do acompanhante da empresa, quando o responsável técnico não for seu empregado; e
+c) data e local da realização da perícia;
+V - demonstrações ambientais:
+a) Programa de Prevenção de Riscos Ambientais – PPRA, previsto na NR 9, até 02 de janeiro de 2022;
+b) Programa de Gerenciamento de Riscos – PGR, previsto na NR 1, a partir de 3 de janeiro de 2022;
+c) Programa de Gerenciamento de Riscos – PGR, na mineração, previsto na NR 22;
+d) Programa de Condições e Meio Ambiente de Trabalho na Indústria da Construção – PCMAT, previsto na NR 18;
+e) Programa de Controle Médico de Saúde Ocupacional – PCMSO, previsto na NR 7; e
+f) Programa de Gerenciamento de Riscos no Trabalho Rural – PGRTR, previsto na NR 31.
+Parágrafo único. Não serão aceitos os seguintes laudos:
+I - elaborado por solicitação do próprio segurado, sem o atendimento das condições previstas no inciso IV do caput;
+II - relativo à atividade diversa, salvo quando efetuada no mesmo setor;
+III - relativo a equipamento ou setor similar;
+IV - realizado em localidade diversa daquela em que houve o exercício da atividade; e
+V - de empresa diversa.
+Art. 278. As demonstrações ambientais referidas no inciso V do caput do art. 277 devem ser atualizadas conforme periodicidade prevista na legislação trabalhista, ou sempre que ocorrer qualquer alteração no ambiente de trabalho ou em sua organização, observado o parágrafo único do art. 279.
+Art. 279. Serão aceitos o LTCAT e os laudos mencionados nos incisos I a IV do caput do art. 277 emitidos em data anterior ou posterior ao período de exercício da atividade do segurado, desde que a empresa informe expressamente que não houve alteração no ambiente de trabalho ou em sua organização ao longo do tempo.
+Parágrafo único. Para efeito do disposto no caput serão considerados como alteração do ambiente de trabalho ou em sua organização, entre outras, aquelas decorrentes de:
+I - mudança de leiaute;
+II - substituição de máquinas ou de equipamentos;
+III - adoção ou alteração de tecnologia de proteção coletiva; e
+IV - alcance dos níveis de ação estabelecidos na legislação trabalhista, se aplicável.
+Art. 280. O LTCAT e as demonstrações ambientais deverão embasar o preenchimento da GFIP, eSocial ou de outro sistema que venha a substituí-la, e dos formulários de comprovação de períodos laborados em atividade especial.
+Parágrafo único. O INSS poderá solicitar o LTCAT ou as demais demonstrações ambientais, ainda que não exigidos inicialmente, toda vez que concluir pela necessidade da análise deles para subsidiar a decisão do enquadramento da atividade especial, estando a empresa obrigada a prestar as informações na forma do inciso III do art. 225 do RPS.
+Subseção II
+Do PPP
+Art. 281. O PPP constitui-se em um documento histórico laboral do trabalhador, segundo modelo instituído pelo INSS, conforme formulário do Anexo XVII, que deve conter as seguintes informações básicas:
+I - dados administrativos da empresa e do trabalhador;
+II - registros ambientais; e
+III - responsáveis pelas informações.
+§ 1º O PPP deverá ser assinado pelo representante legal da empresa ou seu preposto, que assumirá a responsabilidade sobre a fidedignidade das informações prestadas quanto à:
+I - fiel transcrição dos registros administrativos; e
+II - veracidade das demonstrações ambientais e dos programas médicos de responsabilidade da empresa.
+§ 2º Deverá constar no PPP o nome e o CPF do responsável pela assinatura do documento.
+§ 3º A prestação de informações falsas no PPP constitui crime de falsidade ideológica, nos termos do art. 299 do Código Penal, bem como crime de falsificação de documento público, nos termos do art. 297 do Código Penal.
+§ 4º O PPP dispensa a apresentação de laudo técnico ambiental para fins de comprovação de condição especial de trabalho, desde que todas as informações estejam adequadamente preenchidas e amparadas em laudo técnico.
+§ 4º-A. Quando da emissão do PPP, devem ser observadas as seguintes orientações acerca da dispensa de informações: (incluído pela Instrução Normativa PRES/INSS nº 170, de 4 de Julho de 2024)
+I - para atividade exercida até 13 de outubro de 1996, véspera da publicação da Medida Provisória nº 1.523, de 1996: (incluído pela Instrução Normativa PRES/INSS nº 170, de 4 de Julho de 2024)
+a) quando não se tratar de ruído, fica dispensado o preenchimento do campo referente ao responsável pelos Registros Ambientais; (incluído pela Instrução Normativa PRES/INSS nº 170, de 4 de Julho de 2024)
+b) fica dispensado o preenchimento dos campos referentes às informações de Equipamentos de Proteção Coletiva - EPC eficaz; (incluído pela Instrução Normativa PRES/INSS nº 170, de 4 de Julho de 2024)
+II - para atividade exercida até 3 de dezembro de 1998, data da publicação da Medida Provisória nº 1.729, de 1998, convertida na Lei nº 9.732, de 11 de dezembro de 1998, fica dispensado o preenchimento dos campos referentes às informações de EPI eficaz; e (incluído pela Instrução Normativa PRES/INSS nº 170, de 4 de Julho de 2024)
+III - para atividade exercida até 31 de dezembro de 1998, fica dispensado o preenchimento do campo código de ocorrência GFIP. (incluído pela Instrução Normativa PRES/INSS nº 170, de 4 de Julho de 2024)
+§ 5º Sempre que julgar necessário, o INSS poderá solicitar documentos para confirmar ou complementar as informações contidas no PPP, de acordo com § 7º do art. 68 e inciso III do art. 225, ambos do RPS.
+§ 6º O trabalhador ou seu preposto terá acesso às informações prestadas pela empresa sobre o seu perfil profissiográfico previdenciário, podendo inclusive solicitar a retificação de informações quando em desacordo com a realidade do ambiente de trabalho, conforme orientação a ser estabelecida em ato do Ministro de Estado do Trabalho e Previdência.
+§7º Quando da implantação do PPP em meio digital, o layout do formulário previsto no Anexo XVII poderá ser alterado para melhor visualização em formato eletrônico, desde que mantido inalterado o conteúdo do documento.
+Art. 282. Além da comprovação do exercício em atividade especial, o PPP tem como finalidade:
+I - comprovar as condições para obtenção do direito a benefícios e serviços previdenciários;
+II - fornecer ao trabalhador meios de prova produzidos pelo empregador perante a Previdência Social, a outros órgãos públicos e aos sindicatos, de forma a garantir todo direito decorrente da relação de trabalho, seja ele individual, ou difuso e coletivo;
+III - fornecer à empresa meios de prova produzidos em tempo real, de modo a organizar e a individualizar as informações contidas em seus diversos setores ao longo dos anos, possibilitando que a empresa evite ações judiciais indevidas relativas a seus trabalhadores; e
+IV - possibilitar aos administradores públicos e privados acessos a bases de informações fidedignas, como fonte primária de informação estatística, para desenvolvimento de vigilância sanitária e epidemiológica, bem como definição de políticas em saúde coletiva.
+Art. 283. As informações constantes no PPP são de caráter privativo do trabalhador, constituindo crime nos termos da Lei nº 9.029, de 1995, práticas discriminatórias decorrentes de sua exigibilidade por outrem, bem como de sua divulgação para terceiros, ressalvado quando exigida pelos órgãos públicos competentes.
+Art. 284. A partir de 1º de janeiro de 2004, conforme estabelecido pela Instrução Normativa INSS/DC nº 99, de 2003, a empresa ou equiparada à empresa deverá preencher o formulário PPP de forma individualizada para seus empregados, trabalhadores avulsos e contribuintes individuais cooperados, que trabalhem expostos a agentes prejudiciais à saúde, ainda que não presentes os requisitos para fins de enquadramento de atividade especial, seja pela eficácia dos equipamentos de proteção, coletivos ou individuais, seja por não se caracterizar a permanência.
+§ 1º A partir da implantação em meio digital do PPP ou de documento que venha a substituí-lo, esse formulário deverá ser preenchido para todos os segurados empregados, avulsos e cooperados vinculados a cooperativas de trabalho ou de produção, independentemente do ramo de atividade da empresa, da exposição a agentes prejudiciais à saúde.
+§ 2º A implantação do PPP em meio digital, ou de documento que venha substituí-lo nesse formato, será gradativa e haverá período de adaptação conforme critérios definidos pela Previdência Social.
+§ 3º A declaração de inexistência de exposição a riscos físicos, químicos e biológicos ou associação desses agentes no PPP poderá ser feita:
+I - para a Microempresa - ME e a Empresa de Pequeno Porte – EPP embasada na declaração eletrônica de ausência de riscos físicos, químicos e biológicos prevista no item 1.8.4 da NR 1, com redação dada pela Redação dada pela Portaria SEPRT nº 6.730, de 9 de março de 2020;
+II – para o Micro Empreendedor Individual – MEI sempre que nas fichas com orientações sobre as medidas de prevenção a serem adotadas de acordo com a atividade econômica de desenvolvida, nos termos do item 1.8.2 da NR 1, com redação dada pela Redação dada pela Portaria SEPRT nº 6.730, de 9 de março de 2020, não existir a indicação de exposição a agentes físicos, químicos ou biológicos; e
+III – Para todas as empresas quando no inventário de riscos do Programa de Gerenciamento de Riscos (PGR) de que trata o item 1.5.7 da NR 1 do Ministério do Trabalho e Previdência for constatada a inexistência de riscos físicos, químicos e biológicos previstos no anexo IV do Regulamento da Previdência Social.
+§ 4º O PPP deverá ser atualizado sempre que houver alteração que implique mudança das informações contidas nas suas seções.
+§ 5º A empresa ou equiparada à empresa deve elaborar e manter atualizado o PPP para os segurados referidos no caput, bem como fornecê-lo nas seguintes situações:
+I - por ocasião da rescisão do contrato de trabalho ou da desfiliação da cooperativa, sindicato ou órgão gestor de mão de obra, com fornecimento de uma das vias para o trabalhador, mediante recibo;
+II - sempre que solicitado pelo trabalhador, para fins de requerimento de reconhecimento de períodos laborados em condições especiais;
+III - para fins de análise de benefícios e serviços previdenciários e quando solicitado pelo INSS;
+IV - para simples conferência por parte do trabalhador, quando da revisão do Programa de Gerenciamento de Riscos – PGR; e
+V - quando solicitado pelas autoridades competentes.
+§ 6º A partir da implantação do PPP em meio digital, as informações disponibilizadas, pela empresa através do eSocial, serão disponibilizadas ao segurado pelo INSS, ficando a empresa ou equiparado responsável pela disponibilização ao trabalhador das informações referentes ao período anterior a tal implantação.
+§ 7º A exigência da informação no PPP, em relação aos agentes nocivos químicos e físicos, para os quais haja limite de tolerância estabelecido na legislação trabalhista e aplicável no âmbito da legislação previdenciária, fica condicionada ao alcance dos níveis de ação e, aos demais agentes nocivos, à efetiva exposição no ambiente de trabalho.
+§ 8º A comprovação da entrega do PPP disposta no inciso I do § 5º poderá ser feita no próprio instrumento de rescisão ou de desfiliação, bem como em recibo à parte.
+§ 9º O PPP e a comprovação de entrega ao trabalhador disposta no inciso I do § 4º deverão ser mantidos na empresa por 20 (vinte) anos.
+Art. 285. Quando apresentado o PPP, deverão ser observadas quanto ao preenchimento, para fins de comprovação de efetiva exposição do segurado a agentes prejudiciais à saúde, as seguintes situações:
+I - para atividade exercida até 13 de outubro de 1996, véspera da publicação da Medida Provisória nº 1.523:
+a) quando não se tratar de ruído, fica dispensado o preenchimento do campo referente ao responsável pelos Registros Ambientais;
+b) fica dispensado o preenchimento dos campos referentes às informações de Equipamentos de Proteção Coletiva- EPC eficaz;
+II - para atividade exercida até 3 de dezembro de 1998, data da publicação da Medida Provisória nº 1.729, convertida na Lei nº 9.732, de 11 de dezembro de 1998, fica dispensado o preenchimento dos campos referentes às informações de Equipamento de Proteção Individual- EPI eficaz; e
+III - para atividade exercida até 31 de dezembro de 1998, fica dispensado o preenchimento do campo código de ocorrência GFIP.  (revogado pela Instrução Normativa PRES/INSS nº 170, de 4 de Julho de 2024)

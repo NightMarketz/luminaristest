@@ -1,0 +1,112 @@
+ANEXO V da Resolução CGSN nº 140, de 22 de maio de 2018
+Alíquotas e Partilha do Simples Nacional - Receitas de prestação de serviços descritos no inciso V do § 1º 
+do art. 25, quando o fator "r" for inferior a 28%
+(Vigência: 1º/1/2027 a 31/12/2028)
+Para os anos-calendário 2027 e 2028
+Receita Bruta em 12 Meses (em R$) Alíquota Nominal Valor a Deduzir (em R$)
+1ª Faixa Até 180.000,00 15,50% -
+2ª Faixa De 180.000,01 a 360.000,00 18,00% 4.500,00
+3ª Faixa De 360.000,01 a 720.000,00 19,50% 9.900,00
+4ª Faixa De 720.000,01 a 1.800.000,00 20,50% 17.100,00
+5ª Faixa De 1.800.000,01 a 3.600.000,00 23,00% 62.100,00
+6ª Faixa De 3.600.000,01 a 4.800.000,00 30,40% 540.000,00
+Faixas
+Percentual de Repartição dos Tributos
+IRPJ CSLL CBS CPP ISS IBS
+1ª Faixa 25,00% 15,00% 16,96% 28,85% 14,00% 0,19%
+2ª Faixa 23,00% 15,00% 16,96% 27,85% 17,00% 0,19%
+3ª Faixa 24,00% 15,00% 17,95% 23,85% 19,00% 0,20%
+4ª Faixa 21,00% 15,00% 18,94% 23,85% 21,00% 0,21%
+5ª Faixa 23,00% 12,50% 16,96% 23,85% 23,50% 0,19%
+6ª Faixa 35,10% 15,54% 19,78% 29,58% - -
+Quando o valor do RBT12 for superior ao limite da 5ª faixa, para a parcela que não exceder o sublimite, os 
+percentuais efetivos de ISS e IBS serão calculados conforme segue, respectivamente:
+ISS: {[(RBT12 x 23%) - R$ 62.100,00]/RBT12} x 23,50%
+IBS: {[(RBT12 x 23%) - R$ 62.100,00]/RBT12} x 0,19%
+Alíquotas do Simples Nacional - Receitas de prestação de serviços descritos no inciso V do § 1º do art. 25, 
+quando o fator "r" for inferior a 28%
+(Vigência: 1º/1/2029)
+A partir do ano-calendário 2029
+Receita Bruta em 12 Meses (em R$) Alíquota Nominal Valor a Deduzir (em R$)
+1ª Faixa Até 180.000,00 15,50% -
+2ª Faixa De 180.000,01 a 360.000,00 18,00% 4.500,00
+3ª Faixa De 360.000,01 a 720.000,00 19,50% 9.900,00
+4ª Faixa De 720.000,01 a 1.800.000,00 20,50% 17.100,00
+5ª Faixa De 1.800.000,01 a 3.600.000,00 23,00% 62.100,00
+6ª Faixa De 3.600.000,01 a 4.800.000,00 30,50% 540.000,00
+Partilha do Simples Nacional - Receitas de prestação de serviços descritos no inciso V do § 1º do art. 25, 
+quando o fator "r" for inferior a 28%
+(Vigência: 1º/1/2029 a 31/12/2029)
+Para o ano-calendário 2029
+Faixas
+Percentual de Repartição dos Tributos
+IRPJ CSLL CBS CPP ISS IBS
+1ª Faixa 25,00% 15,00% 17,15% 28,85% 12,60% 1,40%
+2ª Faixa 23,00% 15,00% 17,15% 27,85% 15,30% 1,70%
+3ª Faixa 24,00% 15,00% 18,15% 23,85% 17,10% 1,90%
+4ª Faixa 21,00% 15,00% 19,15% 23,85% 18,90% 2,10%
+5ª Faixa 23,00% 12,50% 17,15% 23,85% 21,15% 2,35%
+6ª Faixa 35,00% 15,50% 20,00% 29,50% - -
+Quando o valor do RBT12 for superior ao limite da 5ª faixa, para a parcela que não exceder o sublimite, os 
+percentuais efetivos de ISS e IBS serão calculados conforme segue, respectivamente:
+ISS: {[(RBT12 x 23%) - R$ 62.100,00]/RBT12} x 21,15%
+IBS: {[(RBT12 x 23%) - R$ 62.100,00]/RBT12} x 2,35%
+(Vigência: 1º/1/2030 até 31/12/2030)
+A partir do ano-calendário 2030
+Faixas
+Percentual de Repartição dos Tributos
+IRPJ CSLL CBS CPP ISS IBS
+1ª Faixa 25,00% 15,00% 17,15% 28,85% 11,20% 2,80%
+2ª Faixa 23,00% 15,00% 17,15% 27,85% 13,60% 3,40%
+3ª Faixa 24,00% 15,00% 18,15% 23,85% 15,20% 3,80%
+4ª Faixa 21,00% 15,00% 19,15% 23,85% 16,80% 4,20%
+5ª Faixa 23,00% 12,50% 17,15% 23,85% 18,80% 4,70%
+6ª Faixa 35,00% 15,50% 20,00% 29,50% - -
+Quando o valor do RBT12 for superior ao limite da 5ª faixa, para a parcela que não exceder o sublimite, os 
+percentuais efetivos de ISS e IBS serão calculados conforme segue, respectivamente:
+ISS: {[(RBT12 x 23%) - R$ 62.100,00]/RBT12} x 18,80%
+IBS: {[(RBT12 x 23%) - R$ 62.100,00]/RBT12} x 4,70%
+(Vigência: 1º/1/2031 a 31/12/2031)
+Para o ano-calendário 2031
+Faixas
+Percentual de Repartição dos Tributos
+IRPJ CSLL CBS CPP ISS IBS
+1ª Faixa 25,00% 15,00% 17,15% 28,85% 9,80% 4,20%
+2ª Faixa 23,00% 15,00% 17,15% 27,85% 11,90% 5,10%
+3ª Faixa 24,00% 15,00% 18,15% 23,85% 13,30% 5,70%
+4ª Faixa 21,00% 15,00% 19,15% 23,85% 14,70% 6,30%
+5ª Faixa 23,00% 12,50% 17,15% 23,85% 16,45% 7,05%
+6ª Faixa 35,00% 15,50% 20,00% 29,50% - -
+Quando o valor do RBT12 for superior ao limite da 5ª faixa, para a parcela que não exceder o sublimite, os 
+percentuais efetivos de ISS e IBS serão calculados conforme segue, respectivamente:
+ISS: {[(RBT12 x 23%) - R$ 62.100,00]/RBT12} x 16,45%
+IBS: {[(RBT12 x 23%) - R$ 62.100,00]/RBT12} x 7,05%
+(Vigência: 1º/1/2032 a 31/12/2032)
+Para o ano-calendário 2032
+Faixas
+Percentual de Repartição dos Tributos
+IRPJ CSLL CBS CPP ISS IBS
+1ª Faixa 25,00% 15,00% 17,15% 28,85% 8,40% 5,60%
+2ª Faixa 23,00% 15,00% 17,15% 27,85% 10,20% 6,80%
+3ª Faixa 24,00% 15,00% 18,15% 23,85% 11,40% 7,60%
+4ª Faixa 21,00% 15,00% 19,15% 23,85% 12,60% 8,40%
+5ª Faixa 23,00% 12,50% 17,15% 23,85% 14,10% 9,40%
+6ª Faixa 35,00% 15,50% 20,00% 29,50% - -
+Quando o valor do RBT12 for superior ao limite da 5ª faixa, para a parcela que não exceder o sublimite, os 
+percentuais efetivos de ISS e IBS serão calculados conforme segue, respectivamente:
+ISS: {[(RBT12 x 23%) - R$ 62.100,00]/RBT12} x 14,10%
+IBS: {[(RBT12 x 23%) - R$ 62.100,00]/RBT12} x 9,40%
+(Vigência: 1º/1/2033 a 31/12/2033)
+Para o ano-calendário 2033
+Faixas
+Percentual de Repartição dos Tributos
+IRPJ CSLL CBS CPP IBS
+1ª Faixa 25,00% 15,00% 17,15% 28,85% 14,00%
+2ª Faixa 23,00% 15,00% 17,15% 27,85% 17,00%
+3ª Faixa 24,00% 15,00% 18,15% 23,85% 19,00%
+4ª Faixa 21,00% 15,00% 19,15% 23,85% 21,00%
+5ª Faixa 23,00% 12,50% 17,15% 23,85% 23,50%
+6ª Faixa 35,00% 15,50% 20,00% 29,50% -
+Com relação ao IBS, quando o valor do RBT12 for superior ao limite da 5ª faixa, para a parcela que não 
+ultrapassar o sublimite, o percentual efetivo desse imposto será calculado conforme segue:
+{[(RBT12 x 23%) - R$ 62.100,00]/RBT12} x 23,50%

@@ -1,0 +1,330 @@
+INSTITUTO NACIONAL DO SEGURO SOCIAL
+ANEXO XVII
+INSTRUÇÃO NORMATIVA PRES/INSS Nº 128, 28 DE MARÇO DE 2022
+PERFIL PROFISSIOGRÁFICO PREVIDENCIÁRIO – PPP
+DADOS ADMINISTRATIVOS
+1 – Nº CNPJ do Domicílio Tributário/CEI/CAEPF/CNO 2 – Nome Empresarial 3 – CNAE
+4 – Nome do Trabalhador 5 – BR/PDH 6 – CPF nº
+7 – Data de Nascimento 8 – Sexo (F/M) 9 – Matrícula do Trabalhador no eSocial 10 – Data de 
+Admissão 11 – Regime Revezamento
+12 – CAT REGISTRADA
+12.1 – Data do Registro 12.2 – Número da CAT 
+INSTITUTO NACIONAL DO SEGURO SOCIAL
+13 – LOTAÇÃO E ATRIBUIÇÃO
+13.1 – Período
+13.2 –  Nº
+CNPJ/CEI/ 
+CAEPF/CNO
+13.3 – Setor 13.4 – Cargo 13.5 – Função 13.6 – 
+CBO
+13.7 – Código 
+GFIP/eSocial
+______/______/________   a
+______/______/________
+______/______/________   a
+______/______/________
+______/______/________   a
+______/______/________
+______/______/________   a
+______/______/________
+14 – PROFISSIOGRAFIA
+14.1 – Período 14.2 – Descrição das Atividades
+INSTITUTO NACIONAL DO SEGURO SOCIAL
+_____/____/________   a  _____/____/________
+_____/____/________   a  _____/____/________
+_____/____/________   a  _____/____/________
+_____/____/________   a  _____/____/________
+REGISTROS AMBIENTAIS
+15 – EXPOSIÇÃO A FATORES DE RISCOS
+15.1 – Período 15.2 – Tipo 15.3 – Fator 
+de Risco
+15.4 – 
+Intensidade/ 
+Concentração
+15.5 – 
+Técnica 
+Utilizada
+15.6 – 
+EPC 
+Eficaz 
+(S/N)
+15.7 
+– EPI
+Eficaz 
+(S/N)
+15.8 – CA 
+EPI
+15.9 – Atendimento aos requisitos das 
+NR-06 e NR-01 do MTP pelos EPIs 
+informados (*)
+Medida 
+de 
+Proteção
+Condição 
+de 
+Funciona
+mento do 
+EPI
+Prazo de 
+Validade 
+do EPI
+Periodici
+dade da 
+Troca do 
+EPI
+Higieni
+zação 
+do EPI
+____/____/_______ a
+____/____/_______
+____/____/_______ a
+____/____/_______
+INSTITUTO NACIONAL DO SEGURO SOCIAL
+____/____/_______ a
+____/____/_______
+____/____/_______ a
+____/____/_______
+* Legenda do item 15.9:
+Medida de Proteção: Foi tentada a implementação de medidas de proteção coletiva, de caráter administrativo ou de organização do trabalho, optando-se pelo Equipamento de Proteção Individual – EPI por
+inviabilidade técnica, insuficiência ou interinidade, ou ainda em caráter complementar ou emergencial?
+Condição de Funcionamento do EPI: Foram observadas as condições de funcionamento e do uso ininterrupto do EPI ao longo do tempo, conforme especificação técnica do fabricante, ajustada às condições?
+Prazo de Validade do EPI: Foi observado o prazo de validade, conforme Certificado de Aprovação – CA do MTP?
+Periocidade da Troca do EPI: Foi observada a periodicidade de troca definida pelos programas ambientais, comprovada mediante recibo assinado pelo usuário em época própria?
+Higienização do EPI: Foi observada a higienização?
+16. RESPONSÁVEL PELOS REGISTROS AMBIENTAIS
+16.1 – Período 16.2 – CPF nº 16.3 Registro Conselho de Classe 16.4 Nome do profissional legalmente 
+habilitado
+____/_____/_______  a  ____/_____/______
+____/_____/_______  a  ____/_____/______
+____/_____/_______  a  ____/_____/______
+INSTITUTO NACIONAL DO SEGURO SOCIAL
+____/_____/_______  a  ____/_____/______
+RESPONSÁVEIS PELAS INFORMAÇÕES
+Declaramos,  para  todos  fins  de  direito,  que  as  informações  prestadas  neste  documento  são  verídicas  e  foram  transcritas  fielmente  dos  registros 
+administrativos, das demonstrações ambientais e dos programas médicos de responsabilidade da empresa. É de nosso conhecimento que a prestação de  
+informações falsas neste documento constitui crime de falsificação de documento público, nos termos do art. 297 do Código Penal e, também, que tais  
+informações são de caráter privativo do trabalhador, constituindo crime, nos termos da Lei nº 9.029, de 13 de abril de 1995, práticas discriminatórias  
+decorrentes de sua exigibilidade por outrem, bem como de sua divulgação para terceiros, ressalvado quando exigida pelos órgãos públicos competentes.
+17 – Data da Emissão do PPP 18 – Representante Legal da Empresa
+ ______/______/_________
+18.1 - Nº CPF do Representante Legal                                                                        18.2 – Nome do Representante Legal
+_____________________________________________________
+ (Assinatura física ou eletrônica)
+OBSERVAÇÕES
+INSTITUTO NACIONAL DO SEGURO SOCIAL
+INSTRUÇÕES DE PREENCHIMENTO DO PPP
+CAMPO DESCRIÇÃO INSTRUÇÃO DE PREENCHIMENTO
+DADOS ADMINISTRATIVOS
+1 Nº CNPJ do Domicílio 
+Tributário/ CEI/ CAEPF/CNO
+CNPJ relativo ao estabelecimento escolhido como domicílio tributário, nos termos do art. 127 do 
+CTN, no formato XXXXXXXX/XXXX-XX; ou
+Matrícula no Cadastro Específico do INSS (Matrícula CEI) relativa à obra realizada por Contribuinte 
+Individual ou ao estabelecimento escolhido como domicílio tributário que não possua CNPJ, no 
+formato XX.XXX.XXXXX/XX, ambos compostos por caracteres numéricos; ou
+Cadastro das Atividades Econômicas das Pessoas Físicas (CAEPF) ou Cadastro Nacional de Obras 
+(CNO) do empregador no formato, respectivamente, XXX.XXX.XXX/XXX-XX e XX.XXX.XXXXX/XX.
+Quando da implantação do PPP em meio eletrônico, o campo apresentará o CNPJ raiz no formato 
+XX.XXX.XXX ou o CPF do empregador com o qual o vínculo está estabelecido.
+2 NOE EMPRESARIAL Até quarenta caracteres alfanuméricos.
+3 CNAE
+Classificação  Nacional  de  Atividades  Econômicas  da  Empresa  –  CNAE,  completo,  com  sete 
+caracteres numéricos, no formato XXXXXX-X, instituído pelo IBGE por meio da Resolução CONCLA  
+nº 07, de 16 de dezembro de 2002. A tabela de códigos CNAE - Fiscal pode ser consultada na  
+internet, no site www.cnae.ibge.gov.br
+4 NOME DO TRABALHADOR Até setenta caracteres alfabéticos.
+INSTITUTO NACIONAL DO SEGURO SOCIAL
+5 BR/PDH
+BR – Beneficiário Reabilitado; PDH – Portador de Deficiência Habilitado; NA – Não Aplicável.
+Preencher com base no art. 93 da Lei nº 8.213, de 1991, que estabelece a obrigatoriedade do 
+preenchimento  dos  cargos  de  empresas  com  cem  ou  mais  empregados  com  beneficiários 
+reabilitados ou pessoas portadoras de deficiência, habilitadas, na seguinte proporção:
+I - até 200 empregados     2%;
+II - de 201 a 500  3%;
+III - de 501 a 1.000  4%;
+IV - de 1.001 em diante     5%.
+6 CPF Nº Número de Cadastro da Pessoa Física com onze caracteres numéricos, no formato XXX.XXX.XXX-XX.
+7 DATA DO NASCIMENTO No formato DD/MM/AAAA
+8 SEXO (F/M) F - Feminino; M - Masculino
+9 MATRÍCULA DO 
+TRABALHADOR NO eSOCIAL Número único composto pelo código da empresa e pelo número do empregado.
+10 DATA DE ADMISSÃO No formato DD/MM/AAAA
+INSTITUTO NACIONAL DO SEGURO SOCIAL
+11
+REGIME DE REVEZAMENTO
+Regime de Revezamento de Trabalho, para trabalhos em turnos ou escala, especificando tempo 
+trabalhado e tempo de descanso, com até quinze caracteres alfanuméricos.
+Exemplo: 24 x 72 horas; 14 x 21 dias; 2 x 1 meses. Se inexistente, preencher com NA – Não  
+Aplicável.
+12 CAT REGISTRADA
+Informações  sobre  as  Comunicações  de  Acidente  do  Trabalho  registradas  pela  empresa  na 
+Previdência Social, nos termos do art. 22 da Lei nº 8.213, de 1991, do art. 169 da CLT, do art. 336  
+do RPS, aprovado pelo Decreto nº 3.048, de 1999 e da Portaria SEPRT nº 4.334, de 15 de abril de 
+2021.
+12.1 DATA DO REGISTRO No formato DD/MM/AAAA.
+12.2 NÚMERO DA CAT
+Com treze caracteres numéricos, com formato XXXXXXXXXX-X/XX.
+Os dois últimos caracteres correspondem a um número sequencial relativo ao mesmo acidente, 
+identificado por NIT, CNPJ e data do acidente.
+Nos casos de CATs encaminhadas pelo eSocial, pode ser registrado o número do recibo do evento 
+‘S-2210 – Comunicação de Acidente de Trabalho’, no formato X.X.XXXXXXXXXXXXXXXXXXX
+13 LOTAÇÃO E ATRIBUIÇÃO
+Informações sobre o histórico de lotação e atribuições do trabalhador, por período.
+A alteração de qualquer um dos campos - 13.2 a 13.7 - implica, obrigatoriamente, a criação de nova  
+linha, com discriminação do período, repetindo as informações que não foram alteradas.
+13.1 PERÍODO
+Data de início e data de fim do período, ambas no formato DD/MM/AAAA.
+No caso de trabalhador ativo, a data de fim do último período não deverá ser preenchida.
+INSTITUTO NACIONAL DO SEGURO SOCIAL
+13.2 Nº CNPJ/CEI/CAEPF/CNO
+Local onde efetivamente o trabalhador exerce suas atividades. Deverá ser informado o CNPJ do 
+estabelecimento de  lotação do trabalhador  ou da empresa tomadora  de serviços,  no formato 
+XXXXXXXX/XXXX-XX ou Matrícula CEI da obra ou do estabelecimento que não possua CNPJ, no 
+formato XX.XXX.XXXXX/XX, ou o Cadastro das Atividades Econômicas das Pessoas Físicas (CAEPF), 
+no  formato  XXX.XXX.XXX/XXX-XX  ou  o  Cadastro  Nacional  de  Obras  (CNO)  do  empregador  no 
+formato XX.XXX.XXXXX/XX.
+13.3 SETOR Lugar  administrativo  na  estrutura  organizacional  da  empresa,  onde  o  trabalhador  exerce  suas 
+atividades laborais, com até quinze caracteres alfanuméricos.
+13.4 CARGO Cargo do trabalhador, constante na CTPS, se empregado ou trabalhador avulso, ou constante no 
+Recibo de Produção e Livro de Matrícula, se cooperado, com até trinta caracteres alfanuméricos.
+13.5 FUNÇÃO
+Lugar administrativo na estrutura organizacional da empresa, onde o trabalhador tenha atribuição 
+de comando, chefia, coordenação, supervisão ou gerência. Quando inexistente a função, preencher 
+com NA - Não Aplicável, com até trinta caracteres alfanuméricos.
+INSTITUTO NACIONAL DO SEGURO SOCIAL
+13.6 CBO Classificação Brasileira de Ocupação – CBO vigente à época, com seis caracteres numéricos: 
+1  -  No  caso  de  utilização  da  tabela  CBO  relativa  a  1994,  utilizar  a  CBO  completa  com  cinco 
+caracteres, completando com “0” (zero) a primeira posição;
+2 - No caso de utilização da tabela CBO relativa a 2002, utilizar a CBO completa com seis caracteres.
+Alternativamente, pode ser utilizada a CBO, com cinco caracteres numéricos, conforme Manual da 
+GFIP para usuários do SEFIP:
+1 - No caso de utilização da tabela CBO relativa a 1994, utilizar a CBO completa com cinco caracteres.
+2 -  No  caso  de  utilização  da  tabela  CBO  relativa  a  2002,  utilizar  a  família  do CBO  com  quatro 
+caracteres, completando com “0” (zero) a primeira posição.
+A  tabela  de  CBO  pode  ser consultada na internet, no site  
+http://cbo.maisemprego.mte.gov.br/cbosite/pages/home.jsf
+OBS.:  Após  a  alteração  da  GFIP,  somente  será  aceita  a  CBO  completa,  com  seis  caracteres 
+numéricos, conforme a nova tabela CBO relativa a 2002.
+13.7 CÓDIGO DE OCORRÊNCIA DA 
+GFIP/eSOCIAL
+Código Ocorrência da GFIP/eSocial para o trabalhador, com dois caracteres numéricos, conforme 
+Manual  da GFIP  para usuários do SEFIP  ou com  um  caractere  numérico conforme Manual  de  
+Orientação do eSocial para usuários do eSocial.
+Deve  ser  utilizado  o código correspondente  ao  declarado  em  GFIP,  para  o  período em  que  a 
+empresa era obrigada à GFIP ou, para períodos posteriores a substituição da GFIP pelo eSocial, o 
+código declarado no eSocial. 
+14 PROFISSIOGRAFIA
+Informações sobre a profissiografia do trabalhador, por período.
+A alteração do campo 14.2 implica, obrigatoriamente, a criação de nova linha, com discriminação do 
+período.
+INSTITUTO NACIONAL DO SEGURO SOCIAL
+14.1 PERÍODO Data de início e data de fim do período, ambas no formato DD/MM/AAAA. No caso de trabalhador 
+ativo, a data de fim do último período não deverá ser preenchida.
+14.2
+DESCRIÇÃO DAS ATIVIDADES
+Descrição das atividades, físicas ou mentais, realizadas pelo trabalhador, por força do poder de 
+comando a que se submete, com até novecentos e noventa e nove caracteres alfanuméricos.
+As atividades deverão ser descritas com exatidão e de forma sucinta, com a utilização de verbos no 
+infinitivo impessoal.
+REGISTROS AMBIENTAIS
+15 EXPOSIÇÃO AFATORES DE 
+RISCOS
+Informações sobre a exposição do trabalhador a fatores de riscos ambientais, por período, ainda 
+que estejam neutralizados, atenuados ou exista proteção eficaz.
+A alteração de qualquer um dos campos do 15.2 ao 15.8 implica, obrigatoriamente, a criação de 
+nova linha, com discriminação do período, repetindo as informações que não foram alteradas.
+15.1 PERÍODO Data de início e data de fim do período, ambas no formato DD/MM/AAAA. No caso de trabalhador 
+ativo, a data de fim do último período não deverá ser preenchida.
+15.2 TIPO
+F - Físico; Q - Químico; B – Biológico; conforme classificação adotada pelo Ministério da Saúde em  
+“Doenças Relacionadas do Trabalho: Manual de Procedimentos para os Serviços de Saúde”, de 2001.
+O que determina a associação de agentes é a superposição de períodos  com fatores de risco 
+diferentes.
+INSTITUTO NACIONAL DO SEGURO SOCIAL
+15.3 FATOR DE RISCO
+Descrição do fator de risco, com até quarenta caracteres alfanuméricos.
+Em se tratando do Tipo “Q”, deverá ser informado o nome da substância ativa, não sendo aceitas 
+citações de nomes comerciais.
+15.4 INTENSIDADE / 
+CONCENTRAÇÃO
+Intensidade ou Concentração, dependendo do tipo de agente, com até quinze caracteres 
+alfanuméricos.
+Caso o fator de risco não seja passível de mensuração, preencher com NA - Não Aplicável.
+15.5 TÉCNICA UTILIZADA
+Técnica utilizada para apuração do item 15.4, com até quarenta caracteres alfanuméricos. A 
+indicação da norma que estabelece a metodologia utilizada é imprescindível.
+Caso o fator de risco não seja passível de mensuração, preencher com NA - Não Aplicável.
+15.6 EPC EFICAZ (S/N)
+S - Sim; N - Não, considerando se houve ou não a eliminação ou a neutralização, com base no 
+informado nos itens 15.2 a 15.5, asseguradas as condições de funcionamento do EPC ao longo do 
+tempo, conforme especificação técnica do fabricante e respectivo plano de manutenção.
+15.7 EPI EFICAZ (S/N)
+S - Sim; N - Não, considerando se houve ou não a atenuação, com base no informado nos itens 15.2 
+a 15.5, observado o disposto na NR-06 do MTP, assegurada a observância:
+1- da hierarquia estabelecida no item 1.5.5.1.2 da NR-01 do MTP (medidas de proteção coletiva,
+medidas de caráter administrativo ou de organização do trabalho e utilização de EPI, nesta ordem,
+admitindo-se a utilização de EPI somente em situações de inviabilidade técnica, insuficiência ou
+interinidade à implementação do EPC, ou ainda em caráter complementar ou emergencial);
+2- das condições de funcionamento do EPI ao longo do tempo, conforme especificação técnica do
+fabricante, ajustada às condições de campo;
+3- do prazo de validade, conforme Certificado de Aprovação do MTP;
+4- da periodicidade de troca definida pelos programas ambientais, devendo esta ser comprovada
+INSTITUTO NACIONAL DO SEGURO SOCIAL
+mediante recibo; e
+5- dos meios de higienização.
+15.8 C.A. EPI
+Número do Certificado de Aprovação do MTP para o Equipamento de Proteção Individual referido 
+no campo 15.7, com cinco caracteres numéricos.
+Caso não seja utilizado EPI, preencher com NA – Não Aplicável.
+15.9
+ATENDIMENTO AOS 
+REQUISITOS DAS NR-06 E 
+NR-01 DO MTP PELOS EPI 
+INFORMADOS
+Observação do disposto na NR-06 do MTP, assegurada a observância:
+1- da hierarquia estabelecida no item 1.5.5.1.2 da NR-01 do MTP (medidas de proteção coletiva,
+medidas de caráter administrativo ou de organização do trabalho e utilização de EPI, nesta ordem,
+admitindo-se a utilização de EPI somente em situações de inviabilidade técnica, insuficiência ou
+interinidade à implementação do EPC, ou ainda em caráter complementar ou emergencial);
+2- das condições de funcionamento do EPI ao longo do tempo, conforme especificação técnica do
+fabricante, ajustada às condições de campo;
+3- do prazo de validade, conforme Certificado de Aprovação do MTP;
+4- da periodicidade de troca definida pelos programas ambientais, devendo esta ser comprovada
+mediante recibo; e
+5- dos meios de higienização.
+16 RESPONSÁVEL PELOS 
+REGISTROS AMBIENTAIS
+Informações sobre os responsáveis pelos registros ambientais, por período.
+16.1 PERÍODO Data de início e data de fim do período, ambas no formato DD/MM/AAAA. No caso de trabalhador 
+ativo, sem alteração do responsável, a data de fim do último período não deverá ser preenchida.
+INSTITUTO NACIONAL DO SEGURO SOCIAL
+16.2 CPF nº Número de Cadastro da Pessoa Física com onze caracteres numéricos, no formato XXX.XXX.XXX-XX.
+16.3 REGISTRO CONSELHO DE 
+CLASSE
+Número do registro profissional no Conselho de Classe, com nove caracteres alfanuméricos, no 
+formato XXXXXX-X/XX ou XXXXXXX/XX.
+A parte “-X” corresponde à D - Definitivo ou P - Provisório.
+A parte “/XX” deve ser preenchida com a UF, com dois caracteres alfabéticos.
+A parte numérica deverá ser completada com zeros à esquerda.
+16.4 NOME DO PROFISSIONAL 
+LEGALMENTE HABILITADO Até setenta caracteres alfabéticos.
+RESPONSÁVEIS PELAS INFORMAÇÕES
+17 DATA DE EMISSÃO DO PPP Data em que o PPP é impresso e assinado pelos responsáveis, no formato DD/MM/AAAA.
+18 REPRESENTANTE LEGAL DA 
+EMPRESA
+Informações sobre o Representante Legal da empresa.
+Somente deve ser preenchido nos casos de PPP em meio físico (papel)
+18.1 Nº CPF DO 
+REPRESENTANTE LEGAL
+CPF do representante legal da empresa, com onze caracteres numéricos, no formato XXX.XXX.XXX-
+XX.
+INSTITUTO NACIONAL DO SEGURO SOCIAL
+18.2 NOME DO REPRESENTANTE 
+LEGAL
+Até quarenta caracteres alfabéticos.
+ASSINATURA DO 
+REPRESENTANTE LEGAL Assinatura, física ou eletrônica, do Representante Legal.
+OBSERVAÇÕES
+Devem ser incluídas neste campo informações necessárias à análise do PPP, bem como facilitadoras do requerimento do benefício, como por exemplo:
+esclarecimento sobre alteração de razão social da empresa, no caso de sucessora ou indicador de empresa pertencente a grupo econômico.
+OBS.: É facultada a inclusão de informações complementares ou adicionais ao PPP.

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en" style="scroll-behavior: smooth">
+<head>
+  <meta charset="utf-8">
+  <title>Portal IN</title>
+  <base href="/">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <style>
+    .spinner {
+      position: fixed;
+      top: 40%;
+      left: 45%;
+    }
+
+    .img-spinner {
+      width: 100px;
+      height: 100px;
+      animation-name: carregando;
+      animation-duration: 1s;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+    }
+
+    @keyframes carregando {
+      0% {
+        transform: scale(1, 1);
+      }
+
+      25% {
+        transform: scale(0.75, 0.75);
+      }
+
+      50% {
+        transform: scale(0.5, 0.5);
+      }
+
+      75% {
+        transform: scale(0.75, 0.75);
+      }
+
+      100% {
+        transform: scale(1, 1);
+      }
+    }
+  </style>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1FXTNC2E39"></script>
+  <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+    gtag('config', 'G-1FXTNC2E39', { send_page_view: false });
+  </script>
+
+<link rel="stylesheet" href="styles.5248f1db3fa9f0f2cd0d.css"></head>
+<body>
+  <app-root>
+    <div class="spinner">
+      <img class="img-spinner" src="assets/img/PN.png" />
+    </div>
+  </app-root>
+<script type="text/javascript" src="runtime.ec2944dd8b20ec099bf3.js"></script><script type="text/javascript" src="polyfills.3bfd66addbd0d2814591.js"></script><script type="text/javascript" src="scripts.dc27ede4c064c3603d83.js"></script><script type="text/javascript" src="main.11d20173ec4bc58ac2aa.js"></script></body>
+</html>
