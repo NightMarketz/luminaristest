@@ -51,7 +51,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
 
-export const VERSAO = 5;
+export const VERSAO = 6;
 const EU = fileURLToPath(import.meta.url);
 export const CLASSES = ['defeito', 'debito', 'spec', 'feature', 'fork', 'gate'];
 export const ESTADOS = ['aberta', 'em-sessao', 'em-pr', 'resolvida', 'com-dono', 'descartada'];
@@ -141,7 +141,7 @@ export function adicionar(campos, dir = pasta(), agora = new Date()) {
     try { geracao = (ler(dir, campos.pai).geracao ?? 1) + 1; } catch { throw new Error(`pai inexistente: ${campos.pai}`); }
   }
   const stamp = agora.toISOString().replace(/[-:]/g, '').slice(0, 15).replace('T', '-');
-  const id = `L-${stamp}-${randomBytes(2).toString('hex')}`;
+  const id = idLivre(dir, stamp);
   const l = {
     id, criada: agora.toISOString(), estado: 'aberta', geracao,
     local: campos.local, classe: campos.classe, oQue: campos.oQue, evidencia: campos.evidencia,
@@ -153,6 +153,16 @@ export function adicionar(campos, dir = pasta(), agora = new Date()) {
   };
   writeFileSync(join(dir, `${id}.json`), JSON.stringify(l, null, 2), { flag: 'wx' });
   return { ...l, avisos };
+}
+
+// Id = timestamp (s) + 2 bytes aleatórios. Duas lacunas no mesmo segundo podiam sortear o mesmo sufixo e o `wx` dava
+// EEXIST (L-…-42c9: derrubou o CI 'Scripts – node --test' no #1405). Sorteia de novo até achar um nome livre na pasta.
+export function idLivre(dir, stamp, sorteio = () => randomBytes(2).toString('hex')) {
+  for (let i = 0; i < 64; i++) {
+    const id = `L-${stamp}-${sorteio()}`;
+    if (!existsSync(join(dir, `${id}.json`))) return id;
+  }
+  throw new Error(`sem id livre para ${stamp} depois de 64 sorteios`);
 }
 
 // Desde quando a lacuna está no estado atual: a última transição do histórico, não a criação. Entrada `semTransicao`

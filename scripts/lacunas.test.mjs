@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
 import {
   adicionar, arquivoDe, grupos, instalar, listar, marcarDreno, mudar, paradas, porArquivo, prDaLacuna, pulso, sincronizar,
-  integradosDosTitulos, triar, validarLocal,
+  idLivre, integradosDosTitulos, triar, validarLocal,
   VERSAO,
 } from './lacunas.mjs';
 
@@ -353,4 +353,13 @@ test('PR fechado que um commit de integração da main cita conta como integrado
   assert.deepEqual(r.resolvidas, [integra.id]);
   assert.deepEqual(r.reabertas, [abandonado.id]);
   assert.match(listar(dir).find((l) => l.id === integra.id).destino, /integrado na main/);
+});
+
+// L-…-42c9: sufixo aleatório repetido no mesmo segundo não pode derrubar o add (EEXIST).
+test('idLivre sorteia de novo quando o nome já existe na pasta', () => {
+  const dir = nova();
+  writeFileSync(join(dir, 'L-20261125-120000-aaaa.json'), '{}');
+  const sorteios = ['aaaa', 'aaaa', 'bbbb'];
+  assert.equal(idLivre(dir, '20261125-120000', () => sorteios.shift()), 'L-20261125-120000-bbbb');
+  assert.throws(() => idLivre(dir, '20261125-120000', () => 'aaaa'), /sem id livre/);
 });
