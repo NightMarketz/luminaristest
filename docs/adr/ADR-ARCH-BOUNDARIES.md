@@ -84,7 +84,7 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
   `PeriodService → paises/br/EcdChartStructureRule` (`import type`), `AuditService → lib/ofx`, `ReconciliationService → lib/cnab`, `ExerciseClosingService → LalurService`
   (`import type`), `IPostingRepository → models/taxAssessmentProvisao` (`import type`) ⇒ `npm run check:arch` **exit 6**, `x 6 dependency violations`, cada uma como
   `error C1-ledger-core-not-fiscal: <from> → <to>`; o `core-boundary.test.ts` (detector independente, lista de famílias) acusou os mesmos 6. Plantios removidos:
-  `check:arch` exit 0 ("no dependency violations found", 24 conhecidas ignoradas).
+  `check:arch` exit 0 ("no dependency violations found", 24 conhecidas ignoradas na base de então; hoje, na main pós-#1375, são 11 ativas / 11 obsoletas).
 - **Teste de direção:** `features/accounting/__tests__/core-boundary.test.ts` manteve a asserção de módulos de **origem** (item 42 do KIT-SETOR) e ganhou a de
   **direção**: cada arquivo do núcleo do razão existe (renomear fica vermelho, não vácuo), o detector tem autoteste (inclusive `import type` plantado em memória), a regra
   C1 existe no `.cjs` com severidade erro e seu `from` casa todos os arquivos, e a lista de permitidos nunca contém fiscal/`paises/`.
