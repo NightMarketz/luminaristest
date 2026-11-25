@@ -18,4 +18,13 @@ export interface IInventoryService {
     scope: AccountingScope,
     params: ReverseStockForReceiptParams,
   ): Promise<{ totalReversedCents: number }>;
+
+  /**
+   * CANCELLING PR-0 (0.4 i) — pré-cheque de leitura (sem mutar) do `reverseStockForReceipt`. Opcional na porta: um stub sem ele
+   * degrada para "sem pré-cheque" (o CAS dentro do `reverseStockForReceipt` segue autoritativo).
+   */
+  canReverseStockForReceipt?(
+    scope: AccountingScope,
+    params: Pick<ReverseStockForReceiptParams, 'sourceType' | 'sourceId' | 'reversalEventId'>,
+  ): Promise<boolean>;
 }

@@ -3135,7 +3135,12 @@
       "PACKAGE_CONSUMPTION_PENDING": "Waiting for the package consumption debit",
       "PACKAGE_ORIGIN_REVERSED": "The package originating sale was reversed",
       "PACKAGE_EXPIRY_NFSE_PENDING": "Missing data for the expired package NFS-e",
-      "UNKNOWN_EVENT_KEY": "Event that no sector kit declares — bug in the event emitter; contact support"
+      "UNKNOWN_EVENT_KEY": "Event that no sector kit declares — bug in the event emitter; contact support",
+      "PAYMENT_REVERSAL_INVARIANT_VIOLATED": "Payment reversal is already in the ledger, but the title balance cannot carry it — operator review needed",
+      "RECEIPT_REVERSAL_INVARIANT_VIOLATED": "Receipt reversal is already in the ledger, but the title balance cannot carry it — operator review needed",
+      "IMPOSTO_JA_RECOLHIDO": "Withheld tax already paid — reverse the tax payment before cancelling",
+      "JCP_JA_PAGO": "JCP has a payment booked — reverse the payment and repeat the cancellation",
+      "CANCEL_REDRIVE_FAILED": "Cancellation in progress has not completed yet — it will be retried; check the period and stock"
     }
   },
   "simples": {

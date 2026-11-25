@@ -42,4 +42,22 @@ describe('PAYABLE_TRANSITIONS', () => {
     expect(() => assertTransition(PAYABLE_TRANSITIONS, 'OPEN', 'PAYING', 'Conta a pagar')).not.toThrow();
     expect(canTransition(PAYABLE_TRANSITIONS, 'OPEN', 'OPEN')).toBe(false);
   });
+
+  // BE-INCR-CANCELAMENTO-CANCELLING PR-0 (0.2, F-CX-2 a): a intenção de cancelar só avança.
+  it('CANCELLING só avança para CANCELLED (rejeita CANCELLING → OPEN/PAID/PARTIALLY_PAID/PAYING)', () => {
+    expect(PAYABLE_TRANSITIONS.CANCELLING).toEqual(['CANCELLED']);
+    for (const to of ['OPEN', 'PARTIALLY_PAID', 'PAYING', 'PAID', 'DEFERRED'] as const) {
+      expect(canTransition(PAYABLE_TRANSITIONS, 'CANCELLING', to)).toBe(false);
+    }
+    expect(() => assertTransition(PAYABLE_TRANSITIONS, 'CANCELLING', 'OPEN', 'Conta a pagar')).toThrow(ValidationError);
+  });
+
+  it('só OPEN, PARTIALLY_PAID e PAID abrem CANCELLING; título em baixa em trânsito (PAYING) não', () => {
+    expect(sourcesOf(PAYABLE_TRANSITIONS, 'CANCELLING').sort()).toEqual(['OPEN', 'PAID', 'PARTIALLY_PAID']);
+  });
+
+  it('CANCELLING não é liquidável (escrita nova morta) mas segue "em aberto" para a leitura (F-CX-3 a: vivo para razão/fiscal, morto para escrita)', () => {
+    expect(PAYABLE_SETTLEABLE_STATUSES).not.toContain('CANCELLING');
+    expect(PAYABLE_OUTSTANDING_STATUSES).toContain('CANCELLING');
+  });
 });

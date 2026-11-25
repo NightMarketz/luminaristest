@@ -73,9 +73,17 @@ function build(opts: Opts = {}) {
   const releaseSettlement = jest.fn(async () => (releaseResults.length ? releaseResults.shift()! : 1));
 
   const createdPayments: PayablePayment[] = [];
+  // CANCELLING PR-0: o CAS de intenção grava o estado que a tx de conclusão relê (`findById` passa a devolver CANCELLING com a data/motivo gravados).
+  let cancelling: { cancelReversalDate: string; cancelReason: string | null } | null = null;
   const payableRepo = {
     create: jest.fn(async (data: Record<string, unknown>) => payableRow({ id: 'pay-new', ...data } as Partial<Payable>)),
-    findById: jest.fn(async () => payableRow()),
+    findById: jest.fn(async () => payableRow(cancelling ? ({ status: 'CANCELLING', ...cancelling } as Partial<Payable>) : {})),
+    findActivePayments: jest.fn(async () => [] as PayablePayment[]),
+    casStartCancelling: jest.fn(async (_s: unknown, _id: string, data: { cancelReversalDate: string; cancelReason: string | null }) => {
+      cancelling = { cancelReversalDate: data.cancelReversalDate, cancelReason: data.cancelReason };
+      return 1;
+    }),
+    casCompleteCancelling: jest.fn(async (_s: unknown, _id: string, _data: { deletedAt: Date; documentNumber: string | null }) => 1),
     findByIdWithPayments: jest.fn(async () => ({ ...payableRow(), payments: [] })),
     findManyByUnit: jest.fn(async () => ({ payables: [], total: 0 })),
     findAllActive: jest.fn(async () => [] as Payable[]),
@@ -122,6 +130,7 @@ function build(opts: Opts = {}) {
   const inventoryService = {
     receiveStock: jest.fn(async () => ({ valueCents: 0 })),
     reverseStockForReceipt: jest.fn(async () => ({ totalReversedCents: 0 })),
+    canReverseStockForReceipt: jest.fn(async () => true),
   };
 
   // LAC-E F-E2: existence gate for inventoryProductRef — defaults to "exists" so the purchase paths
@@ -163,7 +172,7 @@ function build(opts: Opts = {}) {
   const service = new PayableService(
     payableRepo as never,
     accountRepo as never,
-    { postEntry, reverseEntry, findEntryBySource } as never,
+    { postEntry, reverseEntry, findEntryBySource, assertPeriodOpenFor: jest.fn(async () => undefined) } as never,
     auditService as never,
     policy as never,
     counterpartyRepo as never,
@@ -572,9 +581,25 @@ describe('PayableService.cancelPayable — reverse recognition (F6/ACC-018/D3)',
 
     expect(reverseEntry).toHaveBeenCalledTimes(1);
     expect((reverseEntry.mock.calls[0] as unknown[])[1]).toMatchObject({ lancamentoId: 'rec-1', reversalPostingDate: '2026-07-14' });
-    const upd = payableRepo.updatePayable.mock.calls.at(-1)![2] as Record<string, unknown>;
-    expect(upd.status).toBe('CANCELLED');
-    expect(upd.documentNumber).toBe('deleted:pay-1:NF-100'); // frees the @@unique for a re-create
+    // CANCELLING PR-0: a intenção (CANCELLING) é gravada antes do estorno e a conclusão renomeia a chave de negócio (CAS CANCELLING → CANCELLED).
+    expect(payableRepo.casStartCancelling).toHaveBeenCalledTimes(1);
+    expect(payableRepo.casStartCancelling.mock.calls[0][2]).toMatchObject({ fromStatuses: ['OPEN'], cancelReversalDate: '2026-07-14', cancelReason: 'erro' });
+    const done = payableRepo.casCompleteCancelling.mock.calls.at(-1)![2];
+    expect(done.documentNumber).toBe('deleted:pay-1:NF-100'); // frees the @@unique for a re-create
+  });
+
+  it('CANCELLING PR-0 (0.4 ii): o CAS de intenção perdido (título mudou entre a leitura e a tx) ⇒ 409 TITULO_MUDOU_DURANTE_O_CANCELAMENTO, sem estorno e sem audit', async () => {
+    const { service, payableRepo, reverseEntry, auditService } = build({
+      findEntryBySource: (type) => (type === AP_PAYABLE_SOURCE_TYPE ? { id: 'rec-1' } : null),
+    });
+    payableRepo.casStartCancelling.mockResolvedValueOnce(0);
+    await expect(service.cancelPayable(scope, 'pay-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never)).rejects.toMatchObject({
+      statusCode: 409,
+      errorCode: 'TITULO_MUDOU_DURANTE_O_CANCELAMENTO',
+    });
+    expect(reverseEntry).not.toHaveBeenCalled();
+    expect(auditService.append).not.toHaveBeenCalled();
+    expect(payableRepo.casCompleteCancelling).not.toHaveBeenCalled();
   });
 
   it('is idempotent when already cancelled', async () => {

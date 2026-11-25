@@ -156,6 +156,12 @@ describe('Onda 2.1 — estorno atômico até o subrazão (2 commits + reconcile)
       expect(Number((await prisma.receivable.findUniqueOrThrow({ where: { id: t.receivableId } })).receivedCents)).toBe(1000);
       expect(await prisma.auditEvent.count({ where: { scopeUserId: DONO, unitId: UNIT, targetId: t.receivableId } })).toBe(auditoriasAntes);
       expect((await ar().reconcileReceivables(scope())).blocked).toBeGreaterThanOrEqual(1);
+      // CANCELLING PR-0 (F-AR-1 a, 9d3e): o BLOCKED deixou de ser só log — fica na bandeja, com alerta na 1ª captura, e a 2ª passada não duplica a linha.
+      const pend = await prisma.reconcilePendingItem.findMany({ where: { userId: DONO, unitId: UNIT, sourceType: 'receipt.cancel', sourceId: t.receiptId } });
+      expect(pend).toHaveLength(1);
+      expect(pend[0].reasonCode).toBe('RECEIPT_REVERSAL_INVARIANT_VIOLATED');
+      expect(pend[0].alertedAt).not.toBeNull();
+      expect(pend[0].attempts).toBe(2);
       await prisma.receivable.update({ where: { id: t.receivableId }, data: { receivedCents: 50000 } }); // restaura p/ não contaminar os demais
       await prisma.receivableReceipt.update({ where: { id: t.receiptId }, data: { status: 'CANCELLED' } });
     });

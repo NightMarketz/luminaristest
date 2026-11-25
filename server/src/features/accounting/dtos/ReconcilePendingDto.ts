@@ -28,6 +28,13 @@ export const ReconcilePendingReasonCode = z.enum([
   'PACKAGE_ORIGIN_REVERSED', // poison — resolve só com a correção do E-1
   'PACKAGE_EXPIRY_NFSE_PENDING', // transitório — falta dado para a NFS-e do vencido; o vencimento e o lançamento ficam
   'UNKNOWN_EVENT_KEY', // poison até corrigir quem emite — nenhum kit declara o evento (KIT-SETOR PR-6 item 47); skip-listado por decisão do dono (D-2026-10-14-I4-I5-LACUNAS-EXECUCAO L-2)
+  // BE-INCR-CANCELAMENTO-CANCELLING PR-0 (item 0.10; cédula D-2026-11-25-FORKS-DRENAGEM-DA-CAIXA, "BLOCKED persistido com alerta", 9d3e):
+  // o BLOCKED determinístico do cancelamento/estorno deixa de ser só log e vira pendência. Poison = não resolve sem ação do operador.
+  'PAYMENT_REVERSAL_INVARIANT_VIOLATED', // poison — razão do pagamento já estornado e o saldo do título não comporta o estorno (AP)
+  'RECEIPT_REVERSAL_INVARIANT_VIOLATED', // poison — idem para o recebimento (AR, F-AR-1 a)
+  'IMPOSTO_JA_RECOLHIDO', // poison — o título de imposto da retenção já tem baixa: estornar o DARF antes
+  'JCP_JA_PAGO', // poison — JCP com baixa lançada entre o estorno e a conclusão (PR-1): estornar a baixa e repetir o cancelamento
+  'CANCEL_REDRIVE_FAILED', // transitório — estorno/estoque que falhou por causa que pode sumir (estoque, erro isolado); o job de re-drive (PR-2) repete
 ]);
 export type ReconcilePendingReasonCodeValue = z.infer<typeof ReconcilePendingReasonCode>;
 

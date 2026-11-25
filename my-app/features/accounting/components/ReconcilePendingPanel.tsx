@@ -51,6 +51,12 @@ export const REASON_LABELS: Record<ReconcilePendingReasonCode, { key: string; fa
     key: 'pendencias.reason.UNKNOWN_EVENT_KEY',
     fallback: 'Evento que nenhum kit de setor declara — erro de quem emite o evento; acione o suporte',
   },
+  // BE-INCR-CANCELAMENTO-CANCELLING PR-0 (item 0.10): o BLOCKED do cancelamento/estorno vira pendência (rótulo mínimo; a tela do `e397` refina).
+  PAYMENT_REVERSAL_INVARIANT_VIOLATED: { key: 'pendencias.reason.PAYMENT_REVERSAL_INVARIANT_VIOLATED', fallback: 'Estorno do pagamento já está no razão, mas o saldo do título não o comporta — exige conferência do operador' },
+  RECEIPT_REVERSAL_INVARIANT_VIOLATED: { key: 'pendencias.reason.RECEIPT_REVERSAL_INVARIANT_VIOLATED', fallback: 'Estorno do recebimento já está no razão, mas o saldo do título não o comporta — exige conferência do operador' },
+  IMPOSTO_JA_RECOLHIDO: { key: 'pendencias.reason.IMPOSTO_JA_RECOLHIDO', fallback: 'Imposto retido já recolhido — estorne o DARF antes de cancelar' },
+  JCP_JA_PAGO: { key: 'pendencias.reason.JCP_JA_PAGO', fallback: 'JCP com pagamento lançado — estorne a baixa e repita o cancelamento' },
+  CANCEL_REDRIVE_FAILED: { key: 'pendencias.reason.CANCEL_REDRIVE_FAILED', fallback: 'Cancelamento em andamento que ainda não concluiu — será repetido; confira o período e o estoque' },
 };
 
 export interface ReconcilePendingPanelProps {

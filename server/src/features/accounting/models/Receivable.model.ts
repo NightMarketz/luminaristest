@@ -71,6 +71,8 @@ export type ReceiptStatus = (typeof RECEIPT_STATUSES)[number];
  * `SYNC_SKIP_ERROR_CODES` das pontes) e deixa o título para intervenção humana.
  */
 export const RECEIPT_REVERSAL_INVARIANT_CODE = 'RECEIPT_REVERSAL_INVARIANT_VIOLATED';
+/** `sourceType` da pendência do estorno do recebimento na bandeja de reconcile (CANCELLING PR-0, F-AR-1 a). */
+export const RECEIPT_CANCEL_PENDING_SOURCE_TYPE = 'receipt.cancel';
 
 /**
  * Dual fato gerador — two distinct ledger events keyed on DISTINCT source ids (D3):

@@ -2724,6 +2724,20 @@ export async function retryOneReconcilePendingItem(
       });
       return resolvedIfAny(summary);
     }
+    // BE-INCR-CANCELAMENTO-CANCELLING PR-0 (0.10, F-AR-1 a): pendências do cancelamento/estorno do subrazão. O `rescan` (manual) e, no PR-2, o job de
+    // re-drive passam por aqui; o BLOCKED determinístico sobe como erro e o chamador o conta como "continua pendente".
+    case 'payable.cancel': {
+      const result = await factory.getPayableService().redriveCancelling(scope, pending.sourceId);
+      return { outcome: result.outcome === 'completed' ? 'resolved' : 'still_pending' };
+    }
+    case 'payment.cancel': {
+      const result = await factory.getPayableService().redrivePaymentCancellation(scope, pending.sourceId);
+      return { outcome: result.outcome === 'completed' ? 'resolved' : 'still_pending' };
+    }
+    case 'receipt.cancel': {
+      await factory.getReceivableService().redriveReceiptCancellation(scope, pending.sourceId);
+      return { outcome: 'resolved' };
+    }
     default:
       // Defensive — every capture site in the 8 passes above uses exactly one of the sourceTypes
       // handled above. An unrecognized sourceType (e.g. a row hand-inserted by a future caller)

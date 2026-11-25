@@ -62,8 +62,10 @@ export interface AlertPayload {
     // EFX F-19.1: passo da purga LGPD que falhou (os outros seguem no mesmo ciclo).
     | 'purge_deleted_records'
     // EFX F-18.2: a varredura de job de exportação preso em PROCESSING.
-    | 'data_exchange_stale_sweep';
-  event: 'reconcile_summary' | 'generation_failed' | 'job_failed' | 'uncaught_exception';
+    | 'data_exchange_stale_sweep'
+    // CANCELLING PR-0 (0.9): pendência de cancelamento/estorno que não se resolve sozinha (BLOCKED determinístico) — o job de re-drive (PR-2) usa a mesma origem.
+    | 'subledger_redrive';
+  event: 'reconcile_summary' | 'generation_failed' | 'job_failed' | 'uncaught_exception' | 'blocked_permanent';
   timestamp: string; // ISO
   [key: string]: unknown; // free-form fields per trigger (failed, blocked, jobId, kind…)
 }

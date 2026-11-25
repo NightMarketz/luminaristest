@@ -381,6 +381,42 @@ export class InventoryService implements IInventoryService {
   // ---------------------------------------------------------------------------
 
   /**
+   * CANCELLING PR-0 (item 0.4 i, F-CX-2 a) — pré-cheque de LEITURA do `reverseStockForReceipt`: diz se o desfazer passaria agora, sem mutar.
+   * Mesma régua do `decrementForCogs` (`qtyOnHand >= qty`, por item, somando as entradas do mesmo item); movimento com REVERSAL já gravado
+   * (replay) não conta. NÃO é atômico com o desfazer (estoque vendido entre os dois ainda lança no CAS autoritativo, dentro da tx do
+   * `reverseStockForReceipt`) — serve para o cancelamento quase nunca ficar em CANCELLING por causa evitável.
+   */
+  async canReverseStockForReceipt(
+    scope: AccountingScope,
+    params: Pick<ReverseStockForReceiptParams, 'sourceType' | 'sourceId' | 'reversalEventId'>,
+  ): Promise<boolean> {
+    if (!this.policy.canManageInventory(scope)) {
+      throw new ForbiddenError('Você não tem permissão para estornar estoque.');
+    }
+    const originals = await this.inventoryRepo.findMovementsBySource(scope, {
+      kind: 'INBOUND',
+      sourceType: params.sourceType,
+      sourceId: params.sourceId,
+    });
+    const needed = new Map<string, number>();
+    for (const original of originals) {
+      const existing = await this.inventoryRepo.findMovementBySource(scope, {
+        inventoryItemId: original.inventoryItemId,
+        kind: 'REVERSAL',
+        sourceType: params.sourceType,
+        sourceId: params.reversalEventId,
+      });
+      if (existing) continue;
+      needed.set(original.inventoryItemId, (needed.get(original.inventoryItemId) ?? 0) + original.qtyDelta);
+    }
+    for (const [inventoryItemId, qty] of needed) {
+      const item = await this.inventoryRepo.findById(scope, inventoryItemId);
+      if (!item || item.deletedAt != null || item.qtyOnHand < qty) return false;
+    }
+    return true;
+  }
+
+  /**
    * Re-remove the stock a purchase had received when that purchase is cancelled (INCR-INVENTORY
    * D3(b), driven by `PayableService.cancelPayable`). Reads each ORIGINAL INBOUND movement for the
    * receipt (`sourceType`+`sourceId=payableId`) and decrements the snapshot by its exact qty/value

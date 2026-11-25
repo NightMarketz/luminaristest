@@ -269,6 +269,31 @@ describe('RETENCOES-FONTE PR-2 — retenções feitas no AP', () => {
     expect(await ultimoEvento('ap.withholding.reversed')).toMatchObject({ withholdingId: tw.id, tributo: 'IRRF', amountCents: '1500' });
   });
 
+  it('CANCELLING PR-0 (F-CX-1 a): crash DEPOIS da intenção e do estorno da retenção no razão ⇒ o título fica CANCELLING; repetir o cancelamento conclui (retenção REVERSED, título de imposto cancelado, 1 estorno no razão)', async () => {
+    const t = (await criarTitulo(cp.A, 'NF-A7C', 100_000, '2026-07-10')).body.data.id as string;
+    const [tw] = await retencoes(t);
+    const imposto = (await tituloImposto('170806-202607'))!;
+    expect((await titulo(t)).status).toBe('PARTIALLY_PAID'); // a retenção é baixa sem caixa
+    // O que o cancelPayable deixou em disco antes de morrer: a INTENÇÃO (status CANCELLING + data/ator) e o commit 1 da retenção no razão.
+    const won = await prisma.$transaction((tx) =>
+      new PayableRepository().casStartCancelling(scope(), t, { fromStatuses: ['OPEN', 'PARTIALLY_PAID', 'PAID'], cancelledById: dono.id, cancelReason: null, cancelReversalDate: '2026-07-11' }, tx),
+    );
+    expect(won).toBe(1);
+    const original = await prisma.journalEntry.findFirstOrThrow({ where: { userId: dono.id, sourceType: 'ap.withholding', sourceId: tw.settlementId! } });
+    await getFactory().getPostingService().reverseEntry(scope(), { unitId: UNIT, lancamentoId: original.id, reversalPostingDate: '2026-07-11', reason: 'crash entre os dois commits', automaticWriter: true });
+    expect((await titulo(t)).status).toBe('CANCELLING');
+    expect((await prisma.taxWithholding.findUniqueOrThrow({ where: { id: tw.id } })).status).toBe('ACTIVE');
+
+    const r = await cancelarTitulo(t, '2026-07-20'); // a intenção persistida (11/07) prevalece sobre o corpo
+    expect(r.status).toBe(200);
+    expect((await titulo(t)).status).toBe('CANCELLED');
+    expect(Number((await titulo(t)).paidCents)).toBe(0);
+    expect((await prisma.taxWithholding.findUniqueOrThrow({ where: { id: tw.id } })).status).toBe('REVERSED');
+    expect((await titulo(imposto.id)).status).toBe('CANCELLED');
+    expect(await prisma.journalEntry.count({ where: { userId: dono.id, sourceType: 'reversal', sourceId: original.id } })).toBe(1);
+    expect(await prisma.auditEvent.count({ where: { scopeUserId: dono.id, unitId: UNIT, targetId: t, eventType: 'payable.cancelled' } })).toBe(1);
+  });
+
   it('item 21 / invariante 7: imposto já recolhido ⇒ cancelar o título de origem dá 409; a baixa do título de imposto debita a conta a recolher', async () => {
     const t = (await criarTitulo(cp.A, 'NF-A9', 100_000, '2026-09-10')).body.data.id as string;
     const imposto = (await tituloImposto('170806-202609'))!;

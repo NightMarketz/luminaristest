@@ -20,7 +20,7 @@ interface Envelope<T> {
 export type ReconcilePendingReasonCode = ReconcilePendingReasonCodeInput;
 
 /**
- * Os 10 códigos do enum, na ordem do BE. `satisfies` + o teste do painel (todo código tem rótulo) fecham o mapa sobre
+ * Os 15 códigos do enum, na ordem do BE. `satisfies` + o teste do painel (todo código tem rótulo) fecham o mapa sobre
  * o contrato: um código novo no enum quebra o tsc do `REASON_LABELS`.
  */
 export const RECONCILE_PENDING_REASON_CODES = [
@@ -34,6 +34,11 @@ export const RECONCILE_PENDING_REASON_CODES = [
   'PACKAGE_ORIGIN_REVERSED',
   'PACKAGE_EXPIRY_NFSE_PENDING',
   'UNKNOWN_EVENT_KEY',
+  'PAYMENT_REVERSAL_INVARIANT_VIOLATED',
+  'RECEIPT_REVERSAL_INVARIANT_VIOLATED',
+  'IMPOSTO_JA_RECOLHIDO',
+  'JCP_JA_PAGO',
+  'CANCEL_REDRIVE_FAILED',
 ] as const satisfies readonly ReconcilePendingReasonCode[];
 
 export const reconcilePendingService = {

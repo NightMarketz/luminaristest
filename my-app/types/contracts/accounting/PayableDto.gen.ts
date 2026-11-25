@@ -118,7 +118,7 @@ reason?: string
 }
 export interface ListPayablesQueryInput {
 unitId: string
-status?: ("OPEN" | "PARTIALLY_PAID" | "PAYING" | "PAID" | "CANCELLED" | "DEFERRED")
+status?: ("OPEN" | "PARTIALLY_PAID" | "PAYING" | "PAID" | "CANCELLING" | "CANCELLED" | "DEFERRED")
 counterpartyId?: string
 dueFrom?: string
 dueTo?: string

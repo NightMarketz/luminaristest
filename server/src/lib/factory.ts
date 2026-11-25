@@ -175,6 +175,7 @@ import { SpedEcfRealGenerationService } from '../features/accounting/services/Sp
 import { ExerciseClosingService } from '../features/accounting/services/ExerciseClosingService';
 import { PayableService } from '../features/accounting/services/PayableService';
 import { ReceivableService } from '../features/accounting/services/ReceivableService';
+import { ReconcilePendingRecorder } from '../features/accounting/services/reconcilePendingRecorder';
 import { DimensionService } from '../features/accounting/services/DimensionService';
 import { DimensionReportService } from '../features/accounting/services/DimensionReportService';
 import { TieOutDiagnosticService } from '../features/accounting/services/TieOutDiagnosticService';
@@ -1511,6 +1512,7 @@ export class ApplicationFactory {
       auditService,
       this.policies.accounting,
     );
+    const pendingRecorder = new ReconcilePendingRecorder(this.repositories.reconcilePending);
     const payableService = new PayableService(
       this.repositories.payable,
       this.repositories.account,
@@ -1535,6 +1537,8 @@ export class ApplicationFactory {
       // BE-INCR-FIXED-ASSETS PR-5 (item 22/28, decisão do dono 23/09): lê o SourceDocument.rawJson
       // da recognition para redriveFixedAssetDrafts — nunca uma 2ª cópia do breakdown no Payable.
       this.repositories.sourceProvenance,
+      // BE-INCR-CANCELAMENTO-CANCELLING PR-0 (0.9): BLOCKED do cancelamento/estorno na bandeja do reconcile + alerta na 1ª captura.
+      pendingRecorder,
     );
 
     // Extracted from the literal so CrmReceivableBridge (below) shares the same instance.
@@ -1547,6 +1551,7 @@ export class ApplicationFactory {
       this.policies.accounting,
       this.repositories.counterparty,
       this.repositories.collectionCharge, // BE-INCR-PAYMENT-PROVIDER PR-2 (P2-13)
+      pendingRecorder, // BE-INCR-CANCELAMENTO-CANCELLING PR-0 (F-AR-1 a): BLOCKED do estorno do recebimento na bandeja
     );
 
     const reconciliationService = new ReconciliationService(

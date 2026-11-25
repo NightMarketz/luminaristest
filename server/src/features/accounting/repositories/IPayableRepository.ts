@@ -190,6 +190,29 @@ export interface IPayableRepository {
   /** INV F-11.2 — status do claim desfeito, CAS sobre PAYING (0 = o título saiu de PAYING). Must run inside the tx. */
   resolveRevertedClaim(scope: AccountingScope, id: string, status: PayableStatus, tx?: Prisma.TransactionClient): Promise<number>;
 
+  /**
+   * CANCELLING PR-0 (0.3, 69c7) — CAS da INTENÇÃO de cancelar: `updateMany` where `status ∈ fromStatuses` (e `deletedAt` nulo) →
+   * `status='CANCELLING'` + `cancelledById`/`cancelReason`/`cancelReversalDate` ('YYYY-MM-DD'), gravado ANTES do estorno no razão. 1 = esta
+   * chamada abriu o cancelamento; 0 = o título mudou (baixa em trânsito, outro cancelamento já abriu/concluiu). Dentro da tx do chamador.
+   */
+  casStartCancelling(
+    scope: AccountingScope,
+    id: string,
+    data: { fromStatuses: readonly PayableStatus[]; cancelledById: string; cancelReason: string | null; cancelReversalDate: string },
+    tx: Prisma.TransactionClient,
+  ): Promise<number>;
+
+  /**
+   * CANCELLING PR-0 (0.3/0.6) — conclusão: `updateMany` where `status='CANCELLING'` → `CANCELLED` + `deletedAt` + rename do `documentNumber`
+   * (libera a chave de negócio). 0 = já concluído por outro caminho (idempotente: o chamador não emite 2º audit). Dentro da tx.
+   */
+  casCompleteCancelling(
+    scope: AccountingScope,
+    id: string,
+    data: { deletedAt: Date; documentNumber: string | null },
+    tx: Prisma.TransactionClient,
+  ): Promise<number>;
+
   updatePayable(
     scope: AccountingScope,
     id: string,

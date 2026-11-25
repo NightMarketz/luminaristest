@@ -19,8 +19,9 @@ import {
 describe('status arrays (BRIEF item 3)', () => {
   it('PARTIALLY_PAID entra entre OPEN e PAYING; OUTSTANDING e SETTLEABLE o incluem; terminais ficam fora', () => {
     // RETENCOES-FONTE PR-2 (item 20): DEFERRED = título de imposto < R$ 10 somado ao seguinte — fora de OUTSTANDING e SETTLEABLE.
-    expect(PAYABLE_STATUSES).toEqual(['OPEN', 'PARTIALLY_PAID', 'PAYING', 'PAID', 'CANCELLED', 'DEFERRED']);
-    expect(PAYABLE_OUTSTANDING_STATUSES).toEqual(['OPEN', 'PARTIALLY_PAID', 'PAYING']);
+    // CANCELLING PR-0 (F-CX-3 a): em cancelamento segue "em aberto" para a leitura (o razão ainda o tem) e fora de SETTLEABLE (escrita nova morta).
+    expect(PAYABLE_STATUSES).toEqual(['OPEN', 'PARTIALLY_PAID', 'PAYING', 'PAID', 'CANCELLING', 'CANCELLED', 'DEFERRED']);
+    expect(PAYABLE_OUTSTANDING_STATUSES).toEqual(['OPEN', 'PARTIALLY_PAID', 'PAYING', 'CANCELLING']);
     expect(PAYABLE_SETTLEABLE_STATUSES).toEqual(['OPEN', 'PARTIALLY_PAID']);
     expect(PAYABLE_OUTSTANDING_STATUSES).not.toContain('PAID');
     expect(PAYABLE_SETTLEABLE_STATUSES).not.toContain('PAYING'); // in flight is not settleable again
