@@ -6,6 +6,6 @@
  * Não é `*.types.ts`: a `M4` só deixa esse sufixo ler `models/` e `dtos/`, e estes tipos moram com o registro de
  * processadores.
  */
-export type { AnalyticsProcessorContext, ChartDataPoint, TableDataRow } from '../core/ProcessorRegistry';
-export type { Dimension, Filter, Measure, PipelineSpec } from '../core/pipeline/Pipeline';
-export { aggregatePipelineProcessor } from '../dynamic/processors/AggregatePipelineProcessor';
+export type { AnalyticsProcessorContext, ChartDataPoint, TableDataRow } from '../domain/core/ProcessorRegistry';
+export type { Dimension, Filter, Measure, PipelineSpec } from '../domain/core/pipeline/Pipeline';
+export { aggregatePipelineProcessor } from '../domain/dynamic/processors/AggregatePipelineProcessor';

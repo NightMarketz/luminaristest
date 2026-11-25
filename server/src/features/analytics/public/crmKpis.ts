@@ -11,4 +11,4 @@ export {
   crmBantProcessor,
   crmProposalsByStatusProcessor,
   crmActivitiesByTypeProcessor,
-} from '../kpis/crm';
+} from '../domain/kpis/crm';

@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { getFactory } from '@/lib/factory';
 import { handleApiError } from '@/lib/apiUtils';
 import { getUserContextFromRequest } from '@/lib/authUtils';
-import { resolveChartData, resolveChartDetails } from '@/features/analytics/engine/AnalyticsResolver';
+import { resolveChartData, resolveChartDetails } from '@/features/analytics/services/AnalyticsResolver';
 import { ChartDataQuerySchema, ChartDetailsQuerySchema, DrillDownQuerySchema } from '@/features/analytics/dtos/AnalyticsQueryDto';
 
 export async function getAnalyticsPresets(req: Request, res: Response) {

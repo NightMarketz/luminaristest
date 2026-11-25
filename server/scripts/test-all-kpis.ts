@@ -12,11 +12,11 @@
  */
 
 import { PrismaClient } from '../generated/prisma/index';
-import { revenueKpiProcessor } from '../src/features/analytics/kpis/revenue';
-import { costKpiProcessor } from '../src/features/analytics/kpis/cost';
-import { profitKpiProcessor } from '../src/features/analytics/kpis/profit';
-import { cashflowKpiProcessor } from '../src/features/analytics/kpis/cashflow';
-import type { TableDataRow } from '../src/features/analytics/core';
+import { revenueKpiProcessor } from '../src/features/analytics/domain/kpis/revenue';
+import { costKpiProcessor } from '../src/features/analytics/domain/kpis/cost';
+import { profitKpiProcessor } from '../src/features/analytics/domain/kpis/profit';
+import { cashflowKpiProcessor } from '../src/features/analytics/domain/kpis/cashflow';
+import type { TableDataRow } from '../src/features/analytics/domain/core';
 
 const prisma = new PrismaClient();
 

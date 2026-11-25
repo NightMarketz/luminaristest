@@ -1,5 +1,5 @@
-import { profitKpiProcessor } from '../features/analytics/kpis/profit/ProfitKpiProcessor';
-import { DatePreset } from '../features/analytics/utils/DateUtils';
+import { profitKpiProcessor } from '../features/analytics/domain/kpis/profit/ProfitKpiProcessor';
+import { DatePreset } from '../features/analytics/domain/utils/DateUtils';
 
 async function runProfitAudit() {
     console.log('--- PROFIT KPI AUDIT START ---');

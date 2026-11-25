@@ -1,6 +1,6 @@
 /**
  * Porta pública da feature `analytics` para o tipo da configuração de KPI que um preset de tabela declara
- * (`PresetTableDefinition.analytics`). Só o tipo: nenhuma outra feature alcança `analytics/core/` direto
+ * (`PresetTableDefinition.analytics`). Só o tipo: nenhuma outra feature alcança `analytics/models/` direto
  * (regra `M1`, ADR-MODULE-BOUNDARIES §10 e §11.6).
  *
  * Nasceu sem o sufixo `*.types.ts` porque o tipo morava em `core/models/`, que a `M4` não aceita (dono, questionário,

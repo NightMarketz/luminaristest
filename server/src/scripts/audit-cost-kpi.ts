@@ -1,5 +1,5 @@
-import { costKpiProcessor } from '../features/analytics/kpis/cost/CostKpiProcessor';
-import { DatePreset, getPeriodBoundaries } from '../features/analytics/utils/DateUtils';
+import { costKpiProcessor } from '../features/analytics/domain/kpis/cost/CostKpiProcessor';
+import { DatePreset, getPeriodBoundaries } from '../features/analytics/domain/utils/DateUtils';
 
 async function runCostAudit() {
     console.log('--- COST KPI AUDIT START ---');
