@@ -21,9 +21,11 @@ atualizado: "2026-11-25"
 
 `STATUS_QUE_OCUPAM_NUMERO` ([`server/src/features/accounting/models/inutilizacao.ts`](../../../server/src/features/accounting/models/inutilizacao.ts)) inclui `DENIED`
 (uso denegado, cStat 110/301/302): a nota denegada recebe protocolo e **consome** o número, logo o número dela não entra na
-faixa de inutilização e conta na guarda da rej. 241. O código cita o MOC 7.0 VG §5.1.6, Tab. 5-4 (cópia citada em
-`inutilizacao.test.ts:132`), mas **essa citação não foi conferida no texto** e o acervo `ctresb/leis` tem 0 resultados para
-"denegada". O texto mostrado ao operador é neutro (dono, 24/11); só a lógica assume o consumo.
+faixa de inutilização e conta na guarda da rej. 241. A transcrição do MOC 7.0 já no repo
+(`docs/accounting/fontes-oficiais/TRANSCRICAO-MOC70-webservices-NFe-2026-10-29.md:266-267`) sustenta que a NF-e denegada recebe
+número de protocolo e que a denegação é gravada; **não** diz que o número fica consumido nem que sai da inutilização — isso
+segue inferência. Os cStat 301/302 como "uso denegado" também não constam dessa transcrição (só o 110). O acervo `ctresb/leis`
+não traz "denegada". O texto mostrado ao operador é neutro (dono, 24/11); só a lógica assume o consumo.
 
 ## Pergunta para fechar
 
@@ -33,7 +35,7 @@ faixa de inutilização e conta na guarda da rej. 241. O código cita o MOC 7.0 
 ## Como fechar (só o dono)
 
 1. Conferir no MOC oficial (texto, não resumo) ou perguntar ao contador, citando a seção.
-2. Colar abaixo a evidência literal e o desfecho; assinar. **Gate sem assinatura é nulo** — o agente não preenche.
+2. Colar abaixo a evidência literal e o desfecho (PASSOU/FALHOU/BLOQUEADO + a interpretação acima); assinar. **Gate sem assinatura é nulo** — o agente não preenche.
 3. Confirmado → trocar "ASSUMIDO" pela citação conferida no comentário de `inutilizacao.ts`; contrário → tirar `DENIED` de
    `STATUS_QUE_OCUPAM_NUMERO` e ajustar `inutilizacao.test.ts:132`.
 
@@ -44,3 +46,7 @@ _(em branco — do dono)_
 ## Desfecho
 
 _(em branco — do dono: confirmado · contrário · inconclusivo)_
+
+## Assinatura
+
+_(em branco — do dono; gate sem assinatura é nulo)_
