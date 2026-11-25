@@ -613,6 +613,19 @@ export class PostingService {
       throw new NotFoundError(`Lançamento '${input.lancamentoId}' não foi encontrado.`);
     }
 
+    // Lacuna 6449: lançamento de subrazão (ar.* / ap.*) é do serviço do título; só ele estorna, pela porta interna
+    // `automaticWriter` (fora do DTO HTTP, o Zod a descarta). Estorno por fora deixaria o recibo/pagamento ACTIVE com o
+    // razão Reversed, que o reconcile leria como crash entre os dois commits. O sourceType de lançamento postado não muda,
+    // então a leitura fora da tx é autoritativa.
+    if (!input.automaticWriter && /^(ar|ap)\./.test(original.sourceType ?? '')) {
+      throw new AppError(
+        `O ${describeLancamento(original)} pertence ao subrazão (${original.sourceType}); estorne pelo título ` +
+          '(cancelar recebimento, pagamento ou título).',
+        409,
+        'SUBLEDGER_OWNED_ENTRY',
+      );
+    }
+
     // IDEMPOTENCY — must come BEFORE the status gate: a reversed entry has status 'Reversed',
     // so checking status first would throw instead of returning the prior reversal.
     if (original.reversedById) {
@@ -982,7 +995,7 @@ export class PostingService {
    * REGRA_VALIDA_NIVEL_CONTAS: analítica de ativo/passivo/PL no nível ≥ 4 (o nível do I050 é a profundidade do
    * código); e toda conta abaixo do nível 1 precisa da conta superior (I050.COD_CTA_SUP), que é sintética.
    */
-  private async assertNivelDoPlano(scope: AccountingScope, dto: CreateAccountInput): Promise<void> {
+  private async assertNivelDoPlano(scope: AccountingScope, dto: CreateAccountInput, tx?: Prisma.TransactionClient): Promise<void> {
     const segmentos = dto.code.split('.');
     const analitica = dto.acceptsEntries ?? true;
     if (analitica && PATRIMONIAL_NATURES.includes(dto.nature) && segmentos.length < NIVEL_MINIMO_ANALITICA_PATRIMONIAL) {
@@ -993,7 +1006,7 @@ export class PostingService {
     }
     if (segmentos.length > 1) {
       const pai = segmentos.slice(0, -1).join('.');
-      const superior = await this.accountRepo.findByCode(scope, pai);
+      const superior = await this.accountRepo.findByCode(scope, pai, tx);
       if (!superior || superior.acceptsEntries) {
         throw new ValidationError(
           `A conta superior '${pai}' de '${dto.code}' precisa existir como conta sintética (que não recebe lançamento) ` +
@@ -1019,6 +1032,8 @@ export class PostingService {
     const { userId, unitId } = accountingScopeWhere(scope);
     try {
       return await this.postingRepo.runTransaction(async (tx) => {
+        // Lacuna 79a9 (F-PBF1-6, etapa b): a superior pode ter sido apagada depois da pré-checagem; relida na tx.
+        await this.assertNivelDoPlano(scope, dto, tx);
         const account = await this.accountRepo.create({
           userId,
           unitId,
@@ -1086,6 +1101,10 @@ export class PostingService {
     }
 
     await this.postingRepo.runTransaction(async (tx) => {
+      // Lacuna c1b9: o "sem lançamentos" acima é pré-checagem; um postEntry pode commitar antes desta tx. Autoritativo aqui.
+      if (await this.postingRepo.existsForAccount(scope, accountId, tx)) {
+        throw new AppError('Conta possui lançamentos e não pode ser excluída.', 409, 'CONFLICT');
+      }
       // BRIEF 3C item 19 (espelho de LalurService.archiveParteB): um ajuste vivo da Parte A com esta conta
       // sairia no M310/M360 apontando para conta morta. Contado DENTRO da tx (item 16).
       const lalurLive = await this.lalurRepo.countLiveEntriesByAccount(scope, accountId, tx);
