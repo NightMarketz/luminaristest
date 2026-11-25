@@ -15,7 +15,7 @@ const PUBLIC_EXEC = '^src/features/[^/]+/public/(?!.*\\.types\\.ts$)';
 // ADR-MODULE-BOUNDARIES §10, F-MB-1 (b) e F-MB-3 (c): pasta de camada de uma feature. A M2 entra por feature
 // (F-MBE-2 c): M2_FEATURES cresce a cada PR de renome e termina como `[^/]+`.
 const LAYER_DIR = '/(services|repositories|policies|models|dtos|controllers|domain|ports|adapters|public)/';
-const M2_FEATURES = '(dynamicTables)';
+const M2_FEATURES = '(dynamicTables|analytics|sectorKits)';
 // O alvo das três regras M2: arquivo `.ts` de produção de uma feature de M2_FEATURES fora de pasta de camada.
 const M2_OUTSIDE_LAYER = {
   path: `^src/features/${M2_FEATURES}/.+\\.ts$`,
