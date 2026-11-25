@@ -6,9 +6,11 @@
  * (mesmo padrão de `accountingSyncReconcile.job.ts`) — este arquivo é só a fiação de produção.
  */
 import { getFactory } from '../lib/factory';
-import type { PollSummary } from '../features/accounting/services/FiscalDocumentLifecycleService';
+import logger from '../lib/logger';
+import type { FaseFalhou, PollSummary } from '../features/accounting/services/FiscalDocumentLifecycleService';
 import { readMsEnv } from './readMsEnv';
 
+const JOB = 'dfe_poll_pending';
 const DEFAULT_POLL_AFTER_MS = 120_000; // 2 minutos — dá tempo do parceiro responder antes de reconsultar
 
 /** BRD F-71.1: inválido lança (antes caía no default em silêncio); o `DfePollScheduler.start()` lê no boot. */
@@ -16,17 +18,36 @@ export function readDfePollAfterMs(): number {
   return readMsEnv('DFE_POLL_AFTER_MS', DEFAULT_POLL_AFTER_MS, 0);
 }
 
+/**
+ * Onda 4 / 4.1 (L1 do #1392) — cada fase DEPOIS do poll é isolada. `pollPendingOnce` já gravou `pollGaveUpAt`/`pollAlertedAt` e
+ * devolve no `summary` os ids a alertar; se uma fase seguinte lançasse e o `summary` se perdesse, o webhook nunca sairia e o
+ * marcador "já alertei" (persistido) impediria reemissão: alerta perdido de forma permanente. A fase que lança é registrada
+ * (OBS-R8: `job.failed` com a fase) e entra em `fasesFalharam`; o `DfePollScheduler` emite os alertas do poll primeiro e depois
+ * o `job_failed` da fase (OBS-R11). As outras fases seguem rodando no mesmo tick.
+ */
+async function fase<T>(nome: string, falhas: FaseFalhou[], run: () => Promise<T>): Promise<T | undefined> {
+  try {
+    return await run();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.event('error', 'job.failed', JOB, { job: JOB, fase: nome, error: message });
+    falhas.push({ fase: nome, error: message });
+    return undefined;
+  }
+}
+
 export async function runDfePollPending(): Promise<PollSummary> {
   const olderThan = new Date(Date.now() - readDfePollAfterMs());
   const service = getFactory().getFiscalDocumentLifecycleService();
   const summary = await service.pollPendingOnce(olderThan);
+  const falhas: FaseFalhou[] = [];
   // X10a PR-9 (decisões 6 e 7): transmite as NFC-e off-line, alerta o prazo e resolve as órfãs — antes do dreno, para a
   // NFC-e autorizada agora ganhar o anexo no mesmo tick.
-  const contingencia = await getFactory().getNfceContingenciaService().tick(olderThan);
+  const contingencia = await fase('contingencia', falhas, () => getFactory().getNfceContingenciaService().tick(olderThan));
   // BE-INCR-DFE-EVENTOS PR-2 (item 18): eventos do fisco sobre as NFS-e autorizadas (cancelamento fora do Luminaris e
   // o em voo do item 19). Cancelar não cria anexo; a ordem em relação ao dreno não importa.
-  const eventos = await service.pollEventosOnce();
+  const eventos = await fase('eventos', falhas, () => service.pollEventosOnce());
   // BE-INCR-DFE-ANEXO-PENDENTE item 7 (F-PA-2 a): mesmo tick, depois do poll.
-  const attachments = await service.drainPendingAttachmentsOnce();
-  return { ...summary, contingencia, eventos, attachments };
+  const attachments = await fase('anexos', falhas, () => service.drainPendingAttachmentsOnce());
+  return { ...summary, contingencia, eventos, attachments, ...(falhas.length > 0 ? { fasesFalharam: falhas } : {}) };
 }

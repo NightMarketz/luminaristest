@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   cancelarFiscalDocument,
   consultarFiscalDocument,
+  rearmarPollingFiscalDocument,
   emitFiscalDocument,
   getDfeStatus,
   getFiscalDocument,
@@ -39,6 +40,8 @@ router.post('/documents', emitFiscalDocument);
 router.get('/documents', listFiscalDocuments);
 router.get('/documents/:id', getFiscalDocument);
 router.post('/documents/:id/consultar', consultarFiscalDocument);
+// Lacunas cf36/3cf5 — re-arme do polling que o job abandonou (teto de tentativas).
+router.post('/documents/:id/rearmar-polling', rearmarPollingFiscalDocument);
 router.post('/documents/:id/reenviar', reenviarFiscalDocument);
 router.post('/documents/:id/cancelar', cancelarFiscalDocument);
 // BE-INCR-DFE-EVENTOS (nó X11, item 11) — substituição de NFS-e (DPS nova com o grupo subst; o e105102 vem do fisco).
