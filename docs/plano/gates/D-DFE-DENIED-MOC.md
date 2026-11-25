@@ -4,7 +4,7 @@ tipo: "dado-externo"
 dominio: "externo"
 titulo: "Confirmar no MOC/contador: a NF-e/NFC-e denegada consome o número?"
 estado: "human-open"
-estado_detalhe: "Premissa assumida no código (DENIED consome o número e entra na lacuna de inutilização); sem oráculo — acervo ctresb/leis sem 'denegada'. Nada confirmado."
+estado_detalhe: "Premissa assumida no código (DENIED consome o número e entra na lacuna de inutilização) e cStat 301/302 como uso denegado sem fonte conferida; sem oráculo — acervo ctresb/leis sem 'denegada'. Nada confirmado."
 autorizacao: "dono, questionário 25/11/2026 (lacuna 9b9d): \"manter DENIED consome número (inferência) + gate humano 'confirmar MOC/contador'\""
 depende_de: []
 ancora_sdd: "§III.2"
@@ -31,6 +31,12 @@ não traz "denegada". O texto mostrado ao operador é neutro (dono, 24/11); só 
 
 > Na NF-e/NFC-e com uso denegado (cStat 110, 301 ou 302), o número da nota fica consumido (não pode ser reutilizado nem
 > inutilizado) como numa nota autorizada? Fonte: MOC 7.0 VG §5.1.6 / Tab. 5-4 ou orientação do contador.
+
+## Segunda pergunta (dono, 25/11/2026: incluir no gate)
+
+> Os cStat **301** e **302** são "uso denegado" (irregularidade do emitente / do destinatário), como o **110**? Fonte:
+> Nota Técnica / MOC com a tabela de cStat da NF-e. Hoje só o 110 consta da transcrição do MOC no repo; 301/302 aparecem em
+> `inutilizacao.ts:23` e `IFiscalDocumentRepository.ts:14` **sem fonte conferida**.
 
 ## Como fechar (só o dono)
 

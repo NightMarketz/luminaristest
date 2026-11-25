@@ -22,7 +22,7 @@ export const INUT_MAX_NUMEROS = 10_000n;
  * CONTINGENCY (X10a PR-9) ocupa: a NFC-e off-line já tem número e DANFE; sai com ele quando o job a transmitir.
  * DENIED (uso denegado, cStat 110/301/302) ocupa — ASSUMIDO, não confirmado: a premissa é que a denegada recebe protocolo e CONSOME o número,
  *   ao contrário da rejeitada. O MOC (transcrição em docs/accounting/fontes-oficiais) sustenta só protocolo + gravação da denegada; "consome o número"
- *   e os cStat 301/302 não constam da transcrição (MOC 7.0 VG §5.1.6, Tab. 5-4); o acervo ctresb/leis não traz "denegada".
+ *   e os cStat 301/302 NÃO CONFERIDOS (só o 110 consta da transcrição; MOC 7.0 VG §5.1.6, Tab. 5-4); o acervo ctresb/leis não traz "denegada".
  *   Decisão do dono 25/11/2026: manter a lógica e confirmar no gate `D-DFE-DENIED-MOC` (docs/plano/gates).
  * CANCEL_ANALYSIS (X11 PR-3) ocupa: é nota autorizada à espera da análise fiscal do cancelamento (só existe na NFS-e).
  */
