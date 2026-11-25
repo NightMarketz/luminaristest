@@ -12,6 +12,11 @@ atualizado: "2026-11-25"
 **Estado:** `decided`. Emenda a [D-2026-11-11-LACUNA-VAI-AO-MAESTRO](D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md) (§1 item 2,
 §2 e §3), o OPS-007 de `.claude/skills/_OPERATING-GATES.md` e o passo 3b do `.claude/prompts/maestro.md`.
 
+**Emenda (25/11):** o §1 (rótulo único de gravidade) e a meta bug/gate/fiscal foram substituídos pela matriz de
+[D-2026-11-25-MATRIZ-DE-LACUNAS](D-2026-11-25-MATRIZ-DE-LACUNAS.md) (dono, chat, 25/11: "Perfeito pode seguir" e
+"Integração única"). O resto continua: nit/estilo na caixa e fora da conta, sem paradas nem grupos, carona no PR, meta
+em vez da caixa inteira e a classificação da caixa legada pela sessão de fechamento.
+
 **Por quê:** a caixa recebia tudo com o mesmo peso. Nit de revisão, estilo e débito miúdo contavam igual a defeito, a
 linha `LACUNAS NA CAIXA: <n>` inflava e o dreno tinha como meta esvaziar a caixa inteira, o que nunca fecha.
 
