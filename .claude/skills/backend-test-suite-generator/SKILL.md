@@ -66,7 +66,7 @@ Toda suíte gerada cumpre, por tipo:
 ## Repository patterns to inspect first
 
 ```
-server/src/features/analytics/kpis/revenue/__tests__/RevenueKpiProcessor.test.ts   ← KPI processor gold standard
+server/src/features/analytics/domain/kpis/revenue/__tests__/RevenueKpiProcessor.test.ts   ← KPI processor gold standard
 server/src/features/documents/__tests__/rag-tenant-isolation.test.ts               ← security / mock service
 server/src/features/users/__tests__/user-deletion-qdrant.test.ts                   ← service + LGPD
 server/src/features/chatInstances/__tests__/tenant-isolation.test.ts               ← repository isolation
@@ -79,14 +79,14 @@ server/jest.config.js                                                           
 
 Por TIPO de suíte — leia o golden correspondente ANTES de gerar:
 
-- **kpi-processor** → `server/src/features/analytics/kpis/revenue/__tests__/RevenueKpiProcessor.test.ts` — `referenceDate` fixo (`new Date('2024-03-15T12:00:00Z')`), suíte "Edge Cases (QA Gold Standard)" com QA-4 (Empty Safety: rows vazios → `Number.isFinite` e nunca `NaN`), QA-2 (exclui negativos), QA-3 (timezone/midnight leap) e `previousValue` `undefined` quando o campo não está configurado. (Para a estrutura multi-suíte Math/Float/Timezone/Empty nomeada, ver também `analytics/kpis/sales/__tests__/SalesProfitByProductProcessor.test.ts`, que valida 1000 × R$0,10 = R$100,00 sem drift.)
+- **kpi-processor** → `server/src/features/analytics/domain/kpis/revenue/__tests__/RevenueKpiProcessor.test.ts` — `referenceDate` fixo (`new Date('2024-03-15T12:00:00Z')`), suíte "Edge Cases (QA Gold Standard)" com QA-4 (Empty Safety: rows vazios → `Number.isFinite` e nunca `NaN`), QA-2 (exclui negativos), QA-3 (timezone/midnight leap) e `previousValue` `undefined` quando o campo não está configurado. (Para a estrutura multi-suíte Math/Float/Timezone/Empty nomeada, ver também `analytics/domain/kpis/sales/__tests__/SalesProfitByProductProcessor.test.ts`, que valida 1000 × R$0,10 = R$100,00 sem drift.)
 - **service** → `server/src/features/users/__tests__/user-deletion-qdrant.test.ts` — copie os padrões **genéricos**: factory `buildService(overrides)`, `mockPolicy`/`mockRepo` padronizados, `beforeEach(() => jest.clearAllMocks())`, policy-first (nega antes de tocar repo), cross-tenant `NotFoundError`. ⚠️ **A ordem "Qdrant antes do SQL delete" é específica de LGPD** (este service faz HARD delete + cleanup externo, exceção art.18) — **NÃO** replique essa ordenação num service de **soft-delete** comum: lá o delete é `update({ deletedAt })` via repo, sem cleanup externo. Para um exemplar de orquestração não-LGPD, ver também `crm/services/__tests__/CrmPipelineService.test.ts`.
 - **security / tenant-isolation** → `server/src/features/documents/__tests__/rag-tenant-isolation.test.ts` — `jest.mock` de prisma/logger, ownership check antes do vector store, asserção de que `vectorRepository.search` NÃO é chamado em acesso cross-tenant.
 - **middleware** → `server/src/middleware/__tests__/auth.test.ts` — JWT válido/expirado/ausente, bypass de rota pública, enforcement admin-only.
 
 ## Generation contract — KPI Processor test
 
-Localização: `server/src/features/analytics/kpis/<category>/__tests__/<Name>KpiProcessor.test.ts`
+Localização: `server/src/features/analytics/domain/kpis/<category>/__tests__/<Name>KpiProcessor.test.ts`
 
 > **Contrato real** (verificado contra `RevenueKpiProcessor.test.ts` e `SalesProfitByProductProcessor.test.ts`):
 > - Rows têm shape `{ id, data: { ...campos } }` — o processor lê `row.data[field]`
@@ -270,7 +270,7 @@ describe('<Resource> tenant isolation', () => {
 
 ```
 server/src/features/<resource>/services/__tests__/<Resource>Service.test.ts         ← NEW
-server/src/features/analytics/kpis/<cat>/__tests__/<Name>KpiProcessor.test.ts      ← NEW
+server/src/features/analytics/domain/kpis/<cat>/__tests__/<Name>KpiProcessor.test.ts      ← NEW
 server/src/middleware/__tests__/<middleware>.test.ts                                 ← NEW
 server/src/features/<resource>/__tests__/tenant-isolation.test.ts                  ← NEW
 ```

@@ -18,10 +18,10 @@
 | DynamicTable Preset Module | domain | server/src/features/dynamicTables/domain/presets/modules/**/*.ts | Field presets | Module object export | – | dynamic-table-preset-generator |
 | DynamicTable Field Preset | domain | server/src/features/dynamicTables/domain/presets/fields/**/*.ts | ITableSchema | Field config object | – | dynamic-table-preset-generator |
 | DynamicTable System Preset | domain | server/src/features/dynamicTables/domain/presets/systems/*.ts | Module presets | System array export | – | dynamic-table-preset-generator |
-| Analytics KPI Processor | domain | server/src/features/analytics/kpis/*/*.KpiProcessor.ts | AnalyticsProcessor | Single-pass processor fn | __tests__/*.test.ts | analytics-kpi-generator |
-| Analytics KPI Template | domain | server/src/features/analytics/kpis/*/*.KpiTemplate.ts | KpiProcessor | Template registration object | – | analytics-kpi-generator |
-| Analytics Dynamic Processor | domain | server/src/features/analytics/dynamic/processors/*.ts | AnalyticsProcessor | Processor fn | – | analytics-kpi-generator |
-| Analytics Dynamic Template | domain | server/src/features/analytics/dynamic/templates/*.ts | DynamicProcessor | Template object | – | analytics-kpi-generator |
+| Analytics KPI Processor | domain | server/src/features/analytics/domain/kpis/*/*.KpiProcessor.ts | AnalyticsProcessor | Single-pass processor fn | __tests__/*.test.ts | analytics-kpi-generator |
+| Analytics KPI Template | domain | server/src/features/analytics/domain/kpis/*/*.KpiTemplate.ts | KpiProcessor | Template registration object | – | analytics-kpi-generator |
+| Analytics Dynamic Processor | domain | server/src/features/analytics/domain/dynamic/processors/*.ts | AnalyticsProcessor | Processor fn | – | analytics-kpi-generator |
+| Analytics Dynamic Template | domain | server/src/features/analytics/domain/dynamic/templates/*.ts | DynamicProcessor | Template object | – | analytics-kpi-generator |
 | Document Extractor | domain | server/src/lib/vector/extractors/*.ts | pdf-parse/mammoth/exceljs | Extracted text fn | – | document-processing-generator |
 | Vector RAG step | domain | server/src/lib/vector/*.ts | Qdrant, OpenAI | Chunking/embedding fn | – | document-processing-generator |
 | Chat Service | domain | server/src/features/chat/services/*.ts | Qdrant, OpenAI, DynamicTable | AI conversation service | – | (chat-domain-generator planned) |

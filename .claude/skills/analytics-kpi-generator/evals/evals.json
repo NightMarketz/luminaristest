@@ -31,9 +31,9 @@
       ],
       "prompt": "Gere o KPI 'TicketMedio' na categoria 'revenue', backend-only: (1) TicketMedioKpiProcessor.ts — processor single-pass sobre rows retornando ChartDataPoint[], acumulando dinheiro só via addMoney(); (2) TicketMedioKpiTemplate.ts — template com requiredFields/optionalFields, auto-registrado via registerTemplate; (3) o trecho de revenue/index.ts que registra o processor via registerProcessor e importa o template. Cada arquivo precedido de um marcador `// <path>`.",
       "target_files": [
-        "server/src/features/analytics/kpis/revenue/TicketMedioKpiProcessor.ts",
-        "server/src/features/analytics/kpis/revenue/TicketMedioKpiTemplate.ts",
-        "server/src/features/analytics/kpis/revenue/index.ts"
+        "server/src/features/analytics/domain/kpis/revenue/TicketMedioKpiProcessor.ts",
+        "server/src/features/analytics/domain/kpis/revenue/TicketMedioKpiTemplate.ts",
+        "server/src/features/analytics/domain/kpis/revenue/index.ts"
       ],
       "assertions": [
         "@TicketMedioKpiProcessor.ts::contains:ChartDataPoint",
@@ -63,7 +63,7 @@
       ],
       "prompt": "No TicketMedioKpiProcessor, garanta em um único passe sobre as rows que: rows vazios produzam um value 0 finito (nunca NaN), e previousValue seja undefined quando não há período anterior (nunca 0). Gere apenas o processor, precedido de `// <path>`.",
       "target_files": [
-        "server/src/features/analytics/kpis/revenue/TicketMedioKpiProcessor.ts"
+        "server/src/features/analytics/domain/kpis/revenue/TicketMedioKpiProcessor.ts"
       ],
       "assertions": [
         "@TicketMedioKpiProcessor.ts::contains:ChartDataPoint",
@@ -82,7 +82,7 @@
       "regression_of": "processor acumulando dinheiro com += (drift de float) e/ou acessando prisma direto / vazando camada HTTP (res.json) em vez de ser função pura do context devolvendo ChartDataPoint[]",
       "prompt": "Gere o corpo do TicketMedioKpiProcessor acumulando o total de vendas sem usar += em floats e sem tocar prisma nem Express — apenas sobre as rows do context. Precedido de `// <path>`.",
       "target_files": [
-        "server/src/features/analytics/kpis/revenue/TicketMedioKpiProcessor.ts"
+        "server/src/features/analytics/domain/kpis/revenue/TicketMedioKpiProcessor.ts"
       ],
       "assertions": [
         "@TicketMedioKpiProcessor.ts::contains:addMoney(",

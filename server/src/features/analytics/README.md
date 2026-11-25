@@ -27,7 +27,7 @@ Private helpers: `convertConfigurationsToGroups`, `getGroupTitle`, dependency ch
 
 ## Key concepts
 
-- **Code presets vs CORE definitions.** Code presets are TypeScript templates (`core/`, `kpis/`).
+- **Code presets vs CORE definitions.** Code presets are TypeScript templates (`domain/core/`, `domain/kpis/`).
   **CORE definitions** are rows in the user's `analyticsDefinitions` table (a `dynamicTables` table with
   `ui.presentation: 'system'`), letting analytics be authored as **data**. They carry a **scope**:
   `global` | `preset` | `table`.
@@ -44,10 +44,14 @@ Private helpers: `convertConfigurationsToGroups`, `getGroupTitle`, dependency ch
 analytics/
 ├── README.md                  # this index
 ├── docs/                      # ANALYTICS_DOCUMENTATION · ANALYTICS_TESTING_GUIDELINES · ANALYTICS_CALCULATIONS_PROPOSAL
-├── services/                  # AnalyticsService + validators (AnalyticsValidator, AnalyticsDefinitionValidator)
-├── core/                      # TemplateRegistry, AnalyticsConfiguration, AnalyticsTemplate, Pipeline, Compiler, ExpressionEvaluator
-├── dynamic/                   # processors: FormulaCalculation, StatusComparison, AggregatePipeline, ...
-└── kpis/                      # Revenue, Cost, Profit, Cashflow, Sales templates + processors
+├── services/                  # AnalyticsService + validators + AnalyticsResolver, FieldMapper (the former engine/)
+├── models/                    # AnalyticsConfiguration, AnalyticsTemplate, ChartPreset (types)
+├── public/                    # what other features may import (rule M1 of check:arch)
+└── domain/                    # pure logic (rule D2): no repository, service, Prisma or Express
+    ├── core/                  # ProcessorRegistry, TemplateRegistry, Pipeline, Compiler, ExpressionEvaluator
+    ├── dynamic/               # processors: FormulaCalculation, StatusComparison, AggregatePipeline, ...
+    ├── kpis/                  # Revenue, Cost, Profit, Cashflow, Sales templates + processors
+    └── utils/                 # CurrencyUtils (addMoney), DataSanitizer, DateUtils
 ```
 
 ---
@@ -63,7 +67,7 @@ analytics/
 
 Capability-feature gold set (no Policy/Repository; see [`TESTING.md`](../../../TESTING.md)):
 
-- **Computation unit** — `engine/__tests__/KpiEngine.spec.ts` + `kpis/**/__tests__/*Processor.test.ts`:
+- **Computation unit** — `services/__tests__/KpiEngine.spec.ts` + `domain/kpis/**/__tests__/*Processor.test.ts`:
   the KPI math per processor (revenue, profit, cost, sales, cashflow).
 - **DTO unit** — `dtos/__tests__/AnalyticsQueryDto.spec.ts`: required keys, coercions, caps (limit
   ≤ 1000), and the sortOrder enum.

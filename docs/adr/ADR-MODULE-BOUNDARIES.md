@@ -343,7 +343,7 @@ comentada no código, onboarding na tx do install) e jobs/`server.ts` (`PurgeDel
 - Limite da medida: regex, não AST. A regra de lint é a medida definitiva; se ela achar mais que o baseline acima,
   o achado vai à caixa antes de qualquer supressão.
 
-## 11. Emenda de 24/11/2026 — ligação das regras (PR-2 do BRIEF de execução; §11.5 = `users/public/` e `M4`; §11.6 = renome de `dynamicTables` e `M2`; §11.7 = `M2` sem ponto cego, `D2` e CLI do P2)
+## 11. Emenda de 24/11/2026 — ligação das regras (PR-2 do BRIEF de execução; §11.5 = `users/public/` e `M4`; §11.6 = renome de `dynamicTables` e `M2`; §11.7 = `M2` sem ponto cego, `D2` e CLI do P2; §11.8 = renome de `analytics` e `sectorKits`)
 
 Autorização: dono, chat, 24/11/2026: "Executa o BRIEF inteiro". Esta emenda registra o que o §8 item 4 pede: o baseline
 antes/depois de cada regra ligada e a prova de que cada uma morde. As regras valem na branch
@@ -687,3 +687,81 @@ sondas passavam: a órfã na raiz da feature dava exit 0 em 24/11 (§11.6, últi
 - **CLI do P2:** as listas ainda citam os dois arquivos apagados nesta emenda. Não foram tiradas: a lista está
   congelada na árvore do #1387, e mexer nela agora seria a manutenção que a decisão encerrou.
 - **Ambiente da prova:** Windows, com o `node_modules` pela junção do depósito. O resultado do CI (Linux) é o que vale.
+
+### 11.8 Emenda de 25/11/2026 — renome de `analytics` e `sectorKits` (segundo PR de renome, em fase)
+
+Autorização: dono, chat, 24/11/2026: "Executa o BRIEF inteiro" e, em 25/11, "Pode seguir executando aqui"; questionário
+de 25/11, duas respostas: "Pagar as 29 (Recommended)" e "analytics/models/ (Recommended)"
+(`docs/plano/decisoes/D-2026-11-25-MODULE-BOUNDARIES-PR3-ANALYTICS-SECTORKITS-RESPOSTAS.md`). PR de fase em draft (#1422),
+sobre o #1411, no regime de `D-2026-11-25-BRANCH-LONGA-E-TURNOS`: um commit por item, as duas features no mesmo PR.
+
+**O que entrou**
+
+| Feature | De | Para | Nota |
+|---|---|---|---|
+| `analytics` | `kpis/` | `domain/kpis/` | |
+| | `dynamic/` | `domain/dynamic/` | |
+| | `core/` (registros, `engine/`, `pipeline/`) | `domain/core/` | |
+| | `core/models/` | `models/` | resposta 2; o BRIEF §5.3 dizia "`core/models/` já casa" e não o movia |
+| | `utils/` | `domain/utils/` | |
+| | `engine/` | `services/` | `AnalyticsResolver` e `FieldMapper`, com os 3 testes |
+| | `index.ts` | apagado | sem importador de produção nem de teste. Os processadores se registram pelos imports de `services/AnalyticsResolver.ts` em `domain/kpis` e `domain/dynamic` (fecha o insumo ausente do BRIEF §9) |
+| `sectorKits` | `kits/` | `domain/kits/` | as 12 versões, `_shared/` e os `published.json` |
+| | `registry.ts` | `domain/registry.ts` | |
+
+`M2_FEATURES` passa a `(dynamicTables|analytics|sectorKits)`.
+
+**As 29 entradas `M1` que trocariam de chave, pagas por porta em `public/`** (resposta 1)
+
+| Porta (arquivo novo) | Quem passa a importar por ela | Arestas |
+|---|---|---|
+| `analytics/public/processor.ts` (contrato do processador, tipos do pipeline, `aggregatePipelineProcessor`) | `crm/services/CrmAnalyticsService.ts`, `CrmReportService.ts` | 4 |
+| `analytics/public/crmKpis.ts` (os 7 processadores de KPI do CRM) | `crm/services/CrmAnalyticsService.ts` | 1 |
+| `analytics/public/money.ts` (`addMoney`) | `crm/services/CrmReportService.ts` | 1 |
+| `dynamicTables/public/dynamicTable.types.ts` (tipos do model) | 4 arquivos de `analytics/domain/` e `analytics/services/AnalyticsResolver.ts` | 5 |
+| `dynamicTables/public/dynamicTableService.ts` (só o tipo do serviço) | `analytics/services/AnalyticsResolver.ts` | 1 |
+| `crm/public/constants.ts` (ordem dos status e sentinela de etapa) | 3 processadores de `analytics/domain/kpis/crm/` | 3 |
+| `sectorKits/public/registry.ts` (`KIT_REGISTRY`, `latestKit`) | `accountingBinding/fixtures/sectorBindingRegistry.ts` | 1 |
+| `accountingBinding/public/clinicBinding.ts` e `saleBinding.ts` | as 12 versões de kit | 12 |
+| `accounting/public/chartOfAccounts.ts` (`codigoPosL8`) | `sectorKits/domain/kits/_shared/referencial2025Canonico.ts` | 1 |
+
+Todas reexportam por nome (a R6 barra `export *`) e nenhuma importa `repositories/` (`M3`).
+
+**Baseline (server):** 376 → 361 (portas de `analytics`) → **347** (portas de `sectorKits`), só remoção: `M1` 322 → 293;
+`M1a` 36, `J1` 15 e `X3` 3 sem mudança. Os dois commits de movimento não mudam nenhuma chave. A `M2` (as três regras) e a
+`D2` medem 0 para as duas features e não entram no arquivo. Módulos cruzados: 2174 → 2183 (10 portas novas, 1 arquivo
+apagado). my-app sem mudança (79).
+
+**Prova de que a `M2` morde nas duas features** (saída literal de `npm run check:arch`, 25/11; 347 conhecidas ignoradas)
+
+| Caso | Sonda | Saída | Exit |
+|---|---|---|---|
+| raiz de `analytics`, importada por um service | `analytics/__sondaM2.ts` ← `analytics/services/__sondaImp.ts` | `error M2-feature-code-in-layer-folder: src/features/analytics/services/__sondaImp.ts → src/features/analytics/__sondaM2.ts` | 1 |
+| pasta antiga `kpis/` | `analytics/kpis/__sondaM2.ts` ← `analytics/services/__sondaImp.ts` | `error M2-feature-code-in-layer-folder: src/features/analytics/services/__sondaImp.ts → src/features/analytics/kpis/__sondaM2.ts` | 1 |
+| órfã na raiz de `analytics` | `analytics/__sondaM2c.ts`, sem import | `error M2c-feature-code-in-layer-folder-orphan: src/features/analytics/__sondaM2c.ts` | 1 |
+| contraprova `analytics` | a mesma sonda em `analytics/domain/` | `✔ no dependency violations found (2185 modules, 10020 dependencies cruised)` | 0 |
+| pasta antiga `kits/` | `sectorKits/kits/__sondaM2.ts` ← `sectorKits/services/__sondaImp.ts` | `error M2-feature-code-in-layer-folder: src/features/sectorKits/services/__sondaImp.ts → src/features/sectorKits/kits/__sondaM2.ts` | 1 |
+| raiz de `sectorKits`, importa um model | `sectorKits/__sondaM2b.ts` com `import type` de `./models/kitInstallTypes` | `error M2b-feature-code-in-layer-folder-importing: src/features/sectorKits/__sondaM2b.ts → src/features/sectorKits/models/kitInstallTypes.ts` | 1 |
+| contraprova `sectorKits` | a mesma sonda em `sectorKits/domain/` | `✔ no dependency violations found (2185 modules, 10020 dependencies cruised)` | 0 |
+
+Sondas removidas depois de cada caso.
+
+**Declarado**
+
+- **Teste-guarda do `sectorKits`:** `sectorKits/__tests__/importBoundary.test.ts` tem a lista do que a feature pode
+  importar de `accounting` (decisão de 08/10, `D-2026-10-08-KIT-SETOR-FORKS-KB6-KB9`). A lista ganhou a porta
+  `accounting/public/chartOfAccounts`, só com `codigoPosL8`, o mesmo nome que ela já aceitava do fixture. Sem isso o
+  teste reprovava o import pela porta. O invariante não muda: de `accounting`, só o plano canônico nomeado.
+- **`accounting/public/` nasce antes do PR-3.x da `accounting`**, com um arquivo. O plano de contas padrão vai para
+  `accounting/paises/br/` naquele PR (F-MBE-6 a); muda então só a linha de reexport. Não conferi se a regra `P1` do
+  ADR-PAIS-NA-BORDA aceita `public/` reexportando de `paises/`: ela não está nesta branch.
+- **`check-registries.mjs`** (gate de wiring do `skill-audit`) cita `analytics/kpis` em duas linhas, e a pasta
+  `.claude/skills/skill-audit/` é negada para escrita de agente. O patch (2 linhas, só caminho) fica com o dono, como no
+  §11.6. Até ele ser aplicado e commitado, o `skill-audit run` dá 1 finding e o job "Skill governance" do CI reprova o PR.
+- **`analytics/public/analyticsConfiguration.ts`** segue sem o sufixo `*.types.ts`, embora o tipo agora more em
+  `analytics/models/`: a troca mexeria nos importadores criados no §11.6.
+- **Arestas que não mudaram de chave seguem no baseline**, por exemplo as de `analytics/services/` para
+  `dynamicTables/models/DynamicTable.model`. A resposta 1 cobre só as 29 que o renome deslocava.
+- **`dynamicTables/public/dynamicTableService.ts`** expõe só o tipo do serviço. Não substitui o `DynamicTableReader` do
+  PR-4, que troca a injeção do repositório.
+- **Testes de integração:** não rodaram aqui; valem os do CI.

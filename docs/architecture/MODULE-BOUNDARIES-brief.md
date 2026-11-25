@@ -530,6 +530,22 @@ Respostas literais em `docs/plano/decisoes/D-2026-11-25-MODULE-BOUNDARIES-LACUNA
 | §5.3, `dynamicTables/utils/` | `RelationUtils.ts` e `TableUtils.ts` vão para `domain/` | os dois foram apagados (sem importador de produção nem de teste) |
 | §5.3, texto que o `tsc` não vê | cada PR-3.x repõe os caminhos | o `server/src/jobs/proveP2ZeroDiffCli.ts` saiu dessa lista: ficou congelado na árvore do #1387 (emenda de 25/11 no ADR-P2). Os PR-3.x de `accountingBinding` e `accounting` não mexem nele |
 
+### 13.3 PR-3.x de `analytics` e `sectorKits` (25/11/2026)
+
+Respostas literais em `docs/plano/decisoes/D-2026-11-25-MODULE-BOUNDARIES-PR3-ANALYTICS-SECTORKITS-RESPOSTAS.md`; medida,
+portas, plantios e pontos declarados no `ADR-MODULE-BOUNDARIES.md` §11.8.
+
+| Onde | O BRIEF dizia | O que valeu |
+|---|---|---|
+| §2, PR-3.x | um PR por feature, que abre e mergeia no mesmo dia | as duas features num **PR de fase em draft** (#1422), um commit por item, pelo regime de `D-2026-11-25-BRANCH-LONGA-E-TURNOS` (§1.3: PR ainda não aberto pode ser juntado num PR de fase, na ordem do BRIEF) |
+| §5.3, `analytics/core/` | `core/` → `domain/…`; "`core/models/` já casa" | `core/` → `domain/core/`, e os 4 arquivos de `core/models/` → `analytics/models/` (raiz da feature, que a `M4` aceita) |
+| §5.3 e §9, `analytics/index.ts` | apagar ou `public/`; confirmar antes como os processadores se registram | apagado. Não tinha importador; o registro acontece pelos imports de `services/AnalyticsResolver.ts` em `domain/kpis` e `domain/dynamic` |
+| §5.3, `analytics/engine/` (2/2) | → `services/` | movidos `AnalyticsResolver.ts` e `FieldMapper.ts`, com os 3 testes |
+| §2, PR-3.x (efeito no baseline) | move as pastas e acrescenta a feature à `M2` | o renome mudava a chave de 29 entradas `M1` (15 de `analytics`, 14 de `sectorKits`), e o PR paga as 29 com 10 arquivos de porta em `public/` de seis features (`analytics`, `dynamicTables`, `crm`, `sectorKits`, `accountingBinding`, `accounting`). Baseline 376 → 347 (`M1` 322 → 293) |
+| §5.5, `skill-audit/check-registries.mjs` | caminhos a repor no mesmo PR | 2 linhas (`analytics/kpis`), por patch que o dono aplica; a pasta é negada para escrita de agente |
+| §5.3, texto que o `tsc` não vê | skills, `GENERATION_CONTRACTS.md`, `scripts/` | também três testes que leem caminho em texto (`analyticsFieldMappingCoupling`, `sectorKits/__tests__/registry.test.ts`, `ChartOfAccountsFixture.plano4niveis.test.ts`) e o glob de `scripts/classe-risco.mjs` para `sectorKits/domain/kits/_shared/**` |
+| fora do BRIEF | — | o teste-guarda `sectorKits/__tests__/importBoundary.test.ts` (decisão de 08/10) ganhou a porta `accounting/public/chartOfAccounts` na lista permitida, só com `codigoPosL8` |
+
 ## Gates de envio [OPS-001]
 
 1. **Objetivo:** §1 (medida nova), §2 (fatias com classe), §3 (janela), §4 (prova), §7 (forks).

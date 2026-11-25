@@ -42,8 +42,8 @@
       ],
       "prompt": "Gere o KPI 'TicketMedio' na categoria 'revenue' ponta a ponta: (1) backend processor single-pass sobre rows retornando ChartDataPoint[]; (2) template do KPI auto-registrado e registrado no index da categoria; (3) hook frontend useTicketMedioKpi que busca via analytics.service; (4) widget TicketMedioKpiCard que consome o hook e renderiza o card canônico DashboardKpiCard. Saída: o conteúdo completo de cada arquivo da cadeia, cada um precedido de um marcador `// <path>`.",
       "target_files": [
-        "server/src/features/analytics/kpis/revenue/TicketMedioKpiProcessor.ts",
-        "server/src/features/analytics/kpis/revenue/TicketMedioKpiTemplate.ts",
+        "server/src/features/analytics/domain/kpis/revenue/TicketMedioKpiProcessor.ts",
+        "server/src/features/analytics/domain/kpis/revenue/TicketMedioKpiTemplate.ts",
         "my-app/features/dashboard/category-views/revenue/hooks/useTicketMedioKpi.ts",
         "my-app/features/dashboard/category-views/revenue/components/kpi/TicketMedioKpiCard.tsx"
       ],
@@ -70,7 +70,7 @@
       ],
       "prompt": "No backend processor TicketMedioKpiProcessor, garanta que rows vazios produzam um valor 0 finito (nunca NaN) e que previousValue seja undefined quando não há dado anterior — em um único passe sobre os rows. Gere apenas o processor, precedido de `// <path>`.",
       "target_files": [
-        "server/src/features/analytics/kpis/revenue/TicketMedioKpiProcessor.ts"
+        "server/src/features/analytics/domain/kpis/revenue/TicketMedioKpiProcessor.ts"
       ],
       "assertions": [
         "@TicketMedioKpiProcessor.ts::contains:ChartDataPoint",
