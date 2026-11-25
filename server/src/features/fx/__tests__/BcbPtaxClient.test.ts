@@ -69,11 +69,11 @@ describe('BcbPtaxClient.fetchClosing (item 22)', () => {
     expect(quotes).toHaveLength(3);
   });
 
-  it('HTTP não-2xx → PtaxClientError (5xx é GET idempotente: o wrapper tenta 3× antes de entregar o 503)', async () => {
+  it('HTTP não-2xx → PtaxClientError (5xx é GET idempotente: o wrapper tenta 2× (OUTBOUND_POLICY.bcbPtax, dono 24/11) antes de entregar o 503)', async () => {
     const fetchMock = jest.fn(async () => new Response('{}', { status: 503 }));
     global.fetch = fetchMock as unknown as typeof fetch;
     await expect(new BcbPtaxClient().fetchClosing('USD', '2026-09-24', '2026-09-28')).rejects.toThrow(/503/);
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('HTTP 404 é permanente → 1 chamada só', async () => {

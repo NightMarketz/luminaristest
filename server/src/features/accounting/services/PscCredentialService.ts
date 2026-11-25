@@ -4,7 +4,7 @@ import { AppError, ForbiddenError, NotFoundError } from '../../../lib/errors';
 import { loadKeyring, open, seal, type Keyring } from '../../../lib/secretBox';
 import { readCertFacts } from '../../../lib/nfeSignature';
 import { logger } from '../../../lib/logger';
-import { outboundFetch } from '../../../lib/outboundHttp';
+import { OUTBOUND_POLICY, outboundFetch, type OutboundPolicy } from '../../../lib/outboundHttp';
 import {
   DFE_PSC_KEYRING,
   DFE_PSC_REDIRECT_ENV,
@@ -37,7 +37,8 @@ import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeI
 import type { CredencialPscResolvida, TipoDfeAssinado } from '../dfe/AssinadorRemotoPort';
 import type { UnitCnpjResolver } from './FiscalCertificateService';
 
-export type PscFetch = (url: string, init?: RequestInit) => Promise<Response>;
+/** `policy` = política de rede do ponto (ver `OUTBOUND_POLICY`); sem ela, 1 prazo de `PSC_HTTP_TIMEOUT_MS` por tentativa. */
+export type PscFetch = (url: string, init?: RequestInit, policy?: OutboundPolicy) => Promise<Response>;
 /** Gancho pós-autorização (decisão 5 de D-2026-10-29-X10A-PR7-9-FORKS: envia as PENDING_SIGNATURE da unidade). */
 export type PscOnAuthorized = (scope: AccountingScope) => Promise<void>;
 
@@ -52,8 +53,8 @@ export interface PscCredentialServiceOptions {
   onAuthorized?: PscOnAuthorized;
 }
 
-const defaultFetch: PscFetch = (url, init) =>
-  outboundFetch('psc', url, { ...init, signal: AbortSignal.timeout(PSC_HTTP_TIMEOUT_MS) });
+/** Sem `signal` do chamador: o prazo é do wrapper (`timeoutMs`/`deadlineMs`), visível e testável. */
+const defaultFetch: PscFetch = (url, init, policy = { timeoutMs: PSC_HTTP_TIMEOUT_MS }) => outboundFetch('psc', url, init, policy);
 
 /**
  * PscCredentialService — credencial OAuth do PSC por unidade (X10a PR-7; EMENDA-PSC E-3..E-6, E-9; F-PSC-3..5 a).
@@ -300,7 +301,7 @@ export class PscCredentialService {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
       body: body.toString(),
-    });
+    }, { timeoutMs: PSC_HTTP_TIMEOUT_MS }); // POST sem chave: 1 tentativa; o `code` é de uso único e não pode ser re-enviado
     if (res.status >= 400 && res.status < 500) throw new AppError('O PSC recusou o código de autorização.', 400, PSC_AUTORIZACAO_ERRO);
     const json = await this.jsonOk(res);
     const accessToken = json.access_token;
@@ -320,7 +321,7 @@ export class PscCredentialService {
     const res = await this.call(pscUrl(provider.baseUrl, 'oauth/certificate-discovery'), {
       method: 'GET',
       headers: { Accept: 'application/json', Authorization: `Bearer ${accessToken}` },
-    });
+    }, OUTBOUND_POLICY.pscDiscovery);
     const json = await this.jsonOk(res);
     const list = Array.isArray(json.certificates) ? (json.certificates as Array<Record<string, unknown>>) : [];
     for (const item of list) {
@@ -343,9 +344,9 @@ export class PscCredentialService {
     );
   }
 
-  private async call(url: string, init: RequestInit): Promise<Response> {
+  private async call(url: string, init: RequestInit, policy: OutboundPolicy): Promise<Response> {
     try {
-      return await this.fetchFn(url, init);
+      return await this.fetchFn(url, init, policy);
     } catch {
       throw new AppError('PSC indisponível.', 502, PSC_INDISPONIVEL);
     }
