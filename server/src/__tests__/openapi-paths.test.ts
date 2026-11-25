@@ -117,6 +117,14 @@ const { options } = require('../../scripts/generate-openapi');
 const BASELINE = 293;
 
 describe('OpenAPI @openapi path coverage', () => {
+  // Guarda de portabilidade: o swagger-jsdoc expande `options.apis` como glob, e glob só aceita
+  // '/' como separador. Uma barra invertida (path.resolve no Windows) vira escape e casa 0
+  // arquivos — o spec sai com 0 paths e este teste e o route-spec-wiring falham só no Windows.
+  it('options.apis globs use only forward slashes', () => {
+    const withBackslash = (options.apis as string[]).filter((g) => g.includes('\\'));
+    expect(withBackslash).toEqual([]);
+  });
+
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {
     const spec = swaggerJSDoc(options) as { paths?: Record<string, unknown> };
     const pathCount = Object.keys(spec.paths || {}).length;
