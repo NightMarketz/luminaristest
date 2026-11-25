@@ -46,7 +46,10 @@ describe('BE-INCR-LEGAL-PARAMS PR-1 — /api/legal-parameters', () => {
   it('item 11 — qualquer autenticado lê a lista e o lookup (a semente da migração está lá); sem token ⇒ 401', async () => {
     const lista = await request(app).get(`${BASE}?tabela=PIS_COFINS&status=PUBLISHED`).set(authHeader(USER));
     expect(lista.status).toBe(200);
-    expect(lista.body.data).toHaveLength(4);
+    // 4 linhas lp1-pc-* (v1) + 4 lp-pc-lc214-* (migração 20261125120000: republicam a fonte com a LC 214/2025 art. 542
+    // e supersedem as v1 — a v1 continua PUBLISHED como histórico; 84ad).
+    expect(lista.body.data).toHaveLength(8);
+    expect(lista.body.data.filter((l: { supersedesId: string | null }) => l.supersedesId !== null)).toHaveLength(4);
     const v = await vigente('PRESUNCAO_IRPJ', '2026-03-31', '&discriminador=SERVICO');
     expect(v.status).toBe(200);
     expect(v.body.data).toMatchObject({ valorInt: 3200, fonte: 'Lei 9.249/1995 art. 15 § 1º III a', status: 'PUBLISHED' });
