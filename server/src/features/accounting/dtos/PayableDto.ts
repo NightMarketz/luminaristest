@@ -39,7 +39,7 @@ const dateOnly = (field: string) =>
  *         description:         { type: string }
  *         issueDate:           { type: string, description: "Data-only YYYY-MM-DD — competência do reconhecimento" }
  *         dueDate:             { type: string, description: "Data-only YYYY-MM-DD — vencimento" }
- *         amountCents:         { type: integer, minimum: 1, maximum: 2147483647, description: "Valor em centavos inteiros. Teto de POLÍTICA (não de persistência — a coluna é BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400. Guarda contra erro de digitação/ordem de grandeza, não limite técnico." }
+ *         amountCents:         { type: integer, minimum: 1, maximum: 8796093022207, description: "Valor em centavos inteiros. Teto de POLÍTICA (não de persistência — a coluna é BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400. Guarda contra erro de digitação/ordem de grandeza, não limite técnico." }
  *         expenseAccountId:    { type: string, description: "Id de uma conta-folha nature=Expense (contrapartida do reconhecimento). XOR com inventoryProductRef+inventoryQty (INCR-INVENTORY D3(b))." }
  *         inventoryProductRef: { type: string, description: "Compra de estoque (INCR-INVENTORY D3(b)): ref DynamicTable do produto; débito vai a 1.1.6 Estoques + emite StockMovement INBOUND. Exige inventoryQty; XOR com expenseAccountId." }
  *         inventoryQty:        { type: integer, minimum: 1, description: "Unidades recebidas nesta compra de estoque; pareado com inventoryProductRef. amountCents é o valor TOTAL (evita arredondamento por-unidade)." }
@@ -51,7 +51,7 @@ const dateOnly = (field: string) =>
  *             required: [tributo, amountCents, motivo]
  *             properties:
  *               tributo:     { type: string, enum: [IRRF, CSLL, COFINS, PIS, INSS, ISS] }
- *               amountCents: { type: integer, minimum: 0, maximum: 2147483647 }
+ *               amountCents: { type: integer, minimum: 0, maximum: 8796093022207 }
  *               motivo:      { type: string, minLength: 3, maxLength: 140 }
  *         pfDeducoes:
  *           type: object
@@ -74,7 +74,7 @@ const dateOnly = (field: string) =>
  *               setDeclared: { type: boolean, description: "Faz parte de um conjunto (art. 120 § 1º) — exige CAPITALIZE" }
  *               usefulLifeUpToOneYear: { type: boolean, description: "Vida útil ≤ 1 ano (2ª hipótese do art. 120) — só com EXPENSE; libera acima do limite" }
  *               cProd:     { type: string }
- *               costCents: { type: integer, minimum: 1, maximum: 2147483647 }
+ *               costCents: { type: integer, minimum: 1, maximum: 8796093022207 }
  *               ncm:       { type: string, description: "Exigido para o casamento da taxa pelo Anexo III — ausente ou sem correspondência única → 400 ANTES de qualquer escrita" }
  *               qty:       { type: integer, minimum: 1, default: 1 }
  *               nItem:     { type: integer, minimum: 1, description: "Posição da linha na NF-e — chave do rascunho; ausente numa criação manual usa o índice no array" }
@@ -89,7 +89,7 @@ const dateOnly = (field: string) =>
  *               productRef:  { type: string }
  *               cProd:       { type: string }
  *               nItem:       { type: integer, minimum: 1 }
- *               costCents:   { type: integer, minimum: 1, maximum: 2147483647 }
+ *               costCents:   { type: integer, minimum: 1, maximum: 8796093022207 }
  *               description: { type: string }
  *         attachmentId:        { type: string, description: "Id de um DocumentAttachment já enviado, anexado ao lançamento de reconhecimento (F4)" }
  */
@@ -438,7 +438,7 @@ export const CreatePayableSchema = z
  *         unitId:      { type: string }
  *         method:      { type: string, enum: [Cash, Pix, TED, Boleto] }
  *         paidAt:      { type: string, description: "Data-only YYYY-MM-DD — data EFETIVA do débito bancário (D9), não a data do clique" }
- *         amountCents: { type: integer, minimum: 1, maximum: 2147483647, description: "Valor DESTE pagamento: qualquer parte do saldo em aberto (amountCents − paidCents), nunca acima dele (BE-INCR-PARTIAL-SETTLEMENT). A checagem contra o saldo vive no serviço (sum-CAS atômico), não neste schema. Teto de POLÍTICA (não de persistência — BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400." }
+ *         amountCents: { type: integer, minimum: 1, maximum: 8796093022207, description: "Valor DESTE pagamento: qualquer parte do saldo em aberto (amountCents − paidCents), nunca acima dele (BE-INCR-PARTIAL-SETTLEMENT). A checagem contra o saldo vive no serviço (sum-CAS atômico), não neste schema. Teto de POLÍTICA (não de persistência — BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400." }
  */
 // A regra "≤ saldo remanescente" NÃO cabe no DTO puro (precisa do registro): vive no serviço
 // (`registerPayment`) e é autoritativa no sum-CAS do repositório. Mudança de "deve igualar" para

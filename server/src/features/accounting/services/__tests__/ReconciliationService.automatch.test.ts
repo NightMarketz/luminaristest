@@ -18,6 +18,7 @@
 import { ReconciliationService, RECONCILE_WINDOW_DAYS, RECONCILE_CHUNK_SIZE } from '../ReconciliationService';
 import { ForbiddenError, NotFoundError, ServiceError, ValidationError } from '../../../../lib/errors';
 import type { AccountingScope } from '../../scope/AccountingScope';
+import { statementParserBr } from '../../paises/br/StatementParserBr';
 
 const scope: AccountingScope = {
   ownerUserId: 'u1',
@@ -116,6 +117,7 @@ function buildService(over: {
     accountRepo as never,
     policy as never,
     audit as never,
+    statementParserBr,
   );
   return { svc, repo, accountRepo, policy, audit };
 }

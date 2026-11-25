@@ -42,8 +42,8 @@ const dateOnly = (field: string) =>
  *         description:            { type: string }
  *         ncmPrefix:              { type: string, nullable: true }
  *         quantity:               { type: integer, minimum: 1, default: 1 }
- *         costCents:              { type: integer, minimum: 1, maximum: 2147483647 }
- *         residualValueCents:     { type: integer, minimum: 0, maximum: 2147483647, default: 0, description: 'deve ser < costCents' }
+ *         costCents:              { type: integer, minimum: 1, maximum: 8796093022207 }
+ *         residualValueCents:     { type: integer, minimum: 0, maximum: 8796093022207, default: 0, description: 'deve ser < costCents' }
  *         acquiredAt:             { type: string, description: 'YYYY-MM-DD' }
  *         rateId:                 { type: string, description: 'XOR com annualRateBp — taxa do catálogo (Anexo III ou CUSTOM)' }
  *         annualRateBp:           { type: integer, minimum: 1, maximum: 10000, description: 'XOR com rateId — taxa explícita em basis points' }
@@ -110,8 +110,8 @@ export const CreateFixedAssetSchema = z
  *         description:            { type: string }
  *         ncmPrefix:              { type: string, nullable: true }
  *         quantity:               { type: integer, minimum: 1 }
- *         costCents:              { type: integer, minimum: 1, maximum: 2147483647 }
- *         residualValueCents:     { type: integer, minimum: 0, maximum: 2147483647 }
+ *         costCents:              { type: integer, minimum: 1, maximum: 8796093022207 }
+ *         residualValueCents:     { type: integer, minimum: 0, maximum: 8796093022207 }
  *         acquiredAt:             { type: string }
  *         rateId:                 { type: string }
  *         annualRateBp:           { type: integer, minimum: 1, maximum: 10000 }
@@ -151,7 +151,7 @@ export const UpdateFixedAssetSchema = z
  *         unitId:                    { type: string }
  *         assetId:                   { type: string, description: 'DEVE ser igual ao :id do path' }
  *         activatedAt:               { type: string, description: 'YYYY-MM-DD' }
- *         openingAccumulatedCents:   { type: integer, minimum: 0, maximum: 2147483647, description: 'obrigatório se activatedAt for anterior ao 1º período OPEN/SOFT_CLOSED do escopo (item 9)' }
+ *         openingAccumulatedCents:   { type: integer, minimum: 0, maximum: 8796093022207, description: 'obrigatório se activatedAt for anterior ao 1º período OPEN/SOFT_CLOSED do escopo (item 9)' }
  *         version:                   { type: integer, description: 'CAS — version atual do ativo (PENDING_ACTIVATION)' }
  */
 export const ActivateFixedAssetSchema = z
@@ -174,7 +174,7 @@ export const ActivateFixedAssetSchema = z
  *         unitId:                { type: string }
  *         assetId:                { type: string, description: 'DEVE ser igual ao :id do path' }
  *         disposedAt:             { type: string, description: 'YYYY-MM-DD' }
- *         proceedsCents:          { type: integer, minimum: 0, maximum: 2147483647, description: '0 = imprestável (art. 121 §4)' }
+ *         proceedsCents:          { type: integer, minimum: 0, maximum: 8796093022207, description: '0 = imprestável (art. 121 §4)' }
  *         counterpartAccountId:   { type: string, description: 'obrigatório quando proceedsCents > 0 (F-FA13 → a)' }
  *         version:                { type: integer, description: 'CAS — version atual do ativo (ACTIVE)' }
  */

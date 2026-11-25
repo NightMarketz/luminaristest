@@ -3,7 +3,7 @@ import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';
 import type { Account, SourceDocument } from 'generated/prisma';
 import { fiscalYearOf } from '../models/dates';
-import { CANONICAL_ACCOUNTS, NIVEL_MINIMO_ANALITICA_PATRIMONIAL, PATRIMONIAL_NATURES, isCodigoDoPlanoPadrao, isContaDoPlanoPadrao } from '../fixtures/ChartOfAccountsFixture';
+import { CANONICAL_ACCOUNTS, isCodigoDoPlanoPadrao, isContaDoPlanoPadrao } from '../fixtures/ChartOfAccountsFixture';
 import type { CanonicalAccount } from '../fixtures/ChartOfAccountsFixture';
 import { CLOSING_SOURCE_TYPE, reversedClosingSourceId } from '../models/closing';
 import { MAX_CENTS, centsFromDb } from '../models/money';
@@ -22,7 +22,7 @@ import type {
   JournalEntrySourceWithDocument,
 } from '../repositories/ISourceProvenanceRepository';
 import type { IDimensionRepository } from '../repositories/IDimensionRepository';
-import type { ILalurRepository } from '../repositories/ILalurRepository';
+import type { AccountDeletionGuard, ChartStructureRule } from '../ports/LedgerPorts';
 import type { AuditService } from './AuditService';
 import { assertLegDimensions, resolveLineDimensions } from './dimensionTagging';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -108,8 +108,10 @@ export class PostingService {
     private readonly auditService: AuditService,
     private readonly sourceProvenanceRepo: ISourceProvenanceRepository,
     private readonly dimensionRepo: IDimensionRepository,
-    /** ECF 3C item 19: ajustes vivos do e-Lalur apontando para a conta travam o soft-delete dela. */
-    private readonly lalurRepo: Pick<ILalurRepository, 'countLiveEntriesByAccount'>,
+    /** Onda 1.2: o que mais trava o soft-delete da conta (BR: ajuste vivo do e-Lalur, ECF 3C item 19). Porta do núcleo; adaptador na factory. */
+    private readonly accountDeletionGuard: AccountDeletionGuard,
+    /** Onda 1.2: regra de estrutura do plano de contas do país (BR: Manual da ECD, nível ≥ 4 + conta superior). Porta; adaptador na factory. */
+    private readonly chartStructureRule: ChartStructureRule,
     /**
      * IRRF-DISTRIBUICAO PR-1 (item 6; dono 21/10, opção (b)): referencial das folhas do plano padrão que os kits não trazem,
      * gravado logo depois de as contas existirem (`ReferentialMappingService.ensureCanonicalMappings`; adaptador na factory).
@@ -299,6 +301,13 @@ export class PostingService {
 
     const sumDebit = input.lines.reduce((acc, line) => acc + line.debitCents, 0);
     const sumCredit = input.lines.reduce((acc, line) => acc + line.creditCents, 0);
+    // F-W2B-2 → (b): o teto por perna é o limite seguro de Number; a SOMA de várias pernas pode passar dele e,
+    // acima de 2^53−1, `+` perde precisão calada e o `!==` abaixo compararia lixo. Recusa alto, com erro de negócio.
+    if (!Number.isSafeInteger(sumDebit) || !Number.isSafeInteger(sumCredit)) {
+      throw new ValidationError(
+        `A soma das partidas excede o limite seguro de centavos (${MAX_CENTS}) — divida o lançamento.`,
+      );
+    }
     if (sumDebit !== sumCredit || sumDebit <= 0) {
       throw new ValidationError('Lançamento desbalanceado: Σdébito deve igualar Σcrédito.');
     }
@@ -991,32 +1000,6 @@ export class PostingService {
   }
 
   /**
-   * BE-INCR-PLANO-4-NIVEIS (L8, item 6): a regra do PVA aplicada na origem. Manual da ECD L9 (maio/2026) p. 120,
-   * REGRA_VALIDA_NIVEL_CONTAS: analítica de ativo/passivo/PL no nível ≥ 4 (o nível do I050 é a profundidade do
-   * código); e toda conta abaixo do nível 1 precisa da conta superior (I050.COD_CTA_SUP), que é sintética.
-   */
-  private async assertNivelDoPlano(scope: AccountingScope, dto: CreateAccountInput, tx?: Prisma.TransactionClient): Promise<void> {
-    const segmentos = dto.code.split('.');
-    const analitica = dto.acceptsEntries ?? true;
-    if (analitica && PATRIMONIAL_NATURES.includes(dto.nature) && segmentos.length < NIVEL_MINIMO_ANALITICA_PATRIMONIAL) {
-      throw new ValidationError(
-        `Conta analítica de ativo, passivo ou patrimônio líquido precisa ter no mínimo ${NIVEL_MINIMO_ANALITICA_PATRIMONIAL} ` +
-          `níveis no código (ex.: 1.1.1.01); '${dto.code}' tem ${segmentos.length} (Manual da ECD, REGRA_VALIDA_NIVEL_CONTAS).`,
-      );
-    }
-    if (segmentos.length > 1) {
-      const pai = segmentos.slice(0, -1).join('.');
-      const superior = await this.accountRepo.findByCode(scope, pai, tx);
-      if (!superior || superior.acceptsEntries) {
-        throw new ValidationError(
-          `A conta superior '${pai}' de '${dto.code}' precisa existir como conta sintética (que não recebe lançamento) ` +
-            'antes da conta nova (I050.COD_CTA_SUP).',
-        );
-      }
-    }
-  }
-
-  /**
    * Create a user-defined account in the chart of accounts (non-canonical).
    * Duplicate codes are blocked by the @@unique constraint; P2002 → ValidationError.
    */
@@ -1028,12 +1011,18 @@ export class PostingService {
     if (isCodigoDoPlanoPadrao(dto.code)) {
       throw new ValidationError(`O código '${dto.code}' é reservado ao plano padrão; use outro código para a conta nova.`);
     }
-    await this.assertNivelDoPlano(scope, dto);
+    await this.chartStructureRule.assertNewAccount(
+      { code: dto.code, nature: dto.nature, acceptsEntries: dto.acceptsEntries ?? true },
+      (code) => this.accountRepo.findByCode(scope, code),
+    );
     const { userId, unitId } = accountingScopeWhere(scope);
     try {
       return await this.postingRepo.runTransaction(async (tx) => {
         // Lacuna 79a9 (F-PBF1-6, etapa b): a superior pode ter sido apagada depois da pré-checagem; relida na tx.
-        await this.assertNivelDoPlano(scope, dto, tx);
+        await this.chartStructureRule.assertNewAccount(
+          { code: dto.code, nature: dto.nature, acceptsEntries: dto.acceptsEntries ?? true },
+          (code) => this.accountRepo.findByCode(scope, code, tx),
+        );
         const account = await this.accountRepo.create({
           userId,
           unitId,
@@ -1105,12 +1094,9 @@ export class PostingService {
       if (await this.postingRepo.existsForAccount(scope, accountId, tx)) {
         throw new AppError('Conta possui lançamentos e não pode ser excluída.', 409, 'CONFLICT');
       }
-      // BRIEF 3C item 19 (espelho de LalurService.archiveParteB): um ajuste vivo da Parte A com esta conta
-      // sairia no M310/M360 apontando para conta morta. Contado DENTRO da tx (item 16).
-      const lalurLive = await this.lalurRepo.countLiveEntriesByAccount(scope, accountId, tx);
-      if (lalurLive > 0) {
-        throw new AppError('Arquive os ajustes do e-Lalur/e-Lacs relacionados a esta conta antes de excluí-la.', 409, 'CONFLICT');
-      }
+      // Gate autoritativo DENTRO da tx (item 16): o que mais depende da conta (BR: ajuste vivo do e-Lalur, ECF 3C item 19)
+      // vem pela porta AccountDeletionGuard — o núcleo não conhece o fiscal.
+      await this.accountDeletionGuard.assertAccountDeletable(scope, accountId, tx);
       // Conta do usuário no código do plano padrão: o soft-delete libera o código para a canônica nascer no próximo
       // `ensureChartOfAccounts` (lacuna 13dd). A trilha guarda o código original (`payload.code`).
       if (isCodigoDoPlanoPadrao(account.code)) await this.accountRepo.softDeleteReleasingCode(scope, accountId, tx);

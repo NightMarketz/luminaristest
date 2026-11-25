@@ -1622,7 +1622,7 @@
       },
       "empty": "Nenhuma conta da Parte B cadastrada.",
       "field": {
-        "cnpjInvalid": "CNPJ tem 14 dígitos.",
+        "cnpjInvalid": "CNPJ tem 14 posições (12 letras ou números + 2 dígitos).",
         "cnpjSitEsp": "CNPJ situação especial — opcional",
         "codCtaB": "Código da conta (COD_CTA_B)",
         "codCtaBPipe": "O código não pode conter \"|\" — é o separador de campo do arquivo SPED.",
@@ -3846,7 +3846,7 @@
     },
     "field": {
       "nome": "Nome",
-      "taxId": "CPF ou CNPJ (só dígitos)",
+      "taxId": "CPF ou CNPJ (o CNPJ pode ter letras)",
       "residencia": "Residência",
       "participacao": "Participação no capital (%)",
       "entrada": "Entrada",
@@ -3857,7 +3857,7 @@
       "save": "Não foi possível salvar o sócio.",
       "remove": "Não foi possível remover o sócio.",
       "nomeObrigatorio": "Informe o nome do sócio.",
-      "taxIdFormato": "CPF (11 dígitos) ou CNPJ (14 dígitos), só números.",
+      "taxIdFormato": "CPF (11 dígitos) ou CNPJ (14 posições: 12 letras/números + 2 dígitos).",
       "participacaoInvalida": "Participação inválida: um percentual entre 0 e 100.",
       "entradaObrigatoria": "Informe a data de entrada."
     }

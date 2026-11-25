@@ -41,6 +41,7 @@ import type { PostingService } from './PostingService';
 import type { FiscalDocumentEmissionService, FiscalDocumentView } from './FiscalDocumentEmissionService';
 import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
 import { resolveEmissorFor } from '../dfe/resolveEmissor';
+import { deveAlertarAdiamento } from '../models/dfePollAdiamento';
 import { ambienteFromTpAmb, assertTpAmb, DfeTransporteError, DfeTransporteIndisponivelError, tpAmbFor } from '../dfe/DfeEmissorPort';
 import type { CancelInput, CancelResult, DfeAmbiente, DfeCallContext, DfeEmissorPort, EmissaoResult, EventoNfse } from '../dfe/DfeEmissorPort';
 import { AssinaturaRemotaError, isSessaoPscVencida } from '../dfe/AssinadorRemotoPort';
@@ -202,6 +203,12 @@ export interface PollPendingOptions {
   now?: Date;
 }
 
+/** Fase do tick do `dfe_poll_pending` (depois do poll) que lançou; o tick segue e o scheduler alerta (L1 do #1392). */
+export interface FaseFalhou {
+  fase: string;
+  error: string;
+}
+
 export interface PollSummary {
   total: number;
   updated: number;
@@ -211,12 +218,21 @@ export interface PollSummary {
   gaveUp?: number;
   /** Ids dos documentos de `gaveUp` (para o alerta apontar a nota; cuid, sem PII). */
   gaveUpIds?: string[];
+  /**
+   * Lacuna 92c5 (dono 24/11) — documentos cujo transporte (assinador local) está indisponível há `POLL_TRANSPORTE_ALERTA_APOS_MS`
+   * ou mais e que ainda não tinham alertado: sai UMA vez por episódio. O documento segue adiado (nada desiste). Ausente se 0.
+   */
+  transporteAdiadoAlerta?: number;
+  /** Ids dos documentos de `transporteAdiadoAlerta` (cuid, sem PII). */
+  transporteAdiadoIds?: string[];
   /** BE-INCR-DFE-ANEXO-PENDENTE item 7 — resultado da varredura de pendências de anexo no mesmo tick. */
   attachments?: PendingAttachmentDrainSummary;
   /** X10a PR-9 (decisões 6 e 7) — transmissão das NFC-e off-line, prazo e órfãs no mesmo tick. */
   contingencia?: ContingenciaTickSummary;
   /** BE-INCR-DFE-EVENTOS (PR-2, item 18) — eventos do fisco aplicados às NFS-e autorizadas no mesmo tick. */
   eventos?: EventosTickSummary;
+  /** L1 do #1392 — fases posteriores ao poll que lançaram neste tick (contingência, eventos, anexos). Ausente se nenhuma. */
+  fasesFalharam?: FaseFalhou[];
 }
 
 // BE-INCR-DFE-ANEXO-PENDENTE F-PA-6 (a): teto de 10 tentativas, backoff exponencial de 2 min até 1 h.
@@ -238,7 +254,15 @@ const POLL_BACKOFF_BASE_MS = 120_000;
 const POLL_BACKOFF_MAX_MS = 3_600_000;
 /** Documento que o tick nao pode consultar (porta desligada para o tipo): volta daqui a 1 h, sem gastar tentativa. */
 const POLL_ADIAR_MS = 3_600_000;
+/**
+ * Lacuna 92c5 (dono 24/11/2026) — transporte local indisponível (`DfeTransporteIndisponivelError`) adia o documento sem gastar
+ * tentativa; passada esta janela desde o 1º adiamento do episódio, UM alerta avisa que a nota segue sem consulta. Só alerta:
+ * não há teto de idade nem desistência (política não pedida).
+ */
+export const POLL_TRANSPORTE_ALERTA_APOS_MS = 3_600_000;
 const POLL_LAST_ERROR_MAX = 500;
+/** Lacuna 6e13 — outra falha da consulta ou o sucesso encerram o episódio de adiamento por transporte (início e "alertado"). */
+const EPISODIO_ENCERRADO = { pollDeferredSince: null, pollAlertedAt: null } as const;
 /** Teto de documentos consultados por tick: a fila longa nao vira um tick sem fim (o resto fica para o proximo). */
 export const POLL_PENDING_LIMIT = 100;
 
@@ -348,6 +372,25 @@ export class FiscalDocumentLifecycleService {
   }
 
   /**
+   * POST /api/nfe/dfe/documents/:id/rearmar-polling (lacunas cf36/3cf5, dono 25/11) — devolve ao job o documento que ele
+   * abandonou (`pollGaveUpAt`, teto de tentativas): zera desistência, contagem e backoff, sem consultar agora e sem mudar o
+   * status (o destino da nota segue da SEFAZ). A gravação bumpa `updatedAt` e `listPending` exige `updatedAt < agora − DFE_POLL_AFTER_MS`
+   * (padrão 2 min): o documento volta à fila em 1 a 2 ticks, não no próximo. O que o job não abandonou (ou já é terminal) não é mexido: devolve a view atual.
+   * Se a consulta voltar a falhar, o teto conta de novo a partir de zero.
+   */
+  async rearmarPoll(scope: AccountingScope, documentId: string): Promise<FiscalDocumentView> {
+    if (!this.policy.canEmitFiscalDocument(scope)) {
+      throw new ForbiddenError('Você não tem permissão para re-armar a consulta de documento fiscal.');
+    }
+    const doc = await this.repo.findById(scope, documentId);
+    if (!doc) throw new ValidationError(`Documento fiscal '${documentId}' não encontrado.`, null);
+    if ((doc.status === 'SENT' || doc.status === 'PROCESSING') && doc.pollGaveUpAt) {
+      await this.repo.updatePollState(scope, doc.id, { pollAttempts: 0, nextPollAt: null, pollGaveUpAt: null });
+    }
+    return this.emissionService.getById(scope, documentId);
+  }
+
+  /**
    * Job `dfe_poll_pending` (item 27, JOB-005, Prisma-direto) — varre `SENT|PROCESSING` mais
    * velhos que `olderThan`, reconstrói o escopo de cada documento (mesmo padrão de
    * `accountingSyncReconcile.job.ts`: `resolveAccountingScopeInternal({userId: doc.userId}, doc.unitId)`)
@@ -385,7 +428,11 @@ export class FiscalDocumentLifecycleService {
           // polling desistir (L-…580f).
           logger.warn('dfe_poll_pending: transporte indisponível — documento adiado, sem gastar tentativa', { documentId: doc.id, error: message });
           summary.skipped++;
-          await this.adiarPoll(scope, doc, now);
+          // Lacuna 92c5: depois de POLL_TRANSPORTE_ALERTA_APOS_MS adiado, UM alerta por episódio (só alerta, não desiste).
+          if (await this.adiarPorTransporte(scope, doc, message, now)) {
+            summary.transporteAdiadoAlerta = (summary.transporteAdiadoAlerta ?? 0) + 1;
+            (summary.transporteAdiadoIds ??= []).push(doc.id);
+          }
           continue;
         }
         if (isDfeSkippableError(error)) {
@@ -415,7 +462,7 @@ export class FiscalDocumentLifecycleService {
     const desiste = permanente || attempts >= POLL_MAX_ATTEMPTS;
     try {
       if (desiste) {
-        await this.repo.updatePollState(scope, doc.id, { pollAttempts: attempts, pollLastError: lastError, pollGaveUpAt: now, nextPollAt: null });
+        await this.repo.updatePollState(scope, doc.id, { pollAttempts: attempts, pollLastError: lastError, pollGaveUpAt: now, nextPollAt: null, ...EPISODIO_ENCERRADO });
         logger.error('dfe_poll_pending: teto de tentativas — o job para de consultar o documento (consulta manual segue valendo)', {
           documentId: doc.id,
           attempts,
@@ -425,7 +472,7 @@ export class FiscalDocumentLifecycleService {
         return true;
       }
       const delay = Math.min(POLL_BACKOFF_BASE_MS * 2 ** (attempts - 1), POLL_BACKOFF_MAX_MS);
-      await this.repo.updatePollState(scope, doc.id, { pollAttempts: attempts, pollLastError: lastError, nextPollAt: new Date(now.getTime() + delay) });
+      await this.repo.updatePollState(scope, doc.id, { pollAttempts: attempts, pollLastError: lastError, nextPollAt: new Date(now.getTime() + delay), ...EPISODIO_ENCERRADO });
       return false;
     } catch (error) {
       logger.error('dfe_poll_pending: não gravou o controle de retentativa — o documento volta no próximo tick', {
@@ -448,11 +495,43 @@ export class FiscalDocumentLifecycleService {
     }
   }
 
+  /**
+   * Lacuna 92c5 — adia por transporte indisponível (1 h, sem tentativa) e guarda o episódio nas colunas `pollDeferredSince`
+   * (1º adiamento) e `pollAlertedAt` (lacuna 6e13); `pollLastError` é só a mensagem. `true` => este tick deve alertar: o
+   * episódio dura `POLL_TRANSPORTE_ALERTA_APOS_MS` ou mais e o alerta ainda não saiu. Só devolve `true` se o marcador
+   * "alertado" foi gravado — se a gravação falha, o próximo tick tenta de novo (melhor um alerta atrasado que nenhum).
+   */
+  private async adiarPorTransporte(scope: AccountingScope, doc: FiscalDocument, message: string, now: Date): Promise<boolean> {
+    const anterior = doc.pollDeferredSince ? { desde: doc.pollDeferredSince, alertado: doc.pollAlertedAt != null } : null;
+    const alertar = deveAlertarAdiamento(anterior, now, POLL_TRANSPORTE_ALERTA_APOS_MS);
+    try {
+      await this.repo.updatePollState(scope, doc.id, {
+        nextPollAt: new Date(now.getTime() + POLL_ADIAR_MS),
+        pollLastError: message.slice(0, POLL_LAST_ERROR_MAX),
+        pollDeferredSince: anterior?.desde ?? now,
+        pollAlertedAt: alertar ? now : doc.pollAlertedAt,
+      });
+    } catch (error) {
+      logger.warn('dfe_poll_pending: não adiou o documento de transporte indisponível', {
+        documentId: doc.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return false;
+    }
+    if (alertar) {
+      logger.error('dfe_poll_pending: transporte indisponível além da janela de alerta — documento segue adiado', {
+        documentId: doc.id,
+        adiadoDesde: (anterior?.desde ?? now).toISOString(),
+      });
+    }
+    return alertar;
+  }
+
   /** Consulta que deu certo zera a contagem, o backoff e a desistência — só escreve se havia algo a limpar. */
   private async limparFalhaDePoll(scope: AccountingScope, doc: FiscalDocument): Promise<void> {
-    if (!(doc.pollAttempts > 0 || doc.nextPollAt || doc.pollGaveUpAt || doc.pollLastError)) return;
+    if (!(doc.pollAttempts > 0 || doc.nextPollAt || doc.pollGaveUpAt || doc.pollLastError || doc.pollDeferredSince || doc.pollAlertedAt)) return;
     try {
-      await this.repo.updatePollState(scope, doc.id, { pollAttempts: 0, nextPollAt: null, pollGaveUpAt: null, pollLastError: null });
+      await this.repo.updatePollState(scope, doc.id, { pollAttempts: 0, nextPollAt: null, pollGaveUpAt: null, pollLastError: null, ...EPISODIO_ENCERRADO });
     } catch (error) {
       logger.warn('dfe_poll_pending: não limpou o controle de retentativa após a consulta', {
         documentId: doc.id,
