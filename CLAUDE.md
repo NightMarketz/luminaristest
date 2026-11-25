@@ -6,6 +6,11 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
 - **Plano (estado, fila, régua, destino):** vault `docs/plano/` — gere e leia `docs/plano/_INDEX.md` (`node scripts/plano-vault.mjs index`; não versionado) → a nota do nó →
   só o trilho/rejeitada que ela linka (protocolo em `docs/plano/README.md`). **Não abra o `docs/SDD-LUMINARIS.md`
   inteiro** (snapshot consolidado de 23/09); citação "master map §N" resolve em `docs/plano/_ANCORAS.md`.
+- **Memória durável (armadilhas, correções do dono, decisões-marco) = ObsidianVault** — pre-flight: leia
+  `c:\Users\smurf\ObsidianVault\30 Projects\Luminaris\MEMORY.md` e busque com
+  `node "$env:USERPROFILE\.gemini\config\plugins\engineering-rigor\scripts\vault-search.mjs" --query "<termos>" --top 5`;
+  protocolo de leitura/escrita e fronteira repo × vault em `AGENTS.md`. A auto-memória do Claude Code segue em uso
+  e vale **o mesmo que o vault** na consulta (dono, 24/11): leia as duas; conflito se resolve pela hierarquia do `AGENTS.md`.
 - **Bar de qualidade / camadas:** `.claude/skills/_ARCHITECTURE-CONTRACT.md`
 - **Antes de mudar estrutura ou dependência entre camadas, leia `docs/adr/`** (índice em `docs/adr/INDEX.md`).
   Fronteiras mecanizadas: `docs/adr/ADR-ARCH-BOUNDARIES.md` — `npm run check:arch` (server/ e my-app/) bloqueia
