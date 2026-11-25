@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, afterEach, beforeEach, onTestFinished } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup, within, act } from '@testing-library/react';
 
 vi.mock('next-i18next', async () => (await import('./i18nPt')).nextI18nextPt());
 vi.mock('../../../../../lib/context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'eu' } }) }));
@@ -607,12 +607,22 @@ describe('rascunho e exclusão', () => {
     });
 
     it('salvar zera a sujeira: Voltar à lista depois de salvar não pergunta', async () => {
-      svc.create.mockImplementation((body: { name: string }) => ok({ ...saved, userId: 'eu', id: 'n1', name: body.name, spec: { source: 'leadProposals', measures: [{ type: 'count' }] } }));
+      // L-20261114-210543-36f4: "Salvar" desabilitado também vale com o save EM VOO, e a linha de base da sujeira é
+      // recapturada num efeito passivo depois do commit — esperar o botão deixava o clique em "Voltar" correr contra
+      // o efeito (2/10 vermelho local). O save resolve dentro do act, que drena o commit E o efeito da linha de base.
+      let release!: () => void;
+      svc.create.mockImplementation(
+        (body: { name: string }) =>
+          new Promise((r) => {
+            release = () => r({ success: true, data: { ...saved, userId: 'eu', id: 'n1', name: body.name, spec: { source: 'leadProposals', measures: [{ type: 'count' }] } } });
+          }),
+      );
       await newReportOn('leadProposals');
       fireEvent.change(screen.getByLabelText('Nome'), { target: { value: 'Contagem' } });
       fireEvent.click(screen.getByText('Salvar'));
       await waitFor(() => expect(svc.create).toHaveBeenCalled());
-      await waitFor(() => expect(screen.getByText('Salvar')).toBeDisabled());
+      await act(async () => release());
+      expect(screen.getByText('Salvar como')).toBeEnabled(); // salvo e fora do voo
       fireEvent.click(screen.getByText('Voltar à lista'));
       expect(await screen.findByText('Novo relatório')).toBeInTheDocument();
       expect(screen.queryByRole('dialog')).toBeNull();

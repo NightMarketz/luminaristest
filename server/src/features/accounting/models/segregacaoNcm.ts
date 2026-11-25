@@ -19,9 +19,9 @@ import { SEGREGACAO_EXCLUI, type TributoSimples } from './simplesCalc';
 
 /**
  * LC 214 art. 542 XI — a Lei 10.147/2000 fica revogada a partir deste dia: o seguinte ao último `vigenteAte` de `PIS_COFINS`.
- * `null` = a tabela não publica fim (PIS/Cofins segue em vigor). `linhas` carrega `PIS_COFINS`.
+ * Fail-closed (ressalva do #1357, dono 24/11): linha `PIS_COFINS` em vigor sem `vigenteAte` ⇒ erro (`FimDeVigenciaNaoPublicadoError`), nunca `null`/"sem fim". `linhas` carrega `PIS_COFINS`.
  */
-export function fimMonofasicoPisCofins(linhas: readonly LinhaLegal[], dataConsultada: string): string | null {
+export function fimMonofasicoPisCofins(linhas: readonly LinhaLegal[], dataConsultada: string): string {
   return diaSeguinteAoFimDeVigencia(linhas, 'PIS_COFINS', null, dataConsultada);
 }
 
@@ -61,7 +61,7 @@ export function segregacaoPorNcm(ncm: string | null | undefined, cUf: string | n
   const out: TributoSimples[] = [];
   if (findMonofasicoRule(ncm8, regrasMonofasico(linhas, data))) {
     const fim = fimMonofasicoPisCofins(linhas, data); // só lido com NCM monofásica: NCM fora da tabela não depende da PIS_COFINS
-    if (fim === null || data < fim) out.push(...SEGREGACAO_EXCLUI.monofasico);
+    if (data < fim) out.push(...SEGREGACAO_EXCLUI.monofasico);
   }
   if (cUf && icmsStDaNcm(ncm8, cUf, data, linhas)) out.push(...SEGREGACAO_EXCLUI.icmsSt);
   return out;

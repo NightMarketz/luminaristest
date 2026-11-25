@@ -7,7 +7,7 @@
 import fs from 'fs';
 import path from 'path';
 import { LEGAIS_SEMENTE, LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO, legalParamsSeedRows } from '@test/helpers/legalParams';
-import { SemLinhaVigenteError, type LegalParameterTabela } from '../../../legalParameters/models/legalParameter';
+import { FimDeVigenciaNaoPublicadoError, ParametroLegalAusenteError, SemLinhaVigenteError, type LegalParameterTabela } from '../../../legalParameters/models/legalParameter';
 import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
 import { issAliquotaMaxBp } from '../issLimite';
 import { exigirIssNaoExtinto, fatorReducaoIssBp, fimIss, IssExtintoError, issExtinto, ISS_EXTINTO_MENSAGEM } from '../issTransicao';
@@ -98,10 +98,19 @@ describe('item 3 — fatorReducaoIssBp e issExtinto', () => {
     expect(issExtinto(todas, '2033-01-01')).toBe(true);
   });
 
-  it('issExtinto: linha de ISS_LIMITE sem vigenteAte = sem fim publicado ⇒ nunca extinto; sem linha ⇒ erro', () => {
+  it('FAIL-CLOSED (ressalva do #1357, dono 24/11): linha de ISS_LIMITE em vigor SEM vigenteAte ⇒ erro PARAMETRO_LEGAL_AUSENTE, nunca "sem fim ⇒ não extinto"; sem linha ⇒ erro', () => {
     const aberta = todas.map((l) => (l.tabela === 'ISS_LIMITE' ? { ...l, vigenteAte: null } : l));
-    expect(issExtinto(aberta, '2040-01-01')).toBe(false);
+    for (const chamada of [() => fimIss(aberta, '2040-01-01'), () => issExtinto(aberta, '2040-01-01'), () => exigirIssNaoExtinto(aberta, '2040-01-01')]) {
+      expect(chamada).toThrow(ParametroLegalAusenteError);
+      expect(chamada).toThrow(FimDeVigenciaNaoPublicadoError);
+      expect(chamada).toThrow(/sem vigenteAte/);
+      expect(chamada).toThrow(expect.objectContaining({ errorCode: 'PARAMETRO_LEGAL_AUSENTE' }));
+    }
     expect(() => issExtinto(todas.filter((l) => l.tabela !== 'ISS_LIMITE'), '2030-01-01')).toThrow(SemLinhaVigenteError);
+  });
+
+  it('a semente real publica o fim do ISS (vigenteAte preenchido) — o fail-closed não dispara hoje', () => {
+    expect(() => fimIss(todas, '2030-01-01')).not.toThrow();
   });
 });
 

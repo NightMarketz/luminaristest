@@ -36,11 +36,13 @@ const ANTIGA_CSLL: Record<string, { valor: number; fonte: string }> = {
 const IN_2121 = '2022-12-15';
 const ATE = '2026-12-31';
 const CODIGOS_FONTE = 'Receita Federal, DCTF — Tabelas de códigos de receita PIS (27/02/2024) e Cofins (27/07/2023)';
+// Lacuna 84ad: as 4 linhas foram republicadas (supersedes) com a LC 214 acrescentada à `fonte`; o resto da paridade (alíquota, código, vigência) não muda.
+const FONTE_LC214 = '; LC 214/2025 art. 542 (revoga, a partir de 1º/01/2027, dispositivos das leis do PIS e da Cofins); efeito: art. 544 III (red. LC 227/2026)';
 const ANTIGA_PIS_COFINS = [
-  { tributo: 'PIS', modalidade: 'CUMULATIVO', aliquotaBp: 65, codigoReceita: '810902', fonte: `IN RFB 2.121/2022 art. 128; ${CODIGOS_FONTE}`, vigenteDesde: IN_2121, vigenteAte: ATE },
-  { tributo: 'COFINS', modalidade: 'CUMULATIVO', aliquotaBp: 300, codigoReceita: '217201', fonte: `IN RFB 2.121/2022 art. 128; Lei 9.718/1998 art. 8º; ${CODIGOS_FONTE}`, vigenteDesde: IN_2121, vigenteAte: ATE },
-  { tributo: 'PIS', modalidade: 'NAO_CUMULATIVO', aliquotaBp: 165, codigoReceita: '691201', fonte: `IN RFB 2.121/2022 art. 150; Lei 10.637/2002 art. 2º; ${CODIGOS_FONTE}`, vigenteDesde: IN_2121, vigenteAte: ATE },
-  { tributo: 'COFINS', modalidade: 'NAO_CUMULATIVO', aliquotaBp: 760, codigoReceita: '585601', fonte: `IN RFB 2.121/2022 art. 150; Lei 10.833/2003 art. 2º; ${CODIGOS_FONTE}`, vigenteDesde: IN_2121, vigenteAte: ATE },
+  { tributo: 'PIS', modalidade: 'CUMULATIVO', aliquotaBp: 65, codigoReceita: '810902', fonte: `IN RFB 2.121/2022 art. 128; ${CODIGOS_FONTE}${FONTE_LC214}`, vigenteDesde: IN_2121, vigenteAte: ATE },
+  { tributo: 'COFINS', modalidade: 'CUMULATIVO', aliquotaBp: 300, codigoReceita: '217201', fonte: `IN RFB 2.121/2022 art. 128; Lei 9.718/1998 art. 8º; ${CODIGOS_FONTE}${FONTE_LC214}`, vigenteDesde: IN_2121, vigenteAte: ATE },
+  { tributo: 'PIS', modalidade: 'NAO_CUMULATIVO', aliquotaBp: 165, codigoReceita: '691201', fonte: `IN RFB 2.121/2022 art. 150; Lei 10.637/2002 art. 2º; ${CODIGOS_FONTE}${FONTE_LC214}`, vigenteDesde: IN_2121, vigenteAte: ATE },
+  { tributo: 'COFINS', modalidade: 'NAO_CUMULATIVO', aliquotaBp: 760, codigoReceita: '585601', fonte: `IN RFB 2.121/2022 art. 150; Lei 10.833/2003 art. 2º; ${CODIGOS_FONTE}${FONTE_LC214}`, vigenteDesde: IN_2121, vigenteAte: ATE },
 ] as const;
 
 function antigaApuracao(chave: ChaveParametro, data: string, atividade?: AtividadePresuncao): Antiga | undefined {

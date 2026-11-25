@@ -10,6 +10,7 @@
 import { ratearReceita, ReceitaFiscalService, type VendaReconhecida } from '../ReceitaFiscalService';
 import { ReceitaFiscalRecebimentoService, MEIO_PACOTE } from '../ReceitaFiscalRecebimentoService';
 import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { MAX_CENTS } from '../../models/money';
 import type { SaleRevenueLine } from '../../sync/bridges/saleItems';
 import type { ReceitaFiscalLinhaData } from '../../repositories/IReceitaFiscalRepository';
 
@@ -137,8 +138,10 @@ describe('ReceitaFiscalRecebimentoService.registrar — valor do recebimento (bo
     expect(criadas).toHaveLength(0);
   });
 
-  it('valor acima de MAX_CENTS (R$ 21.474.836,48): recusa na borda como o razão (antes da onda 2.3 GRAVAVA 2.147.483.648)', async () => {
-    await expect(registrar(21_474_836.48)).rejects.toThrow('Valor em reais fora da faixa suportada de centavos.');
+  // O teto vem do próprio MAX_CENTS (F-W2B-2 → b, #1350: 2^43 − 1): um literal em reais aqui ficou velho quando o teto subiu
+  // de Int32 e o teste passou a esperar recusa de um valor que o razão agora aceita.
+  it('valor acima de MAX_CENTS (teto de política, hoje 2^43 − 1 centavos): recusa na borda como o razão', async () => {
+    await expect(registrar((MAX_CENTS + 1) / 100)).rejects.toThrow('Valor em reais fora da faixa suportada de centavos.');
     expect(criadas).toHaveLength(0);
   });
 });

@@ -266,7 +266,10 @@ describe('AccountsReceivablePanel — cobrança por provedor', () => {
   it('EMENDA-1 16b: o seed do link da aba Cobrança filtra pelo nº e abre o drawer de cobranças do título', async () => {
     vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({ receivables: [openReceivable], total: 1 });
     render(<AccountsReceivablePanel unitId="u1" initialFilters={{ q: 'NF-1' }} initialChargesReceivableId="ar1" />);
-    await waitFor(() => expect(screen.getByTestId('charges-drawer-ar1')).toBeInTheDocument());
+    // L-20261121-195525-552b: o testid do drawer está no 1º render e a leitura das cobranças sai num efeito passivo
+    // depois dele — espere o estado carregado do drawer (DOM), não só o drawer montado, antes de afirmar a chamada.
+    const drawer = await screen.findByTestId('charges-drawer-ar1');
+    await within(drawer).findByText('Nenhuma cobrança emitida para este título.');
     expect(collectionChargesService.listByReceivable).toHaveBeenCalledWith('ar1', 'u1');
     expect(vi.mocked(accountsReceivableService.listReceivables).mock.calls[0][0]).toMatchObject({ q: 'NF-1' });
   });

@@ -2733,7 +2733,7 @@
       "CANCELLED": "Cancelada",
       "CANCEL_ANALYSIS": "Cancelamento em análise pelo fisco",
       "CONTINGENCY": "Emitida em contingência, aguardando transmissão",
-      "DENIED": "Uso denegado pela SEFAZ (número consumido)",
+      "DENIED": "Uso denegado pela SEFAZ — confira a nota e a situação do emitente",
       "PENDING_SIGNATURE": "Aguardando reautorização do assinador",
       "PROCESSING": "Em processamento",
       "REJECTED": "Rejeitada",

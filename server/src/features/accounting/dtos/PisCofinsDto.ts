@@ -16,7 +16,7 @@ const Cents = z.string().regex(/^\d+$/);
  *       required: [unitId, anoCalendario, periodo]
  *       properties:
  *         unitId:        { type: string, description: "Unidade lida (proveniência; outra unidade da PJ com movimento no mês ⇒ 400)" }
- *         anoCalendario: { type: integer, minimum: 2025, maximum: 2026, description: "2027+ ⇒ 400 (PIS/Cofins revogados — LC 214/2025 art. 542)" }
+ *         anoCalendario: { type: integer, minimum: 2025, description: "Sem teto no schema: sem linha PIS_COFINS vigente no ano ⇒ 400 (PIS/Cofins revogados; a mensagem cita a fonte da linha)" }
  *         periodo:       { type: string, enum: [M01, M02, M03, M04, M05, M06, M07, M08, M09, M10, M11, M12] }
  *         ajustesBase:
  *           type: array
@@ -73,7 +73,7 @@ const Cents = z.string().regex(/^\d+$/);
 const PisCofinsPreviewFields = {
   unitId: z.string().min(1),
   // Onda 3.2: sem teto no schema — o fim do PIS/Cofins é a ausência de linha `PIS_COFINS` vigente (o serviço recusa com o 400
-  // nomeado da revogação, LC 214 art. 542, `parametrosDoMes`); o teto fixo em 2026 não lia a linha.
+  // nomeado da revogação, com a `fonte` da linha, `parametrosDoMes`); o teto fixo em 2026 não lia a linha.
   anoCalendario: z.number().int().min(2025),
   periodo: z.enum(PERIODOS_PIS_COFINS),
   ajustesBase: z

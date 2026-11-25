@@ -117,7 +117,7 @@ const FiscalProfileFields = z
     // BE-INCR-LEGAL-PARAMS PR-2 (item 22): o máximo vem da tabela ISS_LIMITE — conferido no FiscalProfileService.validate
     // (MODULE-BOUNDARIES PR-1a (`L6`; dono, questionário, 24/11: "Vai para o service", revoga a L-8 do BE-INCR-LEGAL-PARAMS)). D-4 (mínimo de 2%)
     // é pendência de contador — não corrigida. ISS-TRANSICAO-IBS PR-1 (item 4; F-ISS-5 a): de 01/01/2033 em diante a
-    // ISS_LIMITE não tem linha (LC 214 art. 543 IV) — valor não nulo ⇒ 400 nomeado, antes de ler o máximo; null passa.
+    // ISS_LIMITE não tem linha (LC 214 art. 543 IV) — valor não nulo ⇒ 400 nomeado (`exigirIssNaoExtinto`, no serviço: o fim é a linha, Onda 3.2 #4), antes de ler o máximo; null passa.
     issAliquotaBp: z
       .number()
       .int()
