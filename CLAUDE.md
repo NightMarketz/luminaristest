@@ -180,12 +180,18 @@ estruturas implícitas entra como verde com revisor PASS — `docs/plano/decisoe
   comando. **Depois da migração, não edite o `GAP-MAP.md` para registrar lacuna** (BRIEF pendente, só roda quando a Faixa 1
   fechar; até lá valem a regra antiga e o escritor único da Faixa 1). Detalhe e sequência na decisão.
 
-## Pilhas e tamanho de PR (dono, 2026-11-08; emendado em 2026-11-10 acima)
-- **Um PR por item do GAP-MAP**, mergeado direto na `main` sempre que a dependência permitir, ou na `integration/<slug>` do tema.
+## Pilhas e tamanho de PR (dono, 2026-11-08; emendado em 2026-11-10 acima e em 2026-11-25)
+- **Branch longa, poucos PRs** (dono, 25/11: "1 teste bem feito valha mais que 100 testes pequenos diários" —
+  `docs/plano/decisoes/D-2026-11-25-BRANCH-LONGA-E-TURNOS.md`): o trabalho vive na `integration/<slug>`; o PR é **por fase
+  que se testa junta**, nasce em draft e sai dele com CI verde; **cada item do BRIEF ou lacuna é um commit** com o id no
+  título. PR-0 de contrato segue próprio. Lacuna P0 ou com gatilho `vazamento` sai em PR próprio, direto na `main`.
+- **Turnos:** de dia o maestro (08:00, agendado) abre as sessões que implementam; a revisão de PR vermelho de código é do
+  turno da noite (02:00, `.claude/prompts/revisor-noturno.md`), em fatias de até 4 commits de item mais uma passada
+  integrada. A passagem entre os dois fica em `<git-common-dir>/turno/`.
 - **Profundidade máxima entre a `main` e o resto: 2** (`main` → integração → pilha). Dentro de uma `integration/<slug>` a pilha é livre
   (acima de 4 camadas, reporte no lote). **Fora de integração**, filho sobre pai não mergeado continua proibido; a raiz entra primeiro.
 - Dependência que não cabe em 2 níveis fora de integração: separe o contrato em PR próprio, que entra antes.
-- **Não junte tarefas extras num PR** só para reduzir a contagem de PRs: PR grande piora a revisão.
+- **O PR de fase junta os itens da mesma fase, não tarefa de outro tema:** o que não é do BRIEF ou do grupo vai à caixa.
 - Ao mergear o pai (squash), rebaseie o filho com `git rebase --onto` e troque a base do PR para a `main` antes de nova rodada de CI.
 
 ## Gates de envio [OPS-001] — antes de fechar resposta/relatório/PR
