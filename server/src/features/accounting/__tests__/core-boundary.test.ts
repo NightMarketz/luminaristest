@@ -137,6 +137,29 @@ function ledgerCoreLeaks(files: string[] = LEDGER_CORE_FILES): string[] {
   return found.sort();
 }
 
+/** Regex da lista fechada `LEDGER_CORE_ALLOWED` (o `to.pathNot` da C1), lida do `.dependency-cruiser.cjs`. */
+function c1Permitido(): RegExp {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- config CJS do depcruise, lida só para conferir a regra
+  const cfg = require(resolve(SRC, '..', '.dependency-cruiser.cjs')) as { forbidden: Array<{ name: string; to: { pathNot: string } }> };
+  return new RegExp(cfg.forbidden.find((r) => r.name === 'C1-ledger-core-not-fiscal')!.to.pathNot);
+}
+
+/** Imports de `content` (arquivo `rel`, relativo a `src/`) que resolvem para arquivo existente de `src/` FORA da lista fechada. */
+function importsForaDaLista(rel: string, content: string, permitido: RegExp): string[] {
+  const file = join(SRC, rel);
+  const fora: string[] = [];
+  for (const spec of specifiers(content)) {
+    // relativo, ou alias `@/` (tsconfig `paths`: `@/*` → `src/*`); pacote npm e `generated/…` ficam de fora. `./X.js` → `X`.
+    if (!spec.startsWith('.') && !spec.startsWith('@/')) continue;
+    const alvoBase = (spec.startsWith('@/') ? join(SRC, spec.slice(2)) : resolve(dirname(file), spec)).replace(/\.js$/, '');
+    const alvo = [`${alvoBase}.ts`, join(alvoBase, 'index.ts')].find((c) => existsSync(c));
+    if (!alvo) continue;
+    const caminho = `src/${norm(alvo).slice(norm(SRC).length + 1)}`;
+    if (!permitido.test(caminho)) fora.push(`${rel} -> ${caminho}`);
+  }
+  return fora;
+}
+
 describe('núcleo do razão — não importa fiscal nem localização (Onda 1.2, regra C1)', () => {
   it('cada arquivo do núcleo do razão existe (renomear fica vermelho, não vácuo)', () => {
     const faltando = LEDGER_CORE_FILES.filter((f) => !existsSync(join(SRC, f)));
@@ -193,21 +216,23 @@ describe('núcleo do razão — não importa fiscal nem localização (Onda 1.2,
     // A C1 é allowlist: o que o razão importa e NÃO está em `pathNot` vira erro no `check:arch`. Quando outra fatia move um tipo
     // do núcleo para um caminho novo (24/11: `ActiveAccountant` saiu de `policies/IAccountingPolicy` para
     // `models/AccountantAssignment.model`, #1375), a lista precisa acompanhar — este teste acusa a deriva no jest, sem o depcruise.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports -- config CJS do depcruise, lida só para conferir a regra
-    const cfg = require(resolve(SRC, '..', '.dependency-cruiser.cjs')) as { forbidden: Array<{ name: string; to: { pathNot: string } }> };
-    const permitido = new RegExp(cfg.forbidden.find((r) => r.name === 'C1-ledger-core-not-fiscal')!.to.pathNot);
+    const permitido = c1Permitido();
     const fora: string[] = [];
-    for (const rel of LEDGER_CORE_FILES) {
-      const file = join(SRC, rel);
-      for (const spec of specifiers(readFileSync(file, 'utf8'))) {
-        if (!spec.startsWith('.')) continue;
-        const alvoBase = resolve(dirname(file), spec);
-        const alvo = [`${alvoBase}.ts`, join(alvoBase, 'index.ts')].find((c) => existsSync(c));
-        if (!alvo) continue;
-        const caminho = `src/${norm(alvo).slice(norm(SRC).length + 1)}`;
-        if (!permitido.test(caminho)) fora.push(`${rel} -> ${caminho}`);
-      }
-    }
+    for (const rel of LEDGER_CORE_FILES) fora.push(...importsForaDaLista(rel, readFileSync(join(SRC, rel), 'utf8'), permitido));
     expect(fora.sort()).toEqual([]);
+  });
+
+  it('o detector da lista fechada enxerga alias `@/` e extensão `.js` (arquivo plantado em memória; lacuna 165b)', () => {
+    // O `check:arch` barra os dois (o depcruise resolve alias e `.js`); o jest também precisa, senão a trava no jest tem ponto cego.
+    const permitido = c1Permitido();
+    const rel = `${FEATURE}/services/AuditService.ts`;
+    const alvo = 'src/features/accounting/services/PeriodService.ts'; // existe e NÃO está na lista da C1
+    expect(permitido.test(alvo)).toBe(false);
+    const specs = ['./PeriodService', './PeriodService.js', '@/features/accounting/services/PeriodService', '@/features/accounting/services/PeriodService.js'];
+    const achado = Object.fromEntries(specs.map((spec) => [spec, importsForaDaLista(rel, `import { PeriodService } from '${spec}';`, permitido)]));
+    expect(achado).toEqual(Object.fromEntries(specs.map((spec) => [spec, [`${rel} -> ${alvo}`]])));
+    // o que está na lista continua passando pelos mesmos caminhos
+    expect(importsForaDaLista(rel, "import { Money } from '@/features/accounting/models/money';", permitido)).toEqual([]);
+    expect(importsForaDaLista(rel, "import { Money } from '../models/money.js';", permitido)).toEqual([]);
   });
 });
