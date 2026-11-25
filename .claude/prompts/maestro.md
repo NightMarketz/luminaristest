@@ -1,6 +1,7 @@
 # Sessão maestro — prompt do dia
 
-> Cole o bloco abaixo num chat **seu** (aberto por você, não por outra sessão), uma vez por dia.
+> Cole o bloco abaixo num chat **seu** (aberto por você, não por outra sessão), uma vez por dia, ou deixe o agendamento
+> do T3 das 08:00 rodá-lo (o texto do agendamento cita a sua frase; `D-2026-11-25-BRANCH-LONGA-E-TURNOS` §4).
 > A 1ª linha é a sua autorização citável para o dia (ORCH-006). Regra: `docs/plano/decisoes/D-2026-10-28-FLUXO-AUTONOMO.md`.
 
 ---
@@ -15,6 +16,8 @@ CICLO
 1. Estado. `git fetch origin`, `node scripts/plano-vault.mjs index --stdout` (régua e "destravados agora") e
    `gh pr list --state open --json number,title,isDraft,mergeable,headRefName,author` e
    `node scripts/lacunas.mjs list --abertas`. Meça; não confie em nota ou fila que diga "aberto".
+   Passagem de turno: `T="$(git rev-parse --git-common-dir)/turno"`. Leia o `$T/revisao-*.md` mais novo (veredito do
+   turno da noite, por PR e SHA) e o seu `$T/maestro-*.md` de ontem. Cada execução agendada começa sem memória da anterior.
 
 2. PRs abertos. Para cada um: `node scripts/classe-risco.mjs pr <n>` e `gh pr checks <n>`.
    - VERDE, todos os checks verdes, MERGEABLE, fora de draft → `gh pr merge <n> --squash --delete-branch`.
@@ -27,14 +30,19 @@ CICLO
      revisor PASS e todas as condições dela, mergeie como VERDE; faltou uma, lote. Esses PRs não mexem mais no GAP-MAP
      (emenda de 10/11): a condição é o ID ter linha na seção da faixa 1 do GAP-MAP da `main`.
    - VERMELHO com `revisor: não (só texto)` → direto ao lote, sem revisor. Nunca mergeie vermelho.
-   - VERMELHO com `revisor: obrigatório` → despache o agente `revisor-independente` (isolation worktree) uma vez
-     por SHA de cabeça, com o BRIEF do nó no prompt, **um revisor por vez na máquina** (espere o anterior voltar
-     antes de despachar o próximo; 5 sobrepostos em 07/11, e o dono relata que o PC trava na sabotagem), no máximo 3 rodadas por PR
-     (D-2026-11-06-REVISAO-CONVERGENCIA). Rodada 1: o PR inteiro. Rodadas 2 e 3: ponha no prompt `rodada: <n>`,
-     o SHA da rodada anterior e a lista de achados dela (do seu resumo, ou do resumo de ontem). Sem PASS na 3ª,
-     não despache a 4ª: o PR vai ao lote marcado "repensar a abordagem". Se não deu para despachar, o PR vai ao
-     lote marcado **sem revisor**; não some. Achado `P` (pré-existente) não segura o PR: o revisor o põe na caixa e
-     ele segue pelo passo 3b (OPS-007). Nunca mergeie vermelho.
+   - VERMELHO com `revisor: obrigatório` → **de dia você não despacha o revisor**: a revisão é do turno da noite
+     (`.claude/prompts/revisor-noturno.md`, D-2026-11-25-BRANCH-LONGA-E-TURNOS §2). Leia na passagem o bloco do SHA de
+     cabeça: PASS → lote (ou, se a base é uma `integration/<slug>`, merge nela com CI verde); FAIL → despache o `implementador`
+     em modo correção na branch do PR, com os achados `A` no brief, e a rodada seguinte é da noite seguinte; sem bloco para o
+     SHA → lote marcado "aguarda a revisão da noite". 3 rodadas sem PASS → lote marcado "repensar a abordagem"
+     (D-2026-11-06-REVISAO-CONVERGENCIA). Achado `P` (pré-existente) não segura o PR: o revisor o põe na caixa e ele
+     segue pelo passo 3b (OPS-007). Nunca mergeie vermelho.
+     **Recuo:** se não existe `revisao-<ontem ou hoje>.md`, ou ele diz `PULADA`, a noite não rodou: despache você o
+     `revisor-independente` (isolation worktree, BRIEF do nó no prompt, **um por vez na máquina**: 5 sobrepostos em
+     07/11, e o dono relata que o PC trava na sabotagem), nas fatias e lotes do passo 4 do `revisor-noturno.md`, no
+     máximo 3 rodadas por PR, e escreva os blocos em `revisao-<hoje>.md`, no mesmo formato.
+   - PR em **draft** numa `integration/<slug>` é fase em obra (D-2026-11-25-BRANCH-LONGA-E-TURNOS §1.4): não mergeie,
+     não mande ao lote nem à noite; liste em "Em obra" no resumo, com os dias desde o 1º commit.
    - Não re-despache o revisor (D-2026-11-25-MATRIZ-DE-LACUNAS §8): PR que corrige achado de revisão fecha quando a
      reprodução do achado fica verde e o CI passa, e conta como rodada do PR de origem (8a; se tocar arquivo fora da
      localização do achado, vale a regra normal). Push que só faz merge da `main`, sem mudar arquivo do PR, não é SHA
@@ -43,11 +51,17 @@ CICLO
 
 3. Fila. Nó entra se: estado `ready`/`inflight`, `autorizacao` com 'executa' do dono, BRIEF ratificado, nenhum
    fork pendente, e ainda tem PR do BRIEF por abrir (um 'executa' cobre o BRIEF inteiro). Ordem: FILA-ORDEM.
-   `node scripts/paralelo.mjs plano <NÓS>` → ondas. Abra uma sessão por nó da onda (no máximo 4 ao mesmo tempo,
-   worktree próprio, `user_asked`), com este brief: "sessao-feature do <NÓ>, <PR-k> do BRIEF <caminho>; tsc dos
+   `node scripts/paralelo.mjs plano <NÓS>` → ondas. Abra uma sessão por nó da onda, com o agente `implementador` (no máximo 4 ao mesmo tempo,
+   worktree próprio, `user_asked`), com este brief: "sessao-feature do <NÓ>, <PR-k> do BRIEF <caminho>; branch longa (D-2026-11-25-BRANCH-LONGA-E-TURNOS §1):
+   trabalhe na `integration/<slug>` do nó (nó de PR único, sem irmãos, segue direto na `main`: Regra 1.6 de 10/11),
+   traga a `main` para ela por merge antes de começar, PR de fase em draft, um
+   commit por item do BRIEF com o id no título, e tire o draft só quando a fase fechar com CI verde; tsc dos
    dois lados, testes do nó, check:arch; fold com `plano-vault.mjs fold` no próprio PR; abre o PR e NÃO mergeia.
    Fork não coberto pelo BRIEF: pare o nó e me reporte o fork com contexto (evidência lida, opções, recomendada)."
-   Nó sem BRIEF mas com autorização de planejamento → sessao-planejamento. Nó sem 'executa' → só lista.
+   Nó sem BRIEF mas com autorização de planejamento → agente `planejador` (sessao-planejamento).
+   Papéis em `.claude/agents/`: `planejador` (Fable), `implementador` (Opus), `revisor-independente` (Opus, só à noite).
+   Se o tipo de agente não carregar na sessão, despache um filho no modelo do cabeçalho dele, com a instrução de seguir
+   o arquivo ao pé da letra. Melhoria `M` da revisão já está na caixa (o revisor registra): segue o passo 3b pela matriz. Nó sem 'executa' → só lista.
    Todo brief de sessão termina com: "Lacuna fora do teu escopo vai à caixa (`node scripts/lacunas.mjs add`, regra
    D-2026-11-11-LACUNA-VAI-AO-MAESTRO §1; se a tua worktree não tem esse arquivo, o mesmo script está em
    `node "$HOME/.claude/tools/lacunas/lacunas.mjs" add`); a do teu escopo você resolve. Toda entrada leva os eixos da matriz (`--dominio`,
@@ -75,7 +89,8 @@ CICLO
      resolve o conjunto pela causa comum ("no macro em vez de vários remendos", dono, 21/11). BRIEF **sem fork** (seção de
      forks vazia e nenhuma lacuna do grupo `com-dono`) → abra a `sessao-feature` dele no mesmo ciclo, citando no brief
      "dono, chat, 21/11: BRIEF de grupo sem fork — 'Sim, executa'". Com fork → pergunta do dia, e a execução espera.
-     Um PR por item, `integration/<slug>` se 2+ PRs dividem arquivos; merge pela classe de risco. Vale só para grupo da caixa.
+     Um PR por fase na `integration/<slug>` do grupo, um commit por lacuna (D-2026-11-25-BRANCH-LONGA-E-TURNOS §1); P0 e
+     gatilho `vazamento` saem em PR próprio, direto na `main`; merge pela classe de risco. Vale só para grupo da caixa.
      Só as `aberta` do grupo vão a `em-sessao` ("planejamento do grupo <slug>"); `com-dono` fica com o dono e entra no
      BRIEF como fork pendente; `em-sessao`/`em-pr` seguem onde estão e o BRIEF as cita.
    - **Isolada** → a tabela §2: duplicada → descartada; defeito/débito → sessao-instrumentacao e depois sessao-correcao;
@@ -92,7 +107,7 @@ CICLO
    houver opção recomendada, siga a recomendada e registre no resumo. Fork de verdade: junte todos e me pergunte
    UMA vez, por AskUserQuestion com contexto (recomendada primeiro); a resposta vira cédula em docs/plano/decisoes/.
 
-FIM DO DIA — resumo (no chat, nesta ordem, só o que medi):
+FIM DO DIA — resumo (no chat e gravado em `$T/maestro-<AAAA-MM-DD>.md`, nesta ordem, só o que medi):
 - Mergeados hoje (número · título · nó).
 - Lacunas da caixa: a linha de `lacunas.mjs pulso` (com a meta e as atrasadas); depois id · origem · classe · matriz · P ·
   arquivo:linha · estado · destino. G5 numa linha só, com a contagem.
@@ -105,6 +120,7 @@ FIM DO DIA — resumo (no chat, nesta ordem, só o que medi):
   estava errado · era intencional · não importava; vazio enquanto não se sabe).
 - Perguntas pendentes (se não perguntei ainda).
 - Parado em mim fora do código: gates humanos, contador, dado externo — uma linha cada.
+- Em obra: PR em draft de branch longa (número · integração · dias em obra · CI do último push).
 - Nós que andaram de estado e o que ficou para amanhã.
 
 NUNCA: mergear vermelho (salvo a exceção D-2026-11-10-FAIXA1-MERGE-LIVRE); mudar a lista VERMELHO do classe-risco.mjs; preencher desfecho ou assinatura de runbook
