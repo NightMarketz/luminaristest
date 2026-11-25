@@ -14,6 +14,7 @@ import type {
   IFiscalDocumentRepository,
   NumberedDocumentView,
   PollStatePatch,
+  PollStateGuard,
   SequenceAmbiente,
   TransitionData,
 } from './IFiscalDocumentRepository';
@@ -123,26 +124,49 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     return (r._sum.vServCents ?? 0n) - (r._sum.vDescIncondCents ?? 0n);
   }
 
-  public async listPending(olderThan: Date, opts: { limit?: number; now?: Date } = {}, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {
+  public async listPending(
+    olderThan: Date,
+    opts: { limit?: number; now?: Date; rearme?: { aposMs: number; idadeMaxMs: number } } = {},
+    tx?: Prisma.TransactionClient,
+  ): Promise<FiscalDocument[]> {
     const now = opts.now ?? new Date();
+    // P1.1: o abandonado volta uma vez por ciclo (`aposMs`), enquanto jovem (`createdAt > now − idadeMaxMs`); o complemento (idade >= teto)
+    // é de `listAbandonoDefinitivo`. `nextPollAt` vale para todos: o re-armado que o adiamento por transporte empurrou não volta antes.
+    const rearmado: Prisma.FiscalDocumentWhereInput[] = opts.rearme
+      ? [{ pollGaveUpAt: { lte: new Date(now.getTime() - opts.rearme.aposMs) }, createdAt: { gt: new Date(now.getTime() - opts.rearme.idadeMaxMs) } }]
+      : [];
     return this.db(tx).fiscalDocument.findMany({
       where: {
         status: { in: ['SENT', 'PROCESSING'] },
         deletedAt: null,
         updatedAt: { lt: olderThan },
-        // Onda 4 / 4.1: o documento em backoff ou abandonado pelo job não volta à fila; o manual nunca é consultado.
-        pollGaveUpAt: null,
+        // Onda 4 / 4.1: o documento em backoff não volta à fila; o manual nunca é consultado.
         partner: { not: 'manual' },
-        OR: [{ nextPollAt: null }, { nextPollAt: { lte: now } }],
+        AND: [{ OR: [{ nextPollAt: null }, { nextPollAt: { lte: now } }] }, { OR: [{ pollGaveUpAt: null }, ...rearmado] }],
       },
       orderBy: [{ updatedAt: 'asc' }],
       ...(opts.limit !== undefined ? { take: opts.limit } : {}),
     });
   }
 
-  public async updatePollState(scope: AccountingScope, id: string, patch: PollStatePatch, tx?: Prisma.TransactionClient): Promise<boolean> {
+  public async listAbandonoDefinitivo(now: Date, opts: { idadeMaxMs: number; limit?: number }, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {
+    return this.db(tx).fiscalDocument.findMany({
+      where: {
+        status: { in: ['SENT', 'PROCESSING'] }, // nota terminal não alerta (lacuna 153d)
+        deletedAt: null,
+        partner: { not: 'manual' },
+        pollGaveUpAt: { not: null },
+        pollAlertedAt: null,
+        createdAt: { lte: new Date(now.getTime() - opts.idadeMaxMs) },
+      },
+      orderBy: [{ updatedAt: 'asc' }],
+      ...(opts.limit !== undefined ? { take: opts.limit } : {}),
+    });
+  }
+
+  public async updatePollState(scope: AccountingScope, id: string, patch: PollStatePatch, tx?: Prisma.TransactionClient, guard: PollStateGuard = {}): Promise<boolean> {
     const r = await this.db(tx).fiscalDocument.updateMany({
-      where: { id, ...accountingScopeWhere(scope), deletedAt: null },
+      where: { id, ...accountingScopeWhere(scope), deletedAt: null, ...guard },
       data: patch,
     });
     return r.count === 1;

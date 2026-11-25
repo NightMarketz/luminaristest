@@ -28,7 +28,9 @@ import { pushTestSchema } from '@test/helpers/db';
 import { FiscalDocumentRepository } from '@/features/accounting/repositories/FiscalDocumentRepository';
 import {
   FiscalDocumentLifecycleService,
+  POLL_IDADE_MAX_MS,
   POLL_MAX_ATTEMPTS,
+  POLL_REARME_INTERVALO_MS,
 } from '@/features/accounting/services/FiscalDocumentLifecycleService';
 import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { DfeTransporteError, DfeTransporteIndisponivelError, type EmissaoResult } from '@/features/accounting/dfe/DfeEmissorPort';
@@ -40,6 +42,7 @@ const UNIT = 'unit-dfe-poll-res';
 const scope = resolveAccountingScopeInternal({ userId: DONO }, UNIT);
 const repo = new FiscalDocumentRepository();
 
+const auditoria = { append: jest.fn() };
 const montarServico = (podeEmitir: boolean) =>
   new FiscalDocumentLifecycleService(
     repo,
@@ -47,7 +50,7 @@ const montarServico = (podeEmitir: boolean) =>
     { upload: jest.fn(async () => ({ id: 'att' })) } as never,
     { attachSourceDocument: jest.fn(async () => ({ id: 'src' })), retireSourceDocument: jest.fn() } as never,
     { canEmitFiscalDocument: () => podeEmitir, canCancelFiscalDocument: () => true } as never,
-    { append: jest.fn() } as never,
+    auditoria as never,
     { findOverlapping: async () => [] } as never,
   );
 const service = montarServico(true);
@@ -123,7 +126,9 @@ describe('Onda 4 / 4.1 — polling de DF-e: teto, backoff e sem head-of-line (SQ
     for (const d of sadios) expect((await row(d.id)).status).toBe('AUTHORIZED');
 
     // só o falho sobra; roda além do teto: a quantidade de consultas é exatamente o teto e não passa disso
-    for (let i = 0; i < POLL_MAX_ATTEMPTS + 5; i += 1) await tick({ limit: 3 });
+    // (ticks de 1 h: o backoff máx. é 1 h; e só 3 h depois da desistência — o re-arme automático (6 h, lacuna 3cf5) vem em outro teste)
+    for (let i = 0; i < 20 && !(await row(ruim.id)).pollGaveUpAt; i += 1) await tick({ limit: 3, avanco: HORA });
+    for (let i = 0; i < 3; i += 1) await tick({ limit: 3, avanco: HORA });
     expect(chamadasDe(ruim.id)).toBe(POLL_MAX_ATTEMPTS);
     const r = await row(ruim.id);
     expect(r.status).toBe('PROCESSING'); // NUNCA REJECTED: a SEFAZ não disse que não recebeu
@@ -163,7 +168,7 @@ describe('Onda 4 / 4.1 — polling de DF-e: teto, backoff e sem head-of-line (SQ
     });
     const t = await tick();
     expect(t.gaveUp).toBe(1);
-    for (let i = 0; i < 3; i += 1) await tick();
+    for (let i = 0; i < 3; i += 1) await tick({ avanco: HORA }); // < 6 h: o re-arme automático (lacuna 3cf5) é de outro teste
     expect(chamadasDe(ruim.id)).toBe(1);
     const r = await row(ruim.id);
     expect(r.pollGaveUpAt).not.toBeNull();
@@ -421,6 +426,301 @@ describe('Onda 4 / 4.1 — polling de DF-e: teto, backoff e sem head-of-line (SQ
     const outro = resolveAccountingScopeInternal({ userId: 'u-outro-dono' }, 'unit-outro');
     await expect(service.rearmarPoll(outro, d.id)).rejects.toBeInstanceOf(ValidationError);
     expect((await row(d.id)).pollGaveUpAt).not.toBeNull();
+  });
+
+  // ---------------------------------------------------------------------------------------------------------------------------------
+  // Lacunas 3cf5/cf36/92c5 (dono 25/11, F-PD-1..5 a) — re-arme automático, teto de idade e alerta final. O relógio é injetado.
+  // ---------------------------------------------------------------------------------------------------------------------------------
+  const DIA = 24 * HORA;
+  const em = (quando: Date) => service.pollPendingOnce(quando, { now: quando });
+  const livre = (ms: number) => new Date(relogio + ms);
+  /** Documento que o job já abandonou: `abandonadoEm` e idade (`createdAt` = `criadoEm`) fixados à mão; `extra` para os demais campos. */
+  async function abandonado(tag: string, abandonadoEm: Date, criadoEm: Date, extra: Record<string, unknown> = {}) {
+    const d = await pendente(tag);
+    await prisma.fiscalDocument.update({
+      where: { id: d.id },
+      data: { pollAttempts: POLL_MAX_ATTEMPTS, pollGaveUpAt: abandonadoEm, pollLastError: 'sefaz_http: HTTP 503', createdAt: criadoEm, ...extra },
+    });
+    return d;
+  }
+  const permanente = () => {
+    try {
+      z.object({ x: z.string() }).parse({});
+    } catch (e) {
+      return e as Error;
+    }
+    return new Error('inalcançável');
+  };
+
+  it('P1.6: o intervalo do re-arme é 6 h e o teto de idade 7 dias (valores do dono, F-PD-1 a / F-PD-2 a)', () => {
+    expect(POLL_REARME_INTERVALO_MS).toBe(6 * HORA);
+    expect(POLL_IDADE_MAX_MS).toBe(7 * DIA);
+  });
+
+  it('P1.1: o documento abandonado só volta depois de 6 h (5 h 59 min 59 s não; 6 h sim) e uma única consulta por ciclo', async () => {
+    const g = livre(0);
+    const d = await abandonado('rearme-auto', g, new Date(g.getTime() - DIA));
+    portaCom(d.id, () => new DfeTransporteError('sefaz_http', 'HTTP 503'));
+
+    await em(new Date(g.getTime() + POLL_REARME_INTERVALO_MS - 1000));
+    expect(chamadasDe(d.id)).toBe(0);
+    const t = await em(new Date(g.getTime() + POLL_REARME_INTERVALO_MS));
+    expect(chamadasDe(d.id)).toBe(1);
+    expect(t.failed).toBeGreaterThanOrEqual(1);
+    const r = await row(d.id);
+    expect(r.pollGaveUpAt?.getTime()).toBe(g.getTime() + POLL_REARME_INTERVALO_MS); // falhou de novo: o próximo ciclo conta daqui
+    expect(r.pollAttempts).toBe(POLL_MAX_ATTEMPTS + 1);
+    expect(r.nextPollAt).toBeNull();
+    expect(r.status).toBe('PROCESSING');
+    // 1 h depois: nada; só depois de mais 6 h
+    await em(new Date(g.getTime() + POLL_REARME_INTERVALO_MS + HORA));
+    expect(chamadasDe(d.id)).toBe(1);
+  });
+
+  it('P1.2: 3 ciclos de re-falha NÃO contam como nova desistência (sem realerta a cada 6 h)', async () => {
+    const g = livre(0);
+    const d = await abandonado('rearme-sem-realerta', g, new Date(g.getTime() - DIA));
+    portaCom(d.id, () => new DfeTransporteError('sefaz_http', 'HTTP 503'));
+    for (let ciclo = 1; ciclo <= 3; ciclo += 1) {
+      const t = await em(new Date(g.getTime() + ciclo * POLL_REARME_INTERVALO_MS));
+      expect(t.gaveUpIds ?? []).not.toContain(d.id);
+      expect(t.abandonoDefinitivoIds ?? []).not.toContain(d.id);
+    }
+    expect(chamadasDe(d.id)).toBe(3);
+  });
+
+  it('P1.1: o re-arme que dá certo limpa tudo (autoriza e zera desistência, contagem e erro)', async () => {
+    const g = livre(0);
+    const d = await abandonado('rearme-ok', g, new Date(g.getTime() - DIA));
+    mockPort.consultar.mockImplementation(
+      async (ref: string): Promise<EmissaoResult> => ({ status: 'AUTHORIZED', partnerRef: ref, chaveOuCodigo: `CH-${ref}`, numero: '1', errors: [] }),
+    );
+    await em(new Date(g.getTime() + POLL_REARME_INTERVALO_MS));
+    const r = await row(d.id);
+    expect(r.status).toBe('AUTHORIZED');
+    expect(r.pollGaveUpAt).toBeNull();
+    expect(r.pollAttempts).toBe(0);
+    expect(r.pollLastError).toBeNull();
+  });
+
+  it('P1.1: o re-arme respeita `nextPollAt` (re-armado empurrado pelo transporte indisponível não volta a cada tick) e NÃO abre episódio de adiamento', async () => {
+    const g = livre(0);
+    const d = await abandonado('rearme-transporte', g, new Date(g.getTime() - DIA));
+    portaCom(d.id, () => new DfeTransporteIndisponivelError('dfe_assinador_sem_dispositivo', 'caixa desligada'));
+    const t0 = new Date(g.getTime() + POLL_REARME_INTERVALO_MS);
+    await em(t0);
+    expect(chamadasDe(d.id)).toBe(1);
+    const r = await row(d.id);
+    expect(r.nextPollAt?.getTime()).toBe(t0.getTime() + HORA); // adiado 1 h
+    expect(r.pollGaveUpAt?.getTime()).toBe(g.getTime()); // segue abandonado: o adiamento não o re-arma de verdade
+    expect(r.pollDeferredSince).toBeNull(); // sem episódio: `pollAlertedAt` ali significa "alerta final" (F-PD-5 a)
+    expect(r.pollAlertedAt).toBeNull();
+    expect(r.pollAttempts).toBe(POLL_MAX_ATTEMPTS); // sem gastar tentativa
+    await em(new Date(t0.getTime() + HORA - 1000));
+    expect(chamadasDe(d.id)).toBe(1); // ainda dentro do adiamento
+    await em(new Date(t0.getTime() + HORA));
+    expect(chamadasDe(d.id)).toBe(2);
+  });
+
+  it('P1.1/P1.3: a idade manda — com 7 dias menos 1 ms ainda re-arma; com exatamente 7 dias o job para e alerta UMA vez (F-PD-2 a, F-PD-5 a)', async () => {
+    const agora = livre(0);
+    const jovem = await abandonado('idade-jovem', new Date(agora.getTime() - 7 * HORA), new Date(agora.getTime() - POLL_IDADE_MAX_MS + 1));
+    const velho = await abandonado('idade-teto', new Date(agora.getTime() - 7 * HORA), new Date(agora.getTime() - POLL_IDADE_MAX_MS));
+    mockPort.consultar.mockImplementation(async (ref: string): Promise<EmissaoResult> => {
+      throw new DfeTransporteError('sefaz_http', `HTTP 503 ${ref}`);
+    });
+
+    const t = await em(agora);
+    expect(chamadasDe(jovem.id)).toBe(1); // re-armado
+    expect(chamadasDe(velho.id)).toBe(0); // acima do teto: nunca mais re-armado
+    expect(t.abandonoDefinitivoIds).toContain(velho.id);
+    expect(t.abandonoDefinitivoIds).not.toContain(jovem.id);
+    expect((await row(velho.id)).pollAlertedAt?.getTime()).toBe(agora.getTime()); // F-PD-5 a: "o alerta final saiu"
+
+    const t2 = await em(new Date(agora.getTime() + POLL_REARME_INTERVALO_MS));
+    expect(t2.abandonoDefinitivoIds ?? []).not.toContain(velho.id); // dois ticks seguidos além do teto = 1 alerta
+    expect(chamadasDe(velho.id)).toBe(0);
+    expect((await row(velho.id)).status).toBe('PROCESSING'); // o status nunca muda
+  });
+
+  it('P1.4/F-PD-5: o re-arme MANUAL de quem já teve o alerta final zera a marca, volta ao polling normal e audita `dfe.poll_rearmed` (sem PII)', async () => {
+    const agora = livre(0);
+    const abandonadoEm = new Date(agora.getTime() - 7 * HORA);
+    const d = await abandonado('rearme-manual-pos-alerta', abandonadoEm, new Date(agora.getTime() - 8 * DIA));
+    await em(agora);
+    expect((await row(d.id)).pollAlertedAt).not.toBeNull();
+
+    auditoria.append.mockClear();
+    await service.rearmarPoll(scope, d.id);
+    const r = await row(d.id);
+    expect(r.pollGaveUpAt).toBeNull();
+    expect(r.pollAlertedAt).toBeNull();
+    expect(r.pollAttempts).toBe(0);
+    expect(auditoria.append).toHaveBeenCalledTimes(1);
+    expect(auditoria.append).toHaveBeenCalledWith(
+      expect.anything(),
+      scope,
+      expect.objectContaining({
+        eventType: 'dfe.poll_rearmed',
+        targetType: 'fiscal_document',
+        targetId: d.id,
+        payload: { documentId: d.id, unitId: UNIT, gaveUpAt: abandonadoEm.toISOString() },
+      }),
+    );
+
+    // o ciclo recomeça: volta à fila normal (mesmo com a idade acima do teto)
+    portaCom(d.id, () => new DfeTransporteError('sefaz_http', 'HTTP 503'));
+    await em(new Date(agora.getTime() + HORA));
+    expect(chamadasDe(d.id)).toBe(1);
+  });
+
+  it('P1.4: re-arme que não muda nada (sem permissão, ou documento não abandonado) NÃO audita', async () => {
+    const naoAbandonado = await pendente('rearme-sem-audit');
+    auditoria.append.mockClear();
+    await service.rearmarPoll(scope, naoAbandonado.id);
+    await expect(montarServico(false).rearmarPoll(scope, naoAbandonado.id)).rejects.toBeInstanceOf(ForbiddenError);
+    expect(auditoria.append).not.toHaveBeenCalled();
+  });
+
+  it('P1.3: nota terminal (AUTHORIZED por outro caminho) com `pollGaveUpAt` velho não gera alerta final (lacuna 153d)', async () => {
+    const agora = livre(0);
+    const d = await abandonado('terminal-velha', new Date(agora.getTime() - 7 * HORA), new Date(agora.getTime() - 9 * DIA), { status: 'AUTHORIZED' });
+    const t = await em(agora);
+    expect(t.abandonoDefinitivoIds ?? []).not.toContain(d.id);
+    expect((await row(d.id)).pollAlertedAt).toBeNull();
+  });
+
+  it('P1.3: documento que desiste JÁ além do teto de idade emite o alerta final UMA vez (não gaveUp + abandono)', async () => {
+    const d = await pendente('desiste-velho');
+    await prisma.fiscalDocument.update({ where: { id: d.id }, data: { createdAt: new Date(relogio - 8 * DIA) } });
+    portaCom(d.id, permanente);
+    const t = await tick();
+    expect(t.abandonoDefinitivoIds).toContain(d.id);
+    expect(t.gaveUpIds ?? []).not.toContain(d.id);
+    const r = await row(d.id);
+    expect(r.pollGaveUpAt).not.toBeNull();
+    expect(r.pollAlertedAt).not.toBeNull();
+    const t2 = await tick();
+    expect(t2.abandonoDefinitivoIds ?? []).not.toContain(d.id); // o varredor não repete: a marca já foi gravada
+    expect(t2.gaveUpIds ?? []).not.toContain(d.id);
+  });
+
+  it('P1.5 (92c5, F-PD-3 a): adiado por transporte há 7 dias menos 1 ms segue adiado; com 7 dias o job desiste e emite UM alerta final', async () => {
+    const d = await pendente('adiado-teto');
+    const inicio = livre(0);
+    portaCom(d.id, () => new DfeTransporteIndisponivelError('dfe_assinador_sem_dispositivo', 'caixa desligada'));
+    await prisma.fiscalDocument.update({
+      where: { id: d.id },
+      data: { createdAt: new Date(inicio.getTime() - DIA), pollDeferredSince: inicio, pollAlertedAt: new Date(inicio.getTime() + HORA), nextPollAt: null },
+    });
+
+    const quase = await em(new Date(inicio.getTime() + POLL_IDADE_MAX_MS - 1));
+    expect(chamadasDe(d.id)).toBe(1);
+    expect(quase.abandonoDefinitivoIds ?? []).not.toContain(d.id);
+    let r = await row(d.id);
+    expect(r.pollGaveUpAt).toBeNull();
+    expect(r.pollDeferredSince?.getTime()).toBe(inicio.getTime());
+
+    await prisma.fiscalDocument.update({ where: { id: d.id }, data: { nextPollAt: null } });
+    const fim = new Date(inicio.getTime() + POLL_IDADE_MAX_MS);
+    const t = await em(fim);
+    expect(t.abandonoDefinitivoIds).toContain(d.id);
+    expect(t.transporteAdiadoIds ?? []).not.toContain(d.id);
+    r = await row(d.id);
+    expect(r.pollGaveUpAt?.getTime()).toBe(fim.getTime());
+    expect(r.pollDeferredSince).toBeNull();
+    expect(r.pollAlertedAt?.getTime()).toBe(fim.getTime());
+    expect(r.nextPollAt).toBeNull();
+    expect(r.pollAttempts).toBe(0); // adiar nunca gastou tentativa
+    expect(r.status).toBe('PROCESSING');
+
+    // ticks seguintes (idade já ≥ 7 dias): nenhum 2º alerta, nenhuma consulta nova
+    const consultas = chamadasDe(d.id);
+    const depois = await em(new Date(fim.getTime() + POLL_REARME_INTERVALO_MS));
+    expect(depois.abandonoDefinitivoIds ?? []).not.toContain(d.id);
+    expect(chamadasDe(d.id)).toBe(consultas);
+  });
+
+  // Revisão independente do #1409 — guardas de estado (compare-and-set) e filtros do repositório.
+  it('revisão #1409 (A): re-arme manual ENTRE a listagem e a gravação do alerta final — nenhum alerta falso e `pollAlertedAt` não sobra', async () => {
+    const agora = livre(0);
+    const d = await abandonado('corrida-alerta', new Date(agora.getTime() - 7 * HORA), new Date(agora.getTime() - 8 * DIA));
+    const original = repo.listAbandonoDefinitivo.bind(repo);
+    const espiao = jest.spyOn(repo, 'listAbandonoDefinitivo').mockImplementationOnce(async (...args) => {
+      const docs = await original(...args);
+      await service.rearmarPoll(scope, d.id); // o operador re-arma depois de o job listar o documento
+      return docs;
+    });
+    try {
+      const t = await em(agora);
+      expect(t.abandonoDefinitivoIds ?? []).not.toContain(d.id);
+    } finally {
+      espiao.mockRestore();
+    }
+    const r = await row(d.id);
+    expect(r.pollGaveUpAt).toBeNull();
+    expect(r.pollAlertedAt).toBeNull(); // sem marca sobrando para suprimir o alerta de 1 h de um episódio futuro
+  });
+
+  it('revisão #1409 (B): re-arme manual DURANTE a consulta do re-armado automático — a falha seguinte não desfaz o re-arme', async () => {
+    const g = livre(0);
+    const d = await abandonado('corrida-rearme', g, new Date(g.getTime() - DIA));
+    mockPort.consultar.mockImplementation(async (ref: string): Promise<EmissaoResult> => {
+      if (ref.startsWith(d.id)) {
+        await service.rearmarPoll(scope, d.id); // o operador clica enquanto a consulta de rede está em voo
+        throw new DfeTransporteError('sefaz_http', 'HTTP 503');
+      }
+      return { status: 'AUTHORIZED', partnerRef: ref, chaveOuCodigo: `CH-${ref}`, numero: '1', errors: [] };
+    });
+    const t = await em(new Date(g.getTime() + POLL_REARME_INTERVALO_MS));
+    expect(t.gaveUpIds ?? []).not.toContain(d.id);
+    const r = await row(d.id);
+    expect(r.pollGaveUpAt).toBeNull(); // o re-arme manual vence a escrita velha do tick
+    expect(r.pollAttempts).toBe(0);
+  });
+
+  it('revisão #1409: re-arme duplo (clique repetido) audita UMA vez — o segundo não encontra mais nada abandonado', async () => {
+    const g = livre(0);
+    const d = await abandonado('rearme-duplo', g, new Date(g.getTime() - DIA));
+    auditoria.append.mockClear();
+    await Promise.all([service.rearmarPoll(scope, d.id), service.rearmarPoll(scope, d.id)]);
+    expect(auditoria.append).toHaveBeenCalledTimes(1);
+  });
+
+  it('revisão #1409: o alerta final e o re-arme ignoram documento apagado (soft-delete) e do modo manual', async () => {
+    const agora = livre(0);
+    const velho = new Date(agora.getTime() - 8 * DIA);
+    const quando = new Date(agora.getTime() - 7 * HORA);
+    const apagado = await abandonado('velho-apagado', quando, velho, { deletedAt: new Date() });
+    const manual = await abandonado('velho-manual', quando, velho, { partner: 'manual' });
+    const jovemApagado = await abandonado('jovem-apagado', new Date(agora.getTime() - 7 * HORA), new Date(agora.getTime() - DIA), { deletedAt: new Date() });
+    const jovemManual = await abandonado('jovem-manual', new Date(agora.getTime() - 7 * HORA), new Date(agora.getTime() - DIA), { partner: 'manual' });
+    mockPort.consultar.mockImplementation(async (ref: string): Promise<EmissaoResult> => {
+      throw new DfeTransporteError('sefaz_http', `HTTP 503 ${ref}`);
+    });
+    const t = await em(agora);
+    for (const x of [apagado, manual]) expect(t.abandonoDefinitivoIds ?? []).not.toContain(x.id);
+    for (const x of [jovemApagado, jovemManual]) expect(chamadasDe(x.id)).toBe(0);
+    for (const x of [apagado, manual]) expect((await row(x.id)).pollAlertedAt).toBeNull();
+  });
+
+  it('revisão #1409: falha ao gravar a marca do alerta final não derruba o tick nem perde o alerta — o próximo tick tenta de novo', async () => {
+    const agora = livre(0);
+    const d = await abandonado('marca-falha', new Date(agora.getTime() - 7 * HORA), new Date(agora.getTime() - 8 * DIA));
+    const original = repo.updatePollState.bind(repo);
+    const espiao = jest.spyOn(repo, 'updatePollState').mockImplementation(async (...args) => {
+      if (args[0] && args[1] === d.id) throw new Error('disco cheio');
+      return original(...args);
+    });
+    try {
+      const t = await em(agora);
+      expect(t.abandonoDefinitivoIds ?? []).not.toContain(d.id);
+    } finally {
+      espiao.mockRestore();
+    }
+    expect((await row(d.id)).pollAlertedAt).toBeNull();
+    const t2 = await em(new Date(agora.getTime() + HORA));
+    expect(t2.abandonoDefinitivoIds).toContain(d.id);
   });
 
   it('consulta manual (consultarUm) de documento que o job abandonou: se der certo, volta ao polling', async () => {

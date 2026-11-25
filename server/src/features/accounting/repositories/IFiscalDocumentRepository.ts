@@ -104,6 +104,16 @@ export interface PollStatePatch {
   pollAlertedAt?: Date | null;
 }
 
+/**
+ * Compare-and-set do controle de retentativa (revisão do #1409): a escrita só vale se as colunas dadas AINDA têm o valor lido
+ * (`null` = "ainda nulo"). O tick processa até 100 documentos em série e o operador pode re-armar no meio; sem a guarda, a
+ * escrita do tick desfaz o re-arme ou grava o alerta final em documento que voltou ao polling. `false` = a linha mudou (ou sumiu).
+ */
+export interface PollStateGuard {
+  pollGaveUpAt?: Date | null;
+  pollAlertedAt?: Date | null;
+}
+
 export interface TransitionData {
   status: FiscalDocumentStatus;
   partnerRef?: string | null;
@@ -229,14 +239,27 @@ export interface IFiscalDocumentRepository {
    * SENT|PROCESSING mais velhos que `olderThan` — alvo do job de polling (BRIEF item 27). Sem escopo: o job varre todos.
    * Onda 4 / 4.1: só os DEVIDOS (`nextPollAt` nulo ou `<= now`, sem `pollGaveUpAt`, fora do modo manual, que nunca é
    * consultado), em rodízio por `updatedAt`, até `limit` — o documento que falha sai da vez (backoff) e não ocupa o teto.
+   * Lacunas 3cf5/cf36 (P1.1, dono 25/11): com `opts.rearme`, o documento ABANDONADO volta à fila quando `pollGaveUpAt <= now − aposMs`
+   * e a idade (`createdAt`) é menor que `idadeMaxMs` — e, como todo documento, só se `nextPollAt` permite. Sem `rearme`, o abandonado
+   * nunca volta (comportamento anterior).
    */
-  listPending(olderThan: Date, opts?: { limit?: number; now?: Date }, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
+  listPending(
+    olderThan: Date,
+    opts?: { limit?: number; now?: Date; rearme?: { aposMs: number; idadeMaxMs: number } },
+    tx?: Prisma.TransactionClient,
+  ): Promise<FiscalDocument[]>;
+  /**
+   * Lacunas 3cf5/92c5 (P1.3, F-PD-2 a) — o documento SENT|PROCESSING abandonado (`pollGaveUpAt`) cuja idade (`createdAt`) já
+   * alcançou `idadeMaxMs` (o complemento do re-arme de `listPending`) e que ainda não teve o alerta final (`pollAlertedAt` nulo).
+   * Fora do modo manual, vivo, em rodízio por `updatedAt`, até `limit`. Sem escopo: o job varre todos.
+   */
+  listAbandonoDefinitivo(now: Date, opts: { idadeMaxMs: number; limit?: number }, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
   /**
    * Onda 4 / 4.1 — grava SÓ o controle de retentativa da consulta (nunca o `status`: o resultado da consulta pode ter
    * mudado o documento entre a leitura e esta escrita). Escrever bumpa o `updatedAt`, que é o que manda o documento
    * para o fim do rodízio. `false` se o documento não existe mais no escopo.
    */
-  updatePollState(scope: AccountingScope, id: string, patch: PollStatePatch, tx?: Prisma.TransactionClient): Promise<boolean>;
+  updatePollState(scope: AccountingScope, id: string, patch: PollStatePatch, tx?: Prisma.TransactionClient, guard?: PollStateGuard): Promise<boolean>;
   /**
    * BE-INCR-DFE-EVENTOS (PR-2, item 18) — alvo da consulta de eventos: NFS-e `AUTHORIZED*` vivas, com chave, e com
    * `nfseDhProc >= desde` (o teto de 2 anos, Anexo I [114]), de todas as unidades (mesmo desenho de `listPending`). Vêm

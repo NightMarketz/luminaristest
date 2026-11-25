@@ -225,6 +225,14 @@ export interface PollSummary {
   transporteAdiadoAlerta?: number;
   /** Ids dos documentos de `transporteAdiadoAlerta` (cuid, sem PII). */
   transporteAdiadoIds?: string[];
+  /**
+   * Lacunas 3cf5/92c5 (dono 25/11, F-PD-2/3/5) — documentos que o job abandonou DEFINITIVAMENTE neste tick (idade ≥ `POLL_IDADE_MAX_MS`,
+   * ou adiado por transporte por esse tempo): o re-arme automático também parou. UM alerta por documento (`pollAlertedAt` grava
+   * "o alerta final saiu"). A consulta manual e o re-arme manual seguem valendo. Ausente se 0.
+   */
+  abandonoDefinitivo?: number;
+  /** Ids dos documentos de `abandonoDefinitivo` (cuid, sem PII). */
+  abandonoDefinitivoIds?: string[];
   /** BE-INCR-DFE-ANEXO-PENDENTE item 7 — resultado da varredura de pendências de anexo no mesmo tick. */
   attachments?: PendingAttachmentDrainSummary;
   /** X10a PR-9 (decisões 6 e 7) — transmissão das NFC-e off-line, prazo e órfãs no mesmo tick. */
@@ -256,10 +264,24 @@ const POLL_BACKOFF_MAX_MS = 3_600_000;
 const POLL_ADIAR_MS = 3_600_000;
 /**
  * Lacuna 92c5 (dono 24/11/2026) — transporte local indisponível (`DfeTransporteIndisponivelError`) adia o documento sem gastar
- * tentativa; passada esta janela desde o 1º adiamento do episódio, UM alerta avisa que a nota segue sem consulta. Só alerta:
- * não há teto de idade nem desistência (política não pedida).
+ * tentativa; passada esta janela desde o 1º adiamento do episódio, UM alerta avisa que a nota segue sem consulta. O teto de
+ * idade do adiado (`POLL_IDADE_MAX_MS`, lacuna 92c5, F-PD-3 a) é o que desiste — este alerta de 1 h, não.
  */
 export const POLL_TRANSPORTE_ALERTA_APOS_MS = 3_600_000;
+/**
+ * Lacunas 3cf5/cf36 (dono 25/11, F-PD-1 a) — o documento que o job abandonou (`pollGaveUpAt`) é re-consultado UMA vez a cada 6 h
+ * (4 consultas por dia; a nota que a SEFAZ já processou aparece em ≤ 6 h). Falhou de novo ⇒ `pollGaveUpAt = agora` e o próximo
+ * ciclo é daqui a 6 h; deu certo ⇒ `limparFalhaDePoll`.
+ */
+export const POLL_REARME_INTERVALO_MS = 6 * 3_600_000;
+/**
+ * Lacunas 3cf5/92c5 (dono 25/11, F-PD-2 a e F-PD-3 a) — teto de IDADE do documento (`agora − createdAt`) para o re-arme automático:
+ * 7 dias. Atingido, o job para de re-armar e emite UM alerta final ("abandono definitivo"); a consulta manual e o re-arme manual
+ * seguem valendo. O mesmo teto vale para o adiado por transporte (medido desde `pollDeferredSince`): ao completar, vira
+ * `pollGaveUpAt` + o mesmo alerta final. O valor é do dono; o efeito fiscal de a nota ficar dias sem consulta é pendência externa
+ * (BE-INCR-DFE-POLLING-DESISTE-brief §5).
+ */
+export const POLL_IDADE_MAX_MS = 7 * 86_400_000;
 const POLL_LAST_ERROR_MAX = 500;
 /** Lacuna 6e13 — outra falha da consulta ou o sucesso encerram o episódio de adiamento por transporte (início e "alertado"). */
 const EPISODIO_ENCERRADO = { pollDeferredSince: null, pollAlertedAt: null } as const;
@@ -385,7 +407,22 @@ export class FiscalDocumentLifecycleService {
     const doc = await this.repo.findById(scope, documentId);
     if (!doc) throw new ValidationError(`Documento fiscal '${documentId}' não encontrado.`, null);
     if ((doc.status === 'SENT' || doc.status === 'PROCESSING') && doc.pollGaveUpAt) {
-      await this.repo.updatePollState(scope, doc.id, { pollAttempts: 0, nextPollAt: null, pollGaveUpAt: null });
+      const pollGaveUpAt = doc.pollGaveUpAt;
+      const gaveUpAt = pollGaveUpAt;
+      // Lacuna 3cf5 (P1.4/F-PD-5 a): zera também a marca do alerta final (`pollAlertedAt`) — o ciclo recomeça do zero — e audita
+      // o re-arme na mesma tx (ação do operador sobre nota fiscal). Só audita se a linha mudou.
+      await this.repo.runTransaction(async (tx) => {
+        // guarda: só re-arma (e audita) quem AINDA está abandonado — duplo clique ou consulta que acabou de limpar não audita em falso
+        const mudou = await this.repo.updatePollState(scope, doc.id, { pollAttempts: 0, nextPollAt: null, pollGaveUpAt: null, ...EPISODIO_ENCERRADO }, tx, { pollGaveUpAt });
+        if (!mudou) return;
+        await this.auditService.append(tx, scope, {
+          actorUserId: scope.actorUserId,
+          eventType: 'dfe.poll_rearmed',
+          targetType: 'fiscal_document',
+          targetId: doc.id,
+          payload: { documentId: doc.id, unitId: doc.unitId, gaveUpAt: gaveUpAt.toISOString() },
+        });
+      });
     }
     return this.emissionService.getById(scope, documentId);
   }
@@ -398,7 +435,11 @@ export class FiscalDocumentLifecycleService {
    */
   async pollPendingOnce(olderThan: Date, opts: PollPendingOptions = {}): Promise<PollSummary> {
     const now = opts.now ?? new Date();
-    const pending = await this.repo.listPending(olderThan, { limit: opts.limit ?? POLL_PENDING_LIMIT, now });
+    const pending = await this.repo.listPending(olderThan, {
+      limit: opts.limit ?? POLL_PENDING_LIMIT,
+      now,
+      rearme: { aposMs: POLL_REARME_INTERVALO_MS, idadeMaxMs: POLL_IDADE_MAX_MS },
+    });
     const summary: PollSummary = { total: pending.length, updated: 0, skipped: 0, failed: 0 };
     for (const doc of pending) {
       const scope = resolveAccountingScopeInternal({ userId: doc.userId }, doc.unitId);
@@ -428,10 +469,15 @@ export class FiscalDocumentLifecycleService {
           // polling desistir (L-…580f).
           logger.warn('dfe_poll_pending: transporte indisponível — documento adiado, sem gastar tentativa', { documentId: doc.id, error: message });
           summary.skipped++;
-          // Lacuna 92c5: depois de POLL_TRANSPORTE_ALERTA_APOS_MS adiado, UM alerta por episódio (só alerta, não desiste).
-          if (await this.adiarPorTransporte(scope, doc, message, now)) {
+          // Lacuna 92c5: depois de POLL_TRANSPORTE_ALERTA_APOS_MS adiado, UM alerta por episódio; ao completar POLL_IDADE_MAX_MS
+          // adiado (F-PD-3 a) o job desiste e emite o alerta final — UM só (o de 1 h já saiu antes, o final é outro, e único).
+          const adiado = await this.adiarPorTransporte(scope, doc, message, now);
+          if (adiado === 'alerta') {
             summary.transporteAdiadoAlerta = (summary.transporteAdiadoAlerta ?? 0) + 1;
             (summary.transporteAdiadoIds ??= []).push(doc.id);
+          } else if (adiado === 'abandono') {
+            summary.abandonoDefinitivo = (summary.abandonoDefinitivo ?? 0) + 1;
+            (summary.abandonoDefinitivoIds ??= []).push(doc.id);
           }
           continue;
         }
@@ -442,44 +488,116 @@ export class FiscalDocumentLifecycleService {
           logger.error('dfe_poll_pending: falha ao consultar documento — alerta', { documentId: doc.id, error: message });
           summary.failed++;
         }
-        if (await this.registrarFalhaDePoll(scope, doc, message, isPermanentPollError(error), now)) {
+        const desistencia = await this.registrarFalhaDePoll(scope, doc, message, isPermanentPollError(error), now);
+        if (desistencia === 'desistiu') {
           summary.gaveUp = (summary.gaveUp ?? 0) + 1;
           (summary.gaveUpIds ??= []).push(doc.id);
+        } else if (desistencia === 'abandono') {
+          summary.abandonoDefinitivo = (summary.abandonoDefinitivo ?? 0) + 1;
+          (summary.abandonoDefinitivoIds ??= []).push(doc.id);
         }
       }
+    }
+    // Lacunas 3cf5/92c5 (F-PD-2 a): o documento abandonado que passou do teto de idade sai do re-arme e ganha UM alerta final.
+    const abandonados = await this.alertarAbandonoDefinitivo(now);
+    if (abandonados.length > 0) {
+      summary.abandonoDefinitivo = (summary.abandonoDefinitivo ?? 0) + abandonados.length;
+      (summary.abandonoDefinitivoIds ??= []).push(...abandonados);
     }
     return summary;
   }
 
   /**
+   * Lacunas 3cf5/92c5 (F-PD-2 a, F-PD-5 a) — documento SENT/PROCESSING abandonado (`pollGaveUpAt`) com idade >= `POLL_IDADE_MAX_MS`
+   * que ainda não alertou: grava `pollAlertedAt = agora` ("o alerta final saiu"; limpo pelo re-arme manual e pelo sucesso da
+   * consulta) e devolve o id. Só devolve o id cuja marca foi gravada: falha de gravação => tenta no próximo tick (melhor alerta
+   * atrasado que nenhum). Falha de leitura não derruba o tick.
+   */
+  private async alertarAbandonoDefinitivo(now: Date): Promise<string[]> {
+    const ids: string[] = [];
+    try {
+      const docs = await this.repo.listAbandonoDefinitivo(now, { idadeMaxMs: POLL_IDADE_MAX_MS, limit: POLL_PENDING_LIMIT });
+      for (const doc of docs) {
+        const scope = resolveAccountingScopeInternal({ userId: doc.userId }, doc.unitId);
+        try {
+          // guarda: o operador pode ter re-armado entre a listagem e esta escrita (e outra instância, alertado) — nesse caso não há alerta
+          if (await this.repo.updatePollState(scope, doc.id, { pollAlertedAt: now }, undefined, { pollGaveUpAt: doc.pollGaveUpAt, pollAlertedAt: null })) {
+            logger.error('dfe_poll_pending: documento abandonado além do teto de idade — o job não o re-arma mais (consulta e re-arme manuais seguem valendo)', {
+              documentId: doc.id,
+              gaveUpAt: doc.pollGaveUpAt?.toISOString(),
+            });
+            ids.push(doc.id);
+          }
+        } catch (error) {
+          logger.error('dfe_poll_pending: não gravou a marca do alerta final de abandono — tenta no próximo tick', {
+            documentId: doc.id,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+    } catch (error) {
+      logger.error('dfe_poll_pending: não listou os documentos abandonados além do teto de idade', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+    return ids;
+  }
+
+  /**
    * 4.1 — uma falha da consulta: conta, agenda o backoff (`nextPollAt`) ou, no teto/erro permanente, para (`pollGaveUpAt`).
-   * `true` => o job desistiu deste documento neste tick (alerta). Falha ao gravar o controle nunca derruba o tick nem trava
+   * `'desistiu'` => o job desistiu deste documento neste tick (alerta); `'abandono'` => desistiu E o documento já passou do teto de
+   * idade (`POLL_IDADE_MAX_MS`): esta desistência é o alerta final (grava `pollAlertedAt`, sem 2º alerta no tick seguinte). O documento
+   * re-armado AUTOMATICAMENTE (já tinha `pollGaveUpAt`) que falha de novo volta a `pollGaveUpAt = agora` sem alerta: não repete a cada
+   * ciclo de 6 h (lacuna 3cf5, P1.2). Falha ao gravar o controle nunca derruba o tick nem trava
    * os outros documentos: vira `logger.error` e o documento volta na próxima varredura (sem backoff, mas sem head-of-line).
    */
-  private async registrarFalhaDePoll(scope: AccountingScope, doc: FiscalDocument, message: string, permanente: boolean, now: Date): Promise<boolean> {
+  private async registrarFalhaDePoll(
+    scope: AccountingScope,
+    doc: FiscalDocument,
+    message: string,
+    permanente: boolean,
+    now: Date,
+  ): Promise<'desistiu' | 'abandono' | null> {
     const attempts = doc.pollAttempts + 1;
     const lastError = message.slice(0, POLL_LAST_ERROR_MAX);
-    const desiste = permanente || attempts >= POLL_MAX_ATTEMPTS;
+    const reArmado = doc.pollGaveUpAt != null; // consulta do re-arme automático (P1.1): uma só; falhou de novo, desiste de novo
+    const desiste = permanente || reArmado || attempts >= POLL_MAX_ATTEMPTS;
     try {
       if (desiste) {
-        await this.repo.updatePollState(scope, doc.id, { pollAttempts: attempts, pollLastError: lastError, pollGaveUpAt: now, nextPollAt: null, ...EPISODIO_ENCERRADO });
+        const definitivo = !reArmado && now.getTime() - doc.createdAt.getTime() >= POLL_IDADE_MAX_MS;
+        const gravou = await this.repo.updatePollState(
+          scope,
+          doc.id,
+          {
+            pollAttempts: attempts,
+            pollLastError: lastError,
+            pollGaveUpAt: now,
+            nextPollAt: null,
+            ...EPISODIO_ENCERRADO,
+            ...(definitivo ? { pollAlertedAt: now } : {}),
+          },
+          undefined,
+          { pollGaveUpAt: doc.pollGaveUpAt }, // o re-arme manual no meio do tick vence: não o desfaz nem alerta
+        );
+        if (!gravou) return null;
         logger.error('dfe_poll_pending: teto de tentativas — o job para de consultar o documento (consulta manual segue valendo)', {
           documentId: doc.id,
           attempts,
           permanente,
+          reArmado,
           error: lastError,
         });
-        return true;
+        return reArmado ? null : definitivo ? 'abandono' : 'desistiu';
       }
       const delay = Math.min(POLL_BACKOFF_BASE_MS * 2 ** (attempts - 1), POLL_BACKOFF_MAX_MS);
       await this.repo.updatePollState(scope, doc.id, { pollAttempts: attempts, pollLastError: lastError, nextPollAt: new Date(now.getTime() + delay), ...EPISODIO_ENCERRADO });
-      return false;
+      return null;
     } catch (error) {
       logger.error('dfe_poll_pending: não gravou o controle de retentativa — o documento volta no próximo tick', {
         documentId: doc.id,
         error: error instanceof Error ? error.message : String(error),
       });
-      return false;
+      return null;
     }
   }
 
@@ -497,34 +615,68 @@ export class FiscalDocumentLifecycleService {
 
   /**
    * Lacuna 92c5 — adia por transporte indisponível (1 h, sem tentativa) e guarda o episódio nas colunas `pollDeferredSince`
-   * (1º adiamento) e `pollAlertedAt` (lacuna 6e13); `pollLastError` é só a mensagem. `true` => este tick deve alertar: o
-   * episódio dura `POLL_TRANSPORTE_ALERTA_APOS_MS` ou mais e o alerta ainda não saiu. Só devolve `true` se o marcador
-   * "alertado" foi gravado — se a gravação falha, o próximo tick tenta de novo (melhor um alerta atrasado que nenhum).
+   * (1º adiamento) e `pollAlertedAt` (lacuna 6e13); `pollLastError` é só a mensagem. Devolve:
+   * - `'alerta'`: este tick deve alertar — o episódio dura `POLL_TRANSPORTE_ALERTA_APOS_MS` ou mais e o alerta ainda não saiu. Só
+   *   devolve se o marcador "alertado" foi gravado (se a gravação falha, o próximo tick tenta de novo: melhor alerta atrasado que nenhum);
+   * - `'abandono'` (F-PD-3 a): o episódio completou `POLL_IDADE_MAX_MS` — o job desiste (`pollGaveUpAt = agora`, episódio encerrado) e
+   *   `pollAlertedAt = agora` passa a significar "o alerta final saiu" (F-PD-5 a): é o ÚNICO alerta final, o varredor de abandono
+   *   (`alertarAbandonoDefinitivo`) não o repete. O status não muda;
+   * - `null`: só adiou.
+   * Documento já abandonado e re-armado automaticamente (`pollGaveUpAt` preenchido) que cai no transporte só adia: não abre episódio,
+   * porque `pollAlertedAt` ali significa "alerta final", não "alerta de 1 h" (F-PD-5 a); o teto de idade do re-arme o limita.
    */
-  private async adiarPorTransporte(scope: AccountingScope, doc: FiscalDocument, message: string, now: Date): Promise<boolean> {
-    const anterior = doc.pollDeferredSince ? { desde: doc.pollDeferredSince, alertado: doc.pollAlertedAt != null } : null;
-    const alertar = deveAlertarAdiamento(anterior, now, POLL_TRANSPORTE_ALERTA_APOS_MS);
+  private async adiarPorTransporte(scope: AccountingScope, doc: FiscalDocument, message: string, now: Date): Promise<'alerta' | 'abandono' | null> {
+    const lastError = message.slice(0, POLL_LAST_ERROR_MAX);
+    const proximo = new Date(now.getTime() + POLL_ADIAR_MS);
     try {
-      await this.repo.updatePollState(scope, doc.id, {
-        nextPollAt: new Date(now.getTime() + POLL_ADIAR_MS),
-        pollLastError: message.slice(0, POLL_LAST_ERROR_MAX),
-        pollDeferredSince: anterior?.desde ?? now,
-        pollAlertedAt: alertar ? now : doc.pollAlertedAt,
-      });
+      if (doc.pollGaveUpAt) {
+        await this.repo.updatePollState(scope, doc.id, { nextPollAt: proximo, pollLastError: lastError }, undefined, { pollGaveUpAt: doc.pollGaveUpAt });
+        return null;
+      }
+      const anterior = doc.pollDeferredSince ? { desde: doc.pollDeferredSince, alertado: doc.pollAlertedAt != null } : null;
+      if (anterior && now.getTime() - anterior.desde.getTime() >= POLL_IDADE_MAX_MS) {
+        const gravou = await this.repo.updatePollState(
+          scope,
+          doc.id,
+          { pollLastError: lastError, pollGaveUpAt: now, nextPollAt: null, pollDeferredSince: null, pollAlertedAt: now },
+          undefined,
+          { pollGaveUpAt: null },
+        );
+        if (!gravou) return null;
+        logger.error('dfe_poll_pending: transporte indisponível pelo teto de idade — o job desiste do documento (consulta e re-arme manuais seguem valendo)', {
+          documentId: doc.id,
+          adiadoDesde: anterior.desde.toISOString(),
+        });
+        return 'abandono';
+      }
+      const alertar = deveAlertarAdiamento(anterior, now, POLL_TRANSPORTE_ALERTA_APOS_MS);
+      const gravou = await this.repo.updatePollState(
+        scope,
+        doc.id,
+        {
+          nextPollAt: proximo,
+          pollLastError: lastError,
+          pollDeferredSince: anterior?.desde ?? now,
+          pollAlertedAt: alertar ? now : doc.pollAlertedAt,
+        },
+        undefined,
+        { pollGaveUpAt: null, pollAlertedAt: doc.pollAlertedAt }, // só se ninguém mexeu na marca (re-arme manual, outra instância)
+      );
+      if (!gravou) return null;
+      if (alertar) {
+        logger.error('dfe_poll_pending: transporte indisponível além da janela de alerta — documento segue adiado', {
+          documentId: doc.id,
+          adiadoDesde: (anterior?.desde ?? now).toISOString(),
+        });
+      }
+      return alertar ? 'alerta' : null;
     } catch (error) {
       logger.warn('dfe_poll_pending: não adiou o documento de transporte indisponível', {
         documentId: doc.id,
         error: error instanceof Error ? error.message : String(error),
       });
-      return false;
+      return null;
     }
-    if (alertar) {
-      logger.error('dfe_poll_pending: transporte indisponível além da janela de alerta — documento segue adiado', {
-        documentId: doc.id,
-        adiadoDesde: (anterior?.desde ?? now).toISOString(),
-      });
-    }
-    return alertar;
   }
 
   /** Consulta que deu certo zera a contagem, o backoff e a desistência — só escreve se havia algo a limpar. */
