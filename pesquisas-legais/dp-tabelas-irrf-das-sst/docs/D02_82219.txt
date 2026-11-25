@@ -1,0 +1,5 @@
+Rendimentos Tributáveis Sujeitos ao Ajuste MensalRedução do Imposto sobre a Renda
+
+até R$ 5.000,00até R$ 312,89(de modo que o imposto devido seja zero)
+
+de R$ 5.000,01 a R$ 7.350,00R$ 978,62 - (0,133145 x rendimentos tributáveis sujeitos à incidência mensal)(de modo que a redução do imposto seja decrescente linearmente até zerar para rendimentos a partir de R$ 7.350,00)

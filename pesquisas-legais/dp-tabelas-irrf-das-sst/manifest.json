@@ -1,0 +1,811 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_82218",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/82218",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/82218",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:39:43-03:00",
+      "sha256": "0a6301ce1f6b973c2864a41f358045c59de5be6f3912e64e6eb66767a5fd99af",
+      "arquivo": "docs/D01_82218.pdf",
+      "texto": "docs/D01_82218.txt",
+      "bytes": 36967,
+      "sha256_texto": "2ce729a4d3df6c19344988068cbd2d4c094c6cb3ac34ad318c7e537490dc5e28",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "D02_82219",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/82219",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/82219",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:39:43-03:00",
+      "sha256": "9f477abe0f0681685a9b3aca094524c56bc694a96e26583fe169360121786504",
+      "arquivo": "docs/D02_82219.html",
+      "texto": "docs/D02_82219.txt",
+      "bytes": 1367,
+      "sha256_texto": "514be13cc481219dc5f6f11262995b41e01fb5b19a2fcc0d33b5f51b15c1b0b2",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "D03_85769",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85769",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85769",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:39:43-03:00",
+      "sha256": "ebaafdc46750043969d998b259d33101a2d0e7f7494cb2e554fb0424a7069c12",
+      "arquivo": "docs/D03_85769.pdf",
+      "texto": "docs/D03_85769.txt",
+      "bytes": 182819,
+      "sha256_texto": "125b882977471fb155d8af17fa9cbaf2286d467b21dba0f85de5ee7e7a14df78",
+      "captura": {
+        "anterior": {
+          "slug": "verif-2026-10-17-simples-mei",
+          "id": "D19",
+          "baixado_em": "2026-10-17T10:05:16-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "D04_85770",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85770",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85770",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:39:44-03:00",
+      "sha256": "397d24f5d285cbe60c16e70afd688e37e1e31f8c5c805a07c6d8588ebbef16ab",
+      "arquivo": "docs/D04_85770.pdf",
+      "texto": "docs/D04_85770.txt",
+      "bytes": 197438,
+      "sha256_texto": "7be9d175b293312e735f361611e1bfb8b48e25e367e0611deca27136884463ee",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "D05_85771",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85771",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85771",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:39:44-03:00",
+      "sha256": "0e6535b469f737eceea4b4ba812a45dc0ca63463632aa12b1678a3d50a92a4f6",
+      "arquivo": "docs/D05_85771.pdf",
+      "texto": "docs/D05_85771.txt",
+      "bytes": 221743,
+      "sha256_texto": "8f380f6de4302530c9db39a731b6118b49bbf46889478200059fc6d15fd68fe9",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "D06_85775",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85775",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85775",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:39:44-03:00",
+      "sha256": "11aad0a339cf319abce522a4badfb3c5d1f803b7ad17b31fe1b1d67110f67a8b",
+      "arquivo": "docs/D06_85775.pdf",
+      "texto": "docs/D06_85775.txt",
+      "bytes": 195278,
+      "sha256_texto": "0dfdc076396dd94303d21dbff6d0d6a7e70fe782a628429abe783075fad024c6",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "D07_85773",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85773",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85773",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:39:44-03:00",
+      "sha256": "9e2e6bbc1b67cdbf624132ebeaa9eec475e5512f66ce603435dd1568a5b9b38e",
+      "arquivo": "docs/D07_85773.pdf",
+      "texto": "docs/D07_85773.txt",
+      "bytes": 182731,
+      "sha256_texto": "10cf922bc7de377a3c6834a44c420f23365c309ea0be9af7f71133b6084d6181",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "Instrução Normativa RFB nº 1500, de 29 de outubro de 2014",
+      "url": "rfb:57670",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/57670/visao/multivigente",
+      "id_normativo": "rfb:57670",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-25T16:41:00-03:00",
+      "sha256": "24cd4877274f766c168739036645c74cddfa2c7e1597aba522841f10a2bd3658",
+      "arquivo": "docs/D08_rfb-57670-multivigente.json",
+      "texto": "docs/D08_rfb-57670-multivigente.txt",
+      "bytes": 861526,
+      "sha256_texto": "bc8cc9d866b7b89373e9ca5b702ccc9c07fb02fed54dfa113b7ab92c02b8a790",
+      "anexos": [
+        {
+          "nome": "Anexo.html",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/32873"
+        },
+        {
+          "nome": "Anexo I.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/32871"
+        },
+        {
+          "nome": "Anexo I.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/35260"
+        },
+        {
+          "nome": "Anexo II.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/32872"
+        },
+        {
+          "nome": "Anexo II.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/35264"
+        },
+        {
+          "nome": "Anexo II.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/69908"
+        },
+        {
+          "nome": "Anexo II.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/72699"
+        },
+        {
+          "nome": "Anexo II.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/82218"
+        },
+        {
+          "nome": "Anexo III.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/32874"
+        },
+        {
+          "nome": "Anexo III.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/35267"
+        },
+        {
+          "nome": "Anexo III.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/69909"
+        },
+        {
+          "nome": "Anexo III.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/72700"
+        },
+        {
+          "nome": "Anexo III.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/82242"
+        },
+        {
+          "nome": "Anexo IV.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/32875"
+        },
+        {
+          "nome": "Anexo IV.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/35307"
+        },
+        {
+          "nome": "Anexo IV.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/69910"
+        },
+        {
+          "nome": "Anexo IV.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/72701"
+        },
+        {
+          "nome": "Anexo IV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/82250"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/32876"
+        },
+        {
+          "nome": "Anexo VI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/32877"
+        },
+        {
+          "nome": "Anexo VI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/35494"
+        },
+        {
+          "nome": "Anexo VII.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/32878"
+        },
+        {
+          "nome": "Anexo VII.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/35270"
+        },
+        {
+          "nome": "Anexo VII.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/46090"
+        },
+        {
+          "nome": "Anexo VII.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/69911"
+        },
+        {
+          "nome": "Anexo VII.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/72702"
+        },
+        {
+          "nome": "Anexo VII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/82251"
+        },
+        {
+          "nome": "Anexo VIII.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/32879"
+        },
+        {
+          "nome": "Anexo VIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/35274"
+        },
+        {
+          "nome": "Anexo IX.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/32880"
+        },
+        {
+          "nome": "Anexo IX.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/33316"
+        },
+        {
+          "nome": "Anexo IX.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/35310"
+        },
+        {
+          "nome": "Anexo IX.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/82252"
+        },
+        {
+          "nome": "139723909443984.html",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/82219"
+        },
+        {
+          "nome": "Anexo XI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/82241"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "dp-cobertura-100",
+          "id": "D27",
+          "baixado_em": "2026-11-14T10:07:57-03:00",
+          "sha256_texto": "bc8cc9d866b7b89373e9ca5b702ccc9c07fb02fed54dfa113b7ab92c02b8a790"
+        },
+        "tipo": "IGUAL"
+      },
+      "alertas": [
+        "35 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D09",
+      "titulo": "Resolução CGSN nº 190, de 4 de agosto de 2026",
+      "url": "rfb:152832",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/152832/visao/multivigente",
+      "id_normativo": "rfb:152832",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-25T16:41:01-03:00",
+      "sha256": "38a118e86ac90bd8f9bd9f4efb8e2fe947cc5af9216c27150d3a5537ca68e66f",
+      "arquivo": "docs/D09_rfb-152832-multivigente.json",
+      "texto": "docs/D09_rfb-152832-multivigente.txt",
+      "bytes": 403358,
+      "sha256_texto": "a5692faad00bdac6b95887948120e1b35c3a9bc47753c800a4c248ae85ccde1a",
+      "anexos": [
+        {
+          "nome": "Anexo I.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85769"
+        },
+        {
+          "nome": "Anexo II.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85770"
+        },
+        {
+          "nome": "Anexo III.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85771"
+        },
+        {
+          "nome": "Anexo IV.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85775"
+        },
+        {
+          "nome": "Anexo V.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85773"
+        },
+        {
+          "nome": "Anexo Único.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85784"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "marcos-restantes-onda32",
+          "id": "D02",
+          "baixado_em": "2026-11-24T16:33:07-03:00",
+          "sha256_texto": "a5692faad00bdac6b95887948120e1b35c3a9bc47753c800a4c248ae85ccde1a"
+        },
+        "tipo": "IGUAL"
+      },
+      "alertas": [
+        "6 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D10",
+      "titulo": "Resolução CGSN nº 196, de 16 de novembro de 2026",
+      "url": "rfb:154694",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154694/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/154694/visao/multivigente",
+      "id_normativo": "rfb:154694",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-25T16:41:13-03:00",
+      "sha256": "af0387ef601c947b71bbbea50f319c5a20d59f0cfd93cb9e6e3c7bd24449e52a",
+      "arquivo": "docs/D10_rfb-154694-multivigente.json",
+      "texto": "docs/D10_rfb-154694-multivigente.txt",
+      "bytes": 177421,
+      "sha256_texto": "37ff4316d8f20f73283c2ae6b93b7035c49dc4dc8dba151174d55c902ef33676",
+      "anexos": [
+        {
+          "nome": "Anexo I.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154694/anexo/87477"
+        },
+        {
+          "nome": "Anexo II.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154694/anexo/87478"
+        },
+        {
+          "nome": "Anexo III.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154694/anexo/87479"
+        },
+        {
+          "nome": "Anexo IV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154694/anexo/87480"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154694/anexo/87481"
+        }
+      ],
+      "captura": {
+        "tipo": "PRIMEIRA"
+      },
+      "alertas": [
+        "5 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D11",
+      "titulo": "D11_87477",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154694/anexo/87477",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154694/anexo/87477",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:41:33-03:00",
+      "sha256": "1d5a2e01b55d1572b603db227d875cec7afd78e93bb28ccda49d8bd8114d8da3",
+      "arquivo": "docs/D11_87477.pdf",
+      "texto": "docs/D11_87477.txt",
+      "bytes": 179552,
+      "sha256_texto": "866d1d614799ac897f6e8681c069730469b58464ffd1db750cc1da584f9fae6f",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D12",
+      "titulo": "D12_87478",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154694/anexo/87478",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154694/anexo/87478",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:41:33-03:00",
+      "sha256": "bbc0358064d0ab67109e77d49900dd64481885c525fa50687ba8bf6380dd0f99",
+      "arquivo": "docs/D12_87478.pdf",
+      "texto": "docs/D12_87478.txt",
+      "bytes": 193084,
+      "sha256_texto": "1a8f3ae1b24e56275975ba137390863eae105588d1a3751b1ae63f1b3dda23da",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D13",
+      "titulo": "D13_87479",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154694/anexo/87479",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154694/anexo/87479",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:41:33-03:00",
+      "sha256": "6f69ff8f9ad48b1c06aead505e0333e11859a1ca98c9bffe5e7deb19739af53a",
+      "arquivo": "docs/D13_87479.pdf",
+      "texto": "docs/D13_87479.txt",
+      "bytes": 218684,
+      "sha256_texto": "7c0bba4d59757b90986c421e3e68ce13824272d6eaa69e04579394682c441523",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D14",
+      "titulo": "D14_87480",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154694/anexo/87480",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154694/anexo/87480",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:41:33-03:00",
+      "sha256": "f43abf935606d16a3728d91eb967e8a8266c916aa8d60baba52431d01707b84e",
+      "arquivo": "docs/D14_87480.pdf",
+      "texto": "docs/D14_87480.txt",
+      "bytes": 193568,
+      "sha256_texto": "28209abb3128f3dc954b088237c90d29156fd859d6f1d68c1ef67f00d70e0ffc",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D15",
+      "titulo": "D15_87481",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154694/anexo/87481",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154694/anexo/87481",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:41:34-03:00",
+      "sha256": "c5bad9145121eed320d1077eed135ae43cf47e5cbad46af6db83ccaf4b671538",
+      "arquivo": "docs/D15_87481.pdf",
+      "texto": "docs/D15_87481.txt",
+      "bytes": 179706,
+      "sha256_texto": "1eacc4e3ef3e6651e0bee69c40cabf3e62ebb57c5258123154e2bb2ca1a96287",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D16",
+      "titulo": "Norma Regulamentadora No. 4 (NR-4) — Ministério do Trabalho e Emprego",
+      "url": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/norma-regulamentadora-no-4-nr-4",
+      "url_final": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/norma-regulamentadora-no-4-nr-4",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:43:47-03:00",
+      "sha256": "ea0d96a9adcd780aaaf5a86c3591ef3c01e403f72d52d1045345d93ac0f78d1d",
+      "arquivo": "docs/D16_norma-regulamentadora-no-4-nr-4.html",
+      "texto": "docs/D16_norma-regulamentadora-no-4-nr-4.txt",
+      "bytes": 206955,
+      "sha256_texto": "94abf555a89fbfe810cebeb6345fa2cdea84d40f5f00afc2ba995652d542195a",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D17",
+      "titulo": "Norma Regulamentadora No. 5 (NR-5) — Ministério do Trabalho e Emprego",
+      "url": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/norma-regulamentadora-no-5-nr-5",
+      "url_final": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/norma-regulamentadora-no-5-nr-5",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:43:47-03:00",
+      "sha256": "8c6c3d5aba01547d671c87bfe3d0fd59b321ba61db662fbc7fa9355795759d5b",
+      "arquivo": "docs/D17_norma-regulamentadora-no-5-nr-5.html",
+      "texto": "docs/D17_norma-regulamentadora-no-5-nr-5.txt",
+      "bytes": 202867,
+      "sha256_texto": "d67332ceb2af72131e3119cd52e3072963cae63af37e6ceca382a2adf1b71807",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D18",
+      "titulo": "NR 4 - Serviços Especializados em Segurança e em Medicina do Trabalho",
+      "url": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/nr-04-atualizada-2023.pdf",
+      "url_final": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/nr-04-atualizada-2023.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:44:10-03:00",
+      "sha256": "1e7bdfb832d7cda0ac012d55c818be2d945730cb64316f498198c6b2eae6dc84",
+      "arquivo": "docs/D18_nr-04-atualizada-2023-pdf.pdf",
+      "texto": "docs/D18_nr-04-atualizada-2023-pdf.txt",
+      "bytes": 731088,
+      "sha256_texto": "80085f1ccf5da402603e7049a7a9a0ce966b8f145405860ee8d99b80f94e3656",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D19",
+      "titulo": "NR5 - Comissão Interna de Prevenção de Acidentes",
+      "url": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/arquivos/normas-regulamentadoras/nr-05-atualizada-2022.pdf",
+      "url_final": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/arquivos/normas-regulamentadoras/nr-05-atualizada-2022.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:44:10-03:00",
+      "sha256": "c05059a8423db7dc334fe97813b5833009b1310d05d32331494180b7372a6c55",
+      "arquivo": "docs/D19_nr-05-atualizada-2022-pdf.pdf",
+      "texto": "docs/D19_nr-05-atualizada-2022-pdf.txt",
+      "bytes": 268726,
+      "sha256_texto": "0d2fc6a0ec17ad10781f84dcb9d30b27832749130823470d0af37a1839447812",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D20",
+      "titulo": "Portal IN",
+      "url": "https://portalin.inss.gov.br/in/594",
+      "url_final": "https://portalin.inss.gov.br/in/594",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:46:30-03:00",
+      "sha256": "4c0e3c7a9e02c2eedfbcb1b3e5fa05116ed396f863224e9466464682179bc264",
+      "arquivo": "docs/D20_594.html",
+      "texto": "docs/D20_594.txt",
+      "bytes": 1754,
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D21",
+      "titulo": "D21_ppp-pdf",
+      "url": "https://www.gov.br/inss/pt-br/centrais-de-conteudo/publicacoes/outras/ppp.pdf",
+      "url_final": "https://www.gov.br/inss/pt-br/centrais-de-conteudo/publicacoes/outras/ppp.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:46:31-03:00",
+      "sha256": "b773df9c51d12059fc33eee2aa8b81953df80e4efb7c1750b03dedfec8027807",
+      "arquivo": "docs/D21_ppp-pdf.pdf",
+      "texto": "docs/D21_ppp-pdf.txt",
+      "bytes": 248956,
+      "sha256_texto": "f63a26c2a1755eb27a5a4cdcbd6e039d97c45dc5b130880288e8955afcbe8447",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D22",
+      "titulo": "INSTRUÇÃO NORMATIVA PRES/INSS Nº 170, DE 4 DE JULHO DE 2024",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/reguladores/inss/instrucoes-normativas/2024/instrucao-normativa-pres-inss-n-170-de-4-de-julho-de-2024-570602042.md",
+      "url_final": "https://github.com/ctresb/leis/blob/8e43c11fade9f61fef46935d2f0af9b45641d906/reguladores/inss/instrucoes-normativas/2024/instrucao-normativa-pres-inss-n-170-de-4-de-julho-de-2024-570602042.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.in.gov.br/web/dou/-/instrucao-normativa-pres/inss-n-170-de-4-de-julho-de-2024-570602042",
+      "versao_texto": "publicação original",
+      "acervo_baixado_em": "2026-10-16",
+      "commit": "8e43c11fade9f61fef46935d2f0af9b45641d906",
+      "alertas": [
+        "versao_texto = 'publicação original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-25T16:48:55-03:00",
+      "sha256": "79fcfa500b41bafb28901747c6b8af5236c4dfe3f90c3b06dd13c7f27e6897e9",
+      "arquivo": "docs/D22_instrucao-normativa-pres-inss-n-170-de-4-de-julho-de-2024-57.md",
+      "texto": "docs/D22_instrucao-normativa-pres-inss-n-170-de-4-de-julho-de-2024-57.txt",
+      "bytes": 58595,
+      "sha256_texto": "50673ded12f252826e9c14ea29b8b5cbd13719aebab59957484130ec76d9ced9",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D23",
+      "titulo": "IN PRES/INSS 128/2022 arts. 272-285 (extraido do Portal IN do INSS)",
+      "url": "https://portalin.inss.gov.br/main.11d20173ec4bc58ac2aa.js",
+      "url_final": "https://portalin.inss.gov.br/in/594",
+      "orgao": "INSS",
+      "baixado_em": "2026-11-25T16:49:44-03:00",
+      "sha256": "15debaa5aedc4351eacdf16691441b0d3a8ba53f6a92493d366c5c85d3409027",
+      "arquivo": "docs/D23_in128-arts272-285.txt",
+      "texto": "docs/D23_in128-arts272-285.txt",
+      "bytes": 22729,
+      "captura": {
+        "tipo": "PRIMEIRA"
+      },
+      "nota": "bruto (pacote JS de 9,6 MB) nao versionado; sha256_pacote_js e o hash do pacote; extracao por ferramentas/ext2.py",
+      "sha256_pacote_js": "561e4f85b0990677c85f599230af87098b9cc7b415ac66bc62ce0523a336c72c"
+    },
+    {
+      "id": "D24",
+      "titulo": "Resolução CGSN nº 140, de 22 de maio de 2018",
+      "url": "rfb:92278",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/92278/visao/multivigente",
+      "id_normativo": "rfb:92278",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-25T16:52:01-03:00",
+      "sha256": "c90d8eb75a39ceff54bf57dd998a795dc53920ba5c94f1415aef79633a45d612",
+      "arquivo": "docs/D24_rfb-92278-multivigente.json",
+      "texto": "docs/D24_rfb-92278-multivigente.txt",
+      "bytes": 1821027,
+      "sha256_texto": "6683e7114bbcdcfa2563cb7d130e09f701f633a0344b36a19e3cfcbbff4ca797",
+      "anexos": [
+        {
+          "nome": "Anexo I .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48430"
+        },
+        {
+          "nome": "Anexo II .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48431"
+        },
+        {
+          "nome": "Anexo III .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48432"
+        },
+        {
+          "nome": "Anexo IV .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48433"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48446"
+        },
+        {
+          "nome": "Anexo VI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48458"
+        },
+        {
+          "nome": "Anexo VI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/50966"
+        },
+        {
+          "nome": "Anexo VII .pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48436"
+        },
+        {
+          "nome": "Anexo VII.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/50967"
+        },
+        {
+          "nome": "Anexo VII.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54769"
+        },
+        {
+          "nome": "Anexo VII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/58338"
+        },
+        {
+          "nome": "Anexo VIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48459"
+        },
+        {
+          "nome": "Anexo IX.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48460"
+        },
+        {
+          "nome": "Anexo X .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48439"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48461"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/52778"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54307"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54308"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54995"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/59531"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/64455"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/77593"
+        },
+        {
+          "nome": "Anexo XI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/81177"
+        },
+        {
+          "nome": "Anexo XII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/58339"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "simples-6-02-6-03-fator-r",
+          "id": "D02",
+          "baixado_em": "2026-11-24T01:24:37-03:00",
+          "sha256_texto": "b5a0230413794b2737aa224e5fd3b8cfbd7bd87a28642b2649e4236a64b094f3"
+        },
+        "tipo": "TEXTO_MUDOU",
+        "citado_em": [
+          {
+            "slug": "dp-cobertura-100",
+            "id": "D30"
+          },
+          {
+            "slug": "parecer-salao-sp-4-pessoas",
+            "id": "D13"
+          },
+          {
+            "slug": "das-espelho-guia",
+            "id": "D03"
+          },
+          {
+            "slug": "insumos-salao-sp",
+            "id": "D10"
+          },
+          {
+            "slug": "ciclo-fiscal-prazos",
+            "id": "D04"
+          },
+          {
+            "slug": "simulacao-montador-unico",
+            "id": "D03"
+          },
+          {
+            "slug": "nfse-2027-salao-parceiro-cbs-ibs",
+            "id": "D03"
+          },
+          {
+            "slug": "simples-6-02-6-03-fator-r",
+            "id": "D02"
+          }
+        ],
+        "diferencas": [
+          "-[AGENDADO]  [Vide modificação prevista para 01/01/2027, nos termos do(a) Resolução CGSN nº 190, de 4 de agosto de 2026 · rfb:152832]",
+          "-[AGENDADO]  [Vide dispositivo a ser incluído em 01/01/2027, nos termos do(a) Resolução CGSN nº 190, de 4 de agosto de 2026 · rfb:152832]",
+          "+[AGENDADO]  [Vide modificação prevista para 01/01/2027, nos termos do(a) Resolução CGSN nº 196, de 16 de novembro de 2026 · rfb:154694]"
+        ]
+      },
+      "alertas": [
+        "alteração com vigência futura: Alterado(a) pelo(a) Resolução CGSN nº 190, de 4 de agosto de 2026, a partir de 01/01/2027 (rfb:152832)",
+        "alteração com vigência futura: Alterado(a) pelo(a) Resolução CGSN nº 195, de 21 de outubro de 2026, a partir de 01/01/2027 (rfb:154194)",
+        "alteração com vigência futura: Alterado(a) pelo(a) Resolução CGSN nº 196, de 16 de novembro de 2026, a partir de 01/01/2027 (rfb:154694)",
+        "24 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar",
+        "TEXTO MUDOU desde 2026-11-24. Dossiês que citaram a versão anterior: dp-cobertura-100 D30, parecer-salao-sp-4-pessoas D13, das-espelho-guia D03, insumos-salao-sp D10, ciclo-fiscal-prazos D04, simulacao-montador-unico D03, nfse-2027-salao-parceiro-cbs-ibs D03, simples-6-02-6-03-fator-r D02. Conferir se a conclusão deles ainda vale"
+      ]
+    },
+    {
+      "id": "D25",
+      "titulo": "D25_82242",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/82242",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/82242",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:53:31-03:00",
+      "sha256": "80318b691f488736dbefa8fab787b1dbba767e60a5b0ad45dd644e528c0a46a2",
+      "arquivo": "docs/D25_82242.pdf",
+      "texto": "docs/D25_82242.txt",
+      "bytes": 28547,
+      "sha256_texto": "eef45e7d15e24ca81044bca2642270399d7ba0aa584cb2594f67f11f16880321",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D26",
+      "titulo": "D26_35494",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/35494",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/57670/anexo/35494",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-25T16:53:45-03:00",
+      "sha256": "116d13c82888973fbd4c878e802cedec6b4d524b0b61d6a2a8d8385e435a46cd",
+      "arquivo": "docs/D26_35494.pdf",
+      "texto": "docs/D26_35494.txt",
+      "bytes": 25186,
+      "sha256_texto": "9492d5dffcf7407d834c914848e59c4cf47076794ebedd93821003b28dbfb784",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "dp-tabelas-irrf-das-sst",
+  "pergunta": "Tabelas mensais do IRRF (IN RFB 1.500/2014 Anexos II e X), faixas do DAS 2027 (Res. CGSN 190 Anexos I-V) conferidas contra legal_parameters; textos IN PRES/INSS 128/2022 (PPP/LTCAT), NR-5 Quadro I, NR-4 Anexo II para o BRIEF do SST",
+  "criado": "2026-11-25T16:39:41-03:00"
+}
