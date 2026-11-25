@@ -42,6 +42,12 @@
 // Classes: defeito · debito · spec (o BRIEF pedia e não foi feito) · feature (frente nova, sem spec) ·
 //          fork (escolha de produto, lei, arquitetura ou irreversível) · gate (humano ou dado externo)
 // Estados: aberta → em-sessao → em-pr → resolvida | com-dono | descartada (descartada exige o motivo no destino)
+//
+// Gravidade (obrigatória no add; D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA): bug · gate · fiscal · melhoria · nit · estilo.
+//   bug/gate/fiscal = meta do dreno (zerar); melhoria conta mas não é meta; nit/estilo ficam na caixa fora da contagem.
+//   node scripts/lacunas.mjs add … --gravidade <g>
+//   node scripts/lacunas.mjs classificar <id> --gravidade <g> --motivo "<por quê>"   (não muda estado nem relógio)
+//   node scripts/lacunas.mjs list [--abertas] --gravidade <g|sem|meta>
 
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
@@ -50,7 +56,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
 
-export const VERSAO = 4;
+export const VERSAO = 6;
 const EU = fileURLToPath(import.meta.url);
 export const CLASSES = ['defeito', 'debito', 'spec', 'feature', 'fork', 'gate'];
 export const ESTADOS = ['aberta', 'em-sessao', 'em-pr', 'resolvida', 'com-dono', 'descartada'];
@@ -65,6 +71,24 @@ export const DIAS_PARADA = 3;
 export const LIMITES_DIAS = { aberta: DIAS_PARADA, 'em-sessao': 2, 'com-dono': 3, 'em-pr': 7 };
 // Estas classes nunca abrem sessão sozinhas: o destino é sempre o dono (tabela §2 da D-2026-11-11).
 export const CLASSES_DO_DONO = ['fork', 'gate'];
+// Gravidade (dono, 25/11): só bug, gate e risco fiscal são a meta do dreno; nit e estilo não entram na contagem.
+export const GRAVIDADES = ['bug', 'gate', 'fiscal', 'melhoria', 'nit', 'estilo'];
+export const META = ['bug', 'gate', 'fiscal'];
+export const FORA_DA_CONTA = ['nit', 'estilo'];
+// Lacuna legada (sem gravidade) conta como meta até ser classificada: sem ela não dá para saber se é bug.
+export const ehMeta = (l) => !l.gravidade || META.includes(l.gravidade);
+export const contaNaCaixa = (l) => !FORA_DA_CONTA.includes(l.gravidade);
+
+export function validarGravidade(gravidade, classe) {
+  if (!GRAVIDADES.includes(gravidade)) {
+    throw new Error(`gravidade inválida: ${gravidade} (use ${GRAVIDADES.join(' · ')}; regra D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA)`);
+  }
+  if (gravidade === 'bug' && classe !== 'defeito') throw new Error(`gravidade bug exige classe defeito (veio ${classe})`);
+  if (classe === 'defeito' && !META.includes(gravidade)) {
+    throw new Error(`classe defeito exige gravidade bug, gate ou fiscal (veio ${gravidade}); sem efeito de comportamento é debito`);
+  }
+  if (classe === 'gate' && gravidade !== 'gate') throw new Error(`classe gate exige gravidade gate (veio ${gravidade})`);
+}
 
 function git(args) {
   try { return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); }
@@ -129,6 +153,10 @@ export function adicionar(campos, dir = pasta(), agora = new Date()) {
   const faltam = ['local', 'classe', 'oQue', 'evidencia'].filter((k) => !campos[k] || !String(campos[k]).trim());
   if (faltam.length) throw new Error(`faltam campos: ${faltam.join(', ')} (lacuna sem evidência não entra)`);
   if (!CLASSES.includes(campos.classe)) throw new Error(`classe inválida: ${campos.classe} (use ${CLASSES.join(' · ')})`);
+  if (!campos.gravidade || campos.gravidade === true) {
+    throw new Error(`falta --gravidade (${GRAVIDADES.join(' · ')}): critério de entrada D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA`);
+  }
+  validarGravidade(campos.gravidade, campos.classe);
   const raiz = campos.raiz ?? git(['rev-parse', '--show-toplevel']);
   validarLocal(campos.local, raiz);
   mkdirSync(dir, { recursive: true });
@@ -143,7 +171,7 @@ export function adicionar(campos, dir = pasta(), agora = new Date()) {
   const id = `L-${stamp}-${randomBytes(2).toString('hex')}`;
   const l = {
     id, criada: agora.toISOString(), estado: 'aberta', geracao,
-    local: campos.local, classe: campos.classe, oQue: campos.oQue, evidencia: campos.evidencia,
+    local: campos.local, classe: campos.classe, gravidade: campos.gravidade, oQue: campos.oQue, evidencia: campos.evidencia,
     comoProvar: campos.comoProvar ?? '', no: campos.no ?? '', pr: campos.pr ?? '', pai: campos.pai ?? '',
     rodada: campos.rodada && campos.rodada !== true ? String(campos.rodada) : '',
     origem: { branch: campos.branch ?? git(['rev-parse', '--abbrev-ref', 'HEAD']), cwd: campos.cwd ?? process.cwd() },
@@ -160,7 +188,7 @@ function desde(l) { return new Date(l.historico?.at(-1)?.em ?? l.criada); }
 // `dias` sobrescreve o limite de todos os estados; sem ele, vale LIMITES_DIAS.
 export function paradas(dir = pasta(), { dias, agora = new Date(), limites = LIMITES_DIAS } = {}) {
   return listar(dir)
-    .filter((l) => l.estado in limites)
+    .filter((l) => l.estado in limites && contaNaCaixa(l))
     .map((l) => ({ ...l, idadeDias: Math.floor((agora - desde(l)) / 86_400_000) }))
     .filter((l) => l.idadeDias >= (dias ?? limites[l.estado]));
 }
@@ -177,8 +205,9 @@ export function porArquivo(dir = pasta()) {
 // Grupos (dono, 21/11: "Planeja como resolver tudo no macro em vez de vários remendos"): lacunas não finais ligadas por
 // arquivo em comum ou pela mesma rodada, fechadas transitivamente. Grupo de 2+ vai a uma sessão de planejamento do
 // grupo; lacuna sozinha segue a tabela §2 como antes.
+// nit e estilo não formam grupo: vão de carona no PR que tocar o arquivo (D-2026-11-25 §3).
 export function grupos(dir = pasta()) {
-  const ls = listar(dir, { abertas: true });
+  const ls = listar(dir, { abertas: true }).filter(contaNaCaixa);
   const pai = ls.map((_, i) => i);
   const raiz = (i) => (pai[i] === i ? i : (pai[i] = raiz(pai[i])));
   const une = (a, b) => { pai[raiz(a)] = raiz(b); };
@@ -258,8 +287,15 @@ export function pulso(dir = pasta(), agora = new Date()) {
   let marca = null;
   try { marca = new Date(readFileSync(join(dir, MARCA_DRENO), 'utf8').trim()); } catch { /* sem marca: nunca proposto */ }
   const marcaRecente = marca && !Number.isNaN(+marca) && agora - marca < 86_400_000;
-  const precisaDreno = (conta.aberta ?? 0) > 0 && (diasSemDespacho === null || diasSemDespacho >= 1) && !marcaRecente;
-  return { conta, paradas: paradas(dir, { agora }).length, ultimoDespacho: ultimo, diasSemDespacho, precisaDreno };
+  // Meta do dreno (dono, 25/11): bug, gate e fiscal não finais, não a caixa inteira. `com-dono` conta (gate humano só
+  // zera quando o dono responde), mas só `aberta` de meta pede cartão: é o que um maestro consegue despachar.
+  const naoFinais = todas.filter((l) => !FINAIS.includes(l.estado));
+  const meta = naoFinais.filter(ehMeta).length;
+  const semGravidade = naoFinais.filter((l) => !l.gravidade).length;
+  const foraDaConta = naoFinais.filter((l) => !contaNaCaixa(l)).length;
+  const metaAberta = todas.filter((l) => l.estado === 'aberta' && ehMeta(l)).length;
+  const precisaDreno = metaAberta > 0 && (diasSemDespacho === null || diasSemDespacho >= 1) && !marcaRecente;
+  return { conta, meta, metaAberta, semGravidade, foraDaConta, paradas: paradas(dir, { agora }).length, ultimoDespacho: ultimo, diasSemDespacho, precisaDreno };
 }
 
 // Passo 0 do maestro, sem julgamento: o que a tabela §2 manda ao dono vai ao dono já no primeiro ciclo.
@@ -294,6 +330,27 @@ export function mudar(id, { estado, destino, pr, classe }, dir = pasta(), agora 
   l.historico.push({ em: agora.toISOString(), estado, destino, ...(l.pr ? { pr: l.pr } : {}), ...(classe ? { classe } : {}) });
   writeFileSync(join(dir, `${id}.json`), JSON.stringify(l, null, 2));
   return l;
+}
+
+// Gravidade de lacuna já gravada (caixa legada, ou reclassificação): não muda estado nem relógio das paradas, por isso
+// vai a `classificacoes` e não ao `historico`.
+export function classificar(id, { gravidade, motivo }, dir = pasta(), agora = new Date()) {
+  if (!motivo || motivo === true || !String(motivo).trim()) throw new Error('--motivo é obrigatório (por que esta gravidade)');
+  const l = ler(dir, id);
+  validarGravidade(gravidade, l.classe);
+  const de = l.gravidade ?? '';
+  l.gravidade = gravidade;
+  l.classificacoes = [...(l.classificacoes ?? []), { em: agora.toISOString(), de, para: gravidade, motivo: String(motivo) }];
+  writeFileSync(join(dir, `${id}.json`), JSON.stringify(l, null, 2));
+  return l;
+}
+
+export function filtrarGravidade(ls, g) {
+  if (!g || g === true) return ls;
+  if (g === 'sem') return ls.filter((l) => !l.gravidade);
+  if (g === 'meta') return ls.filter(ehMeta);
+  if (!GRAVIDADES.includes(g)) throw new Error(`--gravidade inválida: ${g} (use ${GRAVIDADES.join(' · ')} · sem · meta)`);
+  return ls.filter((l) => l.gravidade === g);
 }
 
 export function pastaGlobal() {
@@ -341,7 +398,7 @@ function flags(argv) {
 
 function linha(l) {
   const alerta = (l.geracao > GERACAO_MAX ? ' ⚠ geração > 3: ao dono' : '') + (l.rodada ? ` · rodada ${l.rodada}` : '');
-  return `${l.id} · ${l.estado} · ${l.classe} · ${l.local} · ger ${l.geracao}${alerta}\n    ${l.oQue}` +
+  return `${l.id} · ${l.estado} · ${l.classe}/${l.gravidade ?? 'sem gravidade'} · ${l.local} · ger ${l.geracao}${alerta}\n    ${l.oQue}` +
     (l.destino ? `\n    → ${l.destino}` : '');
 }
 
@@ -350,7 +407,7 @@ function main() {
   const f = flags(resto);
   if (cmd === 'add') {
     const l = adicionar({ local: f.local, classe: f.classe, oQue: f.oQue, evidencia: f.evidencia,
-      comoProvar: f.comoProvar, no: f.no, pr: f.pr, pai: f.pai, rodada: f.rodada });
+      comoProvar: f.comoProvar, no: f.no, pr: f.pr, pai: f.pai, rodada: f.rodada, gravidade: f.gravidade });
     console.log(l.duplicada ? `já estava na caixa: ${l.id}` : `na caixa: ${l.id}`);
     for (const a of l.avisos ?? []) console.error(`aviso: ${a}`);
   } else if (cmd === 'list') {
@@ -374,13 +431,15 @@ function main() {
       avisoCopiaGlobal();
       return;
     }
-    const ls = listar(pasta(), { abertas: !!f.abertas });
+    const ls = filtrarGravidade(listar(pasta(), { abertas: !!f.abertas }), f.gravidade);
     if (f.json) console.log(JSON.stringify(ls, null, 2));
     else console.log(ls.length ? ls.map(linha).join('\n') : '(caixa vazia)');
   } else if (cmd === 'show') {
     console.log(JSON.stringify(ler(pasta(), f._[0]), null, 2));
   } else if (cmd === 'set') {
     console.log(linha(mudar(f._[0], { estado: f.estado, destino: f.destino, pr: f.pr, classe: f.classe })));
+  } else if (cmd === 'classificar') {
+    console.log(linha(classificar(f._[0], { gravidade: f.gravidade, motivo: f.motivo })));
   } else if (cmd === 'triar') {
     const fs = triar(pasta(), { simular: !!f.simular });
     console.log(fs.length ? fs.map((x) => `${x.id} · ${x.classe} → com-dono · ${x.destino}`).join('\n') + (f.simular ? '\n(simulação: nada gravado)' : '') : '(nada a triar)');
@@ -403,14 +462,14 @@ function main() {
     const p = pulso(pasta());
     const c = Object.entries(p.conta).map(([k, v]) => `${k} ${v}`).join(' · ');
     const d = p.diasSemDespacho === null ? 'nenhum despacho a em-sessao registrado' : `último despacho a em-sessao há ${p.diasSemDespacho} dia(s)`;
-    console.log(`${c} · paradas ${p.paradas} · ${d}`);
+    console.log(`${c} · meta bug/gate/fiscal ${p.meta} · sem gravidade ${p.semGravidade} · nit/estilo ${p.foraDaConta} · paradas ${p.paradas} · ${d}`);
     if (p.precisaDreno) {
-      console.log(`DRENO: proponha UM cartão "Drenar a caixa de lacunas (${p.conta.aberta} abertas)" e rode \`pulso --marcar-dreno\``);
+      console.log(`DRENO: proponha UM cartão "Drenar a caixa de lacunas (${p.metaAberta} de bug/gate/fiscal abertas)" e rode \`pulso --marcar-dreno\``);
     }
   } else if (cmd === 'instalar') {
     console.log(`cópia global na v${VERSAO}: ${instalar()}`);
   } else {
-    console.error('uso: node scripts/lacunas.mjs add|list|show|set|triar|sincronizar|pulso|instalar — ver o cabeçalho do arquivo');
+    console.error('uso: node scripts/lacunas.mjs add|list|show|set|classificar|triar|sincronizar|pulso|instalar — ver o cabeçalho do arquivo');
     process.exit(2);
   }
   avisoCopiaGlobal();
