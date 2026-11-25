@@ -46,7 +46,8 @@ CICLO
    Nó sem BRIEF mas com autorização de planejamento → sessao-planejamento. Nó sem 'executa' → só lista.
    Todo brief de sessão termina com: "Lacuna fora do teu escopo vai à caixa (`node scripts/lacunas.mjs add`, regra
    D-2026-11-11-LACUNA-VAI-AO-MAESTRO §1; se a tua worktree não tem esse arquivo, o mesmo script está em
-   `node "$HOME/.claude/tools/lacunas/lacunas.mjs" add`); a do teu escopo você resolve. 1ª linha do relatório: LACUNAS NA CAIXA: <n>.
+   `node "$HOME/.claude/tools/lacunas/lacunas.mjs" add`); a do teu escopo você resolve. Toda entrada leva `--gravidade <bug|gate|fiscal|melhoria|nit|estilo>`
+   (D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA). 1ª linha do relatório: LACUNAS NA CAIXA: <n> (sem nit e estilo).
    Registrou alguma? Rode `lacunas.mjs pulso`; se imprimir DRENO, proponha um cartão 'Drenar a caixa' e rode
    `pulso --marcar-dreno`. Não me mande lacuna por SendMessage."
 
@@ -54,6 +55,10 @@ CICLO
    `node scripts/lacunas.mjs sincronizar` (PR mergeado que toca o arquivo → resolvida; leia o diff de cada "conferir" e
    resolva ou reabra; fechado sem merge → aberta), `triar` (fork, gate, geração > 3 → com-dono), `list --paradas`
    (tempo no estado: abra a sessão agora ou escreva o motivo no resumo) e `list --grupos`.
+   - **Meta do dreno (dono, 25/11):** zerar as não finais de gravidade `bug`, `gate` e `fiscal` (`list --abertas --gravidade
+     meta`), não a caixa inteira; elas saem antes de `melhoria`. Lacuna sem gravidade (caixa legada) conta como meta até
+     `classificar <id> --gravidade <g> --motivo "…"`. `nit` e `estilo` não abrem sessão: vão de carona no PR que tocar o
+     arquivo (`list --por-arquivo`) ou são descartadas com motivo.
    - **Resposta do dono a fork/gate da caixa** (pergunta do dia): `set <id> --estado aberta --classe <a da resposta>
      --destino "dono, <data>: <resposta>"`, ou `descartada` com o motivo, no mesmo ciclo. `com-dono` não é depósito.
    - **Grupo** (2+ lacunas não finais com arquivo em comum ou da mesma rodada) → uma `sessao-planejamento` do grupo, que
@@ -79,7 +84,8 @@ CICLO
 
 FIM DO DIA — resumo (no chat, nesta ordem, só o que medi):
 - Mergeados hoje (número · título · nó).
-- Lacunas da caixa: a linha de `lacunas.mjs pulso`; depois id · origem · classe · arquivo:linha · estado · destino.
+- Lacunas da caixa: a linha de `lacunas.mjs pulso` (com a meta bug/gate/fiscal); depois id · origem · classe/gravidade ·
+  arquivo:linha · estado · destino. nit e estilo numa linha só, com a contagem.
   Nenhuma aberta fica sem destino. **Grupos** (`list --grupos`): arquivos · ids · sessão de planejamento. **Paradas**
   (`list --paradas`): id · estado · dias no estado · motivo (sem vaga, espera o pai, aguarda PR, aguarda resposta).
   **Conferir** (`sincronizar`): id · PR · o que o diff mostrou.

@@ -49,4 +49,4 @@ pause, nunca escolha.
 
 ## Lacunas e débitos (OPS-007)
 
-Item do BRIEF não entregue é seu, não follow-up. O que aparecer fora do BRIEF vai à caixa (`node scripts/lacunas.mjs add`) antes do retorno, e o retorno abre com `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Item do BRIEF não entregue é seu, não follow-up. O que aparecer fora do BRIEF vai à caixa (`node scripts/lacunas.mjs add`) antes do retorno, e o retorno abre com `LACUNAS NA CAIXA: <n>` (toda entrada leva `--gravidade`; nit e estilo ficam fora do `<n>`, D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA). Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
