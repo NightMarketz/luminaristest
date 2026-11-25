@@ -188,4 +188,26 @@ describe('núcleo do razão — não importa fiscal nem localização (Onda 1.2,
   it('zero imports de fiscal/localização no núcleo do razão', () => {
     expect(ledgerCoreLeaks()).toEqual([]);
   });
+
+  it('todo import relativo de arquivo do núcleo do razão cai na lista fechada da C1 (a lista não envelhece sozinha)', () => {
+    // A C1 é allowlist: o que o razão importa e NÃO está em `pathNot` vira erro no `check:arch`. Quando outra fatia move um tipo
+    // do núcleo para um caminho novo (24/11: `ActiveAccountant` saiu de `policies/IAccountingPolicy` para
+    // `models/AccountantAssignment.model`, #1375), a lista precisa acompanhar — este teste acusa a deriva no jest, sem o depcruise.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- config CJS do depcruise, lida só para conferir a regra
+    const cfg = require(resolve(SRC, '..', '.dependency-cruiser.cjs')) as { forbidden: Array<{ name: string; to: { pathNot: string } }> };
+    const permitido = new RegExp(cfg.forbidden.find((r) => r.name === 'C1-ledger-core-not-fiscal')!.to.pathNot);
+    const fora: string[] = [];
+    for (const rel of LEDGER_CORE_FILES) {
+      const file = join(SRC, rel);
+      for (const spec of specifiers(readFileSync(file, 'utf8'))) {
+        if (!spec.startsWith('.')) continue;
+        const alvoBase = resolve(dirname(file), spec);
+        const alvo = [`${alvoBase}.ts`, join(alvoBase, 'index.ts')].find((c) => existsSync(c));
+        if (!alvo) continue;
+        const caminho = `src/${norm(alvo).slice(norm(SRC).length + 1)}`;
+        if (!permitido.test(caminho)) fora.push(`${rel} -> ${caminho}`);
+      }
+    }
+    expect(fora.sort()).toEqual([]);
+  });
 });

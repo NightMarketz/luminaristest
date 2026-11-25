@@ -27,7 +27,9 @@ const LEDGER_CORE_ALLOWED =
   // Resíduo declarado: o plano de contas padrão (CANONICAL_ACCOUNTS) ainda é dado do Brasil dentro do núcleo — vai para
   // `paises/br/` em fatia própria (lacuna na caixa; ADR-ARCH-BOUNDARIES §1.2). As regras da ECD já saíram.
   '|fixtures/ChartOfAccountsFixture\\.ts' +
-  '|models/(Reconciliation\\.model|closing|dates|ledgerStatus|money)\\.ts' +
+  // `AccountantAssignment.model`: contador responsável por escopo (GOV-CONTADOR) é núcleo, não fiscal; `ActiveAccountant` mora aqui desde
+  // o PR-1a do MODULE-BOUNDARIES (#1375), de onde o `PeriodService` o importa (antes vinha de `policies/IAccountingPolicy`).
+  '|models/(AccountantAssignment\\.model|Reconciliation\\.model|closing|dates|ledgerStatus|money)\\.ts' +
   '|policies/IAccountingPolicy\\.ts' +
   '|ports/LedgerPorts\\.ts' +
   '|repositories/I?(Account|AccountantAssignment|AccountingPeriod|Audit|Counterparty|Dimension|JournalEntry|Posting|Reconciliation|SourceProvenance)Repository\\.ts' +

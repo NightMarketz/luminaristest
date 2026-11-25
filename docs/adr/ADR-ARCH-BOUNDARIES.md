@@ -64,11 +64,12 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
   O `ADR-MODULE-BOUNDARIES` segue **Proposed**: nenhuma regra dele (M1/M1a…) foi ligada.
 - **Regra:** `C1-ledger-core-not-fiscal` (erro). `from` = `services/{PostingService,PeriodService,AuditService,ExerciseClosingService,ReconciliationService}`
   e `repositories/I?{JournalEntry,Posting,Account,AccountingPeriod,Audit,Reconciliation,SourceProvenance}Repository` de `features/accounting`.
-  `to` = **tudo em `src/` fora da lista fechada** `LEDGER_CORE_ALLOWED`: `audit/`, `dtos/{Posting,Reconciliation}Dto`, `models/{Reconciliation.model,closing,dates,ledgerStatus,money}`,
+  `to` = **tudo em `src/` fora da lista fechada** `LEDGER_CORE_ALLOWED`: `audit/`, `dtos/{Posting,Reconciliation}Dto`, `models/{AccountantAssignment.model,Reconciliation.model,closing,dates,ledgerStatus,money}`,
   `policies/IAccountingPolicy`, `ports/LedgerPorts`, os repositórios do razão (+ `AccountantAssignment`, `Counterparty`, `Dimension`), `scope/`,
   `services/{AuditService,PostingService,dimensionTagging}`, `fixtures/ChartOfAccountsFixture` (resíduo, abaixo) e `lib/{errors,logger,prisma,spreadsheet}`.
   Allowlist (e não denylist por prefixo) porque o levantamento das arestas de saída do conjunto deu uma lista curta e porque denylist por nome de arquivo
   não pega o fiscal que ainda vai ser escrito. **Import `type` conta.** Precisar de algo novo no núcleo = emenda datada aqui com a porta, não item na lista.
+  Emenda de manutenção (24/11, ao atualizar o #1356 sobre a main com o PR-1a do MODULE-BOUNDARIES, #1375): `ActiveAccountant` (contador responsável por escopo, GOV-CONTADOR — núcleo, não fiscal) passou de `policies/IAccountingPolicy` para `models/AccountantAssignment.model`, e o `PeriodService` o importa de lá; a lista ganhou esse modelo (a regra é allowlist: caminho movido e não listado vira erro). O `core-boundary.test.ts` ganhou a trava "todo import relativo do núcleo do razão cai na lista fechada", que acusa essa deriva no jest.
 - **Portas** (`features/accounting/ports/LedgerPorts.ts`; todas **argumento obrigatório** do construtor — porta opcional esquecida na factory compila e
   desliga a regra em silêncio): `ChartStructureRule` (BR: Manual da ECD, nível ≥ 4 + conta superior — `paises/br/EcdChartStructureRule`),
   `AccountDeletionGuard` (BR: ajuste vivo do e-Lalur — `LalurAccountDeletionGuard`), `ClosingGuard` (BR: provisão de IRPJ/CSLL/PIS/Cofins pendente —
