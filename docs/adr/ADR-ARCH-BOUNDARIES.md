@@ -36,11 +36,12 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
 | D1 | núcleo do DP `features/dp/**` não importa submódulo opcional `features/dp<Nome>/**` (F-DP-10). Emenda 2026-11-03 (§1.1) | **0** (em 03/11) |
 | I6 | `src/controllers/` não importa `features/accounting/scope/resolveAccountingScopeInternal.ts` — controller resolve o escopo pelo `AccountingScopeResolver` (F-I6-7; dono, 2026-10-15, [`D-2026-10-15-I6-FORKS`](../plano/decisoes/D-2026-10-15-I6-FORKS.md)) — **exceção nomeada:** `controllers/crmController.ts`, cujo único uso é o hook Won `maybeSyncOpportunityWon` (unitId da oportunidade já gravada → chamador interno, F-I6-1 d; L-I6-3, dono, questionário, 2026-10-16: *"Exceção nomeada"*) | 42 em 16/10 (os controllers ainda não migrados; encolhe nos PR-2…PR-5 do I6 até 0) |
 | M1a | feature não importa `repositories/` de outra feature, nem a interface, nem por `import type`. Emenda 2026-11-24 (§8) | 36 (em 24/11) |
-| M1 | feature só importa outra por `features/<x>/public/`. Controller, route, job e `lib/factory.ts` ficam fora do `from`. Emenda 2026-11-24 (§8) | 378 (em 24/11); 359 depois da emenda §8.1 |
+| M1 | feature só importa outra por `features/<x>/public/`. Controller, route, job e `lib/factory.ts` ficam fora do `from`. Emenda 2026-11-24 (§8) | 378 (em 24/11); 359 depois da emenda §8.1; 322 depois da §8.2 |
 | M3 | `features/<x>/public/` não importa nem reexporta `repositories/` (F-MBE-3 a). Emenda 2026-11-24 (§8) | **0** |
 | D2 | `domain/` é pura: não importa repository, service, controller, route, `lib/prisma` nem Express (F-MBE-4 a). Emenda 2026-11-24 (§8) | **0** |
 | J1 | `src/jobs/` não importa repository nem `lib/prisma`; fora da regra: `jobs/repositories/` e as CLIs `migratePlano4NiveisCli`, `rekeyLegacyUnitCli`, `seedAccountingFixtureCli`. Emenda 2026-11-24 (§8) | 16 (em 24/11) |
 | M4 | `features/<x>/public/<nome>.types.ts` só importa `models/` e `dtos/` da própria feature: carrega tipo, enum e constante, nada executável (dono, questionário, 24/11: "Tudo em user.types.ts"). Emenda 2026-11-24 (§8.1) | **0** |
+| M2 | peça de feature mora em pasta de camada (`services`, `repositories`, `policies`, `models`, `dtos`, `controllers`, `domain`, `ports`, `adapters`, `public`); sem exceção para `index.ts`; `dynamicTables/rules/` isenta por nome. Vale por feature (F-MBE-2 c): hoje `dynamicTables`. Emenda 2026-11-24 (§8.2) | **0** |
 
 **Imports `type`-only contam.** Interface de repository dentro de policy é exatamente o sinal de policy impura que L5 quer ver.
 
@@ -268,3 +269,25 @@ sem arquivo de sonda).
   `../models/ptax` ⇒ exit 0 ("no dependency violations found", 422 conhecidas ignoradas). Sondas removidas.
 - **Ponto cego declarado:** a regra olha a aresta, não o símbolo. Função definida em `models/` passa pelo `*.types.ts`;
   `models/` é folha pela `L6`.
+
+### 8.2 Emenda 2026-11-24 — `M2` ligada para `dynamicTables` (primeiro PR de renome)
+
+- **Decisão:** dono, chat, 24/11/2026: "Executa o BRIEF inteiro"; F-MBE-2 (c), a `M2` entra por feature. Questionário
+  de 24/11 sobre as 45 entradas do baseline que o renome deslocava: "Extrair para models/", "Quebrar os ciclos" e
+  "Porta em analytics/public". Detalhe, os 7 plantios e os pontos declarados estão no
+  [`ADR-MODULE-BOUNDARIES.md`](ADR-MODULE-BOUNDARIES.md) §11.6.
+- **Regra nova:** `M2-feature-code-in-layer-folder`, severidade de erro: `from ^src/` (fora testes) → `to`
+  `^src/features/(dynamicTables)/.+\.ts$` com `pathNot` em
+  `/(services|repositories|policies|models|dtos|controllers|domain|ports|adapters|public)/`,
+  `^src/features/dynamicTables/rules/` e testes. A lista de features (`M2_FEATURES`) cresce a cada PR de renome e
+  termina como `[^/]+`.
+- **Onde vale:** como o §8, na branch `integration/module-boundaries-be`.
+- **Cobertura:** a exceção de 13/10 (§4): gate estático que lê o código; não é bancada, rodada nem revisor.
+- **Baseline antes/depois:** server 421 → **376**, só remoção (`M1` 359 → 322, `X3` 11 → 3; `M1a` 36 e `J1` 15 sem
+  mudança). A `M2` nasce em 0 para `dynamicTables` e não entra no arquivo. my-app sem mudança (79).
+- **Prova de que morde (condição que falha, 24/11):** `dynamicTables/__sondaM2.ts` importado por
+  `dynamicTables/services/__sondaM2Importer.ts` ⇒ exit 1 com `error M2-feature-code-in-layer-folder:
+  src/features/dynamicTables/services/__sondaM2Importer.ts → src/features/dynamicTables/__sondaM2.ts`; a mesma sonda em
+  `dynamicTables/domain/` ⇒ exit 0 ("no dependency violations found", 376 conhecidas ignoradas). Sondas removidas.
+- **Ponto cego declarado:** a regra casa pelo `to`. Arquivo fora de pasta de camada que ninguém importa não aparece
+  (lacuna `L-20261124-222007-2aaa`).

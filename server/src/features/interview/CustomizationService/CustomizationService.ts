@@ -2,15 +2,22 @@ import { logger } from '../../../lib/logger';
 import { DEFAULT_INTERVIEW_LOCALE, INTERVIEW_TEXT, replyIn, type InterviewLocale } from '../models/interviewText';
 import { OpenAIService } from '../../../lib/openai/OpenAIService';
 import { ICustomizationState, IInterviewTurnResult, IMessage } from '../models/InterviewTypes';
-import { presetKnowledgeBase } from '../../dynamicTables/presets/ai/PresetKnowledgeBase';
+import { presetKnowledgeBase } from '../../dynamicTables/public/presetKnowledge';
+import {
+  bridgeRequirementsOfTable,
+  describeTableLock,
+  expandModuleSelectors,
+  moduleOfTable,
+  MODULE_REGISTRY,
+  type ModuleKey,
+  type ModuleSelector,
+  resolveModuleSelection,
+} from '../../dynamicTables/public/presets';
 import { presetService } from '../../dynamicTables/services/PresetService';
-import { bridgeRequirementsOfTable, describeTableLock } from '../../dynamicTables/presets/removability';
 import { TableExtractor } from './TableExtractor';
 import { AIInteractions } from './AIInteractions';
 import { IInterviewSessionHandle, StateManager } from './StateManager';
 import { InterviewSessionNotFoundError, isInterviewSessionError } from '../models/InterviewSession.model';
-import { expandModuleSelectors, moduleOfTable, MODULE_REGISTRY, type ModuleKey, type ModuleSelector } from '../../dynamicTables/presets/modules/registry';
-import { resolveModuleSelection } from '../../dynamicTables/presets/modules/moduleSelection';
 import { composeSessionTables, toCustomCreation } from './sessionComposition';
 import { z } from 'zod';
 

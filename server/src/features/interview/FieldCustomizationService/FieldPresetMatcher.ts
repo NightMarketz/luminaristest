@@ -1,8 +1,5 @@
 import { logger } from '../../../lib/logger';
-import {
-  fieldPresetKnowledgeBase,
-  IFieldPresetKnowledge,
-} from '../../../features/dynamicTables/presets/fields/FieldPresetKnowledgeBase';
+import { fieldPresetKnowledgeBase, IFieldPresetKnowledge } from '../../dynamicTables/public/presetKnowledge';
 
 /**
  * Casamento determinístico de um campo com o catálogo de presets. A busca semântica por LLM (`findFieldPreset`, a

@@ -12,6 +12,10 @@ const PRISMA = '^src/lib/prisma\\.ts$';
 // models/dtos não a importam (L5/L6); o `*.types.ts` passa: carrega tipo, enum e constante de `models/` e `dtos/` da
 // própria feature e não importa mais nada (regra M4).
 const PUBLIC_EXEC = '^src/features/[^/]+/public/(?!.*\\.types\\.ts$)';
+// ADR-MODULE-BOUNDARIES §10, F-MB-1 (b) e F-MB-3 (c): pasta de camada de uma feature. A M2 entra por feature
+// (F-MBE-2 c): M2_FEATURES cresce a cada PR de renome e termina como `[^/]+`.
+const LAYER_DIR = '/(services|repositories|policies|models|dtos|controllers|domain|ports|adapters|public)/';
+const M2_FEATURES = '(dynamicTables)';
 const FEATURE_LOGIC = '^src/features/[^/]+/(?!models/).+';
 const FISCAL_LIB =
   '^src/lib/(sped|ecf|ecfReal|nfe|nfeCost|nfeSignature|nfse|nfseEvento|nfseReadback|nfseSignature|mit|cnab|ofx|cnpj|cpf|referentialCatalog)\\.ts$';
@@ -193,6 +197,21 @@ module.exports = {
         'do `from` (são a camada de aplicação).',
       from: { path: '^src/features/([^/]+)/', pathNot: TEST },
       to: { path: '^src/features/[^/]+/', pathNot: ['^src/features/$1/', '^src/features/[^/]+/public/'] },
+    },
+    {
+      name: 'M2-feature-code-in-layer-folder',
+      severity: 'error',
+      comment:
+        'Peça de feature mora em pasta de camada (services, repositories, policies, models, dtos, controllers, ' +
+        'domain, ports, adapters, public). Sem exceção para `index.ts` (F-MB-1 b); `dynamicTables/rules/` é a pasta ' +
+        'do motor, isenta por nome (F-MB-3 c). Vale para as features de M2_FEATURES e nasce em 0 para cada uma: ' +
+        'nunca entra no known-violations. Ponto cego: a regra casa pelo `to`, então arquivo sem importador não ' +
+        'aparece.',
+      from: { path: '^src/', pathNot: TEST },
+      to: {
+        path: `^src/features/${M2_FEATURES}/.+\\.ts$`,
+        pathNot: [LAYER_DIR, '^src/features/dynamicTables/rules/', TEST],
+      },
     },
     {
       name: 'M3-public-no-repository',

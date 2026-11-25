@@ -4,8 +4,8 @@
  */
 import { ModuleInstallService } from '../ModuleInstallService';
 import { ValidationError } from '../../../../lib/errors';
-import { composeModuleTables } from '../../presets/modules/registry';
-import { CoreSystemPreset } from '../../presets/systems/CoreSystemPreset';
+import { composeModuleTables } from '../../domain/presets/modules/registry';
+import { CoreSystemPreset } from '../../domain/presets/systems/CoreSystemPreset';
 import { DynamicTablePolicy } from '../../policies/DynamicTablePolicy';
 
 beforeEach(() => jest.clearAllMocks());

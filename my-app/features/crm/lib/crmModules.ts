@@ -2,7 +2,7 @@
  * BE-INCR-CRM-MODULE-COMPOSITION (I8), comportamento 9 — a navegação do CRM decide por MÓDULO instalado.
  *
  * Espelho das tabelas por módulo do registro do servidor
- * (`server/src/features/dynamicTables/presets/modules/registry.ts`). O front não importa código do servidor;
+ * (`server/src/features/dynamicTables/domain/presets/modules/registry.ts`). O front não importa código do servidor;
  * se o registro mudar, este mapa muda no mesmo PR.
  * BE-INCR-CRM-SUBMODULES item 12: CRM-2 dividido em CRM-2A (Contas) + CRM-2B (Contatos).
  */

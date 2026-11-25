@@ -1,6 +1,6 @@
 /**
  * BE-INCR-WIZARD-REMOVABILITY (nó W2) — itens 4, 5 e 6 do BRIEF: a sessão da Entrevista com IA usa a regra única de
- * trava (`presets/removability.ts`). Antes do W2, `TableExtractor` marcava as 17 tabelas do salão com `isCore:true` e
+ * trava (`dynamicTables/domain/presets/removability.ts`). Antes do W2, `TableExtractor` marcava as 17 tabelas do salão com `isCore:true` e
  * nada podia ser removido. A IA é stub: só `getAiResponse` (que nomeia a tabela a remover) é trocado.
  */
 import { TableExtractor } from '../TableExtractor';
@@ -9,9 +9,9 @@ import { CustomizationService } from '../CustomizationService';
 import { AIInteractions } from '../AIInteractions';
 import { FakeInterviewSessionRepository } from './fakeInterviewSessionRepository';
 import type { OpenAIService } from '../../../../lib/openai/OpenAIService';
-import BeautySalonPreset from '../../../dynamicTables/presets/systems/BeautySalonPreset';
+import BeautySalonPreset from '../../../dynamicTables/domain/presets/systems/BeautySalonPreset';
 import { composeSessionTables } from '../sessionComposition';
-import { resolveModuleSelection } from '../../../dynamicTables/presets/modules/moduleSelection';
+import { resolveModuleSelection } from '../../../dynamicTables/domain/presets/modules/moduleSelection';
 
 // BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: customers/sales/… viraram tabelas de módulo — a sessão real nasce de
 // `composeSessionTables` (módulos default ∪ suíte), como no `CustomizationService.createCustomizationSession`.

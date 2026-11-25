@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { UNIT_TYPE_OPTIONS } from '../presets/modules/core/UnitsModule';
-import { moduleSelectorSchema } from '../presets/modules/registry';
+import { UNIT_TYPE_OPTIONS } from '../domain/presets/modules/core/UnitsModule';
+import { moduleSelectorSchema } from '../domain/presets/modules/registry';
 
 /**
  * BE-INCR-ONBOARDING-FIRST-UNIT (nó I1, BRIEF item 1 e §2) — body do `POST /dashboard/create`.

@@ -5,7 +5,7 @@
  */
 import type { OpenAIService } from '../../../../lib/openai/OpenAIService';
 import { CreateDynamicTableDto } from '../../../dynamicTables/dtos/DynamicTable.dto';
-import { fieldPresetKnowledgeBase } from '../../../dynamicTables/presets/fields/FieldPresetKnowledgeBase';
+import { fieldPresetKnowledgeBase } from '../../../dynamicTables/domain/presets/fields/FieldPresetKnowledgeBase';
 import type { ISchemaField } from '../../../dynamicTables/models/DynamicTable.model';
 import { StateManager } from '../../CustomizationService/StateManager';
 import { FakeInterviewSessionRepository } from '../../CustomizationService/__tests__/fakeInterviewSessionRepository';

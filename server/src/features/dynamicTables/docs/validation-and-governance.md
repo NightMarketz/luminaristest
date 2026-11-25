@@ -1,8 +1,8 @@
 # Validation & Governance — The Engine
 
 > **How and where** each rule executes. `services/DynamicTableService.ts` **orchestrates**; the
-> implementations live in `validation/SchemaValidator.ts` (dynamic Zod) and
-> `validation/GovernanceEngine.ts` (the 3 guards + advanced rules + no-overlap). The flow order below is
+> implementations live in `services/SchemaValidator.ts` (dynamic Zod) and
+> `services/GovernanceEngine.ts` (the 3 guards + advanced rules + no-overlap). The flow order below is
 > identical to the previous one. This doc is the execution complement to the authoring reference in
 > [`../presets/README.md`](../presets/README.md) (§7–9, which describes **what** each metadata means).
 >

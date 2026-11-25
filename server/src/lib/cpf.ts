@@ -7,7 +7,7 @@
  * divisão por 11; DV = 0 se resto < 2, senão 11 - resto. Sequências de um só dígito repetido
  * (`11111111111`) passam no módulo 11 e são rejeitadas explicitamente — a RFB não as emite.
  *
- * BESPOKE LOCAL, não import de `dynamicTables/utils/ValidationUtils.isValidCpf`: aquele utilitário
+ * BESPOKE LOCAL, não import de `dynamicTables/domain/ValidationUtils.isValidCpf`: aquele utilitário
  * vive do outro lado da fronteira de plataforma (Contrato §2.1); o cadastro do contador é Prisma
  * first-class e valida por conta própria (mesmo argumento de `normalizeTaxId` no Counterparty).
  */

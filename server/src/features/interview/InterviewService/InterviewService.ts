@@ -7,7 +7,7 @@ import { StageHandlers } from './StageHandlers';
 import { stageConfig } from './PromptConfig';
 import { CustomizationService } from '../CustomizationService/CustomizationService';
 import { presetService } from '../../dynamicTables/services/PresetService';
-import { MODULE_REGISTRY, type ModuleSelector } from '../../dynamicTables/presets/modules/registry';
+import { MODULE_REGISTRY, type ModuleSelector } from '../../dynamicTables/public/presets';
 import { isInterviewSessionError } from '../models/InterviewSession.model';
 import { DEFAULT_INTERVIEW_LOCALE, INTERVIEW_TEXT, replyIn, type InterviewLocale } from '../models/interviewText';
 

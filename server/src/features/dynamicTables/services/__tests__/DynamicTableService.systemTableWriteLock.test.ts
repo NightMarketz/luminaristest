@@ -33,7 +33,7 @@
  */
 import { DynamicTableService } from '../DynamicTableService';
 import { DynamicTablePolicy } from '../../policies/DynamicTablePolicy';
-import { CoreSystemPreset } from '../../presets/systems/CoreSystemPreset';
+import { CoreSystemPreset } from '../../domain/presets/systems/CoreSystemPreset';
 import type { IDynamicTable, ITableSchema } from '../../models/DynamicTable.model';
 import type { IDynamicTableRepository } from '../../repositories/IDynamicTableRepository';
 import { Role } from '../../../users/models/User.model';

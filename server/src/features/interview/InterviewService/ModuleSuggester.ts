@@ -1,9 +1,13 @@
 import { logger } from '../../../lib/logger';
 import { OpenAIService } from '../../../lib/openai/OpenAIService';
-import type { PresetSuite } from '../../dynamicTables/presets';
-import { moduleKnowledge } from '../../dynamicTables/presets/ai/ModuleKnowledgeBase';
-import { MODULE_REGISTRY, type ModuleDef, type ModuleKey } from '../../dynamicTables/presets/modules/registry';
-import { resolveModuleSelection } from '../../dynamicTables/presets/modules/moduleSelection';
+import { moduleKnowledge } from '../../dynamicTables/public/presetKnowledge';
+import {
+  type PresetSuite,
+  MODULE_REGISTRY,
+  type ModuleDef,
+  type ModuleKey,
+  resolveModuleSelection,
+} from '../../dynamicTables/public/presets';
 import type { IMessage, InterviewModuleOption } from '../models/InterviewTypes';
 
 /**

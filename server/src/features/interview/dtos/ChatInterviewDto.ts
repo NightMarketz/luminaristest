@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { moduleSelectorSchema } from '../../dynamicTables/presets/modules/registry';
+import { moduleSelectorSchema } from '../../dynamicTables/public/presets.types';
 import { INTERVIEW_LOCALES } from '../models/interviewText';
 
 /**

@@ -1,7 +1,7 @@
 # Architecture — Dynamic Tables
 
 > Data model, isolation, operation lifecycle, contracts (DTOs) and preset installation.
-> For **what** to declare in metadata, see [`../presets/README.md`](../presets/README.md).
+> For **what** to declare in metadata, see [`../domain/presets/README.md`](../domain/presets/README.md).
 > For **how** the metadata executes, see [`validation-and-governance.md`](./validation-and-governance.md).
 
 ---
@@ -35,8 +35,8 @@ have no `internalName`; in that case resolution falls back to a name/shape heuri
 ## 2. Lifecycle of data operations
 
 All operations go through `services/DynamicTableService.ts`, which **orchestrates** the flow by
-delegating schema validation to `validation/SchemaValidator`, the guards + advanced rules + no-overlap
-to `validation/GovernanceEngine`, and the plugins to `rules/RuleRegistry`. Summary of **who calls what,
+delegating schema validation to `services/SchemaValidator`, the guards + advanced rules + no-overlap
+to `services/GovernanceEngine`, and the plugins to `rules/RuleRegistry`. Summary of **who calls what,
 in what order** (the detail of each step is in
 [validation-and-governance.md](./validation-and-governance.md)):
 
@@ -128,7 +128,7 @@ custom tables.
 
 `DynamicTableService.installPresetAsSystem` assembles a complete ERP from modules, inside ONE
 repository transaction (`repository.runInTransaction`; the caller's preset object is never mutated) (see
-[`../presets/README.md`](../presets/README.md)). Since tables reference one another, installation runs
+[`../domain/presets/README.md`](../domain/presets/README.md)). Since tables reference one another, installation runs
 in two passes to resolve circular relations:
 
 1. **Creation:** creates each `DynamicTable` with a **partial** schema (without the `relation` fields),
@@ -165,9 +165,9 @@ features/dynamicTables/
 ├── models/                    # TS interfaces (ITableSchema, ISchemaField, governance rules)
 ├── policies/                  # authorization (interface + impl)
 ├── repositories/              # data access (interface + ONE Prisma impl; `withTransaction`/`runInTransaction` = tx seam)
-├── validation/                # SchemaValidator + GovernanceEngine (engines extracted from the service)
-├── services/                  # DynamicTableService (orchestrator, incl. installPresetAsSystem) + PresetSyncService/ModuleInstallService + PresetService
+├── services/                  # DynamicTableService (orchestrator, incl. installPresetAsSystem) + PresetSyncService/ModuleInstallService + PresetService + SchemaValidator + GovernanceEngine (engines extracted from the service)
 ├── rules/                     # plugin engine (RuleRegistry, RuleTypes, shared/, plugins/)
-├── utils/                     # TableFactory (composes modules) + ValidationUtils (cpf/cnpj/phone)
-└── presets/                   # fields → modules → systems + README (authoring reference)
+├── domain/                    # pure functions: TableFactory (composes modules) + ValidationUtils (cpf/cnpj/phone) + versionDiff
+│   └── presets/               # fields → modules → systems + README (authoring reference)
+└── public/                    # what other features import (presets, presets.types, presetKnowledge, schemaValidator)
 ```

@@ -27,7 +27,7 @@ Manages **table-level** customization of a chosen preset: presents the tables an
   tasks.
 
 > The base preset comes from `dynamicTables`: `presetService.getPresetByKey` (real structure) +
-> `presetKnowledgeBase` (AI description, in `presets/ai/`).
+> `presetKnowledgeBase` (AI description, in `dynamicTables/domain/presets/ai/`).
 
 ## Action machine (`currentAction`)
 

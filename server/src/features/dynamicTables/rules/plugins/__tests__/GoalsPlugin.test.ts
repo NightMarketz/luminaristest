@@ -1,7 +1,7 @@
 import { GoalsPlugin } from '../GoalsPlugin';
-import { resolveModuleSelection } from '../../../presets/modules/moduleSelection';
-import { composeModuleTables } from '../../../presets/modules/registry';
-import { CoreSystemPreset } from '../../../presets';
+import { resolveModuleSelection } from '../../../domain/presets/modules/moduleSelection';
+import { composeModuleTables } from '../../../domain/presets/modules/registry';
+import { CoreSystemPreset } from '../../../domain/presets';
 
 /**
  * BE-INCR-MODULOS-BASE-SUBMODULOS — PR-4, item 25 (meta sem fonte). GES-META sem VENDAS: a meta com `metricKey` de

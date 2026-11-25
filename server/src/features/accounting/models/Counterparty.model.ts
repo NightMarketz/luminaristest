@@ -69,7 +69,7 @@ export function normalizeCounterpartyName(name: string): string {
 /**
  * `taxId` normalization (BRIEF-W2-A comp. 3; alfanumérico desde BE-INCR-CNPJ-ALFA): mask-only strip via
  * `lib/cnpj.ts` (NOT digit-only any more — the IN RFB 2.229/2024 CNPJ carries letters), unlike `isValidCpf`/`isValidCnpj`
- * (`dynamicTables/utils/ValidationUtils.ts`) — BESPOKE LOCAL, not a cross-module import (that utility
+ * (`dynamicTables/domain/ValidationUtils.ts`) — BESPOKE LOCAL, not a cross-module import (that utility
  * lives on the DynamicTable side of the platform boundary; `Counterparty` is Prisma first-class and
  * owns its own normalization). NO checksum and NO fixed `.length` (11 or 14) validation this phase —
  * `taxId` is an informational discriminator, OUTSIDE the `@@unique` key (fork F-W2A-4).

@@ -10,13 +10,13 @@ import { composeSessionTables, toCustomCreation } from '../sessionComposition';
 import { FakeInterviewSessionRepository } from './fakeInterviewSessionRepository';
 import type { OpenAIService } from '../../../../lib/openai/OpenAIService';
 import type { ICustomizationState } from '../../models/InterviewTypes';
-import BeautySalonPreset from '../../../dynamicTables/presets/systems/BeautySalonPreset';
+import BeautySalonPreset from '../../../dynamicTables/domain/presets/systems/BeautySalonPreset';
 import { CustomCreationDraftSchema } from '../../dtos/CustomCreationDraft.dto';
 import { CustomCreationSchema } from '../../../dynamicTables/dtos/CreateDashboard.dto';
-import { applyModuleRemovals, resolveModuleSelection } from '../../../dynamicTables/presets/modules/moduleSelection';
-import { CoreSystemPreset } from '../../../dynamicTables/presets';
+import { applyModuleRemovals, resolveModuleSelection } from '../../../dynamicTables/domain/presets/modules/moduleSelection';
+import { CoreSystemPreset } from '../../../dynamicTables/domain/presets';
 import { InterviewSessionNotFoundError } from '../../models/InterviewSession.model';
-import type { ModuleKey } from '../../../dynamicTables/presets/modules/registry';
+import type { ModuleKey } from '../../../dynamicTables/domain/presets/modules/registry';
 
 jest.mock('../../../../lib/openai/OpenAIService', () => ({ OpenAIService: { getInstance: () => ({}) } }));
 

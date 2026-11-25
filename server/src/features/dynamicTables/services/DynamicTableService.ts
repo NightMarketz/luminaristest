@@ -10,9 +10,9 @@ import { globalRuleRegistry } from '../rules/RuleRegistry';
 import type { RuleContext } from '../rules/RuleTypes';
 import { withVersionContext, ruleContextOf, type VersionWriteContext } from '../repositories/versionLedger';
 import type { Prisma } from 'generated/prisma';
-import type { PresetTableDefinition } from '../presets';
-import { SchemaValidator } from '../validation/SchemaValidator';
-import { GovernanceEngine } from '../validation/GovernanceEngine';
+import type { PresetTableDefinition } from '../domain/presets';
+import { SchemaValidator } from './SchemaValidator';
+import { GovernanceEngine } from './GovernanceEngine';
 
 /**
  * Fila de escrita por tabela, usada só pelas tabelas que declaram `noOverlap`.
@@ -427,9 +427,9 @@ export class DynamicTableService {
     let variantSchema: ITableSchema | null = null;
     if (saleItemsKey) {
       try {
-        const { saleItemsProductsOnlyModule } = await import('../presets/modules/finance/SalesItemsProductsOnly');
-        const { saleItemsServicesOnlyModule } = await import('../presets/modules/finance/SalesItemsServicesOnly');
-        const { saleItemsMixedModule } = await import('../presets/modules/finance/SalesItemsMixed');
+        const { saleItemsProductsOnlyModule } = await import('../domain/presets/modules/finance/SalesItemsProductsOnly');
+        const { saleItemsServicesOnlyModule } = await import('../domain/presets/modules/finance/SalesItemsServicesOnly');
+        const { saleItemsMixedModule } = await import('../domain/presets/modules/finance/SalesItemsMixed');
         if ((hasProducts && hasServices) || hasPackages) variantSchema = saleItemsMixedModule.schema;
         else if (hasProducts) variantSchema = saleItemsProductsOnlyModule.schema;
         else variantSchema = saleItemsServicesOnlyModule.schema;

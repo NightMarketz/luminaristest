@@ -505,6 +505,19 @@ lacuna de spec (respostas literais em `docs/plano/decisoes/D-2026-11-24-MODULE-B
 | §5.3, `accountingBinding`, linha `scope/` | `scope/` → `models/` no PR-3.x da feature | pago no #1384 (`BindingScope.ts` em `models/`); o PR-3.x do `accountingBinding` segue com `archetypes/`, `interpreter/`, `runtime/` e `fixtures/` |
 | §2, PR-7.x | `J1` 16 → 0 | parte de 15; do `accountingSyncReconcile.job.ts` restam 5 arestas (4 repositórios e `lib/prisma`) |
 
+### 13.1 PR-3.x de `dynamicTables` (24/11/2026)
+
+Respostas literais em `docs/plano/decisoes/D-2026-11-24-MODULE-BOUNDARIES-PR3-DYNAMICTABLES-RESPOSTAS.md`; medida,
+plantios e pontos declarados no `ADR-MODULE-BOUNDARIES.md` §11.6.
+
+| Onde | O BRIEF dizia | O que valeu |
+|---|---|---|
+| §2, PR-3.x de `dynamicTables` | move as pastas da tabela §5.3 e acrescenta a feature à `M2`; classe verde | o renome muda a chave de 45 entradas do baseline (37 `M1`, 8 `X3`), e o PR paga as 45 em vez de regravá-las: portas em `dynamicTables/public/` (4 arquivos), vocabulário de módulos e `TableLock` em `models/`, tipos do preset em `domain/presets/presetTypes.ts` (arquivo-folha), `analytics/public/analyticsConfiguration.ts`. Baseline 421 → 376 (`M1` 359 → 322, `X3` 11 → 3). Classe: vermelho, revisor obrigatório (o diff tem `skill-audit/check-registries.mjs`) |
+| §5.3, `presets/` (50/173), "33 das arestas vêm de outras features" | 33 arestas de outras features passam a pedir `public/` | eram 34 entradas `M1` de outras features para as três pastas (33 para `presets/`, 1 para `validation/SchemaValidator`), todas pagas neste PR; mais 3 de `presets/` para `analytics/core/models/`, pagas por `analytics/public/` |
+| §5.5, `skill-audit/check-registries.mjs` | 8 ocorrências a repor | 6 caminhos a trocar, por patch que o dono aplica e a sessão commita: a pasta é negada para escrita de agente. Sem esse commit o `skill-audit run` reprova o PR |
+| §5.3, texto que o `tsc` não vê | skills, `GENERATION_CONTRACTS.md`, `scripts/`, `governance/`, `lint-layer-gate.md` | também as listas de caminho do `server/src/jobs/proveP2ZeroDiffCli.ts` (perímetro zero-diff do ADR-P2, traduzido 1:1) e um teste que lê `analytics/kpis` por caminho relativo ao arquivo movido (`analyticsFieldMappingCoupling.test.ts`); o PR-3.x da `analytics` tem de ajustar esse teste de novo |
+| §6, item 10 | "a `M2` com a feature em `M2_FEATURES` sai 0" prova que nenhum arquivo ficou fora de camada | a `M2` casa pelo `to` e não vê arquivo sem importador; o item foi conferido também por `find` (lacuna `L-20261124-222007-2aaa`) |
+
 ## Gates de envio [OPS-001]
 
 1. **Objetivo:** §1 (medida nova), §2 (fatias com classe), §3 (janela), §4 (prova), §7 (forks).

@@ -256,9 +256,9 @@ describe('SYMBOL_ALLOWLIST — exceção NOMINAL de UM símbolo (ADR-P2 EMENDA 2
 describe('classifyZeroDiffViolations — função pura (BE-INCR-P2-VERTICAL-CLINICA, comportamento 9)', () => {
   it('diff limpo (só arquivos da camada PRESET/DADO e do CLI) → clean=true', () => {
     const report = classifyZeroDiffViolations([
-      'server/src/features/dynamicTables/presets/systems/AestheticClinicPreset.ts',
-      'server/src/features/dynamicTables/presets/modules/people/AestheticClinicCustomerModule.ts',
-      'server/src/features/dynamicTables/presets/index.ts',
+      'server/src/features/dynamicTables/domain/presets/systems/AestheticClinicPreset.ts',
+      'server/src/features/dynamicTables/domain/presets/modules/people/AestheticClinicCustomerModule.ts',
+      'server/src/features/dynamicTables/domain/presets/index.ts',
       'server/src/features/accountingBinding/fixtures/clinicBinding.ts',
       'server/src/features/accountingBinding/services/BindingCompileService.ts',
       'server/src/jobs/activateAccountingBindingCli.ts',
@@ -270,7 +270,7 @@ describe('classifyZeroDiffViolations — função pura (BE-INCR-P2-VERTICAL-CLIN
 
   it('DETECTA um diff plantado no perímetro (motor DynamicTable) — teste-guarda literal do BRIEF', () => {
     const report = classifyZeroDiffViolations([
-      'server/src/features/dynamicTables/presets/systems/AestheticClinicPreset.ts',
+      'server/src/features/dynamicTables/domain/presets/systems/AestheticClinicPreset.ts',
       'server/src/features/dynamicTables/services/DynamicTableService.ts', // plantado
     ]);
     expect(report.clean).toBe(false);
@@ -294,14 +294,14 @@ describe('classifyZeroDiffViolations — função pura (BE-INCR-P2-VERTICAL-CLIN
   });
 
   it('presets/ai/PresetKnowledgeBase.ts é EXPLICITAMENTE isento (comportamento 3 precisa editá-lo)', () => {
-    const report = classifyZeroDiffViolations(['server/src/features/dynamicTables/presets/ai/PresetKnowledgeBase.ts']);
+    const report = classifyZeroDiffViolations(['server/src/features/dynamicTables/domain/presets/ai/PresetKnowledgeBase.ts']);
     expect(report.clean).toBe(true);
   });
 
   it('CustomerModule.ts compartilhado é vetado (F-P2-5) mesmo fora da árvore do motor', () => {
-    const report = classifyZeroDiffViolations(['server/src/features/dynamicTables/presets/modules/people/CustomerModule.ts']);
+    const report = classifyZeroDiffViolations(['server/src/features/dynamicTables/domain/presets/modules/people/CustomerModule.ts']);
     expect(report.clean).toBe(false);
-    expect(report.vetoedFileViolations).toEqual(['server/src/features/dynamicTables/presets/modules/people/CustomerModule.ts']);
+    expect(report.vetoedFileViolations).toEqual(['server/src/features/dynamicTables/domain/presets/modules/people/CustomerModule.ts']);
   });
 
   // ── Harness de teste fora do perímetro (decisão do dono 2026-09-15, questionário na sessão do PR #320;
@@ -347,7 +347,7 @@ describe('runCli', () => {
 
   it('exit 0 quando git diff não retorna nenhum arquivo do perímetro', () => {
     execFileSync.mockReturnValueOnce(
-      'server/src/features/dynamicTables/presets/systems/AestheticClinicPreset.ts\nserver/src/jobs/activateAccountingBindingCli.ts\n',
+      'server/src/features/dynamicTables/domain/presets/systems/AestheticClinicPreset.ts\nserver/src/jobs/activateAccountingBindingCli.ts\n',
     );
     const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
     expect(runCli(['--base', 'origin/main', '--head', 'HEAD'])).toBe(0);

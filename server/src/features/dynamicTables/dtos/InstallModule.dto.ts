@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { moduleKeySchema, moduleSelectorSchema } from '../presets/modules/registry';
+import { moduleKeySchema, moduleSelectorSchema } from '../domain/presets/modules/registry';
 
 /**
  * BE-INCR-CRM-MODULE-COMPOSITION (nó I8), comportamento 8 + contrato §3 — `POST /dashboard/modules/install`.

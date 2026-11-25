@@ -54,7 +54,7 @@ Leia `.claude/skills/_ARCHITECTURE-CONTRACT.md` §2.1 antes de classificar — o
 
 **[SEL-002] Módulo é canônico selecionável quando pelo menos um vale: (a) mais de um vertical/tenant o usa; (b) tem comportamento cross-entidade (plugin/bridge o lê); (c) uma tela canônica o descobre. Caso contrário é extensão custom — aditiva e inerte (sem plugin, sem bridge, sem efeito fora de si).**
 
-- Canônico → módulo em `presets/modules/<categoria>/`, composto por suíte em `systems/`, registrado em `tablePresetSuites`, com `providesCapabilities`/`requiresCapabilities` declarados. Gera via `dynamic-table-preset-generator`.
+- Canônico → módulo em `domain/presets/modules/<categoria>/`, composto por suíte em `systems/`, registrado em `tablePresetSuites`, com `providesCapabilities`/`requiresCapabilities` declarados. Gera via `dynamic-table-preset-generator`.
 - Custom → nasce em runtime pelo usuário (tabela própria ou campo adicional); nenhum artefato de código.
 
 **[SEL-003] Customização que toca módulo canônico (remover/renomear tabela ou campo que plugin/bridge/tela lê por nome) é zona de risco declarável: o motor hoje falha em silêncio (skip+log), não recusa. O Registro de Fronteira DEVE anotar quais nomes de tabela/campo são contrato implícito de código, citando os consumidores encontrados por grep.**

@@ -80,6 +80,6 @@ interview/
 ## Interaction with other features
 
 - **[`dynamicTables`](../dynamicTables/README.md):** the source of presets. `CustomizationService` uses
-  `presetService.getPresetByKey` + `presetKnowledgeBase` (`presets/ai/`); on completion, the system is
+  `presetService.getPresetByKey` + `presetKnowledgeBase` (`dynamicTables/domain/presets/ai/`); on completion, the system is
   instantiated as dynamic tables. `FieldCustomizationService` reuses **field presets** when adding fields.
 - **`lib/openai`:** all AI steps go through the `OpenAIService` singleton.

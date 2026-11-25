@@ -3,11 +3,11 @@
  * módulos (Core + módulos). Falsificador: as suítes são esvaziadas por mock — antes do fork (b) a única fonte
  * das tabelas de lead fora do Core era a suíte `crmModule`, então sem ela `leads` não seria achado.
  */
-jest.mock('../../presets', () => ({ __esModule: true, tablePresetSuites: {} }));
+jest.mock('../../domain/presets', () => ({ __esModule: true, tablePresetSuites: {} }));
 
 import { PresetSyncService } from '../PresetSyncService';
-import { composeModuleTables, moduleOfTable } from '../../presets/modules/registry';
-import { CoreSystemPreset } from '../../presets/systems/CoreSystemPreset';
+import { composeModuleTables, moduleOfTable } from '../../domain/presets/modules/registry';
+import { CoreSystemPreset } from '../../domain/presets/systems/CoreSystemPreset';
 
 beforeEach(() => jest.clearAllMocks());
 

@@ -3,8 +3,8 @@
  * do salão (BRIEF §1) que a sessão da Entrevista com IA (item 33).
  */
 import { buildQuickPreset } from '../buildQuickPreset';
-import BeautySalonPreset from '../../../dynamicTables/presets/systems/BeautySalonPreset';
-import { resolveModuleSelection } from '../../../dynamicTables/presets/modules/moduleSelection';
+import BeautySalonPreset from '../../../dynamicTables/domain/presets/systems/BeautySalonPreset';
+import { resolveModuleSelection } from '../../../dynamicTables/domain/presets/modules/moduleSelection';
 
 beforeEach(() => jest.clearAllMocks());
 

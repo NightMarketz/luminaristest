@@ -10,7 +10,7 @@ import { z } from 'zod';
  * a malformed body travelled two layers deep before dying, and the resulting error came from the
  * engine instead of the boundary.
  *
- * Shape mirrors the `analyticsDefinitions` preset in `presets/systems/CoreSystemPreset.ts`.
+ * Shape mirrors the `analyticsDefinitions` preset in `dynamicTables/domain/presets/systems/CoreSystemPreset.ts`.
  * `scope` and `published` are preset-`required` but carry a `defaultValue`, and `version` is
  * preset-optional; all three are optional here because `DynamicTableService` applies `defaultValue`
  * via zod `.default()`, so demanding them at the boundary would reject bodies the engine accepts.

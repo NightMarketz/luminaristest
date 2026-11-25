@@ -10,9 +10,9 @@ import { TableExtractor } from '../TableExtractor';
 import { InterviewService } from '../../InterviewService/InterviewService';
 import { InterviewSessionConflictError, InterviewSessionNotFoundError } from '../../models/InterviewSession.model';
 import { FakeInterviewSessionRepository } from './fakeInterviewSessionRepository';
-import BeautySalonPreset from '../../../dynamicTables/presets/systems/BeautySalonPreset';
+import BeautySalonPreset from '../../../dynamicTables/domain/presets/systems/BeautySalonPreset';
 import { composeSessionTables } from '../sessionComposition';
-import { resolveModuleSelection } from '../../../dynamicTables/presets/modules/moduleSelection';
+import { resolveModuleSelection } from '../../../dynamicTables/domain/presets/modules/moduleSelection';
 
 // BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: customers/sales/… viraram tabelas de módulo — a sessão real nasce de
 // `composeSessionTables` (módulos default ∪ suíte), como no `CustomizationService.createCustomizationSession`.

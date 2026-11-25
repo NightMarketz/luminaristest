@@ -27,7 +27,7 @@ gates:
   AC-2.2-3:
     gate: skill-audit/G5
     kind: executable
-    command: "grep -rn \"targetTable: '@@PRESET_TABLE_KEY::\" server/src/features/dynamicTables/presets/modules/"
+    command: "grep -rn \"targetTable: '@@PRESET_TABLE_KEY::\" server/src/features/dynamicTables/domain/presets/modules/"
     expect: "nenhum preset referencia a própria tabela (self-relation == 0)"
 ---
 
