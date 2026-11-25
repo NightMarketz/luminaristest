@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { LEGAL_PARAMS_SEED_FILE_ENCARGO_FOLHA, SIMPLES_SEED_FILES, legalParamsSeedRows, tabelaApuracaoSemente, tabelaPisCofinsSemente, fotografiaSemente } from '@test/helpers/legalParams';
+import { LEGAL_PARAMS_SEED_FILE_ENCARGO_FOLHA, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, SIMPLES_SEED_FILES, legalParamsSeedRows, tabelaApuracaoSemente, tabelaPisCofinsSemente, fotografiaSemente } from '@test/helpers/legalParams';
 import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
 import type { LegalParameterTabela, LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { tabelaIbsCbsDe, tabelaProvisoriaCbsDe } from '../ibsCbsParams';
@@ -73,7 +73,7 @@ describe('decisão 1 — semente ENCARGO_FOLHA', () => {
 
 // ---- item 15 ----
 
-const SIMPLES = legalParamsSeedRows(SIMPLES_SEED_FILES) as LinhaLegal[];
+const SIMPLES = legalParamsSeedRows([...SIMPLES_SEED_FILES, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL]) as LinhaLegal[];
 /** 060101 sujeito ao fator r (Anexo V/III) — a semente não tem atividade com fator r; a mutação é a do simplesCalc.test. */
 const COM_FATOR_R = SIMPLES.map((l) => (l.id === 'sn1-enq-servico-060101' ? { ...l, valorJson: JSON.stringify({ anexo: 'V', fatorR: true, semIss: false }) } : l));
 const somaMeses = (comp: string, d: number) => {

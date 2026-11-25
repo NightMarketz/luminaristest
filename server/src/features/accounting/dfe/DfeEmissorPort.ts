@@ -142,6 +142,22 @@ export function isFalhaDeComunicacao(error: unknown): error is DfeTransporteErro
   return error instanceof DfeTransporteError;
 }
 
+/**
+ * O transporte NÃO está disponível do LADO DE CÁ (assinador local fora, sem token, sem dispositivo na unidade): a chamada nem
+ * chegou ao fisco. Não é falha de comunicação com a SEFAZ (não liga contingência — `isFalhaDeComunicacao` é falso) nem erro do
+ * documento: o polling adia o documento SEM gastar tentativa (a nota já foi enviada; a consulta volta quando a caixa voltar).
+ * Quem implementa um transporte que depende de dispositivo local lança esta classe, nunca um `Error` solto.
+ */
+export class DfeTransporteIndisponivelError extends Error {
+  constructor(
+    public readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'DfeTransporteIndisponivelError';
+  }
+}
+
 /** X10a PR-9 — o grupo `infNFeSupl` da NFC-e (QR Code + urlChave), entregue ao FE para o DANFE (F-NFCE-E1-6 b). */
 export interface NfceSupl {
   qrCode: string;
@@ -198,7 +214,8 @@ export interface EmitirInput {
 }
 
 export interface EmissaoResult {
-  status: 'PROCESSING' | 'AUTHORIZED' | 'REJECTED';
+  /** `DENIED` = uso denegado (NF-e/NFC-e, cStat 110/301/302): protocolo gravado e número consumido; terminal, sem reenvio. */
+  status: 'PROCESSING' | 'AUTHORIZED' | 'REJECTED' | 'DENIED';
   partnerRef: string;
   numero?: string;
   serie?: string;

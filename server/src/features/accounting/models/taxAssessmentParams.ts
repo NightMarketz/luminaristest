@@ -147,6 +147,17 @@ export function linhaVigente(t: TabelaApuracao, chave: ChaveParametro, dataFimDo
 }
 
 /**
+ * Onda 3.2 — primeiro dia em que a chave tem linha na tabela (menor `vigenteDesde`), ou `undefined` se não há linha. É como o
+ * cálculo conhece um marco de lei que JÁ é uma linha de `legal_parameters` (ex.: `LC224_ACRESCIMO_CSLL` vigente desde
+ * 2026-04-01) em vez de repeti-lo como literal: mudar o marco = publicar a linha, sem tocar código.
+ */
+export function primeiraVigenciaDe(t: TabelaApuracao, chave: ChaveParametro): string | undefined {
+  let menor: string | undefined;
+  for (const p of t.linhas) if (p.chave === chave && (menor === undefined || p.vigenteDesde < menor)) menor = p.vigenteDesde;
+  return menor;
+}
+
+/**
  * Lookup puro (item 4). Sem linha vigente: o acréscimo da LC 224 vale 0 (antes da vigência); qualquer outra chave é
  * erro explícito (a tabela cobre todo ano apurável).
  */

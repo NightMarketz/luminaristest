@@ -28,13 +28,15 @@ const mp = {
   keys: [] as string[],
   bodies: [] as Record<string, unknown>[],
   nextCreate: null as null | 'network_after_store' | 'network' | 400 | 401,
+  /** Onda 4 / 4.2: o `outboundFetch` re-tenta POST com X-Idempotency-Key (3 tentativas); a queda de rede do teste dura o orçamento todo. */
+  netLeft: 0,
   nextCancel: null as null | 409,
   /** Gancho do teste: roda no meio do cancelamento no provedor (simula a corrida de exclusão dentro da requisição). */
   afterCancel: null as null | (() => Promise<void>),
   seq: 0,
   reset() {
     this.keys = []; // ordens persistem entre os testes (o MP não esquece)
-    this.bodies = []; this.nextCreate = null; this.nextCancel = null; this.afterCancel = null;
+    this.bodies = []; this.netLeft = 0; this.nextCreate = null; this.nextCancel = null; this.afterCancel = null;
   },
 };
 function orderJson(o: FakeOrder) {
@@ -55,18 +57,26 @@ async function fakeFetch(input: string | URL | Request, init?: RequestInit): Pro
     const body = JSON.parse(String(init.body));
     mp.bodies.push(body);
     const mode = mp.nextCreate;
-    mp.nextCreate = null;
+    if (mode === 'network' || mode === 'network_after_store') {
+      if (mp.netLeft === 0) mp.netLeft = 3; // OutboundRetryPolicy.maxAttempts padrão
+      mp.netLeft -= 1;
+      if (mp.netLeft === 0) mp.nextCreate = null; // a última tentativa da chamada consome o modo
+    } else {
+      mp.nextCreate = null;
+    }
     if (mode === 'network') throw new TypeError('fetch failed');
     if (mode === 400) return json(400, { errors: [{ code: 'invalid_identification' }] });
     if (mode === 401) return json(401, { errors: [{ code: 'unauthorized' }] });
     const existing = mp.byKey.get(key);
-    if (existing) return json(201, orderJson(mp.orders.get(existing)!));
-    const id = `ORD01FIXTURE${String(++mp.seq).padStart(4, '0')}`;
-    const o = { id, status: 'action_required', status_detail: 'waiting_transfer', external_reference: body.external_reference, kind: body.transactions.payments[0].payment_method.id };
-    mp.orders.set(id, o);
-    mp.byKey.set(key, id);
-    if (mode === 'network_after_store') throw new TypeError('fetch failed'); // o MP criou, a resposta se perdeu
-    return json(201, orderJson(o));
+    if (existing && mode !== 'network_after_store') return json(201, orderJson(mp.orders.get(existing)!));
+    if (!existing) {
+      const id = `ORD01FIXTURE${String(++mp.seq).padStart(4, '0')}`;
+      const o = { id, status: 'action_required', status_detail: 'waiting_transfer', external_reference: body.external_reference, kind: body.transactions.payments[0].payment_method.id };
+      mp.orders.set(id, o);
+      mp.byKey.set(key, id);
+    }
+    if (mode === 'network_after_store') throw new TypeError('fetch failed'); // o MP criou, a resposta se perdeu (em todas as tentativas)
+    return json(201, orderJson(mp.orders.get(mp.byKey.get(key)!)!));
   }
   const cancel = url.match(/\/v1\/orders\/([^/]+)\/cancel$/);
   if (cancel) {
@@ -351,11 +361,11 @@ describe('F5 PR-2 — CollectionCharge + adaptador MP + webhook', () => {
     const ordens = mp.orders.size;
     // ainda não é velha: o job não toca
     await getFactory().getCollectionChargeService().pollPending();
-    expect(mp.keys).toEqual([`${row.id}:1`]);
+    expect([...new Set(mp.keys)]).toEqual([`${row.id}:1`]); // as 3 tentativas do wrapper levam a MESMA chave
     await prisma.collectionCharge.update({ where: { id: row.id }, data: { updatedAt: new Date(Date.now() - 11 * 60_000) } });
     const summary = await getFactory().getCollectionChargeService().pollPending();
     expect(summary.redriven).toBe(1);
-    expect(mp.keys).toEqual([`${row.id}:1`, `${row.id}:1`]);
+    expect([...new Set(mp.keys)]).toEqual([`${row.id}:1`]);
     expect(mp.orders.size).toBe(ordens);
     const depois = await prisma.collectionCharge.findUniqueOrThrow({ where: { id: row.id } });
     expect(depois.status).toBe('PENDING');

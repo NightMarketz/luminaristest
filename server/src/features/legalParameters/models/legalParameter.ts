@@ -68,6 +68,12 @@ export const LEGAL_PARAMETER_TABELAS = [
   // EFICIENCIA-FISCAL PR-5 (item 32; F-EF-8/11 a): serviços de saúde com redução de 60 % do IBS/CBS a partir de 2027 (LC 214
   // art. 130 e Anexo III), chave = prefixo de NBS. Consumidor = models/servicoFiscalAvaliacao.ts.
   'IBS_CBS_REDUCAO_NBS',
+  // Onda 3.2 fatia 5 (dono, 24/11/2026: tabelas NT CST/cClassTrib viram LegalParameter): as três tabelas do IT 2025.002 v1.70 que
+  // as regras do grupo UB da NF-e consultam, uma por forma de linha (chave = código; valorJson = colunas da planilha, `ordem` =
+  // posição na aba; cClassTrib leva a vigência da planilha em vigenteDesde/vigenteAte). Consumidor = models/ibsCbsTabelas.ts.
+  'CST_IBS_CBS',
+  'CCLASSTRIB_IBS_CBS',
+  'CCREDPRES_IBS_CBS',
   // BE-INCR-DP-F0-F1 PR-2 (nó PES-4, itens 20 e 23): tabela progressiva do INSS do empregado (EC 103 art. 28) e as tabelas
   // do eSocial como dado (precedente NATUREZA_RENDIMENTO). Consumidor = features/dp/models/parametrosFolha.ts e o
   // cadastro do DP (categoria do vínculo, natureza e incidência das rubricas, motivo do afastamento).
@@ -84,6 +90,9 @@ export const LEGAL_PARAMETER_TABELAS = [
   // BE-INCR-DP-F2 PR-1 (item 13): Tabela 07 do eSocial (tipos de dependente), no padrão do D-8 do F0+F1. Consumidor =
   // features/dp/services/DpDependenteService.ts.
   'ESOCIAL_TIPO_DEPENDENTE',
+  // Onda 3.2 fatia 4 (dono, 24/11/2026): marcos de lei sem linha temática própria — chave = nome do marco, valorTexto = data
+  // (YYYY-MM-DD), fonte obrigatória. Consumidor = models/marcoLegal.ts (hoje: INICIO_LC214_RBT12 em simplesCalc.ts).
+  'MARCO_LEGAL',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 
@@ -143,6 +152,43 @@ export function linhaLegalVigente<T extends LinhaLegal>(
     if (!melhor || l.vigenteDesde > melhor.vigenteDesde) melhor = l;
   }
   return melhor;
+}
+
+/**
+ * Onda 3.2 (datas de corte de lei como linha) — as linhas em vigor da tabela (e da chave, quando dada), em qualquer data.
+ * Só `linhasEmVigor`: rascunho, revogada e substituída não definem marco (uma substituída aberta não "estende" o fim).
+ */
+function linhasDoMarco(linhas: readonly LinhaLegal[], tabela: string, chave: string | null): LinhaLegal[] {
+  return linhasEmVigor(linhas).filter((l) => l.tabela === tabela && (chave === null || l.chave === chave));
+}
+
+/**
+ * Onda 3.2 — o primeiro dia em que a tabela/chave tem linha em vigor (menor `vigenteDesde`): o marco de lei que JÁ é uma
+ * linha, no lugar do literal em código. Sem nenhuma linha ⇒ `ParametroLegalAusenteError` (fail-closed, nunca um
+ * default). `dataConsultada` só nomeia o fato gerador na mensagem.
+ */
+export function inicioDeVigencia(linhas: readonly LinhaLegal[], tabela: LegalParameterTabela, chave: string | null, dataConsultada: string): string {
+  const doMarco = linhasDoMarco(linhas, tabela, chave);
+  if (doMarco.length === 0) throw new ParametroLegalAusenteError(tabela, dataConsultada, chave ?? undefined);
+  return doMarco.reduce((menor, l) => (l.vigenteDesde < menor ? l.vigenteDesde : menor), doMarco[0].vigenteDesde);
+}
+
+/**
+ * Onda 3.2 — o dia em que a lei deixa de valer: o dia seguinte ao maior `vigenteAte` das linhas em vigor da tabela/chave.
+ * Três estados: nenhuma linha ⇒ `ParametroLegalAusenteError` (fail-closed); alguma linha em vigor sem `vigenteAte` ⇒ `null`
+ * (sem fim publicado — a lei não acabou segundo o dado); caso contrário o dia seguinte ao último `vigenteAte`.
+ */
+export function diaSeguinteAoFimDeVigencia(linhas: readonly LinhaLegal[], tabela: LegalParameterTabela, chave: string | null, dataConsultada: string): string | null {
+  const doMarco = linhasDoMarco(linhas, tabela, chave);
+  if (doMarco.length === 0) throw new ParametroLegalAusenteError(tabela, dataConsultada, chave ?? undefined);
+  let ultimo = '';
+  for (const l of doMarco) {
+    if (l.vigenteAte === null) return null;
+    if (l.vigenteAte > ultimo) ultimo = l.vigenteAte;
+  }
+  const d = new Date(`${ultimo}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
 }
 
 /**

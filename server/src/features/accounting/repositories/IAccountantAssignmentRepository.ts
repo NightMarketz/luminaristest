@@ -1,6 +1,6 @@
 import type { AccountantAssignment, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
-import type { ActiveAccountant } from '../policies/IAccountingPolicy';
+import type { ActiveAccountant } from '../models/AccountantAssignment.model';
 import type { AssignmentStatus } from '../models/ledgerStatus';
 
 export interface NewAssignment {

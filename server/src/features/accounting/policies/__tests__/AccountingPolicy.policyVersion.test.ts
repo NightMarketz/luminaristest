@@ -4,7 +4,7 @@
  * verde sem edição (P-14).
  */
 import { AccountingPolicy } from '../AccountingPolicy';
-import type { ActiveAccountant } from '../IAccountingPolicy';
+import type { ActiveAccountant } from '../../models/AccountantAssignment.model';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 

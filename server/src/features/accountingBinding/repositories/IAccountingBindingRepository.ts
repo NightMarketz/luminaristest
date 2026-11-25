@@ -3,8 +3,6 @@ import type { AccountingBindingStatus } from '../models/accountingBindingStatus'
 
 import type { BindingScope } from '../scope/BindingScope';
 
-export { type BindingScope, resolveBindingScope, bindingScopeWhere } from '../scope/BindingScope';
-
 /** Payload de criação de uma nova versão de binding (Draft ou Active — o service decide qual). */
 export interface CreateAccountingBindingInput {
   sectorKey: string;

@@ -3,6 +3,7 @@ import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';
 import type { InventoryItem } from 'generated/prisma';
 import { MAX_CENTS, centsFromDb } from '../models/money';
+import { divHalfUp } from '../models/retencaoParams';
 import {
   INVENTORY_COGS_SOURCE_TYPE,
   INVENTORY_INBOUND_SOURCE_TYPE,
@@ -252,7 +253,9 @@ export class InventoryService implements IInventoryService {
           throw new ValidationError(`Estoque insuficiente para o produto '${item.description || productRef}'.`);
         }
         // Moving average derived in-tx; residue absorbed (D6). Never a persisted per-unit float.
-        const valueDelta = Math.round((centsFromDb(item.totalValueCents) * qty) / item.qtyOnHand);
+        // Onda 2.3: em BigInt (HALF_UP), não `Math.round(float)` — total × qty passa de 2^53 com totais e saldos altos.
+        // `qtyOnHand`/`qty` são Int (fração fora do MVP; `assertQty`), então não há fração a converter aqui.
+        const valueDelta = Number(divHalfUp(BigInt(centsFromDb(item.totalValueCents)) * BigInt(qty), BigInt(item.qtyOnHand)));
 
         // Atomic CAS (D4): decrement qty+value ONLY if enough stock. count===1 wins; a loser (or a
         // concurrent baixa that drained the SKU) gets 0 and is rejected — qtyOnHand never negative.

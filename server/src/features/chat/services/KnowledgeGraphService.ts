@@ -4,34 +4,7 @@ import { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynam
 import { ITableSchema, ISchemaField } from '../../dynamicTables/models/DynamicTable.model';
 import { AppError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
-
-export interface KnowledgeGraphData {
-    tables: {
-        id: string;
-        name: string;
-        label: string;
-        category: string;
-        fields: {
-            name: string;
-            label: string;
-            type: string;
-            required: boolean;
-            readOnly?: boolean;
-            hidden?: boolean;
-            options?: string[];
-            relation?: {
-                targetTable: string;
-                displayField: string;
-            };
-        }[];
-    }[];
-    relations: {
-        sourceTable: string;
-        targetTable: string;
-        field: string;
-        type: '1:1' | '1:N';
-    }[];
-}
+import type { KnowledgeGraphData } from '../models/KnowledgeGraph.model';
 
 export class KnowledgeGraphService {
     constructor(

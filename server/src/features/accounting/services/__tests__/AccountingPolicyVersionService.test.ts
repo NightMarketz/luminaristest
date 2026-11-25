@@ -7,10 +7,11 @@
  * 15h: o payload gravado na proposta não tem a chave `unitId` (condição do REKEY), e o DTO a recusa.
  * Contrato: o payload da proposta conserva o `superRefine` do PUT (no Zod 4, `.omit()` o descarta).
  */
+import { legalParamsSemente } from '@test/helpers/legalParams';
 import type { Prisma } from 'generated/prisma';
 import { AccountantRequiredError, PolicyApprovalRequiredError, PolicyNoAccountantError } from '../../../../lib/errors';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
-import type { ActiveAccountant } from '../../policies/IAccountingPolicy';
+import type { ActiveAccountant } from '../../models/AccountantAssignment.model';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import type { IAccountantAssignmentRepository } from '../../repositories/IAccountantAssignmentRepository';
@@ -64,7 +65,7 @@ const lalur = { findParteBById: jest.fn(async () => null) } as unknown as ILalur
 function fiscalService(assign: IAccountantAssignmentRepository, pv: IAccountingPolicyVersionRepository) {
   const repo = { upsert: jest.fn(), runTransaction: runTx } as unknown as IFiscalProfileRepository & { upsert: jest.Mock };
   const company = { findByYear: jest.fn(async () => null) } as unknown as ICompanyFiscalProfileRepository;
-  return { svc: new FiscalProfileService(repo, accounts, policy, audit, company, assign, pv), repo };
+  return { svc: new FiscalProfileService(repo, accounts, policy, audit, company, assign, pv, legalParamsSemente), repo };
 }
 
 function settingsService(assign: IAccountantAssignmentRepository, pv: IAccountingPolicyVersionRepository) {

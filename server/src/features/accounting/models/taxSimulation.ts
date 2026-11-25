@@ -5,6 +5,7 @@ import { parametroIbsCbsVigente, type ParametroIbsCbs } from './ibsCbsParams';
 import { apurarPisCofinsMensal, periodoDoMes } from './pisCofinsCalc';
 import type { ParametroPisCofins } from './pisCofinsParams';
 import { calcularMes } from './profitDistribution';
+import { inicioLc214Competencia } from './marcoLegal';
 import { apurar, fatorR, rbt12, type ApuracaoCalculada, type ApuracaoInput, type AtividadeInput, type MesReceita } from './simplesCalc';
 import { PERIODOS_TRIMESTRAIS, aliquotaCsll, apurarPresumidoTrimestral, apurarRealTrimestral, fimDoTrimestre, type MemoriaAnterior, type PerfilApuracaoPresumido } from './taxAssessmentCalc';
 import { mulBp, parametroVigente, type TabelaApuracao } from './taxAssessmentParams';
@@ -99,7 +100,8 @@ export function simularFatorR(input: ApuracaoInput, linhas: readonly LinhaLegal[
   if (anexoAtual === '') {
     throw new ValidationError(`${input.competencia}: nenhuma atividade do PA está sujeita ao fator r (LC 123 art. 18 § 5º-J) — não há o que simular.`, null, 'SEM_ATIVIDADE_SUJEITA_AO_FATOR_R');
   }
-  const base = rbt12(input.historico, input.competencia, input.inicioAtividade, input.receitaPaCents);
+  const inicioLc214 = inicioLc214Competencia(linhas, `${input.competencia}-01`);
+  const base = rbt12(input.historico, input.competencia, input.inicioAtividade, input.receitaPaCents, inicioLc214);
   const avisos = [AVISO_FOLHA_REAL];
   let fs12: bigint;
   let simulada: ApuracaoInput = input;
@@ -121,7 +123,7 @@ export function simularFatorR(input: ApuracaoInput, linhas: readonly LinhaLegal[
     }
   }
   const sim = apurar(simulada, linhas);
-  const baseSim = rbt12(simulada.historico, simulada.competencia, simulada.inicioAtividade, simulada.receitaPaCents);
+  const baseSim = rbt12(simulada.historico, simulada.competencia, simulada.inicioAtividade, simulada.receitaPaCents, inicioLc214);
   const folhaAdicional = folhaAlvoCents > fs12 ? folhaAlvoCents - fs12 : 0n;
   const custo = custoFolhaAdicional(folhaAdicional, tipo, e, false);
   avisos.push(

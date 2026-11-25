@@ -2733,6 +2733,7 @@
       "CANCELLED": "Cancelled",
       "CANCEL_ANALYSIS": "Cancellation under tax authority review",
       "CONTINGENCY": "Issued in contingency, awaiting transmission",
+      "DENIED": "Use denied by SEFAZ (number consumed)",
       "PENDING_SIGNATURE": "Waiting for signer reauthorization",
       "PROCESSING": "Processing",
       "REJECTED": "Rejected",

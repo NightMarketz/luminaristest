@@ -1,6 +1,7 @@
 /**
  * ADR-OBSERVABILIDADE §6 item 5 (F-OBS-16 a): the P5 wrapper. `fetch` is faked; the line is read as written to the
- * console and parsed against LogEntrySchema (the request context is merged inside formatLog).
+ * console and parsed against LogEntrySchema (the request context is merged inside formatLog). Timeout/retry (Onda 4,
+ * 4.2) are proved against a real local server in outboundHttp.resilience.spec.ts; here retry is off to keep one attempt.
  */
 import { outboundFetch } from '../outboundHttp';
 import { LogEntrySchema } from '../logEvents';
@@ -41,7 +42,7 @@ describe('outboundFetch', () => {
   it('a non-2xx logs integration.call at warn and still hands the response to the caller', async () => {
     fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(new Response('', { status: 503 }));
 
-    const res = await outboundFetch('bcb_ptax', 'https://olinda.example/x');
+    const res = await outboundFetch('bcb_ptax', 'https://olinda.example/x', undefined, { retry: false });
 
     expect(res.status).toBe(503);
     expect(lines()).toEqual([
@@ -53,7 +54,7 @@ describe('outboundFetch', () => {
     const boom = new TypeError('fetch failed');
     fetchSpy = jest.spyOn(global, 'fetch').mockRejectedValue(boom);
 
-    await expect(outboundFetch('bcb_ptax', 'http://bcb.example/healthz')).rejects.toBe(boom);
+    await expect(outboundFetch('bcb_ptax', 'http://bcb.example/healthz', undefined, { retry: false })).rejects.toBe(boom);
 
     const [line] = lines();
     expect(line).toMatchObject({

@@ -13,7 +13,7 @@ kind: ("NFSE" | "NFE" | "NFCE")
 export interface FiscalDocumentListQueryInput {
 unitId: string
 saleId?: string
-status?: ("SENT" | "PROCESSING" | "AUTHORIZED" | "AUTHORIZED_DIVERGENT" | "REJECTED" | "CANCELLED" | "PENDING_SIGNATURE" | "CONTINGENCY" | "CANCEL_ANALYSIS")
+status?: ("SENT" | "PROCESSING" | "AUTHORIZED" | "AUTHORIZED_DIVERGENT" | "REJECTED" | "CANCELLED" | "PENDING_SIGNATURE" | "CONTINGENCY" | "CANCEL_ANALYSIS" | "DENIED")
 pendencias?: (boolean | ("true" | "false"))
 }
 export interface FiscalDocumentScopeQueryInput {
@@ -91,7 +91,7 @@ ambiente: string
 serie: number
 numero: string
 documentId: (string | null)
-status: (("SENT" | "PROCESSING" | "AUTHORIZED" | "AUTHORIZED_DIVERGENT" | "REJECTED" | "CANCELLED" | "PENDING_SIGNATURE" | "CONTINGENCY") | null)
+status: (("SENT" | "PROCESSING" | "AUTHORIZED" | "AUTHORIZED_DIVERGENT" | "REJECTED" | "CANCELLED" | "PENDING_SIGNATURE" | "CONTINGENCY" | "DENIED") | null)
 avisos: string[]
 presuncao?: string
 }

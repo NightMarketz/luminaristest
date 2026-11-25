@@ -1,6 +1,11 @@
-import { NfeIbsCbsSchema, NfeIbsCbsTotSchema, NfeIsSchema, regrasIbsCbs, type NfeIbsCbs, type NotaParaRegrasIbsCbs } from '../NfeIbsCbsDto';
+import { LEGAL_PARAMS_SEED_FILE_IBS_CBS_TABELAS, legalParamsSeedRows } from '@test/helpers/legalParams';
+import { NfeIbsCbsSchema, NfeIbsCbsTotSchema, NfeIsSchema, issuesIbsCbs, regrasIbsCbs, type NfeIbsCbs, type NotaParaRegrasIbsCbs } from '../NfeIbsCbsDto';
+import { tabelasIbsCbsDe } from '../../models/ibsCbsTabelas';
 import { NfePayloadSchema, type NfePayload } from '../NfePayloadDto';
 import { nfceNumerada } from '../../models/__tests__/nfeMontagem.fixture';
+
+/** Onda 3.2 fatia 5: as tabelas do IT 2025.002 vêm das linhas do seed (o serviço as lê da fotografia). */
+const TABELAS = tabelasIbsCbsDe(legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_IBS_CBS_TABELAS), '2026-10-27');
 
 /**
  * BE-INCR-NFCE (nó X10a, item 20; F-NFCE-12b b) — um bloco por subgrupo do UB (e o W03), cada caso vermelho com o código de
@@ -49,7 +54,7 @@ function nota(itens: Array<NfeIbsCbs | undefined>, o: Opc = {}): NotaParaRegrasI
 }
 const msgs = (n: NotaParaRegrasIbsCbs): string[] => {
   const out: string[] = [];
-  regrasIbsCbs(n, (m) => out.push(m));
+  regrasIbsCbs(n, (m) => out.push(m), TABELAS);
   return out;
 };
 const rej = (n: NotaParaRegrasIbsCbs, ...codigos: string[]) => {
@@ -71,6 +76,8 @@ describe('base gIBSCBS válida e a NFC-e CRT 3 inteira pelo NfePayloadSchema', (
     inf.total.IBSCBSTot = totDe([g]);
     const r = NfePayloadSchema.safeParse(p);
     expect(r.success ? [] : r.error.issues.map((i) => i.message)).toEqual([]);
+    // o schema é estrutural; as regras do UB rodam à parte, com as tabelas (o serviço que monta a nota)
+    expect(issuesIbsCbs(inf, TABELAS)).toEqual([]);
   });
 });
 
@@ -294,6 +301,18 @@ describe('gCredPresOper — crédito presumido da operação (UB120..UB130, UB54
   });
   it('cCredPres 05 (só CBS): IBS indevido ⇒ 1053; CBS ausente ⇒ 1058; condição suspensiva em 2026 ⇒ 1056', () =>
     rej(nota([{ CST: '000', cClassTrib: '000003', gIBSCBS: g000(), gCredPresOper: cp('05', { pCredPres: '1.00', vCredPresCondSus: '1.00' }) }], { mod: 55 }), '1053', '1058', '1056'));
+  it('UB130-10 (rej. 1060): vCredPresCondSus da CBS só existe no brechó (04) a partir de 2027 — antes disso, ou em outro cCredPres, ⇒ 1060 (mutação: sem a regra, cai aqui)', () => {
+    const cbs = { pCredPres: '1.00', vCredPresCondSus: '1.00' }; // o schema exige vCredPres XOR vCredPresCondSus (UB129/UB130)
+    const item = (cCredPres: string, extra: { ibs?: CredPres } = {}) => ({ CST: '000', cClassTrib: '000003', gIBSCBS: g000(), gCredPresOper: cp(cCredPres, extra.ibs, cbs) });
+    // 2026 (padrão do helper): vedado em qualquer cCredPres, brechó inclusive (ano < 2027)
+    rej(nota([item('05')], { mod: 55 }), '1060');
+    rej(nota([item('04', { ibs: { pCredPres: '1.00', vCredPres: '0.05' } })], { mod: 55 }), '1060');
+    // 2027 em diante: fora do brechó continua vedado; no brechó a regra não dispara
+    rej(nota([item('05')], { mod: 55, dhEmi: '2027-02-01T10:00:00-03:00' }), '1060');
+    expect(msgs(nota([item('04', { ibs: { pCredPres: '1.00', vCredPres: '0.05' } })], { mod: 55, dhEmi: '2027-02-01T10:00:00-03:00' })).join(' | ')).not.toContain('rej. 1060');
+    // sem vCredPresCondSus da CBS a regra não dispara
+    expect(msgs(nota([{ CST: '000', cClassTrib: '000003', gIBSCBS: g000(), gCredPresOper: cp('05', undefined, { pCredPres: '1.00', vCredPres: '1.00' }) }], { mod: 55 })).join(' | ')).not.toContain('rej. 1060');
+  });
   it('cCredPres 04 (brechó, deduz do vIBS): vCredPres > vProd ⇒ 1107; vIBS sem a dedução ⇒ 1150', () =>
     rej(nota([{ CST: '000', cClassTrib: '000003', gIBSCBS: g000(), gCredPresOper: cp('04', { pCredPres: '1.00', vCredPres: '150.00' }, { pCredPres: '1.00', vCredPres: '1.00' }) }], { mod: 55 }), '1107', '1150'));
   it('cCredPres 04 com vIBS = UF + Mun − vCredPres e totais conferidos passa', () =>
