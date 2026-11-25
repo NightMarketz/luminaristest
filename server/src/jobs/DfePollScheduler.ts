@@ -68,8 +68,9 @@ export class DfePollScheduler {
   /**
    * Lacuna 2374 (dono 25/11/2026) — ALERTA PRIMEIRO, MARCADOR DEPOIS. Entrega o webhook e só com `delivered` (ou `disabled`: sem
    * webhook configurado não há canal a esperar, e exigir entrega travaria o marcador para sempre) manda o serviço gravar o
-   * "já alertei". `failed` ⇒ marcador não gravado ⇒ o documento segue na fila e o próximo tick elegível realerta (a falha já saiu
-   * como `alert.failed`). Trade-off: entrega ao-menos-uma-vez — dois processos, ou uma gravação que falha depois da entrega,
+   * "já alertei". `failed` ⇒ marcador não gravado ⇒ o documento segue na fila e realerta no próximo tick elegível — o da desistência
+   * ao fim do backoff de 1 h (ressalva (d) do #1414: ~1 consulta e 1 alerta por hora por documento), o de transporte no tick seguinte
+   * (a falha já saiu como `alert.failed`). Trade-off: entrega ao-menos-uma-vez — dois processos, ou uma gravação que falha depois da entrega,
    * dão alerta DUPLICADO, nunca alerta perdido. Nunca lança: a falha da confirmação é logada e o marcador fica para o realerta.
    */
   private async alertarComMarcador(tipo: AlertaDePoll, payload: AlertPayload, documentIds: readonly string[]): Promise<void> {
@@ -116,7 +117,7 @@ export class DfePollScheduler {
       }
       // Onda 4 / 4.1: o job desistiu de consultar documento(s) (teto de falhas seguidas ou erro permanente). O documento segue
       // SENT/PROCESSING — alguém precisa consultar na mão ou investigar. Lacuna 2374: o job só PARA de consultar (`pollGaveUpAt`) depois
-      // que este alerta for entregue; falha de entrega ⇒ o documento volta no tick seguinte e o alerta é refeito.
+      // que este alerta for entregue; falha de entrega ⇒ o documento volta ao fim do backoff de 1 h e o alerta é refeito.
       if ((summary.gaveUp ?? 0) > 0) {
         const ids = summary.gaveUpIds ?? [];
         await this.alertarComMarcador(

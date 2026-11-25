@@ -13,6 +13,7 @@ import type {
   FiscalSequenceView,
   IFiscalDocumentRepository,
   NumberedDocumentView,
+  PollStateGuard,
   PollStatePatch,
   SequenceAmbiente,
   TransitionData,
@@ -143,6 +144,24 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
   public async updatePollState(scope: AccountingScope, id: string, patch: PollStatePatch, tx?: Prisma.TransactionClient): Promise<boolean> {
     const r = await this.db(tx).fiscalDocument.updateMany({
       where: { id, ...accountingScopeWhere(scope), deletedAt: null },
+      data: patch,
+    });
+    return r.count === 1;
+  }
+
+  public async updatePollStateWhen(scope: AccountingScope, id: string, guard: PollStateGuard, patch: PollStatePatch, tx?: Prisma.TransactionClient): Promise<boolean> {
+    const r = await this.db(tx).fiscalDocument.updateMany({
+      where: {
+        id,
+        ...accountingScopeWhere(scope),
+        deletedAt: null,
+        status: { in: [...guard.statusIn] },
+        ...(guard.pollGaveUpAt === null ? { pollGaveUpAt: null } : {}),
+        ...(guard.pollAlertedAt === null ? { pollAlertedAt: null } : {}),
+        ...(guard.hasPollLastError ? { pollLastError: { not: null } } : {}),
+        ...(guard.pollAttempts !== undefined ? { pollAttempts: guard.pollAttempts } : {}),
+        ...(guard.pollDeferredSince ? { pollDeferredSince: guard.pollDeferredSince } : {}),
+      },
       data: patch,
     });
     return r.count === 1;
