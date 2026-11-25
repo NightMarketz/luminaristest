@@ -156,20 +156,6 @@
   },
   {
     "type": "dependency",
-    "from": "src/jobs/JobWatermarkRepository.ts",
-    "to": "src/lib/prisma.ts",
-    "unresolvedTo": "../lib/prisma",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "J1-job-is-entrypoint"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/jobs/PurgeDeletedRecords.ts",
     "to": "src/lib/prisma.ts",
     "unresolvedTo": "../lib/prisma",

@@ -1,4 +1,4 @@
-import prisma from '../lib/prisma';
+import prisma from '../../lib/prisma';
 
 /**
  * Prisma-backed repository for `job_watermarks` — a singleton row PER JOB NAME (BRIEF-W2-F).

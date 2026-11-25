@@ -492,6 +492,19 @@ Tem de sair 0 com "27 known violations ignored" (ou o número do dia) antes de q
 
 Em seguida, a branch de integração do backend (F-MBE-1 b): `git fetch origin && git switch -c integration/module-boundaries-be origin/main && git push -u origin integration/module-boundaries-be`, e a pilha com `gh stack init --base integration/module-boundaries-be`.
 
+## 13. Emenda de 24/11/2026 — o que a execução mudou no fatiamento (§2) e na tabela §5.3
+
+O texto ratificado acima não foi reescrito. Esta seção registra onde a execução divergiu dele, por resposta do dono a
+lacuna de spec (respostas literais em `docs/plano/decisoes/D-2026-11-24-MODULE-BOUNDARIES-EXECUCAO-RESPOSTAS.md`).
+
+| Onde | O BRIEF dizia | O que valeu |
+|---|---|---|
+| §2, PR-2 | só as regras do depcruise e as emendas nos ADRs | o PR-2 (#1380) também ligou o lint de `public/` (R6, do F-MBE-3 a) e alinhou a skill `job-generator` à `J1`. Classe: vermelho, revisor obrigatório (arquivo de skill que não é `.md`) |
+| §2, entre o PR-2 e o PR-3.x | não havia PR | **PR de `users/public`** (#1384): `users/public/user.types.ts` (tipo `IUser` e enum `Role`), regra `M4` (`public/*.types.ts` só importa `models/` e `dtos/` da própria feature; nasce em 0), 17 arquivos repontados, textos das skills. `M1` 378 → 359; baseline 441 → 422. Classe: vermelho, revisor obrigatório |
+| §2, PR-2b | mover `JobWatermarkRepository.ts`; `J1` −1; verde | o PR-2b (#1385) também registra o repositório na `lib/factory.ts` e faz o `accountingSyncReconcile.job.ts` pedi-lo ao `getFactory()`: só mover trocava uma aresta `J1` por outra. `J1` 16 → 15; baseline 422 → 421. Classe: vermelho, revisor obrigatório |
+| §5.3, `accountingBinding`, linha `scope/` | `scope/` → `models/` no PR-3.x da feature | pago no #1384 (`BindingScope.ts` em `models/`); o PR-3.x do `accountingBinding` segue com `archetypes/`, `interpreter/`, `runtime/` e `fixtures/` |
+| §2, PR-7.x | `J1` 16 → 0 | parte de 15; do `accountingSyncReconcile.job.ts` restam 5 arestas (4 repositórios e `lib/prisma`) |
+
 ## Gates de envio [OPS-001]
 
 1. **Objetivo:** §1 (medida nova), §2 (fatias com classe), §3 (janela), §4 (prova), §7 (forks).

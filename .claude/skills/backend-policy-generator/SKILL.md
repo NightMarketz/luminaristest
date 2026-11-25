@@ -59,7 +59,7 @@ server/src/features/users/models/User.model.ts
 
 ## ⭐ Exemplo de referência canônico (espelhe este arquivo)
 
-`server/src/features/users/policies/UserPolicy.ts` — Policy perfeita da camada: todo `can*` (`canCreate`/`canView`/`canUpdate`/`canDelete`/`canListAll`) retorna **só `boolean`**, ZERO `throw`, ZERO acesso a dados (inspeciona apenas campos do `actor`), `canListAll` exige `Role.ADMIN`, ownership via `actor.id === targetUserId || actor.role === Role.ADMIN`, `actor: IUser | null` com `null` → `false` (exceto `canCreate(null)` = signup público), `implements IUserPolicy`, imports de `../models/User.model` (`IUser` + `Role` local, nunca `@prisma/client`). Leia-o ANTES de gerar e siga a mesma estrutura/ordem.
+`server/src/features/users/policies/UserPolicy.ts` — Policy perfeita da camada: todo `can*` (`canCreate`/`canView`/`canUpdate`/`canDelete`/`canListAll`) retorna **só `boolean`**, ZERO `throw`, ZERO acesso a dados (inspeciona apenas campos do `actor`), `canListAll` exige `Role.ADMIN`, ownership via `actor.id === targetUserId || actor.role === Role.ADMIN`, `actor: IUser | null` com `null` → `false` (exceto `canCreate(null)` = signup público), `implements IUserPolicy`, imports de `../models/User.model` (`IUser` + `Role` local, nunca `@prisma/client`) — caminho válido só porque esse arquivo mora na própria feature `users`; policy de outra feature importa de `../../users/public/user.types` (POL-008). Leia-o ANTES de gerar e siga a mesma estrutura/ordem.
 
 ## Generation contract
 
