@@ -101,6 +101,21 @@ describe('#9 — fim do PIS/Cofins = ausência de linha PIS_COFINS vigente (não
     expect(() => parametrosDoMes(tabela, 2027, 'M03', 'CUMULATIVO')).toThrow(/PIS\/Cofins revogados a partir de 2027-01 \(fonte da linha: IN RFB 2\.121\/2022/);
   });
 
+  it('lacuna 84ad: o 400 de 2027 cita a LC 214 art. 542 em TODA fonte da linha (republicada), não só a IN RFB da alíquota', () => {
+    const tabela = tabelaPisCofinsDe(linhasPis());
+    let msg = '';
+    try {
+      parametrosDoMes(tabela, 2027, 'M03', 'CUMULATIVO');
+    } catch (e) {
+      msg = (e as Error).message;
+    }
+    expect(msg).toContain('LC 214');
+    expect(msg).toContain('art. 542');
+    const fontes = /\(fonte da linha: (.*)\)/.exec(msg)![1].split(' | ');
+    expect(fontes).toHaveLength(4); // as 4 linhas republicadas; as substituídas (lp1-pc-*) não chegam à fotografia
+    for (const f of fontes) expect([f, f.includes('LC 214/2025 art. 542')]).toEqual([f, true]);
+  });
+
   it('VIRADA: estender o vigenteAte das linhas para 2027-12-31 faz 2027 apurar — mesmo código, só a linha', () => {
     const tabela = tabelaPisCofinsDe(estendidoAte2027());
     expect(parametrosDoMes(tabela, 2027, 'M03', 'CUMULATIVO').PIS).toBeDefined();

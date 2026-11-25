@@ -16,7 +16,7 @@ const Cents = z.string().regex(/^\d+$/);
  *       required: [unitId, anoCalendario, periodo]
  *       properties:
  *         unitId:        { type: string, description: "Unidade lida (proveniência; outra unidade da PJ com movimento no mês ⇒ 400)" }
- *         anoCalendario: { type: integer, minimum: 2025, maximum: 2026, description: "2027+ ⇒ 400 (PIS/Cofins revogados — LC 214/2025 art. 542)" }
+ *         anoCalendario: { type: integer, minimum: 2025, description: "Sem teto no schema: sem linha PIS_COFINS vigente no ano ⇒ 400 (PIS/Cofins revogados; a mensagem cita a fonte da linha)" }
  *         periodo:       { type: string, enum: [M01, M02, M03, M04, M05, M06, M07, M08, M09, M10, M11, M12] }
  *         ajustesBase:
  *           type: array

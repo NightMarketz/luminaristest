@@ -3115,8 +3115,7 @@
           "anoCalendario": {
             "type": "integer",
             "minimum": 2025,
-            "maximum": 2026,
-            "description": "2027+ ⇒ 400 (PIS/Cofins revogados — LC 214/2025 art. 542)"
+            "description": "Sem teto no schema: sem linha PIS_COFINS vigente no ano ⇒ 400 (PIS/Cofins revogados; a mensagem cita a fonte da linha)"
           },
           "periodo": {
             "type": "string",
