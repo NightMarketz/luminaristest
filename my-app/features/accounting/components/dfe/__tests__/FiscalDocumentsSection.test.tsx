@@ -20,6 +20,7 @@ vi.mock('../../../../../lib/services/dfe.service', () => ({
     get: vi.fn(),
     ficha: vi.fn(),
     reenviar: vi.fn(),
+    rearmarPolling: vi.fn(),
     rejeicaoManual: vi.fn(),
     retornoManual: vi.fn(),
     cancelamentoManual: vi.fn(),
@@ -240,6 +241,54 @@ describe('SOT F-18.1 — FiscalDocumentsSection conhece os 9 status do servidor'
     vi.mocked(dfeService.ficha).mockResolvedValue(ficha());
   });
   afterEach(async () => { await new Promise((r) => setTimeout(r, 0)); cleanup(); });
+
+  // Lacunas cf36/3cf5/92c5 (dono 25/11) — o job de polling desistiu / adiou: a tela mostra e deixa antecipar o re-arme.
+  const GAVE_UP = '2026-11-20T10:00:00.000Z';
+  const parado = (over: Partial<FiscalDocumentView> = {}) =>
+    doc({ partner: 'null', status: 'PROCESSING', poll: { attempts: 8, gaveUpAt: GAVE_UP, lastError: 'sefaz_http: HTTP 503', deferredSince: null, alertedAt: null }, ...over });
+
+  it('cf36/3cf5: nota em voo que o job abandonou mostra o aviso com o último erro e o botão; o clique chama a rota e o aviso some', async () => {
+    vi.mocked(dfeService.rearmarPolling).mockResolvedValue(parado({ poll: { attempts: 0, gaveUpAt: null, lastError: 'sefaz_http: HTTP 503', deferredSince: null, alertedAt: null } }));
+    renderSection([parado()]);
+    await screen.findByTestId('fiscal-doc-d1');
+    const aviso = within(card()).getByTestId('fiscal-doc-poll-parado');
+    expect(aviso).toHaveTextContent('consulta automática');
+    expect(aviso).toHaveTextContent('sefaz_http: HTTP 503');
+    fireEvent.click(within(aviso).getByRole('button', { name: /Re-armar consulta/ }));
+    await vi.waitFor(() => expect(within(card()).queryByTestId('fiscal-doc-poll-parado')).not.toBeInTheDocument());
+    expect(dfeService.rearmarPolling).toHaveBeenCalledWith('d1', { unitId: 'u1' });
+  });
+
+  it('cf36/3cf5: falha do re-arme mostra a mensagem do servidor e o aviso fica', async () => {
+    vi.mocked(dfeService.rearmarPolling).mockRejectedValue({ status: 403, error: 'Você não tem permissão para re-armar a consulta de documento fiscal.' });
+    vi.mocked(dfeService.get).mockResolvedValue(parado());
+    renderSection([parado()]);
+    await screen.findByTestId('fiscal-doc-d1');
+    fireEvent.click(within(card()).getByRole('button', { name: /Re-armar consulta/ }));
+    expect(await screen.findByText('Você não tem permissão para re-armar a consulta de documento fiscal.')).toBeInTheDocument();
+    expect(within(card()).getByTestId('fiscal-doc-poll-parado')).toBeInTheDocument();
+  });
+
+  it('cf36/3cf5: só aparece com `poll.gaveUpAt` e nota em voo de parceiro automático (sem aviso: sem desistência, manual ou terminal)', async () => {
+    renderSection([
+      doc({ id: 'sem', partner: 'null', status: 'PROCESSING' }),
+      parado({ id: 'manual', partner: 'manual' }),
+      parado({ id: 'terminal', status: 'AUTHORIZED' }),
+    ]);
+    await screen.findByTestId('fiscal-doc-sem');
+    for (const id of ['sem', 'manual', 'terminal']) expect(within(card(id)).queryByTestId('fiscal-doc-poll-parado')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Re-armar consulta/ })).not.toBeInTheDocument();
+  });
+
+  it('92c5: nota em voo adiada por assinador indisponível mostra o aviso sem botão; se o job já desistiu, só vale o de "parou"', async () => {
+    const adiada = doc({ partner: 'null', status: 'SENT', poll: { attempts: 0, gaveUpAt: null, lastError: null, deferredSince: GAVE_UP, alertedAt: null } });
+    renderSection([adiada, parado({ id: 'ambos', poll: { attempts: 8, gaveUpAt: GAVE_UP, lastError: null, deferredSince: GAVE_UP, alertedAt: null } })]);
+    await screen.findByTestId('fiscal-doc-d1');
+    expect(within(card()).getByTestId('fiscal-doc-poll-adiado')).toHaveTextContent('Assinador local indisponível');
+    expect(within(card()).queryByRole('button', { name: /Re-armar consulta/ })).not.toBeInTheDocument();
+    expect(within(card('ambos')).queryByTestId('fiscal-doc-poll-adiado')).not.toBeInTheDocument();
+    expect(within(card('ambos')).getByTestId('fiscal-doc-poll-parado')).toBeInTheDocument();
+  });
 
   it.each(['PENDING_SIGNATURE', 'CONTINGENCY', 'CANCEL_ANALYSIS'])(
     'SOT F-18.1: status %s tem rótulo e cor próprios',

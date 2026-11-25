@@ -31,6 +31,7 @@ export const doc = (over: Partial<FiscalDocumentView> = {}): FiscalDocumentView 
   xmlAttachmentId: null,
   pdfAttachmentId: null,
   releitura: null,
+  poll: { attempts: 0, gaveUpAt: null, lastError: null, deferredSince: null, alertedAt: null },
   ...over,
 });
 

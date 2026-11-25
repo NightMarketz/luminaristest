@@ -89,6 +89,18 @@ export interface FiscalDocumentView {
   pdfAttachmentId: string | null;
   /** Releitura da TENTATIVA CORRENTE; `null` sem retorno manual (e de novo `null` depois de um reenvio). */
   releitura: Releitura | null;
+  /**
+   * Lacunas cf36/3cf5/6e13 — estado do polling (`dfe_poll_pending`) do documento, espelho de `FiscalDocumentEmissionService.ts` (`poll`).
+   * `gaveUpAt` = o job parou de consultar (teto de tentativas; o re-arme automático de 6 h segue até 7 dias de idade); `deferredSince` =
+   * adiado por assinador local indisponível; `alertedAt` = alerta (de 1 h do adiamento, ou o final do abandono) já emitido.
+   */
+  poll: {
+    attempts: number;
+    gaveUpAt: string | null;
+    lastError: string | null;
+    deferredSince: string | null;
+    alertedAt: string | null;
+  };
 }
 
 // espelha FiscalDocumentEmissionService.ts:52-58 — a tela usa de `payloads` só o tamanho.
@@ -149,6 +161,11 @@ export const dfeService = {
 
   async reenviar(id: string, body: FiscalDocumentActionBodyInput): Promise<FiscalDocumentView> {
     return (await apiClient.post<Envelope<FiscalDocumentView>>(`${BASE}/documents/${enc(id)}/reenviar`, body)).data;
+  },
+
+  /** Lacunas cf36/3cf5 — devolve ao job de polling o documento que ele abandonou; não consulta agora e não muda o status. */
+  async rearmarPolling(id: string, body: FiscalDocumentActionBodyInput): Promise<FiscalDocumentView> {
+    return (await apiClient.post<Envelope<FiscalDocumentView>>(`${BASE}/documents/${enc(id)}/rearmar-polling`, body)).data;
   },
 
   /** `body.errors` é `[T, ...T[]]` — quem chama monta com `nonEmpty()`. */

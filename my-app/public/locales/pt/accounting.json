@@ -2689,6 +2689,14 @@
       "releitura_divergente": "A nota autorizada diverge do que foi enviado — só sai cancelando e emitindo de novo.",
       "sale_cancelled_with_live_document": "A venda foi cancelada, mas esta nota continua válida — cancele a nota no portal e registre aqui."
     },
+    "poll": {
+      "deferred": "Assinador local indisponível: a consulta desta nota está adiada desde",
+      "deferredHint": "Ligue o assinador; a consulta volta sozinha.",
+      "rearm": "Re-armar consulta",
+      "rearmError": "Não foi possível re-armar a consulta.",
+      "stopped": "A consulta automática desta nota ao parceiro parou",
+      "stoppedHint": "O sistema tenta de novo a cada 6 horas por até 7 dias; você pode antecipar."
+    },
     "reenviar": {
       "error": "Não foi possível reenviar.",
       "hint": "Corrija o perfil fiscal ou a venda antes de reenviar — a DPS é remontada."
