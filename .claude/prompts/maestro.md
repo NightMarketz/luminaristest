@@ -35,6 +35,10 @@ CICLO
      não despache a 4ª: o PR vai ao lote marcado "repensar a abordagem". Se não deu para despachar, o PR vai ao
      lote marcado **sem revisor**; não some. Achado `P` (pré-existente) não segura o PR: o revisor o põe na caixa e
      ele segue pelo passo 3b (OPS-007). Nunca mergeie vermelho.
+   - Não re-despache o revisor (D-2026-11-25-MATRIZ-DE-LACUNAS §8): PR que corrige achado de revisão fecha quando a
+     reprodução do achado fica verde e o CI passa, e conta como rodada do PR de origem (8a; se tocar arquivo fora da
+     localização do achado, vale a regra normal). Push que só faz merge da `main`, sem mudar arquivo do PR, não é SHA
+     novo para a revisão (8c).
    - Nada de comentário público em PR; contexto vai no resumo.
 
 3. Fila. Nó entra se: estado `ready`/`inflight`, `autorizacao` com 'executa' do dono, BRIEF ratificado, nenhum
@@ -54,13 +58,17 @@ CICLO
 
 3b. Lacunas da caixa (D-2026-11-11-LACUNA-VAI-AO-MAESTRO §2 e emendas de 21/11). Passo 0, nesta ordem, sem julgamento:
    `node scripts/lacunas.mjs sincronizar` (PR mergeado que toca o arquivo → resolvida; leia o diff de cada "conferir" e
-   resolva ou reabra; fechado sem merge → aberta), `triar` (fork, gate, geração > 3 → com-dono), `list --paradas`
+   resolva ou reabra; fechado sem merge → aberta), `triar` (fork, gate, geração > 2 → com-dono), `list --paradas`
    (tempo no estado: abra a sessão agora ou escreva o motivo no resumo) e `list --grupos`.
    - **Meta do dreno (dono, 25/11, D-2026-11-25-MATRIZ-DE-LACUNAS):** zerar as não finais P0 e P1 de qualquer domínio e
      P2 do domínio `fiscal` (`list --abertas --prioridade meta`), não a caixa inteira; saem por prioridade, e as atrasadas
      (`list --prioridade atrasada`; prazo P0 1 dia, P1 7, P2 30) primeiro. Lacuna sem matriz (caixa legada, `--prioridade
      sem`) conta como meta até `classificar <id> --motivo "…" <eixos>`. G5 (nit/estilo) não abre sessão: vai de carona no PR que tocar o
      arquivo (`list --por-arquivo`) ou são descartadas com motivo.
+   - **Admissão (§7 da mesma decisão):** só a meta, `fork` e `gate` são despachados. O resto `aberta` de G1–G4 é backlog
+     (`list --backlog`, por P; o `pulso` conta): não abre sessão, só entra no BRIEF de sessão da meta que já vai tocar o
+     mesmo arquivo e o mesmo comportamento. Uma vez por semana, o backlog vai ao dono na pergunta do dia; ele promove com
+     `classificar <id> --admitir --motivo "…"` ou descarta.
    - **Resposta do dono a fork/gate da caixa** (pergunta do dia): `set <id> --estado aberta --classe <a da resposta>
      --destino "dono, <data>: <resposta>"`, ou `descartada` com o motivo, no mesmo ciclo. `com-dono` não é depósito.
    - **Grupo** (2+ lacunas não finais com arquivo em comum ou da mesma rodada) → uma `sessao-planejamento` do grupo, que

@@ -28,7 +28,7 @@
 //   node scripts/lacunas.mjs set <id> --estado <estado> --destino "<sessão / PR / pergunta / motivo>" [--pr <n>]
 //        (--estado em-pr exige --pr, ou um pr já gravado na lacuna) [--classe <classe>]
 //        (fork respondido: `set <id> --estado aberta --classe <a que a resposta definiu> --destino "dono, <data>: <resposta>"`)
-//   node scripts/lacunas.mjs triar [--simular]   (fork, gate e geração > 3 abertos → com-dono; o passo 0 do maestro)
+//   node scripts/lacunas.mjs triar [--simular]   (fork, gate e geração > 2 abertos → com-dono; o passo 0 do maestro)
 //   node scripts/lacunas.mjs sincronizar [--simular]   (lê o GitHub com `gh`: PR mergeado que toca o arquivo → resolvida;
 //        mergeado sem tocar → só avisa; fechado sem merge → aberta; em-sessao com PR aberto → em-pr)
 //   node scripts/lacunas.mjs pulso [--marcar-dreno]   (uma linha: estados, paradas, dias desde o último despacho a
@@ -65,8 +65,9 @@ const EU = fileURLToPath(import.meta.url);
 export const CLASSES = ['defeito', 'debito', 'spec', 'feature', 'fork', 'gate'];
 export const ESTADOS = ['aberta', 'em-sessao', 'em-pr', 'resolvida', 'com-dono', 'descartada'];
 export const FINAIS = ['resolvida', 'descartada'];
-// Geração além disto (lacuna da lacuna da lacuna…) não abre sessão sozinha: vai ao dono como "repensar".
-export const GERACAO_MAX = 3;
+// Geração além disto (lacuna da lacuna…) não abre sessão sozinha: vai ao dono como "repensar".
+// Era 3; a D-2026-11-25-MATRIZ-DE-LACUNAS §8b baixou para 2.
+export const GERACAO_MAX = 2;
 // Lacuna `aberta` há mais dias que isto sem destino é "parada": o maestro a lista no resumo com o motivo (OPS-007).
 export const DIAS_PARADA = 3;
 // Dias no estado atual (desde a última transição, não desde a criação) até a lacuna contar como parada.
@@ -231,6 +232,10 @@ export function adicionar(campos, dir = pasta(), agora = new Date()) {
   let geracao = 1;
   if (campos.pai) {
     try { geracao = (ler(dir, campos.pai).geracao ?? 1) + 1; } catch { throw new Error(`pai inexistente: ${campos.pai}`); }
+    // §8b: sessão aberta para lacuna só registra filha da meta; o resto vai descrito no relatório, sem add.
+    if (!ehMeta({ classe: campos.classe, ...matriz })) {
+      throw new Error(`lacuna filha fora da meta (${prioridade({ classe: campos.classe, ...matriz }) ?? 'G5'}): descreva no relatório, sem add (${REGRA} §8b)`);
+    }
   }
   const stamp = agora.toISOString().replace(/[-:]/g, '').slice(0, 15).replace('T', '-');
   const id = `L-${stamp}-${randomBytes(2).toString('hex')}`;
@@ -364,7 +369,7 @@ export function pulso(dir = pasta(), agora = new Date()) {
   const atrasadas = naoFinais.filter((l) => atrasada(l, agora)).length;
   const metaAberta = todas.filter((l) => l.estado === 'aberta' && ehMeta(l)).length;
   const precisaDreno = metaAberta > 0 && (diasSemDespacho === null || diasSemDespacho >= 1) && !marcaRecente;
-  return { conta, meta: metaLs.length, metaDano, metaFalta, metaAberta, semMatriz, foraDaConta, atrasadas,
+  return { conta, meta: metaLs.length, metaDano, metaFalta, metaAberta, semMatriz, foraDaConta, atrasadas, backlog: backlog(todas).length,
     paradas: paradas(dir, { agora }).length, ultimoDespacho: ultimo, diasSemDespacho, precisaDreno };
 }
 
@@ -373,7 +378,7 @@ export function triar(dir = pasta(), { simular = false, agora = new Date() } = {
   const feitas = [];
   for (const l of listar(dir).filter((x) => x.estado === 'aberta')) {
     let destino = '';
-    if (l.geracao > GERACAO_MAX) destino = 'geração > 3: repensar a abordagem (a cadeia não está convergindo)';
+    if (l.geracao > GERACAO_MAX) destino = 'geração > 2: repensar a abordagem (a cadeia não está convergindo)';
     else if (l.classe === 'fork') destino = 'fork: pergunta única do dia (AskUserQuestion com contexto)';
     else if (l.classe === 'gate') destino = 'gate humano ou dado externo: "Parado em mim"';
     if (!destino) continue;
@@ -423,9 +428,22 @@ export function classificar(id, campos, dir = pasta(), agora = new Date()) {
     if (JSON.stringify(de) !== JSON.stringify(para)) mudou[k] = { de, para };
     if (para === null) delete l[k]; else l[k] = para;
   }
+  if (campos.admitir) {
+    if (!ehMeta(l) && !admitida(l)) mudou.admitida = { de: null, para: true };
+    l.admitida = { em: agora.toISOString(), motivo: String(motivo) };
+  }
   l.classificacoes = [...(l.classificacoes ?? []), { em: agora.toISOString(), mudou, motivo: String(motivo) }];
   writeFileSync(join(dir, `${id}.json`), JSON.stringify(l, null, 2));
   return l;
+}
+
+// §7 Admissão: o maestro despacha só a meta e fork/gate (que vão ao dono). O resto `aberta` de G1–G4 é backlog, fora
+// do despacho, ordenado por P; o dono o revê por semana e promove com `classificar --admitir --motivo`. G5 vai de carona.
+export const admitida = (l) => !!l.admitida;
+export const despachavel = (l) => ehMeta(l) || admitida(l) || CLASSES_DO_DONO.includes(l.classe);
+export function backlog(ls) {
+  return ls.filter((l) => l.estado === 'aberta' && nivelDe(l) && contaNaCaixa(l) && !despachavel(l))
+    .sort((a, b) => (prioridade(a) ?? 'P9').localeCompare(prioridade(b) ?? 'P9') || a.criada.localeCompare(b.criada));
 }
 
 export function filtrarPrioridade(ls, p, agora = new Date()) {
@@ -489,7 +507,7 @@ function flags(argv) {
 }
 
 function linha(l) {
-  const alerta = (l.geracao > GERACAO_MAX ? ' ⚠ geração > 3: ao dono' : '') + (l.rodada ? ` · rodada ${l.rodada}` : '');
+  const alerta = (l.geracao > GERACAO_MAX ? ' ⚠ geração > 2: ao dono' : '') + (l.rodada ? ` · rodada ${l.rodada}` : '');
   const atraso = atrasada(l) ? ' · ⏰ prazo vencido' : '';
   return `${l.id} · ${l.estado} · ${l.classe} ${rotuloMatriz(l)} · ${l.local} · ger ${l.geracao}${alerta}${atraso}\n    ${l.oQue}` +
     (l.destino ? `\n    → ${l.destino}` : '');
@@ -524,6 +542,12 @@ function main() {
       avisoCopiaGlobal();
       return;
     }
+    if (f.backlog) {
+      const b = backlog(listar(pasta()));
+      console.log(b.length ? b.map(linha).join('\n') : '(backlog vazio)');
+      avisoCopiaGlobal();
+      return;
+    }
     if (f.gravidade !== undefined && f.prioridade === undefined) {
       throw new Error('list --gravidade saiu na v7: use --prioridade <P0|P1|P2|P3|meta|sem|atrasada> (D-2026-11-25-MATRIZ-DE-LACUNAS)');
     }
@@ -535,7 +559,7 @@ function main() {
   } else if (cmd === 'set') {
     console.log(linha(mudar(f._[0], { estado: f.estado, destino: f.destino, pr: f.pr, classe: f.classe })));
   } else if (cmd === 'classificar') {
-    console.log(linha(classificar(f._[0], { ...eixosDe(f), motivo: f.motivo })));
+    console.log(linha(classificar(f._[0], { ...eixosDe(f), motivo: f.motivo, admitir: !!f.admitir })));
   } else if (cmd === 'triar') {
     const fs = triar(pasta(), { simular: !!f.simular });
     console.log(fs.length ? fs.map((x) => `${x.id} · ${x.classe} → com-dono · ${x.destino}`).join('\n') + (f.simular ? '\n(simulação: nada gravado)' : '') : '(nada a triar)');
@@ -559,7 +583,7 @@ function main() {
     const c = Object.entries(p.conta).map(([k, v]) => `${k} ${v}`).join(' · ');
     const d = p.diasSemDespacho === null ? 'nenhum despacho a em-sessao registrado' : `último despacho a em-sessao há ${p.diasSemDespacho} dia(s)`;
     console.log(`${c} · meta ${p.meta} (dano ${p.metaDano} · falta ${p.metaFalta} · sem matriz ${p.semMatriz}) · atrasadas ${p.atrasadas}` +
-      ` · G5 ${p.foraDaConta} · paradas ${p.paradas} · ${d}`);
+      ` · backlog ${p.backlog} · G5 ${p.foraDaConta} · paradas ${p.paradas} · ${d}`);
     if (p.precisaDreno) {
       console.log(`DRENO: proponha UM cartão "Drenar a caixa de lacunas (${p.metaAberta} de meta P0/P1/fiscal P2 abertas)" e rode \`pulso --marcar-dreno\``);
     }

@@ -130,7 +130,8 @@ continua; muda o destino do achado:
   --o-que "…"
   --evidencia "…" [--como-provar "…"] [--no <NÓ>] [--pr <n>] [--pai <id>]` (`--pai` = o id da lacuna que originou esta
   sessão, se veio de uma; em spec, feature, fork ou gate, `--impacto` no lugar de `--gravidade`; com G5, nit/estilo, basta
-  o domínio). O id entra na linha do relatório e no corpo do PR.
+  o domínio). Com `--pai`, só entra filha da meta: a de fora o `add` recusa, e ela vai descrita no relatório
+  (D-2026-11-25-MATRIZ-DE-LACUNAS §8b). O id entra na linha do relatório e no corpo do PR.
 - 1ª linha do relatório final: `LACUNAS NA CAIXA: <n> (<ids>)` ou `LACUNAS NA CAIXA: 0`; `<n>` não conta G5 (nit e estilo),
   que vai ao lado como `· G5: <m>` (matriz: `docs/plano/decisoes/D-2026-11-25-MATRIZ-DE-LACUNAS.md`).
 - **Não envie a lacuna por `SendMessage` ao maestro**: turno aberto por mensagem de sessão não abre sessão, e a cadeia

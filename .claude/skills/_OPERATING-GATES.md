@@ -230,6 +230,8 @@ Regra completa: `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`.
    domínio. A prioridade P0–P3 é derivada, nunca digitada. Meta do dreno: P0 e P1 de qualquer domínio, mais P2 do domínio
    `fiscal`; prazo P0 1 dia, P1 7, P2 30. `classificar <id> --motivo "…" [eixos]` reclassifica. G5 entra na caixa fora
    da contagem e vai também no texto do PR (`D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA`, no que a matriz não muda).
+   **Filha só se for meta** (matriz §8b): sessão aberta para lacuna registra filha (`--pai`) só se ela cair na meta; o
+   `add --pai` recusa a de fora, que vai descrita no relatório, sem `add`.
    **Worktree sem `scripts/lacunas.mjs`** (cortada antes de 11/11; "Cannot find module"): o mesmo script, com a mesma
    caixa, está em `node "$HOME/.claude/tools/lacunas/lacunas.mjs" add …` (Bash e PowerShell). Falhar o comando não
    dispensa o registro.
@@ -243,7 +245,9 @@ Regra completa: `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`.
    `.claude/prompts/maestro.md` a partir do passo 3b) e rode `pulso --marcar-dreno`. A caixa só anda quando um maestro roda. O `DRENO`
    só sai com lacuna de meta (P0, P1, P2 fiscal ou sem matriz) `aberta`: a meta é zerar essas, não a caixa inteira.
 5. **Quem resolve:** o maestro lê a caixa a cada ciclo e abre a sessão certa sem perguntar ao dono; fork, gate e
-   cadeia longa (geração > 3) vão ao dono (`lacunas.mjs triar` faz isso sem julgamento, no começo do ciclo). Duas ou
+   cadeia longa (geração > 2, "repensar a abordagem") vão ao dono (`lacunas.mjs triar` faz isso sem julgamento, no
+   começo do ciclo). Só a meta, fork e gate são despachados; o resto `aberta` de G1–G4 é **backlog** (`list --backlog`),
+   que o dono revê por semana e promove com `classificar <id> --admitir --motivo "…"` (matriz §7). Duas ou
    mais lacunas com arquivo em comum, ou da mesma rodada, são um **grupo** (`list --grupos`): vão a **um** planejamento
    que resolve o conjunto pela causa comum, não a um remendo por lacuna; o BRIEF do grupo sem fork executa sem ratificação
    (dono, chat, 21/11: "Sim, executa"), com fork vai à pergunta do dia. A caixa é fila de trabalho, não rodada de

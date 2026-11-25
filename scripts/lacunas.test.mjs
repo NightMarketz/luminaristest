@@ -134,7 +134,7 @@ test('paradas com --dias N: aberta antiga entra; recém-criada e recém-movida n
   assert.equal(ps[0].idadeDias, 11);
 });
 
-test('triar manda fork, gate e geração > 3 ao dono; defeito fica; --simular não grava', () => {
+test('triar manda fork, gate e geração > 2 ao dono (§8b da MATRIZ); defeito fica; --simular não grava', () => {
   const dir = nova();
   const d = adicionar(base, dir);
   const f = adicionar({ ...base, local: 'f.ts:1', classe: 'fork', gravidade: undefined, impacto: 'G3' }, dir);
@@ -143,13 +143,14 @@ test('triar manda fork, gate e geração > 3 ao dono; defeito fica; --simular n�
   const p2 = adicionar({ ...base, local: 'p2.ts:1', pai: p1.id }, dir);
   const p3 = adicionar({ ...base, local: 'p3.ts:1', pai: p2.id }, dir);
   const p4 = adicionar({ ...base, local: 'p4.ts:1', pai: p3.id }, dir);
-  assert.deepEqual(triar(dir, { simular: true }).map((x) => x.id).sort(), [f.id, g.id, p4.id].sort());
+  assert.deepEqual(triar(dir, { simular: true }).map((x) => x.id).sort(), [f.id, g.id, p3.id, p4.id].sort());
   assert.ok(listar(dir).every((l) => l.estado === 'aberta'));
   triar(dir);
   const est = Object.fromEntries(listar(dir).map((l) => [l.id, l.estado]));
   assert.equal(est[d.id], 'aberta');
   assert.equal(est[f.id], 'com-dono');
   assert.equal(est[g.id], 'com-dono');
+  assert.equal(est[p3.id], 'com-dono');
   assert.equal(est[p4.id], 'com-dono');
   assert.deepEqual(triar(dir), []);
 });

@@ -4,7 +4,7 @@ tipo: "decisao"
 dominio: "processo"
 titulo: "Lacuna da caixa recebe matriz de 6 eixos; a prioridade P0–P3 é derivada; meta do dreno = P0 + P1 + fiscal P2"
 estado: "decided"
-autorizacao: "dono, questionário no chat, 2026-11-25: eixos = '6 eixos'; meta = 'P0 + P1 + fiscal P2'; quem = 'Quem registra + maestro'; não-defeito = 'Sim, pelo custo de não ter'. Depois da revisão externa (§6), 'Perfeito pode seguir' sobre R1–R6 e as propostas de C2–C4; ordem dos PRs = 'Integração única' (integration/caixa-gravidade, com o #1408 como 1ª camada)."
+autorizacao: "dono, questionário no chat, 2026-11-25: eixos = '6 eixos'; meta = 'P0 + P1 + fiscal P2'; quem = 'Quem registra + maestro'; não-defeito = 'Sim, pelo custo de não ter'. Depois da revisão externa (§6), 'Perfeito pode seguir' sobre R1–R6 e as propostas de C2–C4; ordem dos PRs = 'Integração única' (integration/caixa-gravidade, com o #1408 como 1ª camada). Admissão e revisão (cópia da sessão Claude Ship): §7 'Dobrar na matriz', 4 eixos 'Manter 6 obrigatórios', §9 'Adotar 9a, 9b e 9c' (questionário, 25/11)."
 atualizado: "2026-11-25"
 ---
 # D-2026-11-25-MATRIZ-DE-LACUNAS
@@ -167,7 +167,83 @@ Lido nas buscas de 25/11; as páginas oficiais não foram abertas inteiras. As f
 - [Qualys, CVSS v4](https://blog.qualys.com/product-tech/2023/11/02/cvss-v4-is-now-live-and-what-do-you-need-to-know)
 - [OWASP Risk Rating](https://owasp.org/www-community/OWASP_Risk_Rating_Methodology)
 
-## 7. Implementação e o que vem depois
+## 7. Admissão: só a meta é despachada
+
+A matriz diz em que ordem as lacunas são tratadas, mas não quantas entram no despacho. Esta seção é o critério de
+parada; os §1–§6 são o rótulo que ele lê.
+
+**Regra.** O maestro abre sessão só para lacuna da meta (P0, P1 e P2 fiscal) e para `fork`/`gate`, que vão ao dono
+(`com-dono`, como hoje). O resto continua registrado e `aberta`, mas **fora do despacho**: é o backlog.
+- **Backlog** = lacuna `aberta` de G1–G4 fora da meta, que não é `fork` nem `gate` e não foi admitida, ordenada por P.
+  `list --backlog` lista, e o `pulso` mostra `backlog <n>`. G5 não entra no backlog: vai de carona no PR que tocar o
+  arquivo (§3).
+- O backlog não some. O dono o revê uma vez por semana (`list --backlog`). Dali, uma lacuna pode ser promovida com
+  `classificar <id> --admitir --motivo "…"`, que grava no `historico` e a torna despachável, ou ser descartada com o motivo.
+- Lacuna do backlog que cai num arquivo que uma sessão da meta já vai tocar entra no BRIEF dessa sessão. Isso só
+  acontece se não aumentar o raio do PR (o mesmo arquivo e o mesmo comportamento). Não abre sessão própria.
+- A regra global de 11/11 ("lacuna achada não fica para trás") continua valendo para o **registro**. O que muda é só o
+  **despacho**.
+
+**Por quê.** Medido pela outra sessão em 25/11 e não reconferido aqui: lacunas com `lacunas.mjs list --json`, toda a
+caixa, de 11/11 a 25/11; CI com `gh run list`, as últimas 400 runs, de 14/11 a 25/11.
+
+| Sinal | Número |
+|---|---|
+| Lacunas criadas | 482, 172 delas só em 24/11 |
+| Resolvidas / abertas | 135 / 244. Entra cerca de 3,5× o que sai |
+| Criadas por sessão de lacuna (geração 2–4) | 106, saídas de 55 lacunas que tiveram filhas |
+| Vindas de rodada de revisão (`--rodada`) | 86, em cerca de 15 rodadas, quase todas em 24/11. Os nomes mostram revisão de revisão: `revisao-lote` → `ressalvas-lote` → `revisao-rodada-ressalvas` → `revisao-final-lote` |
+| Classe | débito 172 · spec 72 · feature 41 · defeito 162 · fork 25 · gate 10. 59% não são defeito |
+| CI | 400 runs; 101 canceladas (25%); mediana de 2 runs por branch, p90 de 5 |
+
+Leitura: o despacho automático de tudo, somado às lacunas filhas e às rodadas de revisão de revisão, forma um laço sem
+critério de parada. A ligação causal é inferida dos campos `pai`, `geracao` e `rodada`; ninguém leu sessão por sessão. O
+CI não é o gargalo: a mediana é de 2 runs por PR.
+
+**Efeito esperado, que precisa ser medido depois.** No piloto, 13 das 20 lacunas caem na meta, porque o piloto foi
+escolhido com peso em fiscal e contábil. A fração real das 244 só se sabe depois da reclassificação (§9).
+- Se mais de 60% das 244 caírem na meta, a admissão não está cortando nada. A meta volta ao dono para ser estreitada,
+  por exemplo P0 + P1 só, sem P2 fiscal.
+- Se a fração for menor, a regra está cumprindo o papel. Em 14 dias, mede-se a entrada contra a saída de novo.
+
+Os 6 eixos continuam obrigatórios no `add` (§4). A cópia propunha 4 obrigatórios, com detecção e certeza opcionais; o
+dono manteve os 6 (questionário, 25/11).
+
+## 8. Revisão e gate: o achado fecha pela própria prova, e o gate roda uma vez por SHA
+
+São o 9a, o 9b e o 9c da cópia, adotados pelo dono em 25/11. Emenda a
+[D-2026-11-06-REVISAO-CONVERGENCIA](D-2026-11-06-REVISAO-CONVERGENCIA.md) e o passo 2 do `maestro.md`. Não cria revisor,
+gate nem rodada (regra ⛔): só tira repetição. O 8a e o 8c são regra de processo do maestro e do revisor, sem código;
+o 8b está no `scripts/lacunas.mjs` v7.
+
+**8a. Achado de revisão fecha pela reprodução dele.**
+- O revisor já entrega um teste ou comando executável por achado (D-2026-11-06). O PR que corrige o achado fecha quando
+  essa reprodução fica verde e o CI passa.
+- Esse PR **não** recebe nova rodada do `revisor-independente`, mesmo sendo vermelho de código. A exceção é quando
+  ele toca um arquivo fora da localização do achado, porque aí já é outra mudança e vale a D-2026-11-06 normal.
+- O PR de correção conta como rodada do PR de origem, dentro do teto de 3. A contagem não recomeça do zero num PR novo.
+- Rodada de revisão pedida pelo dono (`--rodada`) cobre o lote, uma vez. Os achados dela também fecham pela reprodução;
+  não se abre `ressalvas-…` nem `revisao-…-ressalvas` sobre a rodada anterior. Se o dono quiser outra rodada, ele pede,
+  e ela olha só o diff novo.
+
+**8b. Teto de geração.**
+- Uma sessão aberta para resolver lacuna só registra lacuna filha se ela cair na meta (§7). `add --pai` recusa a filha
+  fora da meta ("descreva no relatório, sem add"), e ela vai descrita no relatório.
+- Geração > 2 vai a `com-dono`, marcada "repensar a abordagem": o `triar` faz isso com `GERACAO_MAX` 2. Antes o corte
+  era > 3 (D-2026-11-11).
+- Pela medição da outra sessão em 25/11, havia 29 lacunas de geração 3 e 4.
+
+**8c. Gate uma vez por SHA.**
+- O CI é o oráculo do `tsc`, da suíte e do `check:arch` para o SHA do PR.
+- A sessão roda, enquanto trabalha, só o teste do escopo e o `tsc` do lado que tocou, que já é a regra das skills.
+  Não repete o conjunto de gates antes do push "para garantir".
+- O `revisor-independente` lê o resultado do CI para o SHA que está revisando (`gh pr checks <n>`). Não roda de novo
+  `tsc` nem a suíte que o CI já passou verde ali. Mantém o que só ele faz: a leitura do diff, a sabotagem e a reprodução
+  de cada achado. Se o CI ainda não terminou para aquele SHA, ele espera em vez de rodar a cópia local.
+- O maestro não re-despacha o revisor para um SHA que ele já revisou (regra de hoje). Push que só faz merge da `main`,
+  sem mudar arquivo do PR, não conta como SHA novo para a revisão.
+
+## 9. Implementação e o que vem depois
 
 **No PR da matriz (v7 do `scripts/lacunas.mjs`, empilhado sobre o #1408 em `integration/caixa-gravidade`):**
 - `add` exige `--dominio`, `--gravidade` (defeito/débito) ou `--impacto` (o resto), `--exposicao`, `--deteccao` e
@@ -176,7 +252,15 @@ Lido nas buscas de 25/11; as páginas oficiais não foram abertas inteiras. As f
   - Mescla só os eixos dados e guarda o de → para de cada eixo.
   - O rótulo único antigo é tratado como sem matriz.
 - `list --prioridade <P0|P1|P2|P3|meta|sem|atrasada>` substitui `--gravidade sem|meta`. A linha mostra o P e os eixos.
-- `pulso` mostra a meta (dano · falta · sem matriz), as atrasadas e o G5.
+- `pulso` mostra a meta (dano · falta · sem matriz), as atrasadas, o backlog e o G5.
+- `list --backlog` lista o que está fora do despacho (§7), e `classificar <id> --admitir --motivo "…"` promove uma
+  lacuna do backlog.
+- `add --pai` recusa lacuna filha fora da meta, e `GERACAO_MAX` baixa de 3 para 2: o `triar` manda geração > 2 a
+  `com-dono` (§8b).
+- Docs: `.claude/prompts/maestro.md` (passo 3b despacha só a meta, fork e gate; backlog semanal ao dono; passo 2 sem
+  nova rodada para PR de correção de achado nem para push que só faz merge da `main`), `.claude/agents/revisor-independente.md`
+  (lê o CI do SHA; sabotagem e reprodução ficam), `.claude/skills/_OPERATING-GATES.md` (OPS-007), as 5
+  `.claude/skills/sessao-*/SKILL.md` (filha só da meta) e uma linha de emenda na D-2026-11-11 e na D-2026-11-06.
 - Fecha a lacuna L-20261125-123319-1ae3.
 
 **Depois do merge na `main`:**

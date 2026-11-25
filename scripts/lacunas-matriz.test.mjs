@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { adicionar, atrasada, classificar, ehMeta, filtrarPrioridade, grupos, listar, mudar, paradas, prioridade, pulso } from './lacunas.mjs';
+import { adicionar, atrasada, backlog, classificar, ehMeta, filtrarPrioridade, grupos, listar, mudar, paradas, prioridade, pulso } from './lacunas.mjs';
 
 const nova = () => mkdtempSync(join(tmpdir(), 'lacunas-matriz-'));
 const script = fileURLToPath(new URL('./lacunas.mjs', import.meta.url));
@@ -148,6 +148,33 @@ test('classificar depois de set --classe: o nível do outro lado é descartado',
   assert.equal(prioridade(l), 'P1');
 });
 
+test('§7 admissão: fora da meta é backlog ordenado por P; fork/gate e admitida saem do backlog; G5 não entra', () => {
+  const dir = nova();
+  const t0 = new Date('2026-11-25T12:00:00Z');
+  const p3 = adicionar({ ...bug, local: 'a.ts:1', classe: 'debito', gravidade: 'G4', dominio: 'produto' }, dir, t0);
+  const p2 = adicionar({ ...bug, local: 'b.ts:1', classe: 'debito', gravidade: 'G3', dominio: 'engenharia' }, dir, t0);
+  adicionar(bug, dir, t0); // P1: meta, despachável
+  adicionar({ ...feat, local: 'c.ts:1', classe: 'fork', dominio: 'produto', impacto: 'G4' }, dir, t0); // vai ao dono
+  adicionar(nit, dir, t0); // G5: carona
+  assert.deepEqual(backlog(listar(dir)).map((l) => l.id), [p2.id, p3.id], 'só G1–G4 fora da meta, P2 antes de P3');
+  assert.equal(pulso(dir, t0).backlog, 2);
+  assert.throws(() => classificar(p3.id, { admitir: true }, dir, t0), /--motivo/);
+  const l = classificar(p3.id, { admitir: true, motivo: 'dono, revisão semanal: entra' }, dir, t0);
+  assert.equal(l.admitida.motivo, 'dono, revisão semanal: entra');
+  assert.deepEqual(l.classificacoes.at(-1).mudou.admitida, { de: null, para: true });
+  assert.deepEqual(backlog(listar(dir)).map((x) => x.id), [p2.id]);
+});
+
+test('§8b: lacuna filha só entra se cair na meta; geração > 2 vai ao dono no triar', () => {
+  const dir = nova();
+  const pai = adicionar(bug, dir);
+  assert.throws(() => adicionar({ ...bug, local: 'f.ts:1', classe: 'debito', gravidade: 'G3', dominio: 'engenharia', pai: pai.id }, dir),
+    /filha fora da meta \(P2\)/);
+  assert.throws(() => adicionar({ ...nit, pai: pai.id }, dir), /filha fora da meta \(G5\)/);
+  const fiscal = adicionar({ ...bug, local: 'g.ts:1', classe: 'debito', gravidade: 'G3', dominio: 'fiscal', pai: pai.id }, dir);
+  assert.equal(fiscal.geracao, 2, 'P2 fiscal é meta: entra');
+});
+
 test('G5 não vira parada nem forma grupo', () => {
   const dir = nova();
   const t0 = new Date('2026-11-01T12:00:00Z');
@@ -175,7 +202,7 @@ test('CLI: add com eixos, list --prioridade, classificar e pulso', () => {
   assert.match(run('list', '--prioridade', 'meta').stdout, /defeito P0 \(G1·E2·silencioso·inferido·fiscal · gatilho norma\) · b\.ts:1/);
   assert.doesNotMatch(run('list', '--prioridade', 'meta').stdout, /a\.ts:1/);
   assert.equal(run('list', '--gravidade', 'meta').status, 1, '--gravidade saiu do list');
-  assert.match(run('pulso').stdout, /meta 1 \(dano 1 · falta 0 · sem matriz 0\) · atrasadas 0 · G5 1/);
+  assert.match(run('pulso').stdout, /meta 1 \(dano 1 · falta 0 · sem matriz 0\) · atrasadas 0 · backlog 0 · G5 1/);
   const id = listar(dir).find((l) => l.local === 'a.ts:1').id;
   const r = run('classificar', id, '--motivo', 'é duplicação real', '--gravidade', 'G3', '--exposicao', 'E1', '--deteccao', 'ruidoso',
     '--certeza', 'verificado');
