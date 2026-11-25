@@ -70,8 +70,10 @@ export const SIMPLES_DAS_DOCUMENTO_ANEXADO = 'tax.simples_das.documento_anexado'
 const TABELAS: readonly LegalParameterTabela[] = ['SIMPLES_ANEXO_FAIXA', 'SIMPLES_ANEXO_REPARTICAO', 'SIMPLES_TETO_ISS', 'SIMPLES_ENQUADRAMENTO', 'SIMPLES_LIMITE', 'ISS_LIMITE', 'MARCO_LEGAL'];
 
 /**
- * Res. CGSN 140 art. 27 II, red. Res. CGSN 190/2026 art. 9º (DOU 10/08/2026; efeitos em 01/01/2027, lido no Normas RFB — BRIEF
- * `BE-INCR-SIMPLES-NACIONAL-brief.md` [D16]): 2% de ISS também no mês seguinte ao do início de atividade. Fica em código: a
+ * Res. CGSN 140 art. 27 II, red. Res. CGSN 190/2026 (DOU 10/08/2026), efeitos em 01/01/2027 pelo art. 9º II da 190, na redação da
+ * Res. CGSN 196/2026 (DOU 16/11/2026, vigência 24/11/2026: o inciso I deu efeito imediato só às alterações dos arts. 144-D e 144-E;
+ * as demais, como esta, ficam no inciso II) — lido no Normas RFB (multivigente idAto 152832, sha256 38a118e8…) — BRIEF
+ * `BE-INCR-SIMPLES-NACIONAL-brief.md` [D16]: 2% de ISS também no mês seguinte ao do início de atividade. Fica em código: a
  * fonte NÃO está no acervo `ctresb/leis` e não foi relida na fatia 4 da Onda 3.2 (lacuna registrada na caixa) — não é o marco da LC 214.
  */
 const INICIO_CGSN190_MES_SEGUINTE = '2027-01';
