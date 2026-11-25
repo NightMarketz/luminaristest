@@ -32,6 +32,7 @@ import {
 } from '@/features/accounting/services/FiscalDocumentLifecycleService';
 import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { DfeTransporteError, DfeTransporteIndisponivelError, type EmissaoResult } from '@/features/accounting/dfe/DfeEmissorPort';
+import { ForbiddenError, ValidationError } from '@/lib/errors';
 import { enviarTentativa } from '@/features/accounting/services/dfeEnvio';
 
 const DONO = 'u-dfe-poll-res';
@@ -39,15 +40,17 @@ const UNIT = 'unit-dfe-poll-res';
 const scope = resolveAccountingScopeInternal({ userId: DONO }, UNIT);
 const repo = new FiscalDocumentRepository();
 
-const service = new FiscalDocumentLifecycleService(
-  repo,
-  { getById: jest.fn(async (_s: unknown, id: string) => ({ id })) } as never,
-  { upload: jest.fn(async () => ({ id: 'att' })) } as never,
-  { attachSourceDocument: jest.fn(async () => ({ id: 'src' })), retireSourceDocument: jest.fn() } as never,
-  { canEmitFiscalDocument: () => true, canCancelFiscalDocument: () => true } as never,
-  { append: jest.fn() } as never,
-  { findOverlapping: async () => [] } as never,
-);
+const montarServico = (podeEmitir: boolean) =>
+  new FiscalDocumentLifecycleService(
+    repo,
+    { getById: jest.fn(async (_s: unknown, id: string) => ({ id })) } as never,
+    { upload: jest.fn(async () => ({ id: 'att' })) } as never,
+    { attachSourceDocument: jest.fn(async () => ({ id: 'src' })), retireSourceDocument: jest.fn() } as never,
+    { canEmitFiscalDocument: () => podeEmitir, canCancelFiscalDocument: () => true } as never,
+    { append: jest.fn() } as never,
+    { findOverlapping: async () => [] } as never,
+  );
+const service = montarServico(true);
 
 let seq = 0;
 async function pendente(tag: string) {
@@ -271,6 +274,127 @@ describe('Onda 4 / 4.1 — polling de DF-e: teto, backoff e sem head-of-line (SQ
     const ok = await row(d.id);
     expect(ok.status).toBe('AUTHORIZED');
     expect(ok.pollLastError).toBeNull();
+  });
+
+  it('lacuna 6e13 (dono 25/11): o episódio de adiamento mora em colunas próprias (início e "alertado"); pollLastError é só a mensagem', async () => {
+    const d = await pendente('colunas-episodio');
+    portaCom(d.id, () => new DfeTransporteIndisponivelError('dfe_assinador_sem_dispositivo', 'caixa desligada'));
+    await tick({ avanco: HORA });
+    const inicio = relogio;
+    const a = await row(d.id);
+    expect(a.pollLastError).toBe('dfe_assinador_sem_dispositivo: caixa desligada');
+    expect(a.pollDeferredSince?.getTime()).toBe(inicio);
+    expect(a.pollAlertedAt).toBeNull();
+
+    // 1 h depois: alerta. O início do episódio NÃO anda; o "alertei" leva o relógio do tick; a mensagem segue pura.
+    const t = await tick({ avanco: HORA });
+    expect(t.transporteAdiadoIds ?? []).toContain(d.id);
+    const b = await row(d.id);
+    expect(b.pollDeferredSince?.getTime()).toBe(inicio);
+    expect(b.pollAlertedAt?.getTime()).toBe(relogio);
+    expect(b.pollLastError).toBe('dfe_assinador_sem_dispositivo: caixa desligada');
+
+    // a caixa volta: o controle do episódio inteiro é limpo
+    mockPort.consultar.mockImplementation(
+      async (ref: string): Promise<EmissaoResult> => ({ status: 'AUTHORIZED', partnerRef: ref, chaveOuCodigo: `CH-${ref}`, numero: '1', errors: [] }),
+    );
+    await tick({ avanco: HORA });
+    const c = await row(d.id);
+    expect(c.status).toBe('AUTHORIZED');
+    expect(c.pollDeferredSince).toBeNull();
+    expect(c.pollAlertedAt).toBeNull();
+    expect(c.pollLastError).toBeNull();
+  });
+
+  it('lacuna 6e13: OUTRA falha encerra o episódio (zera início e "alertado") — a queda seguinte começa do zero, sem alerta imediato', async () => {
+    const d = await pendente('episodio-encerra');
+    const alertou = (t: Awaited<ReturnType<typeof tick>>) => (t.transporteAdiadoIds ?? []).includes(d.id);
+    const fora = () => portaCom(d.id, () => new DfeTransporteIndisponivelError('dfe_assinador_sem_dispositivo', 'caixa desligada'));
+    fora();
+    await tick({ avanco: HORA });
+    expect(alertou(await tick({ avanco: HORA }))).toBe(true); // episódio 1 já alertou
+
+    portaCom(d.id, () => new DfeTransporteError('sefaz_http', 'HTTP 503'));
+    await tick({ avanco: HORA });
+    const meio = await row(d.id);
+    expect(meio.pollAttempts).toBe(1);
+    expect(meio.pollDeferredSince).toBeNull();
+    expect(meio.pollAlertedAt).toBeNull();
+
+    // episódio 2: o 1º adiamento NÃO alerta (nem herda o "alertado" nem o início do episódio 1) e abre um início novo
+    fora();
+    expect(alertou(await tick({ avanco: HORA }))).toBe(false);
+    expect((await row(d.id)).pollDeferredSince?.getTime()).toBe(relogio);
+    expect((await row(d.id)).pollAlertedAt).toBeNull();
+  });
+
+  it('lacuna ff2f: a janela de 1 h do alerta — sondada com o documento de volta à fila ANTES de 1 h (nextPollAt zerado à mão): 30 min e 1 h−1 ms não alertam; 1 h alerta', async () => {
+    const d = await pendente('janela-1h');
+    portaCom(d.id, () => new DfeTransporteIndisponivelError('dfe_assinador_sem_dispositivo', 'caixa desligada'));
+    await tick({ avanco: HORA });
+    const inicio = relogio;
+    // Sem este atalho o documento só volta à fila depois de POLL_ADIAR_MS (1 h) e qualquer limiar ≤ 1 h parece igual.
+    const sondar = async (apos: number) => {
+      await prisma.fiscalDocument.update({ where: { id: d.id }, data: { nextPollAt: null } });
+      relogio = inicio + apos;
+      const now = new Date(relogio);
+      return ((await service.pollPendingOnce(now, { now })).transporteAdiadoIds ?? []).includes(d.id);
+    };
+    expect(await sondar(HORA / 2)).toBe(false);
+    expect(await sondar(HORA - 1)).toBe(false);
+    expect(await sondar(HORA)).toBe(true);
+  });
+
+  it('lacunas cf36/3cf5 (dono 25/11): re-arme explícito zera desistência, tentativas e backoff; o status não muda; o job volta a consultar', async () => {
+    const d = await pendente('rearme');
+    portaCom(d.id, () => new DfeTransporteError('sefaz_http', 'HTTP 503'));
+    for (let i = 0; i < POLL_MAX_ATTEMPTS + 1; i += 1) await tick();
+    const abandonado = await row(d.id);
+    expect(abandonado.pollGaveUpAt).not.toBeNull();
+    expect(abandonado.pollAttempts).toBe(POLL_MAX_ATTEMPTS);
+    const chamadas = chamadasDe(d.id);
+    await tick();
+    expect(chamadasDe(d.id)).toBe(chamadas); // abandonado: o job não consulta
+
+    const view = await service.rearmarPoll(scope, d.id);
+    expect(view).toEqual({ id: d.id });
+    const r = await row(d.id);
+    expect(r.pollGaveUpAt).toBeNull();
+    expect(r.pollAttempts).toBe(0);
+    expect(r.nextPollAt).toBeNull();
+    expect(r.status).toBe('PROCESSING'); // re-armar nunca decide o destino da nota
+
+    await tick();
+    expect(chamadasDe(d.id)).toBe(chamadas + 1); // o job voltou a consultá-lo
+  });
+
+  it('re-arme de documento que o job NÃO abandonou não grava nada (devolve a view atual)', async () => {
+    const d = await pendente('rearme-noop');
+    portaCom(d.id, () => new DfeTransporteError('sefaz_http', 'HTTP 503'));
+    await tick();
+    const antes = await row(d.id);
+    expect(antes.pollAttempts).toBe(1);
+    expect(antes.pollGaveUpAt).toBeNull();
+
+    expect(await service.rearmarPoll(scope, d.id)).toEqual({ id: d.id });
+    const depois = await row(d.id);
+    expect(depois.pollAttempts).toBe(1); // o contador de uma falha em andamento fica
+    expect(depois.nextPollAt?.getTime()).toBe(antes.nextPollAt?.getTime());
+  });
+
+  it('re-arme: sem permissão ⇒ 403 sem gravar; documento inexistente ou de outro escopo ⇒ não encontrado', async () => {
+    const d = await pendente('rearme-guardas');
+    portaCom(d.id, () => new DfeTransporteError('sefaz_http', 'HTTP 503'));
+    for (let i = 0; i < POLL_MAX_ATTEMPTS + 1; i += 1) await tick();
+    expect((await row(d.id)).pollGaveUpAt).not.toBeNull();
+
+    await expect(montarServico(false).rearmarPoll(scope, d.id)).rejects.toBeInstanceOf(ForbiddenError);
+    expect((await row(d.id)).pollGaveUpAt).not.toBeNull();
+
+    await expect(service.rearmarPoll(scope, 'nao-existe')).rejects.toBeInstanceOf(ValidationError);
+    const outro = resolveAccountingScopeInternal({ userId: 'u-outro-dono' }, 'unit-outro');
+    await expect(service.rearmarPoll(outro, d.id)).rejects.toBeInstanceOf(ValidationError);
+    expect((await row(d.id)).pollGaveUpAt).not.toBeNull();
   });
 
   it('consulta manual (consultarUm) de documento que o job abandonou: se der certo, volta ao polling', async () => {
