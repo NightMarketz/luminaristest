@@ -10,7 +10,7 @@ import { CANONICAL_ACCOUNTS, CANONICAL_ACCOUNTS_PRE_L8 } from '@/features/accoun
 
 /** BE-INCR-PLANO-4-NIVEIS (F-L8-9 a): salão e clínica v1–v5 são do plano de 3 níveis e se leem contra ele. */
 const ULTIMA_VERSAO_PRE_L8 = 5;
-import { KIT_REGISTRY } from '@/features/sectorKits/registry';
+import { KIT_REGISTRY } from '@/features/sectorKits/domain/registry';
 
 describe('tabela papel → natureza do ajuste (item 20)', () => {
   it('congelada: os 10 papéis e as naturezas de cada um', () => {

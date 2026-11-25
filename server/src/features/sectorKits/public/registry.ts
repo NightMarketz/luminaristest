@@ -3,4 +3,4 @@
  * registro de binding por setor.
  * Regra `M1` (ADR-MODULE-BOUNDARIES §10 e §11.8; dono, questionário, 25/11/2026: "Pagar as 29").
  */
-export { KIT_REGISTRY, latestKit } from '../registry';
+export { KIT_REGISTRY, latestKit } from '../domain/registry';

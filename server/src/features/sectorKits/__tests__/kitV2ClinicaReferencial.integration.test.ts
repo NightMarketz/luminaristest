@@ -8,9 +8,9 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import type { BindingScope } from '@/features/accountingBinding/public/bindingScope.types';
-import { AESTHETIC_CLINIC_KIT_V2 } from '@/features/sectorKits/kits/aestheticClinic/kit.v2';
+import { AESTHETIC_CLINIC_KIT_V2 } from '@/features/sectorKits/domain/kits/aestheticClinic/kit.v2';
 import { CANONICAL_ACCOUNTS_PRE_L8 } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
-import { AESTHETIC_CLINIC_KIT_V1 } from '@/features/sectorKits/kits/aestheticClinic/kit.v1';
+import { AESTHETIC_CLINIC_KIT_V1 } from '@/features/sectorKits/domain/kits/aestheticClinic/kit.v1';
 
 const UNIT = 'unit-kit-v2-clinica';
 const TODAY = new Date().toISOString().slice(0, 10);

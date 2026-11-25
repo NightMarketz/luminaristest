@@ -42,8 +42,8 @@ import {
   type AccountNature,
 } from '../features/accounting/fixtures/ChartOfAccountsFixture';
 import { NIVEL_MINIMO_ANALITICA_PATRIMONIAL, PATRIMONIAL_NATURES } from '../features/accounting/paises/br/EcdChartStructureRule';
-import { KIT_REGISTRY, latestKit } from '../features/sectorKits/registry';
-import { RENOMEACAO_FISCAL_L8, SINTETICAS_FISCAIS_L8 } from '../features/sectorKits/kits/_shared/conteudoFiscalCanonico';
+import { KIT_REGISTRY, latestKit } from '../features/sectorKits/domain/registry';
+import { RENOMEACAO_FISCAL_L8, SINTETICAS_FISCAIS_L8 } from '../features/sectorKits/domain/kits/_shared/conteudoFiscalCanonico';
 import { SECTOR_BINDING_REGISTRY } from '../features/accountingBinding/fixtures/sectorBindingRegistry';
 import type { BindingScope } from '../features/accountingBinding/public/bindingScope.types';
 import type { CompileBindingInput, CompileBindingResult } from '../features/accountingBinding/services/BindingCompileService';

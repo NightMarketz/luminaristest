@@ -2,7 +2,7 @@ import { ForbiddenError, NotFoundError } from '../../../lib/errors';
 import { SALE_BINDING_V1 } from '../../accountingBinding/fixtures/saleBinding';
 import { KitTraceService } from '../services/KitTraceService';
 import { SectorKitPolicy } from '../policies/SectorKitPolicy';
-import { declaredEventKeys, KIT_REGISTRY } from '../registry';
+import { declaredEventKeys, KIT_REGISTRY } from '../domain/registry';
 import type { JournalEntryTracePort, TracedJournalEntry } from '../services/kitTracePorts';
 
 /** BE-INCR-KIT-SETOR PR-6 — rastro (item 50) e registro de eventos de negócio (item 47). */

@@ -1,6 +1,6 @@
-import { REFERENCIAL_2025_CANONICO } from '../kits/_shared/referencial2025Canonico';
-import { BEAUTY_SALON_KIT_V2 } from '../kits/beautySalon/kit.v2';
-import { AESTHETIC_CLINIC_KIT_V2 } from '../kits/aestheticClinic/kit.v2';
+import { REFERENCIAL_2025_CANONICO } from '../domain/kits/_shared/referencial2025Canonico';
+import { BEAUTY_SALON_KIT_V2 } from '../domain/kits/beautySalon/kit.v2';
+import { AESTHETIC_CLINIC_KIT_V2 } from '../domain/kits/aestheticClinic/kit.v2';
 
 /**
  * BE-INCR-KIT-SETOR-EMENDA-1, PR-K1, item 1 — o referencial compartilhado é o do salão v2 (publicado, não se edita):

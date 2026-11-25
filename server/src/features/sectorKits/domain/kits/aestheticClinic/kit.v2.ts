@@ -1,5 +1,5 @@
-import { SectorKitV1Schema, type SectorKitV1 } from '../../dtos/SectorKitDto';
-import { CLINIC_BINDING_V1, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../../accountingBinding/public/clinicBinding';
+import { SectorKitV1Schema, type SectorKitV1 } from '../../../dtos/SectorKitDto';
+import { CLINIC_BINDING_V1, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../../../accountingBinding/public/clinicBinding';
 import { REFERENCIAL_2025_CANONICO } from '../_shared/referencial2025Canonico';
 
 /**

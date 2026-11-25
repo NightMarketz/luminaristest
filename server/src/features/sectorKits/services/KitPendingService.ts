@@ -41,7 +41,7 @@ import {
 import type { ISectorKitPolicy } from '../policies/ISectorKitPolicy';
 import type { IKitInstallationRepository } from '../repositories/IKitInstallationRepository';
 import type { IKitUpgradeRepository } from '../repositories/IKitUpgradeRepository';
-import { KIT_REGISTRY } from '../registry';
+import { KIT_REGISTRY } from '../domain/registry';
 import type { AccountItemValue, OverrideItemValue, ReferentialItemValue, RoleDefaultItemValue } from './classifyKitDiff';
 import type { IKitAuditPort, KitChartPort } from './kitInstallPorts';
 import type { KitUpgradeWritePort } from './kitUpgradePorts';

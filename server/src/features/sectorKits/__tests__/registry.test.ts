@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { KIT_REGISTRY, latestKit, listKits } from '../registry';
+import { KIT_REGISTRY, latestKit, listKits } from '../domain/registry';
 import { SECTOR_BINDING_REGISTRY, DEFAULT_SECTOR_KEY } from '../../accountingBinding/fixtures/sectorBindingRegistry';
 import { SALE_BINDING_V2, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../accountingBinding/fixtures/saleBinding';
 import { CLINIC_BINDING_V2, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../accountingBinding/fixtures/clinicBinding';
@@ -59,7 +59,7 @@ describe('KIT_REGISTRY e SECTOR_BINDING_REGISTRY derivado (item 4)', () => {
 describe('versões publicadas congeladas por sha256 (item 5)', () => {
   it.each(Object.keys(KIT_REGISTRY))('%s: published.json lista toda versão e o hash bate', (kitKey) => {
     const published: Array<{ kitVersion: number; sha256: string }> = JSON.parse(
-      readFileSync(join(__dirname, '..', 'kits', kitKey, 'published.json'), 'utf8'),
+      readFileSync(join(__dirname, '..', 'domain', 'kits', kitKey, 'published.json'), 'utf8'),
     );
     const actual = KIT_REGISTRY[kitKey].map((k) => ({ kitVersion: k.kitVersion, sha256: sha256(k) }));
     expect(actual).toEqual(published);

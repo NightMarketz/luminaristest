@@ -38,7 +38,7 @@ export interface ActivateBindingArgs {
   sectorKey: string;
 }
 
-// Registry de setores: desde o PR-2 do kit, o `KIT_REGISTRY` (`features/sectorKits/registry.ts`), lido pelo
+// Registry de setores: desde o PR-2 do kit, o `KIT_REGISTRY` (`features/sectorKits/domain/registry.ts`), lido pelo
 // `installSectorKitCli` — o `SECTOR_BINDING_REGISTRY` é derivado dele (PR-1).
 
 /** Lê `--flag valor` de um array argv — mesma convenção de `scripts/migrate-deploy.mjs`. */

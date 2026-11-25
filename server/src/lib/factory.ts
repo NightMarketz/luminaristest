@@ -289,7 +289,7 @@ import type {
 import { Prisma } from 'generated/prisma';
 import { KitInstallService, type KitVersionsLookup } from '../features/sectorKits/services/KitInstallService';
 import { ServiceFiscalSuggestionService } from '../features/sectorKits/services/ServiceFiscalSuggestionService';
-import { declaredEventKeys } from '../features/sectorKits/registry';
+import { declaredEventKeys } from '../features/sectorKits/domain/registry';
 import { KitTraceService } from '../features/sectorKits/services/KitTraceService';
 import type {
   IKitAuditPort,

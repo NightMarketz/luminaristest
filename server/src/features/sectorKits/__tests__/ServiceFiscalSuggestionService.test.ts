@@ -1,6 +1,6 @@
 import { ForbiddenError, ValidationError } from '../../../lib/errors';
 import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
-import { BEAUTY_SALON_KIT_V4 } from '../kits/beautySalon/kit.v4';
+import { BEAUTY_SALON_KIT_V4 } from '../domain/kits/beautySalon/kit.v4';
 import { MAX_IA_POR_VARREDURA, ServiceFiscalSuggestionService } from '../services/ServiceFiscalSuggestionService';
 import type { ServiceClassifierPort } from '../services/serviceFiscalSuggestionPorts';
 

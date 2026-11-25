@@ -1,5 +1,5 @@
-import { SectorKitV1Schema, type SectorKitV1 } from '../../dtos/SectorKitDto';
-import { CLINIC_BINDING_V1, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../../accountingBinding/public/clinicBinding';
+import { SectorKitV1Schema, type SectorKitV1 } from '../../../dtos/SectorKitDto';
+import { CLINIC_BINDING_V1, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../../../accountingBinding/public/clinicBinding';
 
 /**
  * Kit da clínica estética, v1 — migração LITERAL de `CLINIC_BINDING_V1` +

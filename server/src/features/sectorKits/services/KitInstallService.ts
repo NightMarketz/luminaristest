@@ -43,7 +43,7 @@ import {
 } from '../models/kitInstallTypes';
 import type { ISectorKitPolicy } from '../policies/ISectorKitPolicy';
 import type { IKitInstallationRepository } from '../repositories/IKitInstallationRepository';
-import { KIT_REGISTRY } from '../registry';
+import { KIT_REGISTRY } from '../domain/registry';
 import type {
   IKitAuditPort,
   KitChartPort,

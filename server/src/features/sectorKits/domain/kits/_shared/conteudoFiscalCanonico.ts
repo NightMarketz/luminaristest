@@ -1,4 +1,4 @@
-import type { SectorKitV1 } from '../../dtos/SectorKitDto';
+import type { SectorKitV1 } from '../../../dtos/SectorKitDto';
 
 /**
  * Conteúdo fiscal do kit, igual nos dois setores (BE-INCR-KIT-SETOR-EMENDA-1, PR-K2, itens 5–6; F-KB-6R/F-KB-9R, dono

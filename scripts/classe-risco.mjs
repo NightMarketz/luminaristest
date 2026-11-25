@@ -98,7 +98,7 @@ export const VERMELHO = [
   ['server/src/routes/mitExports.ts', 'rota do MIT'],
   // G6 — regra fiscal morando em outra feature (carrega regra).
   ['server/src/features/**/*iscal*', 'regra fiscal fora de features/accounting (guarda da venda, sugestão, perfil)'],
-  ['server/src/features/sectorKits/kits/_shared/**', 'conteúdo fiscal e referencial canônico dos kits'],
+  ['server/src/features/sectorKits/domain/kits/_shared/**', 'conteúdo fiscal e referencial canônico dos kits'],
   // G7 — job contábil/fiscal (carrega regra: sync com o razão, polling do DF-e, recálculo legal, migração do plano).
   ['server/src/jobs/**/*ccounting*', 'job de sync/reconcile/seed contábil'],
   ['server/src/jobs/**/*fePoll*', 'job de polling do DF-e'],

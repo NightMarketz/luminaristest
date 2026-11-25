@@ -1,5 +1,5 @@
-import { SectorKitV1Schema, type SectorKitV1 } from '../../dtos/SectorKitDto';
-import { SALE_BINDING_V2, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../../accountingBinding/public/saleBinding';
+import { SectorKitV1Schema, type SectorKitV1 } from '../../../dtos/SectorKitDto';
+import { SALE_BINDING_V2, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../../../accountingBinding/public/saleBinding';
 import { REFERENCIAL_2025_CANONICO_V2 } from '../_shared/referencial2025Canonico';
 import { CONTAS_FISCAIS_V2, PERFIL_FISCAL_PADRAO_V2, REFERENCIAL_2025_FISCAL_V2 } from '../_shared/conteudoFiscalCanonico';
 import { REFERENCIAL_2025_EMENDA_3_3 } from '../_shared/referencialEmenda33';

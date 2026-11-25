@@ -46,7 +46,7 @@ import {
 import type { ISectorKitPolicy } from '../policies/ISectorKitPolicy';
 import type { IKitInstallationRepository } from '../repositories/IKitInstallationRepository';
 import type { IRoleAccountOverrideRepository } from '../repositories/IRoleAccountOverrideRepository';
-import { KIT_REGISTRY } from '../registry';
+import { KIT_REGISTRY } from '../domain/registry';
 import type { IKitAuditPort, KitOverrideAccountPort } from './kitInstallPorts';
 import type { KitVersionsLookup } from './KitInstallService';
 

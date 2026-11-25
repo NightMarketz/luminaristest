@@ -13,8 +13,8 @@ import { AccountingSyncService } from '@/features/accounting/sync/AccountingSync
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 import type { BindingScope } from '@/features/accountingBinding/public/bindingScope.types';
 import { SectorKitV1Schema, type SectorKitV1 } from '@/features/sectorKits/dtos/SectorKitDto';
-import { BEAUTY_SALON_KIT_V6 } from '@/features/sectorKits/kits/beautySalon/kit.v6';
-import { declaredEventKeys } from '@/features/sectorKits/registry';
+import { BEAUTY_SALON_KIT_V6 } from '@/features/sectorKits/domain/kits/beautySalon/kit.v6';
+import { declaredEventKeys } from '@/features/sectorKits/domain/registry';
 
 const UNIT = 'unit-evento-aberto';
 const TODAY = new Date().toISOString().slice(0, 10);

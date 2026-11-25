@@ -4,7 +4,7 @@
  */
 import type { EventBinding } from '@/features/accountingBinding/dtos/AccountingBindingDto';
 import { applyRoleOverrides } from '@/features/sectorKits/services/applyRoleOverrides';
-import { BEAUTY_SALON_KIT_V1 } from '@/features/sectorKits/kits/beautySalon/kit.v1';
+import { BEAUTY_SALON_KIT_V1 } from '@/features/sectorKits/domain/kits/beautySalon/kit.v1';
 
 const BINDINGS: EventBinding[] = BEAUTY_SALON_KIT_V1.binding.eventBindings;
 

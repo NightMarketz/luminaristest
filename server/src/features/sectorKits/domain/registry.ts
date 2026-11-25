@@ -1,5 +1,5 @@
-import type { SectorKitV1 } from './dtos/SectorKitDto';
-import type { KitCatalogEntry, KitRegistry } from './models/kitTypes';
+import type { SectorKitV1 } from '../dtos/SectorKitDto';
+import type { KitCatalogEntry, KitRegistry } from '../models/kitTypes';
 import { BEAUTY_SALON_KIT_V1 } from './kits/beautySalon/kit.v1';
 import { BEAUTY_SALON_KIT_V2 } from './kits/beautySalon/kit.v2';
 import { BEAUTY_SALON_KIT_V3 } from './kits/beautySalon/kit.v3';

@@ -1,4 +1,4 @@
-import type { ServiceFiscalCatalogItem } from '../../dtos/SectorKitDto';
+import type { ServiceFiscalCatalogItem } from '../../../dtos/SectorKitDto';
 
 /**
  * Catálogo de sugestões fiscais por serviço (BE-INCR-KIT-SETOR-EMENDA-1, PR-K3, item 7a; F-KE-3 b, F-KE-4; L4 de 13/10:
