@@ -1,4 +1,4 @@
-import { isValidDateOnly } from '../../accounting/models/dates';
+import { isValidDateOnly } from '../../accounting/public/dates';
 import { OUTBOUND_POLICY, RETRY_BACKOFF_MARGIN_MS, outboundFetch } from '../../../lib/outboundHttp';
 import type { IPtaxClient } from '../ports/IPtaxClient';
 import {
