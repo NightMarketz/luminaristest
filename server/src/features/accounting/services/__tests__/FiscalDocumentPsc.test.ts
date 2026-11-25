@@ -77,6 +77,7 @@ class MemRepo {
   listBySale = async (_s: unknown, saleId: string) => [...this.docs.values()].filter((d) => d.saleId === saleId).map(this.full);
   listByStatus = async (_s: unknown, status: string) => [...this.docs.values()].filter((d) => d.status === status);
   listPending = async () => [...this.docs.values()].filter((d) => d.status === 'SENT' || d.status === 'PROCESSING');
+  listAbandonoDefinitivo = async () => [];
   updatePollState = async () => true;
   createPendingAttachment = jest.fn();
   createSent = async (_s: unknown, data: Record<string, unknown>) => {

@@ -152,6 +152,30 @@ describe('DfePollScheduler — o job desistiu de consultar documento (Onda 4 / 4
   });
 });
 
+describe('DfePollScheduler — abandono definitivo (lacunas 3cf5/92c5, F-PD-2/3/5 a)', () => {
+  it('o resumo com abandono definitivo vira warn e UM alerta remoto com os ids (o service grava a marca antes de devolver o id)', async () => {
+    const log = { event: jest.fn() };
+    const alert = jest.fn();
+    const resumo = { total: 0, updated: 0, skipped: 0, failed: 0, abandonoDefinitivo: 2, abandonoDefinitivoIds: ['doc-a', 'doc-b'] } as PollSummary;
+    await new DfePollScheduler({ poll: async () => resumo, log, alert }).runOnce();
+    expect(log.event).toHaveBeenCalledWith('warn', 'job.completed', 'dfe_poll_pending', expect.objectContaining({ abandonoDefinitivo: 2 }));
+    expect(alert).toHaveBeenCalledTimes(1);
+    expect(alert.mock.calls[0][0]).toMatchObject({
+      source: 'dfe_poll',
+      event: 'reconcile_summary',
+      job: 'dfe_poll_pending',
+      pollAbandonoDefinitivo: 2,
+      pollAbandonoDefinitivoDocumentIds: ['doc-a', 'doc-b'],
+    });
+  });
+
+  it('controle: tick sem abandono definitivo não alerta por isso', async () => {
+    const alert = jest.fn();
+    await new DfePollScheduler({ poll: async () => ({ total: 1, updated: 1, skipped: 0, failed: 0 }), log: { event: jest.fn() }, alert }).runOnce();
+    expect(alert).not.toHaveBeenCalled();
+  });
+});
+
 describe('DfePollScheduler — transporte adiado há ≥ 1 h (lacuna 92c5)', () => {
   it('o resumo do tick com documento adiado alerta o job com os ids (o service garante UMA vez por episódio)', async () => {
     const { scheduler, alert } = montar({ total: 1, updated: 0, skipped: 1, failed: 0, transporteAdiadoAlerta: 1, transporteAdiadoIds: ['doc-x'] } as PollSummary);

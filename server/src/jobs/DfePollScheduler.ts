@@ -70,6 +70,7 @@ export class DfePollScheduler {
         summary.failed > 0 ||
         (summary.gaveUp ?? 0) > 0 ||
         (summary.transporteAdiadoAlerta ?? 0) > 0 ||
+        (summary.abandonoDefinitivo ?? 0) > 0 ||
         (summary.attachments?.failed ?? 0) > 0 ||
         (summary.fasesFalharam?.length ?? 0) > 0 ||
         (c && c.failed + c.orfasFalharam + c.pertoDoPrazo + c.vencidas > 0) ||
@@ -102,6 +103,18 @@ export class DfePollScheduler {
           job: JOB,
           transporteAdiado: summary.transporteAdiadoAlerta,
           transporteAdiadoDocumentIds: summary.transporteAdiadoIds ?? [],
+        });
+      }
+      // Lacunas 3cf5/92c5 (dono 25/11, F-PD-2/3/5 a): o job parou DEFINITIVAMENTE de re-armar documento(s) (idade ≥ 7 dias abandonado, ou
+      // adiado por transporte por esse tempo). UM alerta por documento: o service grava `pollAlertedAt` antes de devolver o id.
+      if ((summary.abandonoDefinitivo ?? 0) > 0) {
+        this.alert({
+          source: 'dfe_poll',
+          event: 'reconcile_summary',
+          timestamp: new Date().toISOString(),
+          job: JOB,
+          pollAbandonoDefinitivo: summary.abandonoDefinitivo,
+          pollAbandonoDefinitivoDocumentIds: summary.abandonoDefinitivoIds ?? [],
         });
       }
       // X10a PR-9 (decisões 6, 7 e 9): NFC-e off-line perto do prazo/vencida ou órfã não resolvida ⇒ alerta remoto.

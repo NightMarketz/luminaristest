@@ -280,6 +280,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-DFE (nó X10b, PR-2, item 40) — ciclo SENT (Fase D acrescenta authorized/rejected/cancelled).
   'dfe.emitted': ['documentId', 'kind', 'attemptNo', 'ref', 'vServCents', 'ambiente'],
   // BE-INCR-DFE (nó X10b, PR-3, item 40) — ciclo de vida do documento após o SENT.
+  // Lacuna 3cf5 (P1.4, dono 25/11) — re-arme MANUAL da consulta do documento que o job abandonou. Ids e o instante da desistência; sem PII.
+  'dfe.poll_rearmed': ['documentId', 'unitId', 'gaveUpAt'],
   'dfe.authorized': ['documentId', 'partnerRef', 'nNFSe', 'chaveOuCodigo', 'sourceDocumentId'],
   'dfe.rejected': ['documentId', 'attemptNo', 'errorCodes'],
   'dfe.denied': ['documentId', 'attemptNo', 'errorCodes'], // uso denegado (cStat 110/301/302): só códigos, sem PII
