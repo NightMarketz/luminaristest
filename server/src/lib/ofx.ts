@@ -1,5 +1,6 @@
 import { ValidationError } from './errors';
-import type { InTable, SpreadsheetFormat } from './spreadsheet';
+import type { InTable } from './spreadsheet';
+import type { StatementFormat } from '../features/accounting/models/Reconciliation.model';
 
 /**
  * Minimal OFX bank-statement parser for the accounting reconciliation import
@@ -36,7 +37,7 @@ import type { InTable, SpreadsheetFormat } from './spreadsheet';
  * lives here (the first non-spreadsheet parser) so both the service branch and the controller
  * sniff share ONE type; `'cnab'` is parsed by `lib/cnab.ts::parseCnab` (BE-INCR7-CNAB).
  */
-export type StatementFormat = SpreadsheetFormat | 'ofx' | 'cnab';
+export type { StatementFormat };
 
 const OFX_HEADERS = ['date', 'amountCents', 'description', 'externalRef'] as const;
 

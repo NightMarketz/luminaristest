@@ -33,7 +33,7 @@ function build(balances: Record<string, { debitCents: number; creditCents: numbe
     { groupByAccount } as never,
     { postEntry } as never,
     { canPost: () => opts.canPost ?? true } as never,
-    { findConfirmedByYear: jest.fn(async () => []) } as never,
+    { assertCanClose: jest.fn(async () => undefined) } as never,
   );
   return { service, groupByAccount, postEntry };
 }
@@ -136,7 +136,7 @@ describe('ExerciseClosingService.closeExercise', () => {
       { groupByAccount: jest.fn(async () => [{ accountId: '3.1', debitCents: 0, creditCents: 150000 }]) } as never,
       { postEntry } as never,
       { canPost: () => true } as never,
-      { findConfirmedByYear: jest.fn(async () => []) } as never,
+      { assertCanClose: jest.fn(async () => undefined) } as never,
     );
     await service.closeExercise(scope, 2026);
     const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
@@ -162,7 +162,7 @@ describe('ExerciseClosingService.closeExercise', () => {
       { groupByAccount } as never,
       { postEntry } as never,
       { canPost: () => true } as never,
-      { findConfirmedByYear: jest.fn(async () => []) } as never,
+      { assertCanClose: jest.fn(async () => undefined) } as never,
     );
 
     await service.closeExercise(scope, 2027);

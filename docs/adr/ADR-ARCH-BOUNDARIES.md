@@ -8,7 +8,7 @@
 
 ## TLDR (2 linhas)
 
-As regras de camada do contrato viraram 11 regras (server) + 7 (my-app) no dependency-cruiser; `check:arch` **bloqueia** o CI, mas só para violação **nova** — as 35 (server) e 18 (my-app) existentes estão congeladas no baseline. `check:dead` (knip) e `check:dup` (jscpd) só reportam.
+As regras de camada do contrato viraram 12 regras (server, com a C1 de 24/11) + 7 (my-app) no dependency-cruiser; `check:arch` **bloqueia** o CI, mas só para violação **nova** — as 35 (server) e 18 (my-app) existentes estão congeladas no baseline. `check:dead` (knip) e `check:dup` (jscpd) só reportam.
 
 ## 1. Fronteiras aprovadas — server (`server/.dependency-cruiser.cjs`)
 
@@ -28,6 +28,7 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
 | L6 | `models/`, `dtos/` não importam camada executável | 4 |
 | B1 | motor `features/dynamicTables/**` não importa `accounting`, `accountingBinding`, `legalParameters`, `fx`, `sectorKits` (`AC-2.1-B1`) | **0** |
 | B7 | motor `features/dynamicTables/**` não importa `features/(chat\|analytics\|integration)/services/` — "o motor nunca chama o consumidor" (Contrato §2.1). Emenda 2026-10-20, BE-INCR-DT-NO-CONSUMER-CALLS (dono, chat, 19/10: opção (b), F5 → β). Baseline antes/depois: 2 → **0** (as duas arestas `DynamicTableService → KnowledgeGraphService/KpiCacheService` removidas no mesmo PR; nunca entraram no arquivo de known violations). Prova de que morde: import plantado em `DynamicTableService.ts` → `B7` exit 1 | **0** |
+| C1 | núcleo do razão (`PostingService`, `PeriodService`, `AuditService`, `ExerciseClosingService`, `ReconciliationService` e os repositórios do razão) só importa uma **lista fechada** (§1.2): fiscal e localização (`paises/**`, `TaxAssessment*`, `ILalurRepository`, `lib/ofx\|cnab\|sped\|ecf…`) entram por porta de `ports/LedgerPorts.ts`. Emenda 2026-11-24 (§1.2) | **0** (5 → 0 no PR) |
 | F1 | libs fiscais puras (`lib/{sped,ecf,ecfReal,nfe*,nfse*,mit,cnab,ofx,cnpj,cpf,referentialCatalog}.ts`) só leem `features/*/models/` — nada de service/repository/Prisma/HTTP | 0 |
 | X1 | `lib/` (exceto `factory.ts`) não importa lógica de feature (models permitidos) | 0 |
 | X2 | produção não importa teste | 0 |
@@ -55,6 +56,46 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
 - **Ponto cego declarado:** a regra olha `features/dp/`. Controller e rota do núcleo (`src/controllers/dp*.ts`,
   `src/routes/dp.ts`) ficam fora e falam só com o `getFactory()`; se um deles passar a chamar serviço de opcional, nenhuma
   regra pega. A regra entre opcionais (opcional só importa outro opcional declarado em `dependsOn`) também não existe.
+
+### 1.2 Emenda 2026-11-24 — C1, núcleo do razão fechado para fiscal/localização (Onda 1.2)
+
+- **Decisão:** plano de correção de 24/11/2026 (dono, chat, via sessão-mãe; item 1.2 da auditoria fiscal/contábil read-only do mesmo dia) +
+  F-PB-1 a ([`ADR-PAIS-NA-BORDA`](ADR-PAIS-NA-BORDA.md), 24/11): o centro é o conceito; o país mora na borda (`features/<domínio>/paises/br/**`).
+  O `ADR-MODULE-BOUNDARIES` (Accepted em 24/11; "executa" do BRIEF inteiro dado pelo dono no mesmo dia, PR-0 a PR-1b já na main pelo #1375) trata de fronteira **entre** features; a C1 é o anel **dentro** de `features/accounting`, sem sobreposição de regra: nenhuma regra dele (M1/M1a…) está ligada no `.dependency-cruiser.cjs` e esta emenda não liga nenhuma.
+- **Regra:** `C1-ledger-core-not-fiscal` (erro). `from` = `services/{PostingService,PeriodService,AuditService,ExerciseClosingService,ReconciliationService}`
+  e `repositories/I?{JournalEntry,Posting,Account,AccountingPeriod,Audit,Reconciliation,SourceProvenance}Repository` de `features/accounting`.
+  `to` = **tudo em `src/` fora da lista fechada** `LEDGER_CORE_ALLOWED`: `audit/`, `dtos/{Posting,Reconciliation}Dto`, `models/{AccountantAssignment.model,Reconciliation.model,closing,dates,ledgerStatus,money}`,
+  `policies/IAccountingPolicy`, `ports/LedgerPorts`, os repositórios do razão (+ `AccountantAssignment`, `Counterparty`, `Dimension`), `scope/`,
+  `services/{AuditService,PostingService,dimensionTagging}`, `fixtures/ChartOfAccountsFixture` (resíduo, abaixo) e `lib/{errors,logger,prisma,spreadsheet}`.
+  Allowlist (e não denylist por prefixo) porque o levantamento das arestas de saída do conjunto deu uma lista curta e porque denylist por nome de arquivo
+  não pega o fiscal que ainda vai ser escrito. **Import `type` conta.** Precisar de algo novo no núcleo = emenda datada aqui com a porta, não item na lista.
+  Emenda de manutenção (24/11, ao atualizar o #1356 sobre a main com o PR-1a do MODULE-BOUNDARIES, #1375): `ActiveAccountant` (contador responsável por escopo, GOV-CONTADOR — núcleo, não fiscal) passou de `policies/IAccountingPolicy` para `models/AccountantAssignment.model`, e o `PeriodService` o importa de lá; a lista ganhou esse modelo (a regra é allowlist: caminho movido e não listado vira erro). O `core-boundary.test.ts` ganhou a trava "todo import relativo do núcleo do razão cai na lista fechada", que acusa essa deriva no jest.
+- **Portas** (`features/accounting/ports/LedgerPorts.ts`; todas **argumento obrigatório** do construtor — porta opcional esquecida na factory compila e
+  desliga a regra em silêncio): `ChartStructureRule` (BR: Manual da ECD, nível ≥ 4 + conta superior — `paises/br/EcdChartStructureRule`),
+  `AccountDeletionGuard` (BR: ajuste vivo do e-Lalur — `LalurAccountDeletionGuard`), `ClosingGuard` (BR: provisão de IRPJ/CSLL/PIS/Cofins pendente —
+  `TaxProvisionClosingGuard`), `StatementParser` (OFX/CNAB — `StatementParserBr`). Adaptadores montados só em `lib/factory.ts`.
+  `provisaoPendente`/`valorProvisao`/`consumoPisCofins` (puras) foram para `models/taxAssessmentProvisao.ts`; `TaxAssessmentService` as reexporta.
+  `StatementFormat` mora em `models/Reconciliation.model.ts`; `lib/ofx` o reexporta.
+- **Baseline antes/depois:** **5 → 0** violações da C1 (medidas com a regra final sobre o código do `origin/main` em cópia fora do repo:
+  `ReconciliationService → lib/ofx`, `→ lib/cnab`; `PostingService → ILalurRepository`; `ExerciseClosingService → TaxAssessmentService`, `→ ITaxAssessmentRepository`;
+  as 4 conhecidas do levantamento + o repositório de apuração, que só o grafo mostrou). O `.dependency-cruiser-known-violations.json` **não mudou**
+  (medido pelo autor na base antiga: 24 ativas ignoradas, 27 obsoletas, antes e depois; após o #1375 o baseline da main é 11 ativas / 11 obsoletas, e o PR não o altera); a C1 nasce com 0 e não entra no arquivo.
+- **Prova de que morde (condição que falha, 24/11):** seis `import` plantados de uma vez, um por família de alvo — `PostingService → ITaxAssessmentRepository` (`import type`),
+  `PeriodService → paises/br/EcdChartStructureRule` (`import type`), `AuditService → lib/ofx`, `ReconciliationService → lib/cnab`, `ExerciseClosingService → LalurService`
+  (`import type`), `IPostingRepository → models/taxAssessmentProvisao` (`import type`) ⇒ `npm run check:arch` **exit 6**, `x 6 dependency violations`, cada uma como
+  `error C1-ledger-core-not-fiscal: <from> → <to>`; o `core-boundary.test.ts` (detector independente, lista de famílias) acusou os mesmos 6. Plantios removidos:
+  `check:arch` exit 0 ("no dependency violations found", 24 conhecidas ignoradas na base de então; hoje, na main pós-#1375, são 11 ativas / 11 obsoletas).
+- **Teste de direção:** `features/accounting/__tests__/core-boundary.test.ts` manteve a asserção de módulos de **origem** (item 42 do KIT-SETOR) e ganhou a de
+  **direção**: cada arquivo do núcleo do razão existe (renomear fica vermelho, não vácuo), o detector tem autoteste (inclusive `import type` plantado em memória), a regra
+  C1 existe no `.cjs` com severidade erro e seu `from` casa todos os arquivos, e a lista de permitidos nunca contém fiscal/`paises/`.
+- **Pontos cegos declarados:**
+  1. **Resíduo no núcleo:** `fixtures/ChartOfAccountsFixture` (`CANONICAL_ACCOUNTS`, `RETAINED_EARNINGS_CODE`, `isCodigoDoPlanoPadrao`) continua importado pelo `PostingService` e pelo
+     `ExerciseClosingService`: é o plano de contas padrão **do Brasil**, ainda dentro do centro. As regras da ECD saíram dele (para `paises/br/EcdChartStructureRule`); o plano em si vai
+     para `paises/br/` em fatia própria (lacuna na caixa). Enquanto isso está na lista de permitidos, nomeado.
+  2. A regra olha **só os arquivos listados**. Outros serviços do razão (`EntryApprovalService`, `AccountingReportService`, `AccountingSyncService`…) e o resto de `features/accounting` ficam fora;
+     estender o `from` é emenda.
+  3. A regra lê **import**, não texto: comentários e nomes de domínio brasileiros (NF-e na proveniência, "ECD/I350" no cabeçalho do encerramento) permanecem no núcleo, e a lógica que passou
+     para a porta só é protegida contra regressão pelos testes (`ledgerPortsBr.test.ts`, `PostingService.test.ts`, as integrações), não pelo depcruise.
 
 ## 2. Fronteiras aprovadas — my-app (`my-app/.dependency-cruiser.cjs`)
 
