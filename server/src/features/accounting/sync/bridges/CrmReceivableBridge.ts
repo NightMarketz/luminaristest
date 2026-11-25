@@ -41,6 +41,7 @@ import type { IAccountingPeriodRepository } from '../../repositories/IAccounting
  */
 
 import { CRM_LEGACY_SOURCE_TYPE } from '../AccountingSyncPort';
+import { roundReaisToCents } from '../../../../lib/decimalMoney';
 
 export { CRM_LEGACY_SOURCE_TYPE };
 
@@ -244,7 +245,7 @@ export class CrmReceivableBridge {
         `Valor inválido para conta a receber (oportunidade '${fact.opportunityId}'): não é um número finito.`,
       );
     }
-    const amountCents = Math.round(fact.amount * 100);
+    const amountCents = roundReaisToCents(fact.amount);
     if (!Number.isSafeInteger(amountCents) || amountCents > MAX_CENTS) {
       throw new ValidationError(
         `Valor fora da faixa segura de centavos (oportunidade '${fact.opportunityId}').`,

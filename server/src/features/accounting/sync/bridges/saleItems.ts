@@ -15,6 +15,7 @@ import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
 import { classifyTaxId } from '../../../../lib/cnpj';
 import { classifySaleItem as classifyItem, toNum } from '../../../../lib/saleLine';
+import { roundReaisToCents } from '../../../../lib/decimalMoney';
 
 export type SaleItemsKind = 'Product' | 'Service' | 'Package' | 'Mixed' | 'Empty';
 
@@ -286,7 +287,7 @@ export async function loadUnconditionalDiscountCents(userId: string, saleIds: re
     if (row.dynamicTableId !== salesTable.id) continue;
     const d = (row.data ?? {}) as Record<string, unknown>;
     if (d.discountKind !== 'UNCONDITIONAL') continue;
-    total += BigInt(Math.max(0, Math.round(toNum(d.discountAmount) * 100)));
+    total += BigInt(Math.max(0, roundReaisToCents(toNum(d.discountAmount))));
   }
   return total;
 }

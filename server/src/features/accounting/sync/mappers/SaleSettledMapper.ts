@@ -3,6 +3,7 @@ import type { PostEntryInput } from '../../dtos/PostingDto';
 import type { AccountingEvent } from '../AccountingSyncPort';
 import type { IAccountingEventMapper } from './IAccountingEventMapper';
 import { A_RECEBER_CODE, BANCO_CODE, CAIXA_CODE, CARTAO_ADQUIRENTE_CODE, PACOTES_PRE_PAGOS_CODE } from '../../fixtures/ChartOfAccountsFixture';
+import { roundReaisToCents } from '../../../../lib/decimalMoney';
 
 /**
  * Maps `sale.settled` → the receivable-settlement entry (Incremento D / D1):
@@ -55,7 +56,7 @@ export class SaleSettledMapper implements IAccountingEventMapper {
         `Valor inválido para liquidação (venda '${event.sourceId}'): não é um número finito.`,
       );
     }
-    const amountCents = Math.round(amount * 100);
+    const amountCents = roundReaisToCents(amount);
     if (!Number.isSafeInteger(amountCents)) {
       throw new ValidationError(
         `Valor fora da faixa segura de centavos (liquidação da venda '${event.sourceId}').`,
