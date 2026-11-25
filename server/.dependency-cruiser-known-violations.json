@@ -2738,20 +2738,6 @@
   },
   {
     "type": "dependency",
-    "from": "src/features/fx/models/ptax.ts",
-    "to": "src/features/crm/constants.ts",
-    "unresolvedTo": "../../crm/constants",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/features/integration/services/DynamicTableWriteEffects.ts",
     "to": "src/features/analytics/services/KpiCacheService.ts",
     "unresolvedTo": "../../analytics/services/KpiCacheService",

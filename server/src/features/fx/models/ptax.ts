@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CURRENCIES } from '../../crm/constants';
+import { CURRENCIES } from '../../crm/public/currencies.types';
 
 /**
  * Módulo neutro de câmbio (BE-INCR-CRM-REPORT-BUILDER PR-1, nó CRM-RB; BRIEF §1.1 e item 26). Mora fora de
@@ -7,7 +7,7 @@ import { CURRENCIES } from '../../crm/constants';
  * (D-2026-09-29-CRM-RB-MOEDA-REALIZADO). Até esse ADR ser ratificado, nada em `features/accounting/**` importa daqui.
  */
 
-/** Moedas cotadas pela PTAX = `CURRENCIES` − BRL (item 23; `crm/constants.ts:1`). */
+/** Moedas cotadas pela PTAX = `CURRENCIES` − BRL (item 23; `crm/models/currencies.ts`, lida por `crm/public/currencies.types.ts`). */
 export type PtaxCurrency = Exclude<(typeof CURRENCIES)[number], 'BRL'>;
 export const PTAX_CURRENCIES: readonly PtaxCurrency[] = CURRENCIES.filter((c): c is PtaxCurrency => c !== 'BRL');
 

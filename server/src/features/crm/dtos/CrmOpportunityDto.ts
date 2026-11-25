@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CURRENCIES, DEFAULT_CURRENCY } from '../constants';
+import { CURRENCIES, DEFAULT_CURRENCY } from '../models/currencies';
 
 /** @openapi
  * components:

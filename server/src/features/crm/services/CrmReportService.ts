@@ -10,7 +10,7 @@ import { aggregatePipelineProcessor } from '../../analytics/public/processor';
 import { addMoney } from '../../analytics/public/money';
 import type { IPtaxRateRepository } from '../../fx/repositories/IPtaxRateRepository';
 import { brasiliaNow, dbToDateOnly, PTAX_CURRENCIES, PTAX_RATE_SCALE, PTAX_SOURCE, type PtaxCurrency } from '../../fx/models/ptax';
-import { CURRENCIES } from '../constants';
+import { CURRENCIES } from '../models/currencies';
 import type { ICrmReportDefinitionRepository } from '../repositories/ICrmReportDefinitionRepository';
 import type { ICrmReportDefinitionPolicy } from '../policies/ICrmReportDefinitionPolicy';
 import type { ICrmReportDefinition } from '../models/CrmReportDefinition.model';
