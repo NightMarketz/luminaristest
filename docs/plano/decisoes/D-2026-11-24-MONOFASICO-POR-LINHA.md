@@ -28,7 +28,7 @@ a vir da linha `PIS_COFINS`, que já carrega o fim (2026-12-31 nas quatro linhas
 
 - Onda 3.2 (datas de corte de lei como linha), PR #1389: `legalParameter.ts` (`diaSeguinteAoFimDeVigencia`),
   `segregacaoNcm.ts` (`fimMonofasicoPisCofins`).
-- Ressalva do mesmo PR (lacuna 03e4, decidida pelo dono): a **publicação** (e a proposta) recusa com 400 a linha de
+- Ressalva do mesmo PR (lacuna 03e4, decidida pelo dono no questionário de 25/11/2026 ("Barrar na publicação das chaves ISS/PIS")): a **publicação** (e a proposta) recusa com 400 a linha de
   `PIS_COFINS` e de `ISS_LIMITE/ALIQUOTA_MAX_BP` sem `vigenteAte`, dizendo a chave — o fail-closed da leitura não vira
   derrubada da plataforma por um erro de dado (`erroDeFimObrigatorio`, `LegalParameterService.propose/publish`).
 
