@@ -111,7 +111,10 @@ export function chargeBanner(
   return null;
 }
 
-/** Tipo do documento pelo tamanho (item 12): 11 dígitos ⇒ CPF, 14 ⇒ CNPJ. */
+/**
+ * Tipo do documento pelo tamanho (item 12): 11 dígitos ⇒ CPF, 14 ⇒ CNPJ. Só dígitos DE PROPÓSITO: o Mercado Pago não
+ * confirmou CNPJ alfanumérico no `payer.identification` (ver `PayerSchema` no servidor, Onda 3.1) — letras são descartadas.
+ */
 export function docTypeFor(number: string): 'CPF' | 'CNPJ' | null {
   const digits = number.replace(/\D/g, '');
   if (digits.length === 11) return 'CPF';

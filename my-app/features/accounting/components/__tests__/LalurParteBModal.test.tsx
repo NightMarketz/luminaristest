@@ -164,6 +164,8 @@ describe('LalurParteBModal', () => {
   it('helpers: formatCnpj masks progressively; isCreatedInYear is inclusive on both ends', () => {
     expect(formatCnpj('12345678000190')).toBe('12.345.678/0001-90');
     expect(formatCnpj('123')).toBe('12.3');
+    // Onda 3.1: máscara do CNPJ alfanumérico (letras preservadas e em maiúsculas; DV só numérico não é imposto aqui)
+    expect(formatCnpj('12abc34501de35')).toBe('12.ABC.345/01DE-35');
     expect(isCreatedInYear('2025-01-01', 2025)).toBe(true);
     expect(isCreatedInYear('2025-12-31', 2025)).toBe(true);
     expect(isCreatedInYear('2024-12-31', 2025)).toBe(false);
