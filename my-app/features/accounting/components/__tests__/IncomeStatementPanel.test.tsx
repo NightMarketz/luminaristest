@@ -12,6 +12,8 @@ import {
   type IncomeStatementReport,
   type StatementDiagnostics,
 } from '../../../../lib/services/accounting.service';
+import ptAccounting from '../../../../public/locales/pt/accounting.json';
+import enAccounting from '../../../../public/locales/en/accounting.json';
 
 vi.mock('../../../../lib/services/accounting.service', () => ({
   accountingService: { getIncomeStatement: vi.fn() },
@@ -73,6 +75,44 @@ describe('IncomeStatementPanel (render)', () => {
     await waitFor(() => expect(screen.getByText(/Custo das Mercadorias Vendidas/)).toBeInTheDocument());
     // -25000 cents → "250,00" visible in the CMV section.
     expect(container.textContent).toContain('250,00');
+  });
+
+  // ── Teste-guarda L-20261121-171655-6052 — seção de custo rotulada como CMV/4.2 ──
+  // Desde o #1296 a seção `costOfGoodsSold` recebe a 4.7 (custo dos serviços prestados) e, desde o #1318, a conta do
+  // insumo de qualquer código. O servidor não manda rótulo de seção (`StatementSection` = accounts + totalCents), então o
+  // título tem de valer para qualquer conteúdo: o da Lei 6.404/1976 art. 187 II ("custo das mercadorias e serviços
+  // vendidos"), sem o subtítulo fixo "4.2". Vale para o fallback do `t()` e para os JSON de locale (a tela real lê o JSON).
+  it('guarda: a seção de custo não se rotula como CMV/4.2 quando contém custo de serviço (4.7) e insumo (4.1.9)', async () => {
+    const withServiceCost: IncomeStatementReport = {
+      ...report,
+      costOfGoodsSold: {
+        accounts: [
+          { accountId: 'c47', code: '4.7.1', name: 'Custo dos serviços prestados', amountCents: '-20000' },
+          { accountId: 'c419', code: '4.1.9', name: 'Insumos do serviço', amountCents: '-5000' },
+        ],
+        totalCents: '-25000',
+      },
+      netResult: { amountCents: '35000', isComputed: true, computation: 'sum' },
+    };
+    vi.mocked(accountingService.getIncomeStatement).mockResolvedValue(withServiceCost);
+
+    render(<IncomeStatementPanel unitId="u1" />);
+    fireEvent.click(screen.getByRole('button', { name: /Gerar DRE/ }));
+    await waitFor(() => expect(screen.getByText(/Custo dos serviços prestados/)).toBeInTheDocument());
+
+    const ptLabel = (ptAccounting as { incomeStatement: { section: { costOfGoodsSold: string } } }).incomeStatement.section.costOfGoodsSold;
+    const enLabel = (enAccounting as { incomeStatement: { section: { costOfGoodsSold: string } } }).incomeStatement.section.costOfGoodsSold;
+    expect({
+      tela: screen.queryByText('(−) Custo das Mercadorias e Serviços Vendidos') !== null,
+      subtitulo42: screen.queryByText('4.2') !== null,
+      pt: ptLabel,
+      en: enLabel,
+    }, 'a seção de custo da DRE rotula custo de serviço como "Custo das Mercadorias Vendidas · 4.2"').toEqual({
+      tela: true,
+      subtitulo42: false,
+      pt: '(−) Custo das Mercadorias e Serviços Vendidos',
+      en: '(−) Cost of Goods and Services Sold',
+    });
   });
 
   // ── Teste-guarda (sessão de instrumentação 2026-09-01) — classe date-only UTC shift ──
