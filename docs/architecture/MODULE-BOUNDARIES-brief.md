@@ -518,6 +518,18 @@ plantios e pontos declarados no `ADR-MODULE-BOUNDARIES.md` §11.6.
 | §5.3, texto que o `tsc` não vê | skills, `GENERATION_CONTRACTS.md`, `scripts/`, `governance/`, `lint-layer-gate.md` | também as listas de caminho do `server/src/jobs/proveP2ZeroDiffCli.ts` (perímetro zero-diff do ADR-P2, traduzido 1:1) e um teste que lê `analytics/kpis` por caminho relativo ao arquivo movido (`analyticsFieldMappingCoupling.test.ts`); o PR-3.x da `analytics` tem de ajustar esse teste de novo |
 | §6, item 10 | "a `M2` com a feature em `M2_FEATURES` sai 0" prova que nenhum arquivo ficou fora de camada | a `M2` casa pelo `to` e não vê arquivo sem importador; o item foi conferido também por `find` (lacuna `L-20261124-222007-2aaa`) |
 
+### 13.2 Lacunas do PR-3.x de `dynamicTables` (25/11/2026)
+
+Respostas literais em `docs/plano/decisoes/D-2026-11-25-MODULE-BOUNDARIES-LACUNAS-PR3-RESPOSTAS.md`; plantios no
+`ADR-MODULE-BOUNDARIES.md` §11.7.
+
+| Onde | O BRIEF dizia | O que valeu |
+|---|---|---|
+| §5.1, `M2` | uma regra, com o alvo no `to` e testes fora do `from` | três regras com o mesmo alvo (`M2`, `M2b`, `M2c`): arquivo fora de pasta de camada reprova com ou sem importador, e importador de teste conta. O item 10 do §6 passa a ser provado pelo gate, sem `find` |
+| §5.1, `D2` | barra repository, service, controller, route, Prisma e Express | barra também `lib/factory.ts` |
+| §5.3, `dynamicTables/utils/` | `RelationUtils.ts` e `TableUtils.ts` vão para `domain/` | os dois foram apagados (sem importador de produção nem de teste) |
+| §5.3, texto que o `tsc` não vê | cada PR-3.x repõe os caminhos | o `server/src/jobs/proveP2ZeroDiffCli.ts` saiu dessa lista: ficou congelado na árvore do #1387 (emenda de 25/11 no ADR-P2). Os PR-3.x de `accountingBinding` e `accounting` não mexem nele |
+
 ## Gates de envio [OPS-001]
 
 1. **Objetivo:** §1 (medida nova), §2 (fatias com classe), §3 (janela), §4 (prova), §7 (forks).

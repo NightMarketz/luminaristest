@@ -343,7 +343,7 @@ comentada no código, onboarding na tx do install) e jobs/`server.ts` (`PurgeDel
 - Limite da medida: regex, não AST. A regra de lint é a medida definitiva; se ela achar mais que o baseline acima,
   o achado vai à caixa antes de qualquer supressão.
 
-## 11. Emenda de 24/11/2026 — ligação das regras (PR-2 do BRIEF de execução; §11.5 = `users/public/` e `M4`; §11.6 = renome de `dynamicTables` e `M2`)
+## 11. Emenda de 24/11/2026 — ligação das regras (PR-2 do BRIEF de execução; §11.5 = `users/public/` e `M4`; §11.6 = renome de `dynamicTables` e `M2`; §11.7 = `M2` sem ponto cego, `D2` e CLI do P2)
 
 Autorização: dono, chat, 24/11/2026: "Executa o BRIEF inteiro". Esta emenda registra o que o §8 item 4 pede: o baseline
 antes/depois de cada regra ligada e a prova de que cada uma morde. As regras valem na branch
@@ -620,4 +620,70 @@ todos os casos. Depois de cada caso os arquivos foram removidos (e a pasta `pres
   um `path.resolve` relativo ao arquivo movido). O snapshot de DTO (`__dto-shapes__.json`) não tem diff.
 - **Classe do PR:** o BRIEF previa verde. Saiu vermelho com revisor obrigatório: o diff tem arquivo de skill que não é
   `.md` (`skill-audit/check-registries.mjs`) e um comentário em `features/accounting/models/Counterparty.model.ts`.
+- **Ambiente da prova:** Windows, com o `node_modules` pela junção do depósito. O resultado do CI (Linux) é o que vale.
+
+### 11.7 Emenda de 25/11/2026 — os três pontos declarados no §11.6: `M2` sem ponto cego, `D2` barra `lib/factory`, CLI do P2 congelado
+
+Autorização: dono, chat, 25/11/2026: "aborda as lacunas"; questionário de 25/11 (mesma sessão), quatro respostas:
+"Fechar no check:arch (Recommended)", "Apagar e travar a D2 (Recommended)", "Congelar como histórico (Recommended)" e
+"PR novo sobre o #1387 (Recommended)". PR próprio na pilha de `integration/module-boundaries-be`, sobre o #1387. Fecha
+as lacunas `L-20261124-222007-2aaa`, `L-20261124-222009-90dd` e `L-20261124-222012-137a`. Os itens "A `M2` casa pelo
+`to`", "`D2` em 0 com uma ressalva" e "Perímetro do ADR-P2" do "Declarado" do §11.6 ficam superados por esta emenda.
+
+**O que entrou**
+
+- **`M2` em três regras, todas com o mesmo alvo** (arquivo `.ts` de produção de uma feature de `M2_FEATURES` fora de
+  `LAYER_DIR`, tirando `dynamicTables/rules/` e testes; constante `M2_OUTSIDE_LAYER`):
+  - `M2-feature-code-in-layer-folder`: o alvo no `to`. O `from` deixa de excluir testes: arquivo fora de camada
+    importado só por teste também reprova.
+  - `M2b-feature-code-in-layer-folder-importing`: o alvo no `from`, com `to` livre. Pega o arquivo que importa
+    qualquer coisa, tenha ou não importador.
+  - `M2c-feature-code-in-layer-folder-orphan`: o alvo no `from` com `orphan: true`. Pega o arquivo que não importa
+    nada e que ninguém importa.
+  Todo arquivo cai em pelo menos uma: tem importador (`M2`), ou importa algo (`M2b`), ou nenhum dos dois (`M2c`). As
+  três nascem em 0 e não entram no known-violations.
+- **`D2` barra `^src/lib/factory\.ts$`:** `domain/` que chama `getFactory()` alcança repository e service por ele.
+  Segue em 0.
+- **`dynamicTables/domain/RelationUtils.ts` e `TableUtils.ts` apagados:** nenhum importador de produção nem de teste
+  (medida de 24/11). O primeiro era o único arquivo de `domain/` que importava `lib/factory`.
+- **`jobs/proveP2ZeroDiffCli.ts` congelado** (emenda de 25/11 no `ADR-P2-second-vertical.md`): a prova da P2 fechou,
+  o CLI não roda no CI, e as listas de caminho passam a descrever a árvore como estava no #1387. Os PRs de renome
+  seguintes não as traduzem mais. O teste das funções puras fica.
+- Contrato §2 (linha das pastas de camada): `domain/` também não importa `lib/factory`.
+
+**Baseline (server):** 376 antes e depois; nenhuma entrada acrescentada ou removida. Módulos cruzados: 2176 → 2174 (os
+dois arquivos apagados).
+
+**Prova de que as regras mordem** (saída literal de `npm run check:arch`, 25/11; 376 conhecidas ignoradas)
+
+| Caso | Sonda | Saída | Exit |
+|---|---|---|---|
+| órfã na raiz da feature | `dynamicTables/__sondaM2.ts`, sem import | `error M2c-feature-code-in-layer-folder-orphan: src/features/dynamicTables/__sondaM2.ts` · 2175 módulos | 1 |
+| sem importador, importa um model | `dynamicTables/__sondaM2.ts` com `import type { ITableSchema } from './models/DynamicTable.model'` | `error M2b-feature-code-in-layer-folder-importing: src/features/dynamicTables/__sondaM2.ts → src/features/dynamicTables/models/DynamicTable.model.ts` · 2175 módulos | 1 |
+| sem import, importada só por um teste | `dynamicTables/__sondaM2.ts` ← `dynamicTables/__tests__/__sondaM2.test.ts` | `error M2-feature-code-in-layer-folder: src/features/dynamicTables/__tests__/__sondaM2.test.ts → src/features/dynamicTables/__sondaM2.ts` · 2176 módulos | 1 |
+| pasta nova fora de camada, sem importador | `dynamicTables/helpers/__sondaM2.ts` importando o mesmo model | `error M2b-feature-code-in-layer-folder-importing: src/features/dynamicTables/helpers/__sondaM2.ts → src/features/dynamicTables/models/DynamicTable.model.ts` · 2175 módulos | 1 |
+| contraprova: órfã em `domain/` | `dynamicTables/domain/__sondaM2.ts` | `✔ no dependency violations found (2175 modules, 10011 dependencies cruised)` | 0 |
+| contraprova: arquivo de teste em `__tests__/` da raiz da feature | `dynamicTables/__tests__/__sondaM2.test.ts` | `✔ no dependency violations found (2175 modules, 10012 dependencies cruised)` | 0 |
+| contraprova: órfã em `rules/` | `dynamicTables/rules/__sondaM2.ts` | `✔ no dependency violations found (2175 modules, 10011 dependencies cruised)` | 0 |
+| contraprova: órfã na raiz de feature fora de `M2_FEATURES` | `analytics/__sondaM2.ts` | `✔ no dependency violations found (2175 modules, 10011 dependencies cruised)` | 0 |
+| `D2`: `domain/` importa `lib/factory` | `dynamicTables/domain/__sondaD2.ts` | `error D2-domain-is-pure: src/features/dynamicTables/domain/__sondaD2.ts → src/lib/factory.ts` · 2175 módulos | 1 |
+| contraprova: `domain/` importa `lib/logger` | `dynamicTables/domain/__sondaD2.ts` | `✔ no dependency violations found (2175 modules, 10012 dependencies cruised)` | 0 |
+| contraprova: `services/` importa `lib/factory` | `dynamicTables/services/__sondaD2.ts` | `✔ no dependency violations found (2175 modules, 10012 dependencies cruised)` | 0 |
+
+Sem sonda o gate cruza 2174 módulos; com sonda, 2175 (2176 no caso com teste importador). Antes da mudança, as mesmas
+sondas passavam: a órfã na raiz da feature dava exit 0 em 24/11 (§11.6, último caso) e a sonda de `domain/` →
+`lib/factory` dava exit 0 em 25/11, antes de a regra mudar. Sondas removidas depois de cada caso (e a pasta
+`helpers/`, criada só para o plantio); `git status` sem sobra.
+
+**Declarado**
+
+- **`M2b` conta uma violação por import:** arquivo fora de camada com N imports gera N linhas. Como a regra nasce em 0
+  e não tem baseline, o número não importa; o primeiro já reprova.
+- **`M2c` depende de o depcruise enxergar o arquivo:** vale para `.ts` sob `src/`. Arquivo de outra extensão (`.json`,
+  `.md`) fora de pasta de camada não é assunto da `M2`.
+- **A `D2` continua sem barrar o resto de `lib/`:** `lib/logger`, `lib/errors`, `lib/cnpj` e `lib/cpf` seguem
+  permitidos em `domain/` (os presets e o `ValidationUtils` os usam). Só `lib/factory` (composition root) e
+  `lib/prisma` são barrados.
+- **CLI do P2:** as listas ainda citam os dois arquivos apagados nesta emenda. Não foram tiradas: a lista está
+  congelada na árvore do #1387, e mexer nela agora seria a manutenção que a decisão encerrou.
 - **Ambiente da prova:** Windows, com o `node_modules` pela junção do depósito. O resultado do CI (Linux) é o que vale.

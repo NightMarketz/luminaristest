@@ -16,6 +16,11 @@ const PUBLIC_EXEC = '^src/features/[^/]+/public/(?!.*\\.types\\.ts$)';
 // (F-MBE-2 c): M2_FEATURES cresce a cada PR de renome e termina como `[^/]+`.
 const LAYER_DIR = '/(services|repositories|policies|models|dtos|controllers|domain|ports|adapters|public)/';
 const M2_FEATURES = '(dynamicTables)';
+// O alvo das três regras M2: arquivo `.ts` de produção de uma feature de M2_FEATURES fora de pasta de camada.
+const M2_OUTSIDE_LAYER = {
+  path: `^src/features/${M2_FEATURES}/.+\\.ts$`,
+  pathNot: [LAYER_DIR, '^src/features/dynamicTables/rules/', TEST],
+};
 const FEATURE_LOGIC = '^src/features/[^/]+/(?!models/).+';
 const FISCAL_LIB =
   '^src/lib/(sped|ecf|ecfReal|nfe|nfeCost|nfeSignature|nfse|nfseEvento|nfseReadback|nfseSignature|mit|cnab|ofx|cnpj|cpf|referentialCatalog)\\.ts$';
@@ -205,13 +210,28 @@ module.exports = {
         'Peça de feature mora em pasta de camada (services, repositories, policies, models, dtos, controllers, ' +
         'domain, ports, adapters, public). Sem exceção para `index.ts` (F-MB-1 b); `dynamicTables/rules/` é a pasta ' +
         'do motor, isenta por nome (F-MB-3 c). Vale para as features de M2_FEATURES e nasce em 0 para cada uma: ' +
-        'nunca entra no known-violations. Ponto cego: a regra casa pelo `to`, então arquivo sem importador não ' +
-        'aparece.',
-      from: { path: '^src/', pathNot: TEST },
-      to: {
-        path: `^src/features/${M2_FEATURES}/.+\\.ts$`,
-        pathNot: [LAYER_DIR, '^src/features/dynamicTables/rules/', TEST],
-      },
+        'nunca entra no known-violations. Esta regra casa pelo `to` (arquivo importado por alguém, teste inclusive); ' +
+        'a M2b e a M2c cobrem o arquivo que ninguém importa (dono, questionário, 25/11/2026: "Fechar no check:arch").',
+      from: { path: '^src/' },
+      to: M2_OUTSIDE_LAYER,
+    },
+    {
+      name: 'M2b-feature-code-in-layer-folder-importing',
+      severity: 'error',
+      comment:
+        'A M2 pelo lado do `from`: arquivo fora de pasta de camada que importa qualquer coisa, tenha ou não ' +
+        'importador. Nasce em 0: nunca entra no known-violations.',
+      from: M2_OUTSIDE_LAYER,
+      to: {},
+    },
+    {
+      name: 'M2c-feature-code-in-layer-folder-orphan',
+      severity: 'error',
+      comment:
+        'A M2 para o arquivo órfão: fora de pasta de camada, não importa nada e ninguém o importa. Com a M2 e a ' +
+        'M2b, todo `.ts` de produção fora de pasta de camada reprova. Nasce em 0: nunca entra no known-violations.',
+      from: { orphan: true, ...M2_OUTSIDE_LAYER },
+      to: {},
     },
     {
       name: 'M3-public-no-repository',
@@ -238,9 +258,12 @@ module.exports = {
       severity: 'error',
       comment:
         'F-MB-4 / F-MBE-4 (a): `domain/` é função pura, não engine — sem repository, service, controller, route, ' +
-        'Prisma nem Express. Nasce em 0: nunca entra no known-violations.',
+        'Prisma nem Express. Nem `lib/factory.ts`: quem chama `getFactory()` alcança repository e service por ele ' +
+        '(dono, questionário, 25/11/2026: "Apagar e travar a D2"). Nasce em 0: nunca entra no known-violations.',
       from: { path: '/domain/', pathNot: TEST },
-      to: { path: `(/repositories/|/services/|/controllers/|^src/routes/|${PRISMA}|node_modules/express/)` },
+      to: {
+        path: `(/repositories/|/services/|/controllers/|^src/routes/|${PRISMA}|^src/lib/factory\\.ts$|node_modules/express/)`,
+      },
     },
     {
       name: 'J1-job-is-entrypoint',

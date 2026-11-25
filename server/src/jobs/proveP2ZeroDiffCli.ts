@@ -33,10 +33,13 @@
  * mora em nenhum diretório protegido acima (domain/presets/modules/ pode crescer), mas F-P2-5 → (a) VETA
  * editar esse arquivo ESPECÍFICO (compartilhado com o salão) — é o comportamento 2 do BRIEF.
  *
- * Caminhos traduzidos em 24/11/2026 pelo renome do ADR-MODULE-BOUNDARIES (PR-3.x de dynamicTables): presets/ →
- * domain/presets/, utils/ → domain/, validation/ → services/. O prefixo `utils/` virou a lista nominal dos cinco
- * arquivos que existiam nele (não há prefixo que diga 'domain/ menos domain/presets/'); `validation/` saiu da lista
- * porque `services/` já a cobre.
+ * CONGELADO em 25/11/2026 (ADR-P2, EMENDA 2026-11-25; dono, questionário: "Congelar como histórico"). A prova da P2
+ * fechou e este CLI não roda no CI. As listas abaixo descrevem a árvore como estava no #1387 (24/11/2026), depois do
+ * primeiro renome do ADR-MODULE-BOUNDARIES: presets/ → domain/presets/, utils/ → domain/, validation/ → services/. O
+ * prefixo `utils/` virou a lista nominal dos cinco arquivos que existiam nele (não há prefixo que diga 'domain/ menos
+ * domain/presets/'); `validation/` saiu da lista porque `services/` já a cobre. Os PRs de renome seguintes NÃO traduzem
+ * mais estes caminhos: o resultado do CLI contra uma árvore posterior ao #1387 não prova nada. Reativar a prova pede
+ * redefinir o perímetro sobre a árvore do dia, em emenda do ADR-P2.
  */
 import { execFileSync } from 'child_process';
 import * as path from 'path';
