@@ -61,7 +61,7 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
 
 - **Decisão:** plano de correção de 24/11/2026 (dono, chat, via sessão-mãe; item 1.2 da auditoria fiscal/contábil read-only do mesmo dia) +
   F-PB-1 a ([`ADR-PAIS-NA-BORDA`](ADR-PAIS-NA-BORDA.md), 24/11): o centro é o conceito; o país mora na borda (`features/<domínio>/paises/br/**`).
-  O `ADR-MODULE-BOUNDARIES` segue **Proposed**: nenhuma regra dele (M1/M1a…) foi ligada.
+  O `ADR-MODULE-BOUNDARIES` (Accepted em 24/11, sem "executa") trata de fronteira **entre** features; a C1 é o anel **dentro** de `features/accounting`, sem sobreposição de regra: nenhuma regra dele (M1/M1a…) foi ligada por esta emenda.
 - **Regra:** `C1-ledger-core-not-fiscal` (erro). `from` = `services/{PostingService,PeriodService,AuditService,ExerciseClosingService,ReconciliationService}`
   e `repositories/I?{JournalEntry,Posting,Account,AccountingPeriod,Audit,Reconciliation,SourceProvenance}Repository` de `features/accounting`.
   `to` = **tudo em `src/` fora da lista fechada** `LEDGER_CORE_ALLOWED`: `audit/`, `dtos/{Posting,Reconciliation}Dto`, `models/{AccountantAssignment.model,Reconciliation.model,closing,dates,ledgerStatus,money}`,
