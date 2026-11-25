@@ -1653,12 +1653,12 @@
           "costCents": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 2147483647
+            "maximum": 8796093022207
           },
           "residualValueCents": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 2147483647,
+            "maximum": 8796093022207,
             "default": 0,
             "description": "deve ser < costCents"
           },
@@ -1729,12 +1729,12 @@
           "costCents": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 2147483647
+            "maximum": 8796093022207
           },
           "residualValueCents": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 2147483647
+            "maximum": 8796093022207
           },
           "acquiredAt": {
             "type": "string"
@@ -1791,7 +1791,7 @@
           "openingAccumulatedCents": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 2147483647,
+            "maximum": 8796093022207,
             "description": "obrigatório se activatedAt for anterior ao 1º período OPEN/SOFT_CLOSED do escopo (item 9)"
           },
           "version": {
@@ -1824,7 +1824,7 @@
           "proceedsCents": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 2147483647,
+            "maximum": 8796093022207,
             "description": "0 = imprestável (art. 121 §4)"
           },
           "counterpartAccountId": {
@@ -1968,7 +1968,7 @@
           "valorCents": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 2147483647,
+            "maximum": 8796093022207,
             "description": "Sempre ≥ 0 — a direção (adição/exclusão) vem do TIPO_LANCAMENTO derivado do catálogo (Manual p.244)."
           },
           "histLancamento": {
@@ -2133,7 +2133,7 @@
           },
           "cnpjSitEsp": {
             "type": "string",
-            "description": "M010.CNPJ_SIT_ESP — 14 dígitos, opcional"
+            "description": "M010.CNPJ_SIT_ESP — 14 posições (CNPJ alfanumérico), opcional"
           }
         }
       },
@@ -2685,7 +2685,7 @@
           "amountCents": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 2147483647,
+            "maximum": 8796093022207,
             "description": "Valor em centavos inteiros. Teto de POLÍTICA (não de persistência — a coluna é BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400. Guarda contra erro de digitação/ordem de grandeza, não limite técnico."
           },
           "expenseAccountId": {
@@ -2726,7 +2726,7 @@
                 "amountCents": {
                   "type": "integer",
                   "minimum": 0,
-                  "maximum": 2147483647
+                  "maximum": 8796093022207
                 },
                 "motivo": {
                   "type": "string",
@@ -2799,7 +2799,7 @@
                 "costCents": {
                   "type": "integer",
                   "minimum": 1,
-                  "maximum": 2147483647
+                  "maximum": 8796093022207
                 },
                 "ncm": {
                   "type": "string",
@@ -2847,7 +2847,7 @@
                 "costCents": {
                   "type": "integer",
                   "minimum": 1,
-                  "maximum": 2147483647
+                  "maximum": 8796093022207
                 },
                 "description": {
                   "type": "string"
@@ -2889,7 +2889,7 @@
           "amountCents": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 2147483647,
+            "maximum": 8796093022207,
             "description": "Valor DESTE pagamento: qualquer parte do saldo em aberto (amountCents − paidCents), nunca acima dele (BE-INCR-PARTIAL-SETTLEMENT). A checagem contra o saldo vive no serviço (sum-CAS atômico), não neste schema. Teto de POLÍTICA (não de persistência — BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400."
           }
         }
@@ -3115,8 +3115,7 @@
           "anoCalendario": {
             "type": "integer",
             "minimum": 2025,
-            "maximum": 2026,
-            "description": "2027+ ⇒ 400 (PIS/Cofins revogados — LC 214/2025 art. 542)"
+            "description": "Sem teto no schema: sem linha PIS_COFINS vigente no ano ⇒ 400 (PIS/Cofins revogados; a mensagem cita a fonte da linha)"
           },
           "periodo": {
             "type": "string",
@@ -3298,13 +3297,13 @@
           "debitCents": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 2147483647,
+            "maximum": 8796093022207,
             "description": "Integer cents. POLICY ceiling (not a persistence limit — the column is BigInt since BE-INCR-MONEY-BIGINT): above this the API returns 400. Guards against a fat-finger/order-of-magnitude typo, not a storage constraint."
           },
           "creditCents": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 2147483647,
+            "maximum": 8796093022207,
             "description": "Integer cents. Same POLICY ceiling as debitCents (see above)."
           },
           "dimensions": {
@@ -3578,7 +3577,7 @@
           "amountCents": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 2147483647,
+            "maximum": 8796093022207,
             "description": "Valor em centavos inteiros. Teto de POLÍTICA (não de persistência — a coluna é BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400. Guarda contra erro de digitação/ordem de grandeza, não limite técnico."
           },
           "revenueAccountId": {
@@ -3621,7 +3620,7 @@
           "amountCents": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 2147483647,
+            "maximum": 8796093022207,
             "description": "Valor DESTE recebimento: qualquer parte do saldo em aberto (amountCents − receivedCents), nunca acima dele (BE-INCR-PARTIAL-SETTLEMENT). A checagem contra o saldo vive no serviço (sum-CAS atômico). Teto de POLÍTICA (não de persistência): acima disso a API responde 400."
           }
         }
@@ -3746,15 +3745,15 @@
           "openingBalanceCents": {
             "type": "integer",
             "nullable": true,
-            "minimum": -2147483647,
-            "maximum": 2147483647,
+            "minimum": -8796093022207,
+            "maximum": 8796093022207,
             "description": "Signed integer cents (a closing balance can be negative — overdraft). POLICY ceiling in both directions (not a persistence limit — the column is BigInt since BE-INCR-MONEY-BIGINT): outside this range the API returns 400."
           },
           "closingBalanceCents": {
             "type": "integer",
             "nullable": true,
-            "minimum": -2147483647,
-            "maximum": 2147483647,
+            "minimum": -8796093022207,
+            "maximum": 8796093022207,
             "description": "Signed integer cents. Same POLICY ceiling as openingBalanceCents (see above)."
           },
           "format": {
@@ -34407,7 +34406,7 @@
                   "valorInt": {
                     "type": "string",
                     "pattern": "^\\d+$",
-                    "description": "PISO_SALARIAL_CENTS in cents, 1..2147483647"
+                    "description": "PISO_SALARIAL_CENTS in cents, 1..8796093022207"
                   },
                   "clausula": {
                     "type": "string",
@@ -34492,7 +34491,7 @@
                   "valorInt": {
                     "type": "string",
                     "pattern": "^\\d+$",
-                    "description": "PISO_SALARIAL_CENTS in cents, 1..2147483647"
+                    "description": "PISO_SALARIAL_CENTS in cents, 1..8796093022207"
                   },
                   "clausula": {
                     "type": "string",

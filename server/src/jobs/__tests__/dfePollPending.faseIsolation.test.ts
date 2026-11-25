@@ -1,12 +1,11 @@
 /**
- * Onda 4 / 4.1 — L1 da revisão independente do #1392. `pollPendingOnce` GRAVA `pollGaveUpAt`/`pollAlertedAt` e devolve os ids
- * a alertar no `summary`; o webhook sai no `DfePollScheduler`. Antes, as fases seguintes do mesmo tick (contingência, eventos,
- * dreno de anexo) rodavam no mesmo `await` sequencial: se uma lançasse, o `summary` se perdia, o alerta nunca saía e, como o
- * marcador "já alertei" já estava no banco, o documento saía da fila e nunca realertava (alerta perdido de forma permanente).
+ * Onda 4 / 4.1 — L1 da revisão independente do #1392. `pollPendingOnce` devolve os ids a alertar no `summary`; o webhook sai no
+ * `DfePollScheduler`. Antes, as fases seguintes do mesmo tick (contingência, eventos, dreno de anexo) rodavam no mesmo `await`
+ * sequencial: se uma lançasse, o `summary` se perdia e o alerta de desistência/adiamento nunca saía.
  *
- * Guarda: fase que lança NÃO derruba o tick — o alerta de desistência/adiamento sai, as fases seguintes ainda rodam, a falha
- * da fase é registrada (OBS-R8, `job.failed` com a fase) e alertada (`job_failed`, OBS-R11). O mesmo molde de
- * `purgeStepIsolation.test.ts`.
+ * Guarda: fase que lança NÃO derruba o tick — o alerta de desistência/adiamento sai (e, entregue, o marcador é confirmado — lacuna
+ * 2374), as fases seguintes ainda rodam, a falha da fase é registrada (OBS-R8, `job.failed` com a fase) e alertada (`job_failed`,
+ * OBS-R11). O mesmo molde de `purgeStepIsolation.test.ts`.
  */
 import { DfePollScheduler } from '../DfePollScheduler';
 import { runDfePollPending } from '../dfePollPending.job';
@@ -47,6 +46,9 @@ function montarFactory(quebra?: Fase) {
 }
 
 const eventos = (alert: jest.Mock, event: string) => alert.mock.calls.map(([p]) => p).filter((p) => p.event === event);
+/** Os dois alertas do poll saem pela entrega confirmada (lacuna 2374); o `alert` fire-and-forget leva o resto (`job_failed`, contingência). */
+const montarScheduler = (alert: jest.Mock, entregarAlerta = jest.fn().mockResolvedValue('delivered'), confirmarAlertas = jest.fn().mockResolvedValue(1)) =>
+  ({ scheduler: new DfePollScheduler({ poll: runDfePollPending, log: { event: jest.fn() }, alert, entregarAlerta, confirmarAlertas }), entregarAlerta, confirmarAlertas });
 
 describe('dfe_poll_pending — fase seguinte que lança não perde o alerta de desistência/adiamento (L1 do #1392)', () => {
   let logSpy: jest.SpyInstance;
@@ -58,13 +60,15 @@ describe('dfe_poll_pending — fase seguinte que lança não perde o alerta de d
   it.each<Fase>(['contingencia', 'eventos', 'anexos'])('fase "%s" lança ⇒ os alertas de desistência e de adiamento ainda saem', async (quebra) => {
     montarFactory(quebra);
     const alert = jest.fn();
-    const scheduler = new DfePollScheduler({ poll: runDfePollPending, log: { event: jest.fn() }, alert });
+    const { scheduler, entregarAlerta, confirmarAlertas } = montarScheduler(alert);
 
     const resultado = await scheduler.runOnce();
 
-    const resumos = eventos(alert, 'reconcile_summary');
+    const resumos = entregarAlerta.mock.calls.map(([p]) => p);
     expect(resumos.find((p) => p.pollGaveUp === 1)).toMatchObject({ pollGaveUpDocumentIds: ['doc-desistiu'] });
     expect(resumos.find((p) => p.transporteAdiado === 1)).toMatchObject({ transporteAdiadoDocumentIds: ['doc-adiado'] });
+    expect(confirmarAlertas).toHaveBeenCalledWith('desistencia', ['doc-desistiu']);
+    expect(confirmarAlertas).toHaveBeenCalledWith('transporte', ['doc-adiado']);
     // A falha da fase não some: alerta de job + resumo marcado.
     expect(eventos(alert, 'job_failed')).toEqual([expect.objectContaining({ source: 'dfe_poll', fases: [quebra], error: `boom-${quebra}` })]);
     expect(resultado).toMatchObject({ fasesFalharam: [{ fase: quebra, error: `boom-${quebra}` }] });
@@ -72,13 +76,13 @@ describe('dfe_poll_pending — fase seguinte que lança não perde o alerta de d
 
   it('fase que lança é registrada (OBS-R8) com a fase e a mensagem, em nível error', async () => {
     montarFactory('contingencia');
-    await new DfePollScheduler({ poll: runDfePollPending, log: { event: jest.fn() }, alert: jest.fn() }).runOnce();
+    await montarScheduler(jest.fn()).scheduler.runOnce();
     expect(logSpy).toHaveBeenCalledWith('error', 'job.failed', 'dfe_poll_pending', expect.objectContaining({ fase: 'contingencia', error: 'boom-contingencia' }));
   });
 
   it('as fases seguintes ainda rodam depois de uma que lança (contingência ⇒ eventos e anexos)', async () => {
     const fases = montarFactory('contingencia');
-    await new DfePollScheduler({ poll: runDfePollPending, log: { event: jest.fn() }, alert: jest.fn() }).runOnce();
+    await montarScheduler(jest.fn()).scheduler.runOnce();
     expect(fases.pollEventosOnce).toHaveBeenCalledTimes(1);
     expect(fases.drainPendingAttachmentsOnce).toHaveBeenCalledTimes(1);
   });
@@ -86,9 +90,10 @@ describe('dfe_poll_pending — fase seguinte que lança não perde o alerta de d
   it('controle: nenhuma fase lança ⇒ sem job_failed e sem fasesFalharam; os alertas saem como antes', async () => {
     montarFactory();
     const alert = jest.fn();
-    const resultado = await new DfePollScheduler({ poll: runDfePollPending, log: { event: jest.fn() }, alert }).runOnce();
+    const { scheduler, entregarAlerta } = montarScheduler(alert);
+    const resultado = await scheduler.runOnce();
     expect(eventos(alert, 'job_failed')).toHaveLength(0);
     expect(resultado).not.toHaveProperty('fasesFalharam');
-    expect(eventos(alert, 'reconcile_summary')).toHaveLength(2);
+    expect(entregarAlerta).toHaveBeenCalledTimes(2);
   });
 });

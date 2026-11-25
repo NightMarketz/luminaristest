@@ -111,6 +111,8 @@ export class FakeSefaz {
     chamadas: [],
   };
   public baseUrl = '';
+  /** Conexões TCP/TLS ainda abertas neste servidor (sobe no `connection`, desce no `close` do socket). */
+  public conexoesAbertas = 0;
   private nProtSeq = 135_000_000_000_000;
 
   constructor(private readonly pki: TlsPki = makeTlsPki()) {}
@@ -146,6 +148,12 @@ export class FakeSefaz {
         });
       },
     );
+    this.server.on('connection', (socket) => {
+      this.conexoesAbertas += 1;
+      socket.once('close', () => {
+        this.conexoesAbertas -= 1;
+      });
+    });
     await new Promise<void>((resolve) => this.server!.listen(0, '127.0.0.1', resolve));
     this.baseUrl = `https://127.0.0.1:${(this.server.address() as AddressInfo).port}`;
     return this.baseUrl;

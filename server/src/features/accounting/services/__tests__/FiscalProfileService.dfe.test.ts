@@ -154,6 +154,7 @@ describe('FiscalProfileService — BE-INCR-DFE (itens 6/7/9)', () => {
       await expect(build({ legalParams: semTeto }).svc.upsert(scope, UpsertFiscalProfileSchema.parse(base))).rejects.toBeInstanceOf(SemLinhaVigenteError);
     });
   });
+
   // MODULE-BOUNDARIES PR-1a (dono, 24/11: "Vai para o service"): o máximo da ISS_LIMITE e a lista nacional do pacote saíram do DTO para o validate.
   it('issAliquotaBp acima do máximo da ISS_LIMITE (pAliq [312], RN E0595) e pacoteCTribNac fora da lista nacional → 400 antes de gravar', async () => {
     const { svc, repo } = build();

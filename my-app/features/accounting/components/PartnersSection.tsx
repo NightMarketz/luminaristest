@@ -9,6 +9,7 @@ import {
 } from '../../../lib/services/partners.service';
 import { percentToBp } from '../../../lib/services/fixedAssets.service';
 import { Modal } from '../../../components/ui/Modal';
+import { CNPJ_REGEX, CPF_REGEX, stripCnpjMask } from '../../../lib/cnpj';
 import { resolveErrorWithCode } from '../lib/resolveError';
 import { useAccountingT } from '../lib/useAccountingT';
 import { formatBp } from '../lib/simplesGrid';
@@ -40,7 +41,8 @@ export const partnerToForm = (p: Partner): PartnerFormState => ({
   saidaEm: p.saidaEm ?? '',
 });
 
-const onlyDigits = (s: string) => s.replace(/\D/g, '');
+/** CPF/CNPJ sem máscara: o CNPJ pode ser alfanumérico (IN RFB 2.229/2024) — nunca `\D`, que apagaria as letras. */
+const normalizeTaxId = (s: string) => stripCnpjMask(s);
 
 /**
  * Forma do `CreatePartnerSchema`; sufixo de `partners.error.*`. O dígito verificador do CPF/CNPJ fica com o servidor
@@ -48,7 +50,8 @@ const onlyDigits = (s: string) => s.replace(/\D/g, '');
  */
 export function validatePartnerForm(f: PartnerFormState): string | null {
   if (!f.nome.trim()) return 'nomeObrigatorio';
-  if (!/^(\d{11}|\d{14})$/.test(onlyDigits(f.taxId))) return 'taxIdFormato';
+  const taxId = normalizeTaxId(f.taxId);
+  if (!CPF_REGEX.test(taxId) && !CNPJ_REGEX.test(taxId)) return 'taxIdFormato';
   const bp = percentToBp(f.participacao);
   if (!Number.isInteger(bp) || bp < 0 || bp > 10000) return 'participacaoInvalida';
   if (!f.entradaEm) return 'entradaObrigatoria';
@@ -63,7 +66,7 @@ export function toPartnerPayload(unitId: string, f: PartnerFormState, atual: Par
   const out: CreatePartnerInput = {
     unitId,
     nome: f.nome.trim(),
-    taxId: onlyDigits(f.taxId),
+    taxId: normalizeTaxId(f.taxId),
     residenteBrasil: f.residenteBrasil,
     participacaoBp: percentToBp(f.participacao),
     entradaEm: f.entradaEm,
@@ -263,8 +266,8 @@ export function PartnersSection({ unitId }: { unitId: string }) {
             <input value={form.nome} onChange={(e) => set('nome', e.target.value)} className={`w-full ${inputClass}`} />
           </Field>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field label={t('partners.field.taxId', 'CPF ou CNPJ (só dígitos)')}>
-              <input inputMode="numeric" value={form.taxId} onChange={(e) => set('taxId', e.target.value)} className={`w-full ${inputClass}`} />
+            <Field label={t('partners.field.taxId', 'CPF ou CNPJ (o CNPJ pode ter letras)')}>
+              <input inputMode="text" autoCapitalize="characters" value={form.taxId} onChange={(e) => set('taxId', e.target.value)} className={`w-full ${inputClass}`} />
             </Field>
             <Field label={t('partners.field.residencia', 'Residência')}>
               <select value={form.residenteBrasil ? 'BR' : 'EX'} onChange={(e) => set('residenteBrasil', e.target.value === 'BR')} className={`w-full ${inputClass}`}>
@@ -316,7 +319,7 @@ export function PartnersSection({ unitId }: { unitId: string }) {
 /** Fallback pt das validações da tela (a chave `partners.error.*` do i18n manda). */
 const MSG_PT: Record<string, string> = {
   nomeObrigatorio: 'Informe o nome do sócio.',
-  taxIdFormato: 'CPF (11 dígitos) ou CNPJ (14 dígitos), só números.',
+  taxIdFormato: 'CPF (11 dígitos) ou CNPJ (14 posições: 12 letras/números + 2 dígitos).',
   participacaoInvalida: 'Participação inválida: um percentual entre 0 e 100.',
   entradaObrigatoria: 'Informe a data de entrada.',
 };

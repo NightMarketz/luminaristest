@@ -46,7 +46,7 @@ import type { SefazTransporte } from './SefazTransporte';
  *   `nfeProc` (NFe + protNFe); rejeição ⇒ `REJECTED` com o cStat em `errors[].code`; duplicidade (204/539) ⇒
  *   `NFeConsultaProtocolo4` pela chave antes de qualquer outra decisão. `partnerRef` = chave (44).
  * - `consultar` (E-8): `consSitNFe` pela chave; 100/150 ⇒ `AUTHORIZED` (re-assina a mesma nota — a assinatura é
- *   determinística — e confere o `digVal` do protocolo); 110/301/302 ⇒ `DENIED` (terminal, o número fica consumido — L-20261124-054021-cbc8);
+ *   determinística — e confere o `digVal` do protocolo); 110/301/302 ⇒ `DENIED` (terminal, sem reenvio — L-20261124-054021-cbc8);
  *   217 ⇒ `PROCESSING` com o código, e quem decide o
  *   `dfe_nao_recebida` é o ciclo (F-ADN-8 a, D-2026-10-29-X10A-PR7-9-FORKS). Nunca reenvia.
  * - `inutilizar` (E-6) e `cancelar` 110111 (E-7) montam, assinam e enviam o pedido; o `nProt` do cancelamento vem da

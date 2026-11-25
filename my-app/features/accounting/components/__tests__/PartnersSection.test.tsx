@@ -145,6 +145,11 @@ describe('validatePartnerForm / toPartnerPayload', () => {
     const ok = { ...emptyPartnerForm(), nome: 'A', taxId: '52998224725', participacao: '100', entradaEm: '2026-01-01' };
     expect(validatePartnerForm(ok)).toBeNull();
     expect(validatePartnerForm({ ...ok, taxId: '123' })).toBe('taxIdFormato');
+    // Onda 3.1: CNPJ alfanumérico (IN RFB 2.229/2024) — com ou sem máscara, minúsculo; DV é do servidor (item 17 do Y600)
+    expect(validatePartnerForm({ ...ok, taxId: '12ABC34501DE35' })).toBeNull();
+    expect(validatePartnerForm({ ...ok, taxId: '12.abc.345/01de-35' })).toBeNull();
+    expect(validatePartnerForm({ ...ok, taxId: '12ABC34501DEAB' })).toBe('taxIdFormato');
+    expect(validatePartnerForm({ ...ok, taxId: '12ABC34501DE3' })).toBe('taxIdFormato');
     expect(validatePartnerForm({ ...ok, participacao: '100,01' })).toBe('participacaoInvalida');
     expect(validatePartnerForm({ ...ok, entradaEm: '' })).toBe('entradaObrigatoria');
   });
@@ -152,5 +157,7 @@ describe('validatePartnerForm / toPartnerPayload', () => {
   it('sócio novo sai sem outrasParticipacoes; saída vazia vira null', () => {
     const body = toPartnerPayload('u1', { ...emptyPartnerForm(), nome: 'A', taxId: '52998224725', participacao: '12,5', entradaEm: '2026-01-01' }, null);
     expect(body).toStrictEqual({ unitId: 'u1', nome: 'A', taxId: '52998224725', residenteBrasil: true, participacaoBp: 1250, entradaEm: '2026-01-01', saidaEm: null });
+    const alfa = toPartnerPayload('u1', { ...emptyPartnerForm(), nome: 'H', taxId: '12.abc.345/01de-35', participacao: '10', entradaEm: '2026-01-01' }, null);
+    expect(alfa.taxId).toBe('12ABC34501DE35');
   });
 });

@@ -3,7 +3,6 @@ import { baseServicoCents, linha, linhaNaoUso, maxZero, type MemoriaLinha } from
 import { mulBp } from './taxAssessmentParams';
 import { fimDoMes } from './taxAssessmentCalcAnual';
 import {
-  PIS_COFINS_REVOGACAO_FONTE,
   parametroPisCofinsVigente,
   type CreditoPisCofinsNota,
   type ModalidadePisCofins,
@@ -159,7 +158,11 @@ function recusaSemLinhaVigente(tabela: readonly ParametroPisCofins[], ano: numbe
   }
   const desde = diaSeguinte(fim);
   const desdeTxt = desde.endsWith('-01') ? desde.slice(0, 7) : desde;
-  return new ValidationError(`${periodo}/${ano}: PIS/Cofins revogados a partir de ${desdeTxt} (${PIS_COFINS_REVOGACAO_FONTE}) — CBS é da onda 3.`);
+  // A citação é o campo `fonte` da(s) linha(s) que marca(m) esse fim (ressalva do #1361, dono 24/11): nenhum artigo de lei
+  // fica fixo no código — estendida a linha, a mensagem cita a fonte da linha estendida, não a de uma revogação que deixou
+  // de valer. Linhas empatadas no fim (PIS/Cofins × modalidades) entram com as `fonte` distintas, em ordem estável.
+  const fontes = [...new Set(tabela.filter((p) => p.vigenteAte === fim).map((p) => p.fonte))].sort();
+  return new ValidationError(`${periodo}/${ano}: PIS/Cofins revogados a partir de ${desdeTxt} (fonte da linha: ${fontes.join(' | ')}) — CBS é da onda 3.`);
 }
 
 /**

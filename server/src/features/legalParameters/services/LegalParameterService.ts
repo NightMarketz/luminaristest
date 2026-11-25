@@ -14,7 +14,7 @@ import type {
   VigenteLegalParameterQuery,
 } from '../dtos/LegalParameterDto';
 import { LEGAL_PARAMETER_TABELAS, LinhaLegalIlegivelError, TABELAS_MIGRADAS, linhaLegalVigente, linhasEmVigor, type LegalParameterTabela } from '../models/legalParameter';
-import { TEM_REGRA_DE_FORMATO, erroDeFormato } from '../models/formatoLinha';
+import { TEM_REGRA_DE_FORMATO, erroDeFimObrigatorio, erroDeFormato } from '../models/formatoLinha';
 import { cachedPublished, storePublished } from './legalParameterCache';
 
 /**
@@ -48,6 +48,12 @@ function erroDoFormato(d: Pick<ProposeLegalParameterInput, 'tabela' | 'chave' | 
 
 function exigirFormato(d: Parameters<typeof erroDoFormato>[0]): void {
   const erro = erroDoFormato(d);
+  if (erro) throw new ValidationError(erro);
+}
+
+/** Lacuna 03e4: a linha que marca o fim da lei não entra (proposta nem publicação) sem `vigenteAte`. */
+function exigirFim(l: Parameters<typeof erroDeFimObrigatorio>[0]): void {
+  const erro = erroDeFimObrigatorio(l);
   if (erro) throw new ValidationError(erro);
 }
 
@@ -213,6 +219,7 @@ export class LegalParameterService {
       throw new ValidationError(`${d.tabela}: tabela ainda não migrada para o banco — nenhum cálculo a lê (BE-INCR-LEGAL-PARAMS, PR-2/PR-3).`);
     }
     exigirFormato(d);
+    exigirFim({ tabela: d.tabela, chave: d.chave, vigenteAte: d.vigenteAte ?? null });
     const row = await this.repo.runTransaction(async (tx) => {
       if (d.supersedesId) {
         const alvo = await this.repo.findById(d.supersedesId, tx);
@@ -268,6 +275,7 @@ export class LegalParameterService {
       // (ex.: CBS 2027) não entra em vigor.
       const v = toView(linha);
       exigirFormato({ tabela: v.tabela as LegalParameterTabela, chave: v.chave, discriminador: v.discriminador ?? undefined, valorInt: v.valorInt ?? undefined, valorTexto: v.valorTexto ?? undefined, valorJson: v.valorJson ?? undefined });
+      exigirFim({ tabela: v.tabela as LegalParameterTabela, chave: v.chave, vigenteAte: v.vigenteAte });
       if (linha.supersedesId) {
         const alvo = await this.repo.findById(linha.supersedesId, tx);
         if (alvo?.status !== 'PUBLISHED') throw new ConflictError(`A linha substituída ${linha.supersedesId} já não está publicada.`);

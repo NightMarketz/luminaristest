@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { isValidCpf } from '../../../lib/cpf';
-import { CNPJ_REGEX, isValidCnpj } from '../../../lib/cnpj';
+import { CNPJ_REGEX, CPF_OR_CNPJ_REGEX, isValidCnpj } from '../../../lib/cnpj';
 import { isValidDateOnly } from '../models/dates';
 
 /**
@@ -44,7 +44,8 @@ export const CreatePartnerSchema = z
   .object({
     unitId: z.string().min(1),
     nome: z.string().trim().min(1).max(200),
-    taxId: z.string().regex(/^(\d{11}|\d{14})$/, 'taxId = CPF (11) ou CNPJ (14) só dígitos'),
+    // CNPJ alfanumérico (IN RFB 2.229/2024; Onda 3.1): o regex único de `lib/cnpj.ts` entra no snapshot de shape (a refine não).
+    taxId: z.string().regex(CPF_OR_CNPJ_REGEX, 'taxId = CPF (11 dígitos) ou CNPJ (14 posições [A-Z0-9], sem máscara)'),
     residenteBrasil: z.boolean(),
     participacaoBp: z.number().int().min(0).max(10000),
     entradaEm: dateOnly('entradaEm'),

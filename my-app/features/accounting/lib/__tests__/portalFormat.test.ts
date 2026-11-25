@@ -44,6 +44,7 @@ describe('portalFormat', () => {
     expect(portalDoc('12.345.678/0001-95')).toBe('12345678000195');
     expect(portalDoc('123.456.789-09')).toBe('12345678909');
     expect(portalDoc('12345678000195')).toBe('12345678000195');
+    expect(portalDoc('12.ABC.345/01DE-35')).toBe('12ABC34501DE35'); // Onda 3.1: CNPJ alfanumérico não perde as letras
     expect(() => portalDoc('1234')).toThrow();
   });
 

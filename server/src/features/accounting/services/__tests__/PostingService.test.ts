@@ -23,6 +23,7 @@ import { Prisma } from 'generated/prisma';
 import { PostingService } from '../PostingService';
 import { AccountingPeriodNotOpenError, ForbiddenError, MaxCentsExceededError, NotFoundError, ValidationError } from '../../../../lib/errors';
 import { CANONICAL_ACCOUNTS } from '../../fixtures/ChartOfAccountsFixture';
+import { ecdChartStructureRule } from '../../paises/br/EcdChartStructureRule';
 import { MAX_CENTS } from '../../models/money';
 import logger from '../../../../lib/logger';
 import type { AccountingScope } from '../../scope/AccountingScope';
@@ -165,7 +166,8 @@ function buildService(over: {
     auditService as any,
     sourceProvenanceRepo as any,
     dimensionRepo as any,
-    { countLiveEntriesByAccount: async () => 0 }, // ECF 3C item 19: sem ajuste do e-Lalur nestas suítes
+    { assertAccountDeletable: async () => undefined }, // porta AccountDeletionGuard (ECF 3C item 19): sem ajuste do e-Lalur nestas suítes
+    ecdChartStructureRule, // adaptador BR REAL da porta ChartStructureRule (mesma regra do PVA que as suítes já exercitavam)
   );
   return { svc, accountRepo, journalEntryRepo, postingRepo, policy, periodRepo, auditService, sourceProvenanceRepo, dimensionRepo };
 }

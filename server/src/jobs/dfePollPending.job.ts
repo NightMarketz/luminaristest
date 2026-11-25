@@ -7,7 +7,7 @@
  */
 import { getFactory } from '../lib/factory';
 import logger from '../lib/logger';
-import type { FaseFalhou, PollSummary } from '../features/accounting/services/FiscalDocumentLifecycleService';
+import type { AlertaDePoll, FaseFalhou, PollSummary } from '../features/accounting/services/FiscalDocumentLifecycleService';
 import { readMsEnv } from './readMsEnv';
 
 const JOB = 'dfe_poll_pending';
@@ -19,11 +19,12 @@ export function readDfePollAfterMs(): number {
 }
 
 /**
- * Onda 4 / 4.1 (L1 do #1392) — cada fase DEPOIS do poll é isolada. `pollPendingOnce` já gravou `pollGaveUpAt`/`pollAlertedAt` e
- * devolve no `summary` os ids a alertar; se uma fase seguinte lançasse e o `summary` se perdesse, o webhook nunca sairia e o
- * marcador "já alertei" (persistido) impediria reemissão: alerta perdido de forma permanente. A fase que lança é registrada
- * (OBS-R8: `job.failed` com a fase) e entra em `fasesFalharam`; o `DfePollScheduler` emite os alertas do poll primeiro e depois
- * o `job_failed` da fase (OBS-R11). As outras fases seguem rodando no mesmo tick.
+ * Onda 4 / 4.1 (L1 do #1392) — cada fase DEPOIS do poll é isolada: a que lança é registrada (OBS-R8: `job.failed` com a fase) e
+ * entra em `fasesFalharam`, as outras seguem no mesmo tick, e o `DfePollScheduler` emite os alertas do poll primeiro e depois o
+ * `job_failed` da fase (OBS-R11). Desde a lacuna 2374 os marcadores "já alertei" (`pollGaveUpAt`/`pollAlertedAt`) não são mais
+ * gravados por `pollPendingOnce`, e sim por `confirmarAlertaDePoll` depois da entrega do webhook: um `summary` perdido por uma
+ * fase que lançou não perde mais o alerta de forma permanente (o documento volta no tick seguinte) — o isolamento segue valendo
+ * para a fase não derrubar as outras nem o alerta do poll.
  */
 async function fase<T>(nome: string, falhas: FaseFalhou[], run: () => Promise<T>): Promise<T | undefined> {
   try {
@@ -50,4 +51,12 @@ export async function runDfePollPending(): Promise<PollSummary> {
   // BE-INCR-DFE-ANEXO-PENDENTE item 7 (F-PA-2 a): mesmo tick, depois do poll.
   const attachments = await fase('anexos', falhas, () => service.drainPendingAttachmentsOnce());
   return { ...summary, contingencia, eventos, attachments, ...(falhas.length > 0 ? { fasesFalharam: falhas } : {}) };
+}
+
+/**
+ * Lacuna 2374 — fiação de produção da confirmação: o scheduler a aciona depois que o webhook entregou o alerta (ou não há
+ * webhook configurado), e só então o serviço grava o marcador "já alertei" dos documentos do alerta.
+ */
+export async function confirmarAlertasDePoll(tipo: AlertaDePoll, documentIds: readonly string[]): Promise<number> {
+  return getFactory().getFiscalDocumentLifecycleService().confirmarAlertaDePoll(tipo, documentIds);
 }

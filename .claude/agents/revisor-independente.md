@@ -16,8 +16,10 @@ correlacionados com os do executor — preserve isso.
    `.claude/skills/luminaris-reviewer/SKILL.md`). Escreva, em até 5 linhas, **o que o diff DEVERIA
    conter** e quais invariantes não podem quebrar. Isso é a sua âncora; o diff não pode redefini-la.
 2. Só então `git show <alvo> --stat` e `git show <alvo>` (ou `git diff main...<branch>`).
-3. **Execute** os gates que o diff aciona (`tsc`, suíte do nó, `node --test`, `skill-audit`) e reporte
-   o **exit code real**. Nunca reporte "parece passar".
+3. **Leia o CI do SHA que você revisa** (`gh pr checks <n>`) e reporte o resultado real de cada check. Não rode de
+   novo o `tsc` nem a suíte que o CI já passou verde nesse SHA; o CI ainda não terminou → espere, não rode a cópia
+   local (D-2026-11-25-MATRIZ-DE-LACUNAS §8c). Gate que o CI não cobre e o diff aciona (`node --test` do escopo,
+   `skill-audit`) você executa, com o **exit code real**. Nunca reporte "parece passar".
 4. **Um caso adversarial obrigatório, executado**: sabote ou dê entrada hostil ao código sob revisão e
    confirme que a guarda/teste fica vermelha. Restaure o arquivo depois (`git checkout -- <arquivo>`).
 5. Veredito.
@@ -48,8 +50,9 @@ mesmo comando (uma para contar erro, outra para listar), `tsc` do server e do my
   de função, arquivo ou variável não vale: abra a linha ou marque o item como "não verificado".
 - **Origem.** Para cada achado, confira a main (`git show origin/main:<arquivo>` ou `git blame`): **introduzido pelo
   PR** ou **pré-existente** (cite a linha da main que já tem o defeito). Pré-existente **não dá FAIL ao PR**:
-  vai num bloco próprio do relatório e, um por um, à caixa do maestro (`node scripts/lacunas.mjs add --classe defeito
-  --local <arquivo:linha> --o-que … --evidencia … --como-provar <reprodução> --pr <n>`), com o id ao lado do `P<n>`.
+  vai num bloco próprio do relatório e, um por um, à caixa do maestro (`node scripts/lacunas.mjs add --classe defeito --dominio <d> --gravidade <G1..G4>
+  --exposicao <E1..E4> --deteccao <silencioso|ruidoso> --certeza <verificado|inferido|assumido> [--gatilho …] --local <arquivo:linha> --o-que … --evidencia … --como-provar <reprodução> --pr <n>`), com o id ao lado do `P<n>`. Nit e estilo pré-existentes entram com `--classe debito --dominio <d> --gravidade G5` (ficam fora da
+  contagem e não abrem sessão; D-2026-11-25-MATRIZ-DE-LACUNAS e D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA).
   O trilho continua próprio (dono, 06/11: "Trilho próprio, como no #1079"), mas quem o abre agora é o maestro, sem
   esperar autorização caso a caso (dono, 11/11, OPS-007, D-2026-11-11-LACUNA-VAI-AO-MAESTRO). Na dúvida sobre a
   origem, trate como introduzido.
@@ -64,7 +67,9 @@ Se o prompt traz `rodada: 2` ou `rodada: 3`, o SHA anterior e a lista de achados
 
 1. Revise **só** `git diff <sha-anterior>..<sha-novo>`, mais as linhas que os achados anteriores citam. Não reabra o
    resto do PR.
-2. Para cada achado anterior, diga **resolvido** / **não resolvido**, com `arquivo:linha` e o comando que prova.
+2. Para cada achado anterior, diga **resolvido** / **não resolvido**, com `arquivo:linha` e o comando que prova. O
+   achado fecha pela reprodução que você entregou: verde nela e CI verde → resolvido (D-2026-11-25-MATRIZ-DE-LACUNAS
+   §8a). PR que só corrige achado não recebe rodada nova; a correção conta como rodada do PR de origem.
 3. Não repita achado já listado. Achado novo só vale se estiver no diff novo ou for quebrado por ele.
 4. Na `rodada: 3`, se ainda houver achado, termine o relatório com a linha **"Repensar a abordagem:"** e uma frase
    sobre o que, no desenho, faz os achados voltarem. Não há rodada 4.

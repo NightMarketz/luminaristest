@@ -13,6 +13,7 @@ import type {
   FiscalSequenceView,
   IFiscalDocumentRepository,
   NumberedDocumentView,
+  PollStateGuard,
   PollStatePatch,
   SequenceAmbiente,
   TransitionData,
@@ -146,6 +147,29 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
       data: patch,
     });
     return r.count === 1;
+  }
+
+  public async updatePollStateWhen(scope: AccountingScope, id: string, guard: PollStateGuard, patch: PollStatePatch, tx?: Prisma.TransactionClient): Promise<boolean> {
+    const r = await this.db(tx).fiscalDocument.updateMany({
+      where: {
+        id,
+        ...accountingScopeWhere(scope),
+        deletedAt: null,
+        status: { in: [...guard.statusIn] },
+        ...(guard.pollGaveUpAt === null ? { pollGaveUpAt: null } : {}),
+        ...(guard.pollAlertedAt === null ? { pollAlertedAt: null } : {}),
+        ...(guard.hasPollLastError ? { pollLastError: { not: null } } : {}),
+        ...(guard.pollAttempts !== undefined ? { pollAttempts: guard.pollAttempts } : {}),
+        ...(guard.pollDeferredSince ? { pollDeferredSince: guard.pollDeferredSince } : {}),
+      },
+      data: patch,
+    });
+    return r.count === 1;
+  }
+
+  public async findManyByIds(ids: readonly string[], tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {
+    if (ids.length === 0) return [];
+    return this.db(tx).fiscalDocument.findMany({ where: { id: { in: [...ids] }, deletedAt: null } });
   }
 
   public async listParaEventos(desde: Date, limit: number, partners: readonly string[], tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {

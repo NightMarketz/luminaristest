@@ -2,7 +2,18 @@
 
 ## O que é
 
-`MAX_CENTS = 2_147_483_647` centavos = **R$ 21.474.836,47**. Teto aplicado a todo campo
+> **Emenda 2026-11-24 (ratificada pelo dono no chat em 24/11/2026, F-W2B-2 → b):** `MAX_CENTS` passou de `2_147_483_647` para
+> `2^43−1` = `8_796_093_022_207` (≈ R$ 87,96 bi por perna). O texto abaixo descreve o teto ANTIGO (R$ 21,47 mi) e
+> fica como histórico; a decisão de 2026-08-31 de manter o teto foi substituída por esta. O dono pediu "perto de
+> 2^53−1"; o valor exato (2^53−1) foi descartado porque um lançamento no teto + qualquer outro na mesma conta
+> estoura `centsFromDb` no `_sum` e o balancete responde 500 — o teto é `⌊(2^53−1)/1024⌋`, com folga para ~1.000
+> pernas no teto numa conta. Subir mais = uma linha em `models/money.ts` + `__dto-shapes__.json` + `openapi.json`.
+> Guardas que seguram o número honesto: `centsFromDb` (recusa BigInt fora do intervalo seguro na leitura) e
+> `PostingService.assertCentsAndBalance` (recusa o lançamento cuja SOMA de pernas deixa de ser inteira segura).
+> Prova: `ExerciseClosingService.maxCents.integration.test.ts` (receita anual de R$ 78 mi posta, encerra e gera
+> I350/I355).
+
+`MAX_CENTS = 2_147_483_647` centavos = **R$ 21.474.836,47** (valor ANTIGO). Teto aplicado a todo campo
 `*Cents` de entrada da contabilidade (`debitCents`, `creditCents`, `amountCents`,
 `totalValueCents`, saldos de conciliação). Definido em
 `server/src/features/accounting/models/money.ts:20`.
@@ -47,8 +58,9 @@ coluna já é `BigInt`). Para subir o teto: mudar a const em `money.ts`, varrer 
 
 ## Decisão
 
-Ratificada pelo dono em 2026-08-31: manter `MAX_CENTS` como teto de política. Sobe quando um
-cliente real precisar de um lançamento maior — não antecipar.
+Ratificada pelo dono em 2026-08-31: manter `MAX_CENTS` como teto de política. **Superada em 2026-11-24** (emenda no
+topo): o dono subiu o teto para 2^53−1 porque a receita anual de uma PJ no Presumido (até R$ 78 mi) já passava do
+teto antigo.
 
 ---
 

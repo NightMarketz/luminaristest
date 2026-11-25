@@ -19,6 +19,10 @@ vi.mock('../../../lib/services/dynamic-table.service', () => ({
 vi.mock('../../../lib/services/accounting.service', () => ({
   accountingService: { getTrialBalance: vi.fn(), getAccounts: vi.fn() },
 }));
+// A AccountingView lê o kit e o binding da unidade no mount: sem mock, rede real cuja rejeição pode chegar depois do
+// teardown (L-20261121-153450-3829). Mock compartilhado em ./accountingViewServiceMocks.
+vi.mock('../../../lib/services/accountingBinding.service', async () => (await import('./accountingViewServiceMocks')).accountingBindingServiceMock());
+vi.mock('../../../lib/services/accountingKit.service', async () => (await import('./accountingViewServiceMocks')).accountingKitServiceMock());
 vi.mock('../../../lib/services/dimensions.service', () => ({ dimensionsService: { listCatalog: vi.fn() } }));
 vi.mock('../../../lib/services/accountantAssignments.service', () => ({
   accountantAssignmentsService: { listMine: vi.fn(), listByScope: vi.fn(), accept: vi.fn(), end: vi.fn(), invite: vi.fn() },
