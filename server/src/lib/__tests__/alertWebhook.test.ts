@@ -161,6 +161,60 @@ describe('sendAlertWebhook', () => {
     });
   });
 
+  // L-20261124-193344-5803 (OBS-R7): a Slack/Discord/Teams webhook URL carries its secret in the
+  // path (and sometimes the query). The alert.failed line may name only the sink's origin.
+  describe('never logs the secret path/query of ALERT_WEBHOOK_URL', () => {
+    const SECRET_URL = 'https://hooks.example.com/services/T000/SEGREDO?token=QSEGREDO';
+    const rawLines = (spy: jest.SpyInstance) => spy.mock.calls.map((c) => String(c[0]));
+
+    it('async path (fetch rejects): logs only the origin', async () => {
+      process.env.ALERT_WEBHOOK_URL = SECRET_URL;
+      fetchSpy = jest.spyOn(global, 'fetch').mockRejectedValue(new Error('ECONNREFUSED'));
+
+      sendAlertWebhook(payload());
+      await flushMicrotasks();
+
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(rawLines(warnSpy)[0]).not.toContain('SEGREDO');
+      expect(warned(warnSpy)[0]).toMatchObject({ event: 'alert.failed', urlOrigin: 'https://hooks.example.com' });
+    });
+
+    it('async path: an error message that echoes the URL is scrubbed to the origin', async () => {
+      process.env.ALERT_WEBHOOK_URL = SECRET_URL;
+      fetchSpy = jest.spyOn(global, 'fetch').mockRejectedValue(new TypeError(`Failed to parse URL from ${SECRET_URL}`));
+
+      sendAlertWebhook(payload());
+      await flushMicrotasks();
+
+      expect(rawLines(warnSpy)[0]).not.toContain('SEGREDO');
+      expect(warned(warnSpy)[0]).toMatchObject({ errorMessage: 'Failed to parse URL from https://hooks.example.com' });
+    });
+
+    it('sync path (circular payload): logs only the origin', () => {
+      process.env.ALERT_WEBHOOK_URL = SECRET_URL;
+      fetchSpy = jest.spyOn(global, 'fetch');
+      const circular: Record<string, unknown> = payload();
+      circular.self = circular;
+
+      sendAlertWebhook(circular as unknown as AlertPayload);
+
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(rawLines(warnSpy)[0]).not.toContain('SEGREDO');
+      expect(warned(warnSpy)[0]).toMatchObject({ urlOrigin: 'https://hooks.example.com' });
+    });
+
+    it('an unparseable URL logs a fixed placeholder, never the raw value', async () => {
+      process.env.ALERT_WEBHOOK_URL = 'not a url /SEGREDO';
+      fetchSpy = jest.spyOn(global, 'fetch').mockRejectedValue(new TypeError('Failed to parse URL from not a url /SEGREDO'));
+
+      sendAlertWebhook(payload());
+      await flushMicrotasks();
+
+      expect(rawLines(warnSpy)[0]).not.toContain('SEGREDO');
+      expect(warned(warnSpy)[0]).toMatchObject({ urlOrigin: '[invalid-url]' });
+    });
+  });
+
   it('does not abort (and does not warn) when the response arrives before the timeout', async () => {
     jest.useFakeTimers();
     process.env.ALERT_WEBHOOK_URL = 'https://alerts.example.com/hook';
