@@ -1,0 +1,30 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei nº 12.592 de 18/01/2012",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2012/lei-12592-2012-01-18.md",
+      "url_final": "https://github.com/ctresb/leis/blob/a31cf3cd12073c7b195933a53e733b85c00cfe02/federal/leis-ordinarias/2012/lei-12592-2012-01-18.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2012-01-18;12592",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "a31cf3cd12073c7b195933a53e733b85c00cfe02",
+      "alertas": [],
+      "baixado_em": "2026-11-21T13:22:18-03:00",
+      "sha256": "ae4c4aae44ba1bd08493c05fd82e366cdd2f3bf263b93383f93b1f936541fd00",
+      "arquivo": "docs/D01_lei-12592-2012-01-18.md",
+      "texto": "docs/D01_lei-12592-2012-01-18.txt",
+      "bytes": 7614,
+      "sha256_texto": "31185ae8508e1a64836cd8a4e6bee29072f2c9c6492fb7ae78ac0eb935c8f2ba",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "revisao-conteudo-simulador-salao",
+  "pergunta": "Revisão das citações do Simulador Tributário do Salão (v46)",
+  "criado": "2026-11-21T13:22:16-03:00"
+}

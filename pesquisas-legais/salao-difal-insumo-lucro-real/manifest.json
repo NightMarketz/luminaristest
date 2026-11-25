@@ -1,0 +1,281 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Decreto nº 9.580 de 22/11/2018",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2018/dec-9580-2018-11-22.md",
+      "url_final": "https://github.com/ctresb/leis/blob/39239e708b021186cea3d407a5fc7984f2c725f5/federal/decretos/2018/dec-9580-2018-11-22.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2018-11-22;9580",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "39239e708b021186cea3d407a5fc7984f2c725f5",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T11:44:50-03:00",
+      "sha256": "2c328212c1a8408eaa64072debe9860ecb435a731150296702b0583f00acfe6e",
+      "arquivo": "docs/D01_dec-9580-2018-11-22.md",
+      "texto": "docs/D01_dec-9580-2018-11-22.txt",
+      "bytes": 1624,
+      "sha256_texto": "5934a1d17e8377ff29a590ebde2063d3c373344bb35cbf32cfe4ba5ea2d9a769",
+      "captura": {
+        "anterior": {
+          "slug": "insumo-lucro-real-custo",
+          "id": "D01",
+          "baixado_em": "2026-11-21T08:12:00-03:00",
+          "sha256_texto": "5934a1d17e8377ff29a590ebde2063d3c373344bb35cbf32cfe4ba5ea2d9a769"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Decreto-Lei nº 1.598 de 26/12/1977",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos-lei/1977/del-1598-1977-12-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d5fce5484986fb975f9fe9c086c943774d63859f/federal/decretos-lei/1977/del-1598-1977-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto.lei:1977-12-26;1598",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "d5fce5484986fb975f9fe9c086c943774d63859f",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:44:52-03:00",
+      "sha256": "3a4f02e9cca3d46efbd8ed906783149fbf170a2205948643344ca153a5fdf7ed",
+      "arquivo": "docs/D02_del-1598-1977-12-26.md",
+      "texto": "docs/D02_del-1598-1977-12-26.txt",
+      "bytes": 123461,
+      "sha256_texto": "803b0a7c8c4bfd3e688f0e6c6a281ba505ce7c66f27769f019b0b71808442a02",
+      "captura": {
+        "anterior": {
+          "slug": "triagem-contador-2026-10-30",
+          "id": "D06",
+          "baixado_em": "2026-10-30T02:21:01-03:00",
+          "sha256_texto": "803b0a7c8c4bfd3e688f0e6c6a281ba505ce7c66f27769f019b0b71808442a02"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Lei nº 8.981 de 20/01/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-8981-1995-01-20.md",
+      "url_final": "https://github.com/ctresb/leis/blob/8bf2e5070525043cb82294b9de8630a4aea5e53d/federal/leis-ordinarias/1995/lei-8981-1995-01-20.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-01-20;8981",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "8bf2e5070525043cb82294b9de8630a4aea5e53d",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:44:53-03:00",
+      "sha256": "b567b47ee6be147deb0aeea63f5cc92d7c93652f40fae948125979dac84680e7",
+      "arquivo": "docs/D03_lei-8981-1995-01-20.md",
+      "texto": "docs/D03_lei-8981-1995-01-20.txt",
+      "bytes": 86250,
+      "sha256_texto": "357afab8cd203455b5ade0fd675f9b9cf2a5ae29511ba1d2d036471a62aa6a8a",
+      "captura": {
+        "anterior": {
+          "slug": "pc1-memoria-calculo",
+          "id": "D03",
+          "baixado_em": "2026-11-03T00:34:50-03:00",
+          "sha256_texto": "357afab8cd203455b5ade0fd675f9b9cf2a5ae29511ba1d2d036471a62aa6a8a"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "Lei nº 7.689 de 15/12/1988",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1988/lei-7689-1988-12-15.md",
+      "url_final": "https://github.com/ctresb/leis/blob/109b06481773474599dbf7e4d73a01309b658007/federal/leis-ordinarias/1988/lei-7689-1988-12-15.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1988-12-15;7689",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "109b06481773474599dbf7e4d73a01309b658007",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:44:55-03:00",
+      "sha256": "7c57b2c916e9d1627edd79bf85758f111d036cbf52c0964fb2527090ac0ed22b",
+      "arquivo": "docs/D04_lei-7689-1988-12-15.md",
+      "texto": "docs/D04_lei-7689-1988-12-15.txt",
+      "bytes": 11412,
+      "sha256_texto": "523cb3bccb3886bb4c8b1dc26ea08ada89bdc3677fc919c8f4558400ba28a041",
+      "captura": {
+        "anterior": {
+          "slug": "verif-2026-10-17-irpj-csll-correcoes",
+          "id": "D01",
+          "baixado_em": "2026-10-17T10:53:39-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "D9580",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T11:45:02-03:00",
+      "sha256": "2d9d39b88ba898cb7d595ecda054d16a75c300f1327a38f5e445e676ea38c6db",
+      "arquivo": "docs/D05_d9580-htm.html",
+      "texto": "docs/D05_d9580-htm.txt",
+      "bytes": 2944670,
+      "sha256_texto": "308eef1ab300503de35e5f95cd330efac875ed092e31da5d7cff109b0421d222",
+      "captura": {
+        "anterior": {
+          "slug": "insumo-lucro-real-custo",
+          "id": "D02",
+          "baixado_em": "2026-11-21T08:12:21-03:00",
+          "sha256_texto": "308eef1ab300503de35e5f95cd330efac875ed092e31da5d7cff109b0421d222"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "Instrução Normativa RFB nº 1700, de 14 de março de 2017",
+      "url": "rfb:81268",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/81268/visao/multivigente",
+      "id_normativo": "rfb:81268",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-21T11:45:03-03:00",
+      "sha256": "0ffa45faae60ed62285940fb442dcb472b5c2529ccb0ae491c20cec9c5446c42",
+      "arquivo": "docs/D06_rfb-81268-multivigente.json",
+      "texto": "docs/D06_rfb-81268-multivigente.txt",
+      "bytes": 2664935,
+      "sha256_texto": "04d3e7f1a6ad70c872df1aad456c05a126734f195cb6364e979908b484857f87",
+      "anexos": [
+        {
+          "nome": "ANEXO I.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51960"
+        },
+        {
+          "nome": "Anexo I.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/52020"
+        },
+        {
+          "nome": "ANEXO II.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51961"
+        },
+        {
+          "nome": "Anexo II.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/52021"
+        },
+        {
+          "nome": "Anexo .html (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43237"
+        },
+        {
+          "nome": "tabela.html",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43557"
+        },
+        {
+          "nome": "Anexo IV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43258"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43259"
+        },
+        {
+          "nome": "Anexo VI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43260"
+        },
+        {
+          "nome": "Anexo VII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43261"
+        },
+        {
+          "nome": "Anexo VIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43262"
+        },
+        {
+          "nome": "Anexo IX.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43263"
+        },
+        {
+          "nome": "Anexo X.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51971"
+        },
+        {
+          "nome": "Anexo XI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51972"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "irrf-distribuicao",
+          "id": "D11",
+          "baixado_em": "2026-10-17T11:26:14-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "SEM_COMPARACAO"
+      },
+      "alertas": [
+        "14 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar",
+        "há captura de 2026-10-17 (irrf-distribuicao D11), mas o texto dela não foi guardado"
+      ]
+    },
+    {
+      "id": "D07",
+      "titulo": "Lei Complementar nº 87 de 13/09/1996",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/1996/lcp-87-1996-09-13.md",
+      "url_final": "https://github.com/ctresb/leis/blob/0ee2fd30e01d0fb9cb3fb42d7ede8de312ea77e4/federal/leis-complementares/1996/lcp-87-1996-09-13.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:1996-09-13;87",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "0ee2fd30e01d0fb9cb3fb42d7ede8de312ea77e4",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:45:52-03:00",
+      "sha256": "9467cc843bf7020babf5400b56dbaadd1b7ee2464dc756c2ba1462afc72f43b8",
+      "arquivo": "docs/D07_lcp-87-1996-09-13.md",
+      "texto": "docs/D07_lcp-87-1996-09-13.txt",
+      "bytes": 66997,
+      "sha256_texto": "3fc5c35d96927b9d3814823c70230a71f45fb2f602502aa6d85d104afaa366e2",
+      "captura": {
+        "anterior": {
+          "slug": "brief-eficiencia-fiscal",
+          "id": "D04",
+          "baixado_em": "2026-10-22T13:20:40-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "RICMS - Artigo 115\r\n\t\t\t\t\t\t\r\nSEÇÃO III - DO PAGAMENTO POR GUIA DE RECOLHIMENTOS ESPECIAIS",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art115.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art115.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:56:17-03:00",
+      "sha256": "1e3502a7d4fcf40e9f0357428a605d4ecfe0234d43ff99f49fd2456a2a6c75ad",
+      "arquivo": "docs/D08_art115-aspx.html",
+      "texto": "docs/D08_art115-aspx.txt",
+      "bytes": 178804,
+      "sha256_texto": "eb1af7510c401038031ea1cd176862136c6eee90e6822d37d21e7b88f75f06df",
+      "captura": {
+        "anterior": {
+          "slug": "insumos-salao-sp",
+          "id": "D20",
+          "baixado_em": "2026-11-20T19:19:30-03:00",
+          "sha256_texto": "eb1af7510c401038031ea1cd176862136c6eee90e6822d37d21e7b88f75f06df"
+        },
+        "tipo": "IGUAL"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "salao-difal-insumo-lucro-real",
+  "pergunta": "O DIFAL de ICMS pago pelo salão (contribuinte do ICMS) na compra interestadual de insumo para uso no serviço é custo dedutível do lucro real e da base da CSLL?",
+  "criado": "2026-11-21T11:43:39-03:00"
+}

@@ -1,0 +1,304 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei Complementar nº 214 de 16/01/2025",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2025/lcp-214-2025-01-16.md",
+      "url_final": "https://github.com/ctresb/leis/blob/571468687b4dc8d8f1a3b1dbd5f958ff85fad0cf/federal/leis-complementares/2025/lcp-214-2025-01-16.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2025-01-16;214",
+      "versao_texto": "republicação/retificação",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "571468687b4dc8d8f1a3b1dbd5f958ff85fad0cf",
+      "alertas": [
+        "versao_texto = 'republicação/retificação' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T11:47:31-03:00",
+      "sha256": "f1f80d77a11f96d8eaf7777d647e577d04abd0fc28420ec22664be7a76ed8851",
+      "arquivo": "docs/D01_lcp-214-2025-01-16.md",
+      "texto": "docs/D01_lcp-214-2025-01-16.txt",
+      "bytes": 1880,
+      "sha256_texto": "69a75533fb995e70146dcbfb8c354916fe2d155b3a163e10d2a110aeaed37e93",
+      "captura": {
+        "anterior": {
+          "slug": "salao-depreciacao-equipamentos",
+          "id": "D04",
+          "baixado_em": "2026-11-21T11:46:16-03:00",
+          "sha256_texto": "69a75533fb995e70146dcbfb8c354916fe2d155b3a163e10d2a110aeaed37e93"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Decreto nº 12.955 de 29/04/2026",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2026/dec-12955-2026-04-29.md",
+      "url_final": "https://github.com/ctresb/leis/blob/517db958cd0ae2ba36c1f0b524b3cc55fe4198c6/federal/decretos/2026/dec-12955-2026-04-29.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2026-04-29;12955",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "517db958cd0ae2ba36c1f0b524b3cc55fe4198c6",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T11:47:33-03:00",
+      "sha256": "5527dbfe923a984a86c22b27ef1c5c0b6f4f0c2996bbe14315e8804afd08bbd9",
+      "arquivo": "docs/D02_dec-12955-2026-04-29.md",
+      "texto": "docs/D02_dec-12955-2026-04-29.txt",
+      "bytes": 779823,
+      "sha256_texto": "5e9edac0c08cbfc7d89c1bbcf32151b31396209c73c4afe4aeeffc93c344ec82",
+      "captura": {
+        "anterior": {
+          "slug": "salao-sr27-base-cbs-parceiro-sem-cnpj",
+          "id": "D04",
+          "baixado_em": "2026-11-21T11:44:18-03:00",
+          "sha256_texto": "5e9edac0c08cbfc7d89c1bbcf32151b31396209c73c4afe4aeeffc93c344ec82"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T11:47:39-03:00",
+      "sha256": "67b8445bdd23e82d042b1168b3e35b5fc184d847d2ad90988733d5b95bf7c4a4",
+      "arquivo": "docs/D03_lcp214-htm.html",
+      "texto": "docs/D03_lcp214-htm.txt",
+      "bytes": 5403923,
+      "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3",
+      "captura": {
+        "anterior": {
+          "slug": "salao-depreciacao-equipamentos",
+          "id": "D07",
+          "baixado_em": "2026-11-21T11:46:28-03:00",
+          "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "d12955",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/D12955.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12955.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T11:47:41-03:00",
+      "sha256": "5ad397633090998590be401da24dbd6972ffa584bce0b1469ffb38036f3f7e49",
+      "arquivo": "docs/D04_d12955-htm.html",
+      "texto": "docs/D04_d12955-htm.txt",
+      "bytes": 3184515,
+      "sha256_texto": "fdd17260256d367e90aaa8f51c289974e9c97078b68b0810b55927533f18671f",
+      "captura": {
+        "anterior": {
+          "slug": "salao-sr27-base-cbs-parceiro-sem-cnpj",
+          "id": "D06",
+          "baixado_em": "2026-11-21T11:44:28-03:00",
+          "sha256_texto": "fdd17260256d367e90aaa8f51c289974e9c97078b68b0810b55927533f18671f"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "D05_30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs-pdf",
+      "url": "https://www.cgibs.gov.br/upload/arquivos/202604/30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs.pdf",
+      "url_final": "https://www.cgibs.gov.br/upload/arquivos/202604/30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:50:45-03:00",
+      "sha256": "9ed7032ef9c25bbee51bdb5e90f60e1ad01a2bf56cb41a28221c3db7f61d419a",
+      "arquivo": "docs/D05_30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs-pdf.pdf",
+      "texto": "docs/D05_30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs-pdf.txt",
+      "bytes": 2896452,
+      "sha256_texto": "21d8be4312aa7cd5acd1203ef82734317d78c03e58691d8490689bf5fc89ba51",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "D06_12101846-resolucao-cgibs-n-19-de-12-de-novembro-de-2026-pdf",
+      "url": "https://www.cgibs.gov.br/upload/arquivos/202611/12101846-resolucao-cgibs-n-19-de-12-de-novembro-de-2026.pdf",
+      "url_final": "https://www.cgibs.gov.br/upload/arquivos/202611/12101846-resolucao-cgibs-n-19-de-12-de-novembro-de-2026.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:50:46-03:00",
+      "sha256": "a113af9fa0a531d69dcc43b24faf8a2b7c79edf08b4e1ee882c94a44ca81f6b1",
+      "arquivo": "docs/D06_12101846-resolucao-cgibs-n-19-de-12-de-novembro-de-2026-pdf.pdf",
+      "texto": "docs/D06_12101846-resolucao-cgibs-n-19-de-12-de-novembro-de-2026-pdf.txt",
+      "bytes": 492855,
+      "sha256_texto": "2d1a0e9bf2608a42679df19c9640e461e6f661f03d305f71753262a09f5607c2",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "D07_17165820-resoluc-a-o-cgibs-n-20-de-17-de-novembro-de-2026-pd",
+      "url": "https://www.cgibs.gov.br/upload/arquivos/202611/17165820-resoluc-a-o-cgibs-n-20-de-17-de-novembro-de-2026.pdf",
+      "url_final": "https://www.cgibs.gov.br/upload/arquivos/202611/17165820-resoluc-a-o-cgibs-n-20-de-17-de-novembro-de-2026.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:50:47-03:00",
+      "sha256": "901d6bcc2dd029abe2764f6a781d4dd027c1d7dd401e9a0c1117dc54c53a732f",
+      "arquivo": "docs/D07_17165820-resoluc-a-o-cgibs-n-20-de-17-de-novembro-de-2026-pd.pdf",
+      "texto": "docs/D07_17165820-resoluc-a-o-cgibs-n-20-de-17-de-novembro-de-2026-pd.txt",
+      "bytes": 531113,
+      "sha256_texto": "560dc0d725eb6ffd022b8c55cd9684b4f4d2ee889c7689dc54d81729f7ade2c6",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "D08_22121010-resolucao-cgibs-n-13-de-22-de-julho-de-2026-pdf",
+      "url": "https://www.cgibs.gov.br/upload/arquivos/202607/22121010-resolucao-cgibs-n-13-de-22-de-julho-de-2026.pdf",
+      "url_final": "https://www.cgibs.gov.br/upload/arquivos/202607/22121010-resolucao-cgibs-n-13-de-22-de-julho-de-2026.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:50:47-03:00",
+      "sha256": "527f5b01b2c8effd984c0334ab1c3068d3926f4f77f90d023211758ee67f7222",
+      "arquivo": "docs/D08_22121010-resolucao-cgibs-n-13-de-22-de-julho-de-2026-pdf.pdf",
+      "texto": "docs/D08_22121010-resolucao-cgibs-n-13-de-22-de-julho-de-2026-pdf.txt",
+      "bytes": 481153,
+      "sha256_texto": "fa5deff287b41e7c023187308a9aa88011bd9cd88acd18e430857fbb827968e9",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D09",
+      "titulo": "D09_29175824-doc-20260729-wa0035-260729-175811-pdf",
+      "url": "https://www.cgibs.gov.br/upload/arquivos/202607/29175824-doc-20260729-wa0035-260729-175811.pdf",
+      "url_final": "https://www.cgibs.gov.br/upload/arquivos/202607/29175824-doc-20260729-wa0035-260729-175811.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:50:48-03:00",
+      "sha256": "7a3ca0791b03c272f10e3c515e1ba44a7379909cb463cf155207e4ea74d8f494",
+      "arquivo": "docs/D09_29175824-doc-20260729-wa0035-260729-175811-pdf.pdf",
+      "texto": "docs/D09_29175824-doc-20260729-wa0035-260729-175811-pdf.txt",
+      "bytes": 141641,
+      "sha256_texto": "0e17b23f748cbfae025e55a45a8c780b4470bcdfbd25f2212fe33fb3512e4610",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D10",
+      "titulo": "D10_30184100-doc-20260730-wa0034-260730-183903-pdf",
+      "url": "https://www.cgibs.gov.br/upload/arquivos/202607/30184100-doc-20260730-wa0034-260730-183903.pdf",
+      "url_final": "https://www.cgibs.gov.br/upload/arquivos/202607/30184100-doc-20260730-wa0034-260730-183903.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:50:48-03:00",
+      "sha256": "a5e4a36991f1151114908d24dcef8fed6c54c809dd10f4f5111f3602fbfe55ac",
+      "arquivo": "docs/D10_30184100-doc-20260730-wa0034-260730-183903-pdf.pdf",
+      "texto": "docs/D10_30184100-doc-20260730-wa0034-260730-183903-pdf.txt",
+      "bytes": 170897,
+      "sha256_texto": "9524edd352657eed3518eb6e24151e9e9f7fb52dd148d509e02d0364dfe1c2c7",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D11",
+      "titulo": "RICMS - Artigo 85 a 86\r\n\t\t\t\t\t\t\r\nCapítulo VI - DA APURAÇÃO DO IMPOSTO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art085.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art085.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:52:23-03:00",
+      "sha256": "d05251d3dbaad131900adc6df4b57e22317510b598f24cce86e100a9a4c5aed5",
+      "arquivo": "docs/D11_art085-aspx.html",
+      "texto": "docs/D11_art085-aspx.txt",
+      "bytes": 150667,
+      "sha256_texto": "5c417517468e402461b6d95c56450569776cf8941eb6f347b719143abfd993d2",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D12",
+      "titulo": "RICMS - Artigo 112 a 114\r\n\t\t\t\t\t\t\r\nSEÇÃO II - DOS PRAZOS PARA PAGAMENTO NO REGIME PERIÓDICO DE APURAÇÃO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art112.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art112.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:52:45-03:00",
+      "sha256": "4127f720e8e4bd17c5d5481a32ce1dc0fb55c8935647c6735d5369cd84353f10",
+      "arquivo": "docs/D12_art112-aspx.html",
+      "texto": "docs/D12_art112-aspx.txt",
+      "bytes": 151106,
+      "sha256_texto": "b27fdd183b9ed1a5a95925e43f8a4fd602a97f6e95b5bea691288a7ea063eaa4",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D13",
+      "titulo": "Comunicado SRE 10 de 2026",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/Comunicado-SRE-10-de-2026.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/Comunicado-SRE-10-de-2026.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:53:59-03:00",
+      "sha256": "5410be31a92bddc495f489ffa56984c1e2b88c25d5ec2fc41af76eea41ee5650",
+      "arquivo": "docs/D13_Comunicado-SRE-10-de-2026-aspx.html",
+      "texto": "docs/D13_Comunicado-SRE-10-de-2026-aspx.txt",
+      "bytes": 166398,
+      "sha256_texto": "568fe1d7ed5e2f3e3ffc197892610f5e2833ce699b52f74d67e1f68458f92329",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D14",
+      "titulo": "Comunicado SRE 9 de 2026",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/Comunicado-SRE-9-de-2026.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/Comunicado-SRE-9-de-2026.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:54:13-03:00",
+      "sha256": "9cf98b1c4bcdbf980448a74e010cc7a8f9037be544a545cfa076d934cdd1262b",
+      "arquivo": "docs/D14_Comunicado-SRE-9-de-2026-aspx.html",
+      "texto": "docs/D14_Comunicado-SRE-9-de-2026-aspx.txt",
+      "bytes": 166612,
+      "sha256_texto": "a8ff457a5b6f614a61ddc027fa8566650faf2994a914fc27495743d17e013af2",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D15",
+      "titulo": "RICMS - Anexo IV - Artigo 1º ao 3º\r\n\t\t\t\t\t\t\r\nANEXO IV - PRAZOS DE RECOLHIMENTO DO IMPOSTO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/l6an4.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/l6an4.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:59:19-03:00",
+      "sha256": "1657db0c4a6cbaebff4519687180923e5ac591fb382178ec3c4a6d4e0967379a",
+      "arquivo": "docs/D15_l6an4-aspx.html",
+      "texto": "docs/D15_l6an4-aspx.txt",
+      "bytes": 204123,
+      "sha256_texto": "66a50c8286938616230f679171b92fadde299d6de369a85974492ca5b7606a55",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D16",
+      "titulo": "D16_26184150-resolucao-cgibs-n-8-de-2026-3-pdf",
+      "url": "https://www.cgibs.gov.br/upload/arquivos/202605/26184150-resolucao-cgibs-n-8-de-2026-3.pdf",
+      "url_final": "https://www.cgibs.gov.br/upload/arquivos/202605/26184150-resolucao-cgibs-n-8-de-2026-3.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:59:24-03:00",
+      "sha256": "6dfb7c090ba26063a6b213fcd311c03543dc58b76bedd59a5759645fb30d3307",
+      "arquivo": "docs/D16_26184150-resolucao-cgibs-n-8-de-2026-3-pdf.pdf",
+      "texto": "docs/D16_26184150-resolucao-cgibs-n-8-de-2026-3-pdf.txt",
+      "bytes": 421851,
+      "sha256_texto": "9bbc5ae87377850451818710025f5dc20cf52f23c6c048f4869126e9ffd14397",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "salao-prazo-ibs-icms-revenda",
+  "pergunta": "Prazo de recolhimento do IBS em 2027 (e dispensa em 2027), prazo da CBS (Dec. 12.955 art. 45) e dia de vencimento do ICMS RPA de SP para varejo de cosméticos de contribuinte pequeno",
+  "criado": "2026-11-21T11:44:04-03:00"
+}

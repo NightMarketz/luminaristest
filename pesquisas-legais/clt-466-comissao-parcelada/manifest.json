@@ -1,0 +1,76 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Decreto-Lei nº 5.452 de 01/05/1943",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos-lei/1943/del-5452-1943-05-01.md",
+      "url_final": "https://github.com/ctresb/leis/blob/f3db126e93c366f938bd927bbf184a8fcf64b2ea/federal/decretos-lei/1943/del-5452-1943-05-01.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "f3db126e93c366f938bd927bbf184a8fcf64b2ea",
+      "alertas": [],
+      "baixado_em": "2026-11-21T08:49:23-03:00",
+      "sha256": "7eee0da3b620a17fbd7b34a0eb9adc967c4fb6650d1acba37469d247f88f4600",
+      "arquivo": "docs/D01_del-5452-1943-05-01.md",
+      "texto": "docs/D01_del-5452-1943-05-01.txt",
+      "bytes": 690741,
+      "sha256_texto": "f8f704c5245f9eb179f540b7cf913e2de5a309571d7a8c5ebdae64d3f401e002",
+      "captura": {
+        "anterior": {
+          "slug": "brief-pes4-f2",
+          "id": "D02",
+          "baixado_em": "2026-11-05T20:18:57-03:00",
+          "sha256_texto": "f8f704c5245f9eb179f540b7cf913e2de5a309571d7a8c5ebdae64d3f401e002"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei nº 3.207 de 18/07/1957",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1957/lei-3207-1957-07-18.md",
+      "url_final": "https://github.com/ctresb/leis/blob/4e17e3dea1fe2756a78ac084867716ee896866f5/federal/leis-ordinarias/1957/lei-3207-1957-07-18.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1957-07-18;3207",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "4e17e3dea1fe2756a78ac084867716ee896866f5",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T08:51:23-03:00",
+      "sha256": "d77e8543595a7f791a4bf67ba35dfef22b3201ddea9f6276a08e2fa70aa00c5d",
+      "arquivo": "docs/D02_lei-3207-1957-07-18.md",
+      "texto": "docs/D02_lei-3207-1957-07-18.txt",
+      "bytes": 4206,
+      "sha256_texto": "66de512c6e8244c117231c98730e77be9f52ee965a53fc18ace94d556b75c9de",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "L3207",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/l3207.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/l3207.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:47:55-03:00",
+      "sha256": "0e9effcd68d7954abb463f724810ecc77d9673c1d85597edc4ee7600d2ffaa99",
+      "arquivo": "docs/D03_l3207-htm.html",
+      "texto": "docs/D03_l3207-htm.txt",
+      "bytes": 11620,
+      "sha256_texto": "8ece6608b43275231a84693d3065975035898d4bc05f1845419cedb463a0cea0",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "clt-466-comissao-parcelada",
+  "pergunta": "Comissão de empregado em venda parcelada no cartão: exigível no mês da venda ou por parcela liquidada (CLT art. 466 §1º)?",
+  "criado": "2026-11-21T08:49:12-03:00"
+}
