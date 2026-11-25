@@ -103,7 +103,7 @@ describe('sendAlertWebhook', () => {
     expect(warnSpy).toHaveBeenCalledTimes(1);
     expect(warned(warnSpy)[0]).toMatchObject({ level: 'warn', event: 'alert.failed', message: 'alert webhook failed' });
     expect(warned(warnSpy)[0]).toMatchObject({
-      url: 'https://alerts.example.com/hook',
+      urlOrigin: 'https://alerts.example.com',
       source: 'accounting_sync_reconcile',
       alertEvent: 'reconcile_summary',
       errorMessage: 'ECONNREFUSED',
@@ -155,7 +155,7 @@ describe('sendAlertWebhook', () => {
     expect(warnSpy).toHaveBeenCalledTimes(1);
     expect(warned(warnSpy)[0]).toMatchObject({ level: 'warn', event: 'alert.failed', message: 'alert webhook failed' });
     expect(warned(warnSpy)[0]).toMatchObject({
-      url: 'https://alerts.example.com/hook',
+      urlOrigin: 'https://alerts.example.com',
       source: 'accounting_sync_reconcile',
       alertEvent: 'reconcile_summary',
     });

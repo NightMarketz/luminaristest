@@ -15,6 +15,37 @@ import logger from './logger';
 /** Fire-and-forget budget for the outbound POST; no retry. */
 const ALERT_WEBHOOK_TIMEOUT_MS = 3000;
 
+/** Placeholder logged when ALERT_WEBHOOK_URL does not parse — the raw value never reaches the log. */
+const INVALID_URL_ORIGIN = '[invalid-url]';
+
+/**
+ * The only part of the sink URL that may be logged (OBS-R7, L-20261124-193344-5803): a Slack/Discord/
+ * Teams webhook carries its secret in the path or the query, so the log names the origin
+ * (protocol + host + port) and nothing else.
+ */
+function sinkOrigin(url: string): string {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return INVALID_URL_ORIGIN;
+  }
+}
+
+/** The `alert.failed` fields shared by both catch paths; an error message that echoes the URL is scrubbed to the origin. */
+function failureFields(url: string, payload: AlertPayload, error: unknown): Record<string, unknown> {
+  const hasNameAndMessage =
+    typeof error === 'object' && error !== null && 'name' in error && 'message' in error;
+  const origin = sinkOrigin(url);
+  const rawMessage = hasNameAndMessage ? String((error as { message: unknown }).message) : String(error);
+  return {
+    urlOrigin: origin,
+    source: payload.source,
+    alertEvent: payload.event,
+    errorName: hasNameAndMessage ? String((error as { name: unknown }).name) : 'UnknownError',
+    errorMessage: rawMessage.split(url).join(origin),
+  };
+}
+
 export interface AlertPayload {
   source:
     | 'accounting_sync_reconcile' | 'sped_ecd' | 'sped_ecf' | 'data_exchange_export'
@@ -59,35 +90,13 @@ export function sendAlertWebhook(payload: AlertPayload): void {
       .catch((error) => {
         // fetch() can reject with heterogeneous error shapes depending on the failure mode —
         // a DOMException on abort, a TypeError on network failure, or a plain object. Reading
-        // name/message structurally is a safe superset that doesn't depend on any one prototype
-        // chain, rather than asserting `instanceof Error`.
-        const hasNameAndMessage =
-          typeof error === 'object' && error !== null && 'name' in error && 'message' in error;
-        logger.event('warn', 'alert.failed', 'alert webhook failed', {
-          url,
-          source: payload.source,
-          alertEvent: payload.event,
-          errorName: hasNameAndMessage
-            ? String((error as { name: unknown }).name)
-            : 'UnknownError',
-          errorMessage: hasNameAndMessage
-            ? String((error as { message: unknown }).message)
-            : String(error),
-        });
+        // name/message structurally (failureFields) is a safe superset that doesn't depend on any
+        // one prototype chain, rather than asserting `instanceof Error`.
+        logger.event('warn', 'alert.failed', 'alert webhook failed', failureFields(url, payload, error));
       })
       .finally(() => clearTimeout(timeoutId));
   } catch (error) {
     clearTimeout(timeoutId);
-    const hasNameAndMessage =
-      typeof error === 'object' && error !== null && 'name' in error && 'message' in error;
-    logger.event('warn', 'alert.failed', 'alert webhook failed', {
-      url,
-      source: payload.source,
-      alertEvent: payload.event,
-      errorName: hasNameAndMessage ? String((error as { name: unknown }).name) : 'UnknownError',
-      errorMessage: hasNameAndMessage
-        ? String((error as { message: unknown }).message)
-        : String(error),
-    });
+    logger.event('warn', 'alert.failed', 'alert webhook failed', failureFields(url, payload, error));
   }
 }
