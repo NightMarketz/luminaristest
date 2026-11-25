@@ -110,6 +110,8 @@ function buildService(over: {
     create: jest.fn(async (data: any) => ({ id: 'p-x', ...data })),
     findByEntryId: jest.fn(async () => []),
     findByAccount: jest.fn(async () => []),
+    // Lacuna c1b9: a releitura autoritativa de "conta com partida" dentro da tx do deleteAccount.
+    existsForAccount: jest.fn(async () => false),
     groupByAccount: jest.fn(async () => []),
     nextEntryNumber: jest.fn(async () => 1),
     // delegates to the global $transaction so existing assertions (toHaveBeenCalledTimes,
@@ -382,6 +384,48 @@ describe('PostingService', () => {
         { id: 'p2', accountId: 'acc-3.1', debitCents: 0, creditCents: 10000 },
       ],
     };
+
+    describe('lacuna 6449: lançamento de subrazão (ar.* / ap.*) só o dono do título estorna', () => {
+      const SUBRAZAO = ['ar.receivable', 'ar.receipt', 'ap.payable', 'ap.payment', 'ap.withholding'];
+
+      it.each(SUBRAZAO)('estorno manual (sem a porta interna) de %s → 409 SUBLEDGER_OWNED_ENTRY, sem escrever', async (sourceType) => {
+        const { svc, journalEntryRepo } = buildService({
+          journalEntryRepo: { findById: jest.fn(async () => ({ ...original, sourceType, sourceId: 'rec-1' })) },
+        });
+        await expect(
+          svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23', reason: 'motivo de teste' }),
+        ).rejects.toMatchObject({ statusCode: 409, errorCode: 'SUBLEDGER_OWNED_ENTRY' });
+        expect($transaction).not.toHaveBeenCalled();
+        expect(journalEntryRepo.create).not.toHaveBeenCalled();
+      });
+
+      it('o serviço do título (automaticWriter) continua estornando o próprio lançamento ar.receipt', async () => {
+        const findById = jest
+          .fn()
+          .mockResolvedValueOnce({ ...original, sourceType: 'ar.receipt', sourceId: 'rec-1' })
+          .mockResolvedValueOnce({ ...original, sourceType: 'ar.receipt', status: 'Reversed', reversedById: 'rev-1' });
+        const { svc, journalEntryRepo } = buildService({
+          journalEntryRepo: { findById, findBySource: jest.fn(async () => null), create: jest.fn(async () => ({ id: 'rev-1', postings: [] })) },
+        });
+        await svc.reverseEntry(scope, {
+          automaticWriter: true, unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23', reason: 'Cancelamento do recebimento',
+        });
+        expect($transaction).toHaveBeenCalledTimes(1);
+        expect(journalEntryRepo.create).toHaveBeenCalledWith(expect.objectContaining({ sourceType: 'reversal', sourceId: 'entry-1' }), txHandle);
+      });
+
+      it('lançamento manual segue estornável pela rota manual', async () => {
+        const findById = jest
+          .fn()
+          .mockResolvedValueOnce({ ...original, sourceType: 'manual' })
+          .mockResolvedValueOnce({ ...original, sourceType: 'manual', status: 'Reversed', reversedById: 'rev-1' });
+        const { svc } = buildService({
+          journalEntryRepo: { findById, findBySource: jest.fn(async () => null), create: jest.fn(async () => ({ id: 'rev-1', postings: [] })) },
+        });
+        await svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23', reason: 'motivo de teste' });
+        expect($transaction).toHaveBeenCalledTimes(1);
+      });
+    });
 
     it('reverses a Posted entry: SWAPS debit/credit, marks original Reversed + links reversedById', async () => {
       const reversal = { id: 'rev-1', sourceType: 'reversal', sourceId: 'entry-1', postings: [] };
@@ -714,6 +758,20 @@ describe('PostingService', () => {
       await expect(svc.deleteAccount(scope, 'acc-9.9')).rejects.toBeInstanceOf(ForbiddenError);
       expect(accountRepo.findById).not.toHaveBeenCalled();
     });
+
+    it('lacuna c1b9: partida gravada depois da pré-checagem → a releitura DENTRO da tx recusa com 409, sem apagar', async () => {
+      // A pré-checagem (fora da tx) não vê partida; um postEntry concorrente commita antes da tx do delete abrir.
+      // Só a leitura feita com o handle da tx enxerga a partida.
+      const existsForAccount = jest.fn(async (_s: AccountingScope, _id: string, tx?: unknown) => tx === txHandle);
+      const { svc, accountRepo, auditService } = buildService({
+        postingRepo: { findByAccount: jest.fn(async () => []), existsForAccount },
+      });
+      await expect(svc.deleteAccount(scope, 'acc-9.9')).rejects.toMatchObject({ statusCode: 409 });
+      expect(existsForAccount).toHaveBeenCalledWith(scope, 'acc-9.9', txHandle);
+      expect(accountRepo.softDelete).not.toHaveBeenCalled();
+      expect(accountRepo.softDeleteReleasingCode).not.toHaveBeenCalled();
+      expect(auditService.append).not.toHaveBeenCalled();
+    });
   });
 
   describe('INCR-2 audit wiring', () => {
@@ -894,6 +952,18 @@ describe('PostingService', () => {
         const { svc } = buildService({ accountRepo: plano({ '3.1': true }) });
         await expect(svc.createAccount(scope, { code: '3.1.1', name: 'X', nature: 'Revenue', acceptsEntries: true, unitId }))
           .rejects.toThrow(/conta superior '3.1'/);
+      });
+
+      it('lacuna 79a9: superior apagada entre a pré-checagem e a tx → a releitura DENTRO da tx recusa, sem criar', async () => {
+        // Fora da tx a superior existe (sintética); com o handle da tx ela já foi apagada por outra escrita.
+        const findByCode = jest.fn(async (_s: AccountingScope, code: string, tx?: unknown) =>
+          code === '2.3.1' && tx !== txHandle ? { id: 'acc-2.3.1', code, nature: 'Equity', acceptsEntries: false } : null);
+        const { svc, accountRepo, auditService } = buildService({ accountRepo: { findByCode } });
+        await expect(svc.createAccount(scope, { code: '2.3.1.02', name: 'Reserva', nature: 'Equity', acceptsEntries: true, unitId }))
+          .rejects.toThrow(/conta superior '2.3.1'/);
+        expect(findByCode).toHaveBeenCalledWith(scope, '2.3.1', txHandle);
+        expect(accountRepo.create).not.toHaveBeenCalled();
+        expect(auditService.append).not.toHaveBeenCalled();
       });
 
       it('resultado com 2 segmentos sob sintética → cria (fora da regra de 4 níveis)', async () => {
