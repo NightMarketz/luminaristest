@@ -51,13 +51,71 @@ export interface OutboundOptions {
   deadlineMs?: number;
 }
 
+/**
+ * Prazos-base (dono, chat, 2026-11-25: "constante única no código", SEM override por variável de ambiente). Cada valor
+ * numérico de prazo mora em UMA constante aqui; a tabela, as políticas por ponto e quem mais precisa do prazo (o model
+ * do PSC, o `SefazSoapClient`) só a referenciam. Mude o valor só aqui.
+ */
+/** 15 s por tentativa: padrão do Mercado Pago (ordem/webhook/job), do fallback da PTAX e do PSC (`PSC_HTTP_TIMEOUT_MS`). */
+export const OUTBOUND_ATTEMPT_TIMEOUT_MS = 15_000;
+/** 30 s: prazo "lento" de uma tentativa (fallback do PSC) e prazo TOTAL de uma chamada SEFAZ SOAP (`SEFAZ_CALL_TOTAL_MS`). */
+export const OUTBOUND_SLOW_TIMEOUT_MS = 30_000;
+/** PSC (token e certificate-discovery): 1 tentativa de 15 s. O model do PSC reexporta este nome. */
+export const PSC_HTTP_TIMEOUT_MS = OUTBOUND_ATTEMPT_TIMEOUT_MS;
+/** Fallback do PSC quando o ponto de chamada não passa política (hoje todos passam `PSC_HTTP_TIMEOUT_MS`). */
+export const PSC_DEFAULT_TIMEOUT_MS = OUTBOUND_SLOW_TIMEOUT_MS;
+/** SEFAZ SOAP: prazo TOTAL de cada chamada (conexão + resposta), no `SefazSoapClient` (não usa `outboundFetch`). PROVISÓRIO
+ *  (linha 11 da tabela): sem SLA oficial nem medida por UF — curto ⇒ contingência AUTO cedo + órfã; longo ⇒ balcão preso. */
+export const SEFAZ_CALL_TOTAL_MS = OUTBOUND_SLOW_TIMEOUT_MS;
+
 /** Timeout padrão por tentativa (ms) — configurável por integração; o chamador sobrescreve com `options.timeoutMs`. */
 export const DEFAULT_TIMEOUT_MS: Record<OutboundIntegration, number> = {
-  mercado_pago: 15_000,
-  bcb_ptax: 15_000,
-  psc: 30_000,
-  sefaz: 30_000,
+  mercado_pago: OUTBOUND_ATTEMPT_TIMEOUT_MS,
+  bcb_ptax: OUTBOUND_ATTEMPT_TIMEOUT_MS,
+  psc: PSC_DEFAULT_TIMEOUT_MS,
+  sefaz: SEFAZ_CALL_TOTAL_MS,
 };
+
+/** Política de rede de UM ponto de chamada: o que o chamador passa ao `outboundFetch` além da URL. */
+export type OutboundPolicy = Pick<OutboundOptions, 'timeoutMs' | 'retry' | 'deadlineMs'>;
+
+/**
+ * Política por ponto de chamada (dono, chat, 2026-11-24 — tabela §6 da proposta de `deadlineMs` por integração; lacunas
+ * 1f43/9f14). Cada ponto com retry vem como PAR `{maxAttempts, deadlineMs}`: `maxAttempts: 2` e `deadlineMs = 2 × timeout
+ * + 5 s` (5 s = `Retry-After` capado em 4 s + 1 s), de modo que o prazo é só o teto de segurança e nunca corta uma
+ * tentativa no meio — com `maxAttempts: 3` o wrapper faria uma 3ª tentativa truncada (lacuna 83be). Ponto de 1 tentativa:
+ * o timeout já é o teto, sem deadline. ÚNICA exceção à fórmula: o `pscDiscovery` (dono: "15 s no total", 1 prazo só) tem
+ * `deadlineMs = timeoutMs`: também é o par `{maxAttempts: 2, deadlineMs}`, mas a 2ª tentativa só acontece se a 1ª falhou
+ * RÁPIDO (5xx/429 ou erro de rede imediato) e o backoff cabe no que resta dos 15 s; a 1ª que estoura o timeout consome o
+ * prazo e não há 2ª. O mesmo `getCharge` tem política diferente no webhook (o MP espera 22 s) e no job.
+ * PROVISÓRIAS até haver medida (proposta §7): os prazos de criar/cancelar ordem do MP (`MP_ORDER_DEADLINE_MS`) e o da
+ * SEFAZ — mude só aqui.
+ */
+const RETRY_ONCE: OutboundRetryPolicy = { maxAttempts: 2 };
+/** Folga do prazo de um ponto de 2 tentativas além de `2 × timeout`: `Retry-After` capado em 4 s + 1 s. */
+export const RETRY_BACKOFF_MARGIN_MS = 5_000;
+export const MP_ORDER_DEADLINE_MS = 35_000; // 2 × 15 s + 5 s — provisório (linhas 1/2/4 da tabela)
+export const MP_REPORT_DEADLINE_MS = 125_000; // 2 × 60 s + 5 s
+export const BCB_PTAX_DEADLINE_MS = 25_000; // 2 × 10 s + 5 s
+export const PSC_DISCOVERY_TIMEOUT_MS = PSC_HTTP_TIMEOUT_MS; // total (1 prazo só): hoje o `signal` compartilhado já era isso
+export const OUTBOUND_POLICY = {
+  /** POST /v1/orders — re-tenta com a MESMA `X-Idempotency-Key`. */
+  mpOrderCreate: { timeoutMs: OUTBOUND_ATTEMPT_TIMEOUT_MS, retry: RETRY_ONCE, deadlineMs: MP_ORDER_DEADLINE_MS },
+  /** POST /v1/orders/{id}/cancel — o 409 do re-cancel já é tratado relendo a ordem. */
+  mpOrderCancel: { timeoutMs: OUTBOUND_ATTEMPT_TIMEOUT_MS, retry: RETRY_ONCE, deadlineMs: MP_ORDER_DEADLINE_MS },
+  /** GET da ordem dentro do handler do webhook: 1 tentativa (15 s + HMAC/DB < 22 s do MP); falha ⇒ o job reconcilia. */
+  mpGetChargeWebhook: { timeoutMs: OUTBOUND_ATTEMPT_TIMEOUT_MS, retry: false },
+  /** GET da ordem no job/recheck. */
+  mpGetChargeJob: { timeoutMs: OUTBOUND_ATTEMPT_TIMEOUT_MS, retry: RETRY_ONCE, deadlineMs: MP_ORDER_DEADLINE_MS },
+  /** GET list/download do relatório de liberações. */
+  mpReportGet: { timeoutMs: 60_000, retry: RETRY_ONCE, deadlineMs: MP_REPORT_DEADLINE_MS },
+  /** POST release_report: sem chave de idempotência o wrapper nunca re-tenta; o timeout já é o teto. */
+  mpReportPost: { timeoutMs: 60_000 },
+  /** GET da cotação PTAX. */
+  bcbPtax: { timeoutMs: 10_000, retry: RETRY_ONCE, deadlineMs: BCB_PTAX_DEADLINE_MS },
+  /** GET certificate-discovery do PSC: prazo explícito de 15 s no total (exceção à fórmula, ver acima), sem `signal` do chamador. */
+  pscDiscovery: { timeoutMs: PSC_DISCOVERY_TIMEOUT_MS, retry: RETRY_ONCE, deadlineMs: PSC_DISCOVERY_TIMEOUT_MS },
+} as const satisfies Record<string, OutboundPolicy>;
 
 const DEFAULT_RETRY = { maxAttempts: 3, baseDelayMs: 250, maxDelayMs: 4_000 } as const;
 const IDEMPOTENCY_HEADERS = ['x-idempotency-key', 'idempotency-key'];

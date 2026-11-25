@@ -12,6 +12,7 @@ import type { DfeCallContext } from '../../DfeEmissorPort';
 import { serializeNfe } from '../../../../../lib/nfeXml';
 import { assinarEnveloped } from '../../../../../lib/dfeXmlSign';
 import type { NfePayload } from '../../../dtos/NfePayloadDto';
+import { DEFAULT_TIMEOUT_MS, SEFAZ_CALL_TOTAL_MS } from '../../../../../lib/outboundHttp';
 
 /**
  * X10a PR-7 — adaptador `sefaz` contra a SEFAZ falsa (HTTPS local com TLS mútuo) e o PSC falso (API v0). EMENDA-1 itens
@@ -70,6 +71,71 @@ describe('SefazNfeEmissor', () => {
     sefaz.controle.atrasoMs = 400;
     const lento = new SefazSoapClient({ transporte: { pfx: pki.clientPfx, passphrase: pki.passphrase, ca: pki.caPem }, connectTimeoutMs: 100, responseTimeoutMs: 100 });
     await expect(lento.call(sefaz.endpoint('SP', 65, 'homologacao', 'NFeStatusServico4'), 'NFeStatusServico4', '<x/>')).rejects.toThrow(/sefaz_timeout/);
+  });
+
+  it('4.2d: prazo TOTAL por chamada — com os timeouts de inatividade folgados, o total (150 ms) corta a resposta lenta', async () => {
+    sefaz.controle.atrasoMs = 800;
+    const total = new SefazSoapClient({ transporte: { pfx: pki.clientPfx, passphrase: pki.passphrase, ca: pki.caPem }, connectTimeoutMs: 10_000, responseTimeoutMs: 10_000, totalTimeoutMs: 150 });
+    const inicio = Date.now();
+    await expect(total.call(sefaz.endpoint('SP', 65, 'homologacao', 'NFeStatusServico4'), 'NFeStatusServico4', '<x/>')).rejects.toThrow(/sefaz_timeout: total/);
+    expect(Date.now() - inicio).toBeLessThan(700);
+  });
+
+  it('4.2d: estourar o prazo total CANCELA a requisição — o servidor vê a conexão fechar logo, sem esperar a resposta lenta', async () => {
+    sefaz.controle.atrasoMs = 1_200;
+    const total = new SefazSoapClient({ transporte: { pfx: pki.clientPfx, passphrase: pki.passphrase, ca: pki.caPem }, connectTimeoutMs: 10_000, responseTimeoutMs: 10_000, totalTimeoutMs: 150 });
+    await expect(total.call(sefaz.endpoint('SP', 65, 'homologacao', 'NFeStatusServico4'), 'NFeStatusServico4', '<x/>')).rejects.toThrow(/sefaz_timeout: total/);
+    // Sem `req.destroy()` a conexão só fecha quando a resposta lenta chega (1,2 s); com ele, em milissegundos.
+    const limite = Date.now() + 500;
+    while (sefaz.conexoesAbertas > 0 && Date.now() < limite) await new Promise((r) => setTimeout(r, 10));
+    expect(sefaz.conexoesAbertas).toBe(0);
+  });
+
+  describe('4.2d: o prazo total no relógio do cliente (timers falsos; I/O real)', () => {
+    const FAKE_TIMERS: Parameters<typeof jest.useFakeTimers>[0] = { doNotFake: ['nextTick', 'setImmediate', 'clearImmediate', 'queueMicrotask', 'Date', 'performance', 'hrtime'] };
+    const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
+    const url = () => sefaz.endpoint('SP', 65, 'homologacao', 'NFeStatusServico4');
+    afterEach(() => {
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    });
+
+    it('sem `totalTimeoutMs` o cliente corta aos 30 s (padrão ratificado): nem aos 29,999 s, nem depois', async () => {
+      jest.useFakeTimers(FAKE_TIMERS);
+      sefaz.controle.atrasoMs = 120_000; // o timer do servidor também é falso: a resposta nunca chega
+      // Inatividade folgada: só o prazo total pode cortar. `totalTimeoutMs` fica de fora de propósito (é o padrão que se prova).
+      const cliente = new SefazSoapClient({ transporte: { pfx: pki.clientPfx, passphrase: pki.passphrase, ca: pki.caPem }, connectTimeoutMs: 600_000, responseTimeoutMs: 600_000 });
+      const chamadasAntes = sefaz.controle.chamadas.length;
+      let encerrada = false;
+      const chamada = cliente.call(url(), 'NFeStatusServico4', '<x/>');
+      const resultado = chamada.then(() => undefined, (e: unknown) => e).finally(() => {
+        encerrada = true;
+      });
+      const limite = Date.now() + 4_000;
+      while (sefaz.controle.chamadas.length === chamadasAntes && Date.now() < limite) await tick(); // a requisição chegou à SEFAZ falsa
+      expect(sefaz.controle.chamadas.length).toBe(chamadasAntes + 1);
+
+      jest.advanceTimersByTime(SEFAZ_CALL_TOTAL_MS - 1);
+      await tick();
+      expect(encerrada).toBe(false);
+      jest.advanceTimersByTime(1);
+      await tick();
+      expect(encerrada).toBe(true);
+      expect(await resultado).toMatchObject({ code: 'sefaz_timeout', message: expect.stringContaining('sefaz_timeout: total') });
+    });
+
+    it('chamada que responde a tempo NÃO deixa o timer do prazo total pendurado (clearTimeout no finally)', async () => {
+      jest.useFakeTimers(FAKE_TIMERS);
+      const cliente = new SefazSoapClient({ transporte: { pfx: pki.clientPfx, passphrase: pki.passphrase, ca: pki.caPem } });
+      expect(jest.getTimerCount()).toBe(0);
+      await expect(cliente.call(url(), 'NFeStatusServico4', '<x/>')).resolves.toContain('<cStat>107</cStat>');
+      expect(jest.getTimerCount()).toBe(0);
+    });
+  });
+
+  it('4.2d: o prazo total padrão é o ratificado (30 s) e o default de timeout da SEFAZ no wrapper concorda', () => {
+    expect(SEFAZ_CALL_TOTAL_MS).toBe(30_000);
+    expect(DEFAULT_TIMEOUT_MS.sefaz).toBe(SEFAZ_CALL_TOTAL_MS);
   });
 
   it('E-5: lote com UMA nota e indSinc=1; cStat 100 ⇒ AUTHORIZED com nfeProc (NFe + protNFe); partnerRef = chave', async () => {
