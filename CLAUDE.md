@@ -38,9 +38,10 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
 - **Lacuna achada fora do escopo não fica no relatório** (dono, 2026-11-11): o que é da tarefa a sessão resolve; o resto
   vai à caixa `node scripts/lacunas.mjs add` (nunca por `SendMessage`; worktree antiga sem o arquivo usa a cópia
   `node "$HOME/.claude/tools/lacunas/lacunas.mjs"`, mesma caixa), e o maestro abre a sessão que resolve —
-  `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`. **Critério de entrada** (dono, 25/11): todo `add` leva
-  `--gravidade`; a meta do dreno é zerar `bug`, `gate` e `fiscal`, `melhoria` conta sem ser meta, `nit`/`estilo` ficam fora
-  da contagem — `docs/plano/decisoes/D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA.md`. **Registrou alguma? Rode `lacunas.mjs pulso`:** se
+  `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`. **Matriz** (dono, 25/11): todo `add` leva
+  `--dominio`, `--gravidade`/`--impacto <G1..G5>`, `--exposicao`, `--deteccao` e `--certeza`; a prioridade P0–P3 é derivada; a meta do
+  dreno é P0 + P1 + P2 fiscal; G5 (nit/estilo) fica fora da contagem — `docs/plano/decisoes/D-2026-11-25-MATRIZ-DE-LACUNAS.md`
+  (resto do critério em `D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA.md`). **Registrou alguma? Rode `lacunas.mjs pulso`:** se
   imprimir `DRENO` (nenhum maestro despachou há 1 dia), proponha um cartão "Drenar a caixa de lacunas" e rode
   `pulso --marcar-dreno` (dono, 21/11). Rodada de revisão pedida pelo dono registra com `--rodada <nome>`.
 - **Gate humano e dado externo NÃO têm sessão de agente** — PVA, sign-off de browser, deploy, XML de

@@ -222,23 +222,26 @@ Regra completa: `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`.
    "follow-up". Não feche com "deixei preparado", "fica para depois" ou "valeria também…" sobre algo do seu escopo.
 2. **O que está fora do escopo vai à caixa, na hora em que aparece**, sem corrigir (a cerca de escopo de cada skill
    continua valendo): `node scripts/lacunas.mjs add --local <arquivo:linha> --classe <defeito|debito|spec|feature|fork|gate>
-   --gravidade <bug|gate|fiscal|melhoria|nit|estilo> --o-que "…" --evidencia "…" [--como-provar "…"] [--no <NÓ>] [--pr <n>]
-   [--pai <id>]`. **Critério de entrada (dono, 25/11, `D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA`):** `--gravidade` é
-   obrigatória. `bug` (= classe `defeito`), `gate` (automático: tsc, `check:arch`, lint, teste, CI; ou humano/dado externo) e
-   `fiscal` são a meta do dreno; `melhoria` (débito real, spec, feature, fork sem risco) conta mas não é meta; `nit` e
-   `estilo` entram na caixa fora da contagem e vão também no texto do PR.
+   --dominio <fiscal|contabil|dados|operacao|produto|engenharia> --gravidade <G1..G5> --exposicao <E1..E4>
+   --deteccao <silencioso|ruidoso> --certeza <verificado|inferido|assumido> [--gatilho regressao,norma,vazamento,persistido]
+   --o-que "…" --evidencia "…" [--como-provar "…"] [--no <NÓ>] [--pr <n>] [--pai <id>]`. **Matriz (dono, 25/11,
+   `D-2026-11-25-MATRIZ-DE-LACUNAS`):** os eixos são obrigatórios; `--gravidade` (dano de ter) vale para `defeito` e
+   `debito`, `--impacto` (custo de não ter, mesma escala) para spec, feature, fork e gate; com G5 (nit/estilo) basta o
+   domínio. A prioridade P0–P3 é derivada, nunca digitada. Meta do dreno: P0 e P1 de qualquer domínio, mais P2 do domínio
+   `fiscal`; prazo P0 1 dia, P1 7, P2 30. `classificar <id> --motivo "…" [eixos]` reclassifica. G5 entra na caixa fora
+   da contagem e vai também no texto do PR (`D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA`, no que a matriz não muda).
    **Worktree sem `scripts/lacunas.mjs`** (cortada antes de 11/11; "Cannot find module"): o mesmo script, com a mesma
    caixa, está em `node "$HOME/.claude/tools/lacunas/lacunas.mjs" add …` (Bash e PowerShell). Falhar o comando não
    dispensa o registro.
 3. **Sem Bash (subagente só de leitura)?** Devolva as lacunas numa seção `Lacunas` do retorno, com os mesmos campos; quem
    te despachou põe na caixa. Quem despacha subagente confere essa seção antes de usar o resultado.
 4. **Fechamento:** 1ª linha do relatório/resposta final `LACUNAS NA CAIXA: <n> (<ids>)` ou `LACUNAS NA CAIXA: 0`;
-   `<n>` não conta nit e estilo, que vão ao lado como `· nit/estilo: <m>`.
+   `<n>` não conta G5 (nit e estilo), que vai ao lado como `· G5: <m>`.
    Nunca por `SendMessage` ao maestro (turno aberto por mensagem de sessão não abre sessão e a cadeia para).
    **Registrou alguma?** Rode `lacunas.mjs pulso` antes do relatório. Se ele imprimir `DRENO`, proponha **um** cartão
-   "Drenar a caixa de lacunas (N de bug/gate/fiscal abertas)" (`start_session`, `own_initiative`; brief: rodar o ciclo do
+   "Drenar a caixa de lacunas (N de meta abertas)" (`start_session`, `own_initiative`; brief: rodar o ciclo do
    `.claude/prompts/maestro.md` a partir do passo 3b) e rode `pulso --marcar-dreno`. A caixa só anda quando um maestro roda. O `DRENO`
-   só sai com lacuna de meta (bug, gate, fiscal ou sem gravidade) `aberta`: a meta é zerar essas, não a caixa inteira.
+   só sai com lacuna de meta (P0, P1, P2 fiscal ou sem matriz) `aberta`: a meta é zerar essas, não a caixa inteira.
 5. **Quem resolve:** o maestro lê a caixa a cada ciclo e abre a sessão certa sem perguntar ao dono; fork, gate e
    cadeia longa (geração > 3) vão ao dono (`lacunas.mjs triar` faz isso sem julgamento, no começo do ciclo). Duas ou
    mais lacunas com arquivo em comum, ou da mesma rodada, são um **grupo** (`list --grupos`): vão a **um** planejamento
@@ -266,7 +269,7 @@ Regra completa: `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`.
 | OPS-004 | item 5 vira artefato obrigatório do relatório (FAIL de forma se ausente) | passos 1–4 são processo, não gate |
 | OPS-005 | **probe objetivo** (`gh pr list --state open` — a única OPS com fonte externa, não auto-reportada); estado da fila vira artefato do relatório | o revisor independente **não** vê a fila (revisa um diff, não o estado de PRs do repo) — quem abre a frente é quem conta |
 | OPS-006 | predicado checável no diff (`git diff --numstat` + caminhos); os dois commits `test:`→`fix:` provam a ordem | a classificação é declarada pelo agente — o veto do dono é o freio |
-| OPS-007 | `scripts/lacunas.mjs add` recusa entrada sem `arquivo:linha` e evidência; o maestro roda `sincronizar` (estado ← GitHub), `triar`, `list --paradas` e `list --grupos` a cada ciclo; `add` recusa entrada sem `--gravidade` ou com gravidade incoerente com a classe; `pulso` mede a meta (bug/gate/fiscal) e faz a sessão que registra propor o cartão de dreno quando há meta aberta e nenhum maestro despachou há 1 dia; o resumo do dia lista toda lacuna com destino | o registro é auto-reportado: lacuna que o agente não registra não aparece. Os freios são a 1ª linha `LACUNAS NA CAIXA` e o revisor, que manda o pré-existente à caixa. O dreno depende de o dono iniciar o maestro ou o cartão. O sinal do `pulso` é qualquer `em-sessao` gravado, por qualquer sessão: um despacho fora do maestro também zera o relógio |
+| OPS-007 | `scripts/lacunas.mjs add` recusa entrada sem `arquivo:linha` e evidência; o maestro roda `sincronizar` (estado ← GitHub), `triar`, `list --paradas` e `list --grupos` a cada ciclo; `add` recusa entrada sem os eixos da matriz ou com `--gravidade`/`--impacto` trocado para a classe; `pulso` mede a meta (P0 + P1 + P2 fiscal) e conta as atrasadas e faz a sessão que registra propor o cartão de dreno quando há meta aberta e nenhum maestro despachou há 1 dia; o resumo do dia lista toda lacuna com destino | o registro é auto-reportado: lacuna que o agente não registra não aparece. Os freios são a 1ª linha `LACUNAS NA CAIXA` e o revisor, que manda o pré-existente à caixa. O dreno depende de o dono iniciar o maestro ou o cartão. O sinal do `pulso` é qualquer `em-sessao` gravado, por qualquer sessão: um despacho fora do maestro também zera o relógio |
 
 Gaps declarados de propósito (OPS-001 gate 5 aplicado a este próprio doc): a metade auto-reportada
 dessas regras só fecha com **review independente** (`reviewer-independence-separate-agent`) — que já é

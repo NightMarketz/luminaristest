@@ -48,9 +48,9 @@ mesmo comando (uma para contar erro, outra para listar), `tsc` do server e do my
   de função, arquivo ou variável não vale: abra a linha ou marque o item como "não verificado".
 - **Origem.** Para cada achado, confira a main (`git show origin/main:<arquivo>` ou `git blame`): **introduzido pelo
   PR** ou **pré-existente** (cite a linha da main que já tem o defeito). Pré-existente **não dá FAIL ao PR**:
-  vai num bloco próprio do relatório e, um por um, à caixa do maestro (`node scripts/lacunas.mjs add --classe defeito --gravidade <bug|gate|fiscal>
-  --local <arquivo:linha> --o-que … --evidencia … --como-provar <reprodução> --pr <n>`), com o id ao lado do `P<n>`. Nit e estilo pré-existentes entram com `--classe debito --gravidade nit|estilo` (ficam fora da
-  contagem e não abrem sessão; D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA).
+  vai num bloco próprio do relatório e, um por um, à caixa do maestro (`node scripts/lacunas.mjs add --classe defeito --dominio <d> --gravidade <G1..G4>
+  --exposicao <E1..E4> --deteccao <silencioso|ruidoso> --certeza <verificado|inferido|assumido> [--gatilho …] --local <arquivo:linha> --o-que … --evidencia … --como-provar <reprodução> --pr <n>`), com o id ao lado do `P<n>`. Nit e estilo pré-existentes entram com `--classe debito --dominio <d> --gravidade G5` (ficam fora da
+  contagem e não abrem sessão; D-2026-11-25-MATRIZ-DE-LACUNAS e D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA).
   O trilho continua próprio (dono, 06/11: "Trilho próprio, como no #1079"), mas quem o abre agora é o maestro, sem
   esperar autorização caso a caso (dono, 11/11, OPS-007, D-2026-11-11-LACUNA-VAI-AO-MAESTRO). Na dúvida sobre a
   origem, trate como introduzido.

@@ -83,6 +83,9 @@ destino`. Nenhuma lacuna aberta sai do dia sem destino: ou tem sessão, ou PR, o
 > **Emenda de 25/11 (critério de entrada):** todo `add` leva `--gravidade <bug|gate|fiscal|melhoria|nit|estilo>`; a meta
 > do dreno é zerar bug, gate e fiscal, não a caixa inteira; nit e estilo ficam na caixa fora da contagem e não abrem
 > sessão. Regra em [D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA](D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA.md).
+>
+> **Emenda de 25/11 (matriz):** o rótulo único e a meta bug/gate/fiscal deram lugar à matriz de 6 eixos, com prioridade
+> P0–P3 derivada e meta P0 + P1 + P2 fiscal. Regra em [D-2026-11-25-MATRIZ-DE-LACUNAS](D-2026-11-25-MATRIZ-DE-LACUNAS.md).
 
 ## Emenda de 11/11: em todo lugar (OPS-007)
 

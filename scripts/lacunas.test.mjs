@@ -12,10 +12,10 @@ import {
   VERSAO,
 } from './lacunas.mjs';
 
-const base = { local: 'server/src/x.ts:10', classe: 'defeito', gravidade: 'bug', oQue: 'soma ignora sinal', evidencia: 'li x.ts:10' };
+const base = { local: 'server/src/x.ts:10', classe: 'defeito', dominio: 'contabil', gravidade: 'G2', exposicao: 'E1', deteccao: 'ruidoso', certeza: 'verificado', oQue: 'soma ignora sinal', evidencia: 'li x.ts:10' };
 const nova = () => mkdtempSync(join(tmpdir(), 'lacunas-'));
 const script = fileURLToPath(new URL('./lacunas.mjs', import.meta.url));
-const ADD = ['add', '--local', 'a.ts:1', '--classe', 'debito', '--gravidade', 'melhoria', '--o-que', 'x', '--evidencia', 'y'];
+const ADD = ['add', '--local', 'a.ts:1', '--classe', 'debito', '--dominio', 'engenharia', '--gravidade', 'G3', '--exposicao', 'E1', '--deteccao', 'ruidoso', '--certeza', 'inferido', '--o-que', 'x', '--evidencia', 'y'];
 
 test('lacuna sem evidência não entra', () => {
   assert.throws(() => adicionar({ ...base, evidencia: '' }, nova()), /evidencia/);
@@ -64,7 +64,7 @@ test('CLI: add e list pela linha de comando', () => {
   const env = { ...process.env, LUMINARIS_LACUNAS_DIR: dir, LACUNAS_TOOLS_DIR: nova() };
   const out = execFileSync('node', [script, ...ADD], { env, encoding: 'utf8' });
   assert.match(out, /na caixa: L-/);
-  assert.match(execFileSync('node', [script, 'list', '--abertas'], { env, encoding: 'utf8' }), /debito\/melhoria · a\.ts:1/);
+  assert.match(execFileSync('node', [script, 'list', '--abertas'], { env, encoding: 'utf8' }), /debito P2 \(G3·E1·ruidoso·inferido·engenharia\) · a\.ts:1/);
 });
 
 test('cópia global, rodada de uma worktree que não tem o script, grava na caixa do .git principal', () => {
@@ -137,8 +137,8 @@ test('paradas com --dias N: aberta antiga entra; recém-criada e recém-movida n
 test('triar manda fork, gate e geração > 3 ao dono; defeito fica; --simular não grava', () => {
   const dir = nova();
   const d = adicionar(base, dir);
-  const f = adicionar({ ...base, local: 'f.ts:1', classe: 'fork', gravidade: 'melhoria' }, dir);
-  const g = adicionar({ ...base, local: 'g.ts:1', classe: 'gate', gravidade: 'gate' }, dir);
+  const f = adicionar({ ...base, local: 'f.ts:1', classe: 'fork', gravidade: undefined, impacto: 'G3' }, dir);
+  const g = adicionar({ ...base, local: 'g.ts:1', classe: 'gate', gravidade: undefined, impacto: 'G2' }, dir);
   const p1 = adicionar({ ...base, local: 'p1.ts:1' }, dir);
   const p2 = adicionar({ ...base, local: 'p2.ts:1', pai: p1.id }, dir);
   const p3 = adicionar({ ...base, local: 'p3.ts:1', pai: p2.id }, dir);
@@ -173,7 +173,7 @@ test('add não bloqueia por arquivo ausente, vizinha no mesmo arquivo ou falta d
   const b = adicionar({ ...base, local: 'existe.ts:9', raiz }, dir);
   assert.ok(b.avisos.some((x) => x.includes(a.id)), 'avisa a vizinha no mesmo arquivo');
   assert.ok(b.avisos.some((x) => /como-provar/.test(x)));
-  const abs = adicionar({ ...base, local: `${raiz.replace(/\\/g, '/')}/existe.ts:5`, classe: 'spec', gravidade: 'melhoria', raiz }, dir);
+  const abs = adicionar({ ...base, local: `${raiz.replace(/\\/g, '/')}/existe.ts:5`, classe: 'spec', gravidade: undefined, impacto: 'G3', raiz }, dir);
   assert.equal(abs.arquivoForaDaCheckout, undefined, 'absoluto dentro da raiz não é "fora da checkout"');
   const c = adicionar({ ...base, local: 'sumiu.ts:1', comoProvar: 'x', raiz }, dir);
   assert.equal(c.arquivoForaDaCheckout, true);
@@ -189,7 +189,7 @@ test('paradas mede o tempo no estado atual, por estado', () => {
   mudar(velhaReaberta.id, { estado: 'aberta', destino: 'PR fechado' }, dir, new Date('2026-11-20T12:00:00Z'));
   const sessaoMorta = adicionar({ ...base, local: 's.ts:1' }, dir, t0);
   mudar(sessaoMorta.id, { estado: 'em-sessao', destino: 'sessão y' }, dir, new Date('2026-11-18T12:00:00Z'));
-  const donoMudo = adicionar({ ...base, local: 'd.ts:1', classe: 'fork', gravidade: 'melhoria' }, dir, t0);
+  const donoMudo = adicionar({ ...base, local: 'd.ts:1', classe: 'fork', gravidade: undefined, impacto: 'G3' }, dir, t0);
   mudar(donoMudo.id, { estado: 'com-dono', destino: 'pergunta' }, dir, new Date('2026-11-17T12:00:00Z'));
   const agora = new Date('2026-11-21T12:00:00Z');
   const ids = paradas(dir, { agora }).map((l) => l.id).sort();
@@ -200,7 +200,7 @@ test('paradas mede o tempo no estado atual, por estado', () => {
 test('porArquivo agrupa as não finais pelo arquivo', () => {
   const dir = nova();
   adicionar({ ...base, local: 'P.ts:1' }, dir);
-  adicionar({ ...base, local: 'P.ts:200', classe: 'debito', gravidade: 'melhoria' }, dir);
+  adicionar({ ...base, local: 'P.ts:200', classe: 'debito', gravidade: 'G3' }, dir);
   const r = adicionar({ ...base, local: 'Q.ts:1' }, dir);
   mudar(r.id, { estado: 'resolvida', destino: 'x' }, dir);
   const g = porArquivo(dir);
@@ -275,7 +275,7 @@ test('dreno: pede cartão com aberta e sem despacho há 1 dia; a marca segura po
 
 test('fork respondido volta à fila com a classe que a resposta definiu', () => {
   const dir = nova();
-  const f = adicionar({ ...base, classe: 'fork', gravidade: 'melhoria' }, dir);
+  const f = adicionar({ ...base, classe: 'fork', gravidade: undefined, impacto: 'G3' }, dir);
   triar(dir);
   assert.throws(() => mudar(f.id, { estado: 'aberta', destino: 'x', classe: 'melhoria' }, dir), /classe inválida/);
   const l = mudar(f.id, { estado: 'aberta', destino: 'dono, 21/11: opção (a)', classe: 'defeito' }, dir);
@@ -286,7 +286,7 @@ test('fork respondido volta à fila com a classe que a resposta definiu', () => 
 test('grupos liga por arquivo e por rodada, transitivamente; isolada fica fora', () => {
   const dir = nova();
   const a = adicionar({ ...base, local: 'P.ts:1' }, dir);
-  const b = adicionar({ ...base, local: 'P.ts:90', classe: 'debito', gravidade: 'melhoria', rodada: 'fe-13-11' }, dir);
+  const b = adicionar({ ...base, local: 'P.ts:90', classe: 'debito', gravidade: 'G3', rodada: 'fe-13-11' }, dir);
   const c = adicionar({ ...base, local: 'Q.tsx:4', rodada: 'fe-13-11' }, dir);
   adicionar({ ...base, local: 'sozinha.ts:1' }, dir);
   const gs = grupos(dir);

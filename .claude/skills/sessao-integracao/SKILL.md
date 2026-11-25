@@ -105,11 +105,14 @@ continua; muda o destino do achado:
   código introduziu. Isso não é "fora de escopo".
 - Cada linha de "Achados fora de escopo" / "Lacunas de spec" vira uma entrada na caixa, antes do relatório:
   `node scripts/lacunas.mjs add --local <arquivo:linha> --classe <defeito|debito|spec|feature|fork|gate>
-  --gravidade <bug|gate|fiscal|melhoria|nit|estilo> --o-que "…"
+  --dominio <fiscal|contabil|dados|operacao|produto|engenharia> --gravidade <G1..G5> --exposicao <E1..E4>
+  --deteccao <silencioso|ruidoso> --certeza <verificado|inferido|assumido> [--gatilho regressao,norma,vazamento,persistido]
+  --o-que "…"
   --evidencia "…" [--como-provar "…"] [--no <NÓ>] [--pr <n>] [--pai <id>]` (`--pai` = o id da lacuna que originou esta
-  sessão, se veio de uma). O id entra na linha do relatório e no corpo do PR.
-- 1ª linha do relatório final: `LACUNAS NA CAIXA: <n> (<ids>)` ou `LACUNAS NA CAIXA: 0`; `<n>` não conta nit e estilo,
-  que vão ao lado como `· nit/estilo: <m>` (critério de entrada: `docs/plano/decisoes/D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA.md`).
+  sessão, se veio de uma; em spec, feature, fork ou gate, `--impacto` no lugar de `--gravidade`; com G5, nit/estilo, basta
+  o domínio). O id entra na linha do relatório e no corpo do PR.
+- 1ª linha do relatório final: `LACUNAS NA CAIXA: <n> (<ids>)` ou `LACUNAS NA CAIXA: 0`; `<n>` não conta G5 (nit e estilo),
+  que vai ao lado como `· G5: <m>` (matriz: `docs/plano/decisoes/D-2026-11-25-MATRIZ-DE-LACUNAS.md`).
 - **Não envie a lacuna por `SendMessage` ao maestro**: turno aberto por mensagem de sessão não abre sessão, e a cadeia
   para. O maestro lê a caixa quando volta.
 
