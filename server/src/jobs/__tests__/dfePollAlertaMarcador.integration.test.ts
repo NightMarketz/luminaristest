@@ -146,12 +146,15 @@ describe('Lacuna 2374 — marcador "já alertei" só depois da entrega confirmad
       expect(tentativasDeAlerta('pollGaveUpDocumentIds', d.id)).toBe(1);
       expect((await row(d.id)).pollGaveUpAt).toBeNull(); // webhook não entregou ⇒ nada de "já alertei"
 
-      await tick(2 * MIN); // o documento segue na fila do job (não foi abandonado): realerta
+      await tick(2 * MIN); // dentro da janela de backoff (1 h): a SEFAZ não é consultada de novo e nada realerta
+      expect(tentativasDeAlerta('pollGaveUpDocumentIds', d.id)).toBe(1);
+
+      await tick(HORA); // janela vencida: o documento segue na fila do job (não foi abandonado): realerta
       expect(tentativasDeAlerta('pollGaveUpDocumentIds', d.id)).toBe(2);
       expect((await row(d.id)).pollGaveUpAt).toBeNull();
 
       webhookOk();
-      await tick(2 * MIN);
+      await tick(HORA);
       expect(tentativasDeAlerta('pollGaveUpDocumentIds', d.id)).toBe(3);
       const entregue = await row(d.id);
       expect(entregue.pollGaveUpAt?.getTime()).toBe(relogio); // entregue ⇒ marcador gravado, o job para
@@ -184,11 +187,46 @@ describe('Lacuna 2374 — marcador "já alertei" só depois da entrega confirmad
       mockPort.consultar.mockImplementation(
         async (ref: string): Promise<EmissaoResult> => ({ status: 'AUTHORIZED', partnerRef: ref, chaveOuCodigo: `CH-${ref}`, numero: '1', errors: [] }),
       );
-      await tick(2 * MIN);
+      await tick(HORA); // janela de backoff vencida: a consulta que RESOLVE a nota continua possível
       const r = await row(d.id);
       expect(r.status).toBe('AUTHORIZED');
       expect(r.pollGaveUpAt).toBeNull();
       expect(tentativasDeAlerta('pollGaveUpDocumentIds', d.id)).toBe(1);
+    });
+
+    it('ressalva (d) do revisor do #1414: webhook fora por muitos ticks de 2 min ⇒ a SEFAZ é consultada no máximo 1× por janela de backoff (1 h); o alerta sai na 1ª consulta devida depois que o webhook volta', async () => {
+      const d = await pendente(`desiste-backoff-${seq}`);
+      portaCom(d.id, erroPermanente); // desiste já na 1ª falha: o alerta fica devido
+      webhookFora();
+
+      await tick(HORA);
+      const inicio = relogio;
+      expect(chamadasDe(d.id)).toBe(1);
+      expect(tentativasDeAlerta('pollGaveUpDocumentIds', d.id)).toBe(1);
+
+      // 62 ticks de 2 min (124 min, > 2 janelas): consultas só nas bordas de janela (0, 60 e 120 min), 1 alerta por consulta
+      for (let i = 0; i < 62; i += 1) {
+        await tick(2 * MIN);
+        const janelas = Math.floor((relogio - inicio) / HORA) + 1;
+        expect(chamadasDe(d.id)).toBeLessThanOrEqual(janelas);
+      }
+      expect(chamadasDe(d.id)).toBe(3);
+      expect(tentativasDeAlerta('pollGaveUpDocumentIds', d.id)).toBe(3);
+      expect((await row(d.id)).pollGaveUpAt).toBeNull();
+
+      // o webhook volta no meio da janela (124 min): nada sai antes da borda (180 min) — e na borda sai, com o marcador
+      webhookOk();
+      for (let i = 0; i < 27; i += 1) await tick(2 * MIN);
+      expect(chamadasDe(d.id)).toBe(3);
+      expect(tentativasDeAlerta('pollGaveUpDocumentIds', d.id)).toBe(3);
+      expect((await row(d.id)).pollGaveUpAt).toBeNull();
+
+      await tick(2 * MIN); // 180 min: janela vencida ⇒ consulta devida
+      expect(relogio - inicio).toBe(3 * HORA);
+      expect(chamadasDe(d.id)).toBe(4);
+      expect(tentativasDeAlerta('pollGaveUpDocumentIds', d.id)).toBe(4);
+      expect((await row(d.id)).pollGaveUpAt?.getTime()).toBe(relogio); // entregue ⇒ o job para
+      expect((await row(d.id)).status).toBe('PROCESSING');
     });
 
     it('sem ALERT_WEBHOOK_URL (ausência é configuração válida, não falha) ⇒ o marcador é gravado e o job para', async () => {

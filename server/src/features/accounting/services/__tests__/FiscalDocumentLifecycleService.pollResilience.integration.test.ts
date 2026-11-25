@@ -390,7 +390,9 @@ describe('Onda 4 / 4.1 — polling de DF-e: teto, backoff e sem head-of-line (SQ
     expect(t.gaveUpIds).toEqual([d.id]); // 8ª falha: alerta devido
     const pendenteDeAlerta = await row(d.id);
     expect(pendenteDeAlerta.pollGaveUpAt).toBeNull();
-    expect(pendenteDeAlerta.nextPollAt).toBeNull(); // sem backoff: volta no tick seguinte, não some
+    // ressalva (d) do revisor do #1414: alerta devido ⇒ backoff TETO (1 h), não `null` — senão o documento acima do teto de
+    // tentativas era reconsultado na SEFAZ a cada ~4 min enquanto o webhook estivesse fora. Segue na fila (volta em 1 h), não some.
+    expect(pendenteDeAlerta.nextPollAt?.getTime()).toBe(relogio + HORA);
     expect(pendenteDeAlerta.pollAttempts).toBe(POLL_MAX_ATTEMPTS);
 
     const now = new Date(relogio);
@@ -416,6 +418,65 @@ describe('Onda 4 / 4.1 — polling de DF-e: teto, backoff e sem head-of-line (SQ
     expect(r.status).toBe('AUTHORIZED');
     expect(r.pollGaveUpAt).toBeNull();
     expect(await service.confirmarAlertaDePoll('desistencia', [], new Date(relogio))).toBe(0); // lista vazia: nada a fazer
+  });
+
+  /**
+   * Ressalva (c) do revisor do #1414 — a janela está DENTRO de `confirmarAlertaDePoll`, entre reler o documento e gravar o
+   * marcador (o teste acima corre a consulta ANTES da confirmação, então a releitura já a enxerga e não prova a gravação).
+   * Aqui a consulta manual bem-sucedida roda exatamente depois da releitura (uma vez só) e antes da escrita: o marcador não
+   * pode sobreviver ao documento recuperado. A guarda é da escrita, não da releitura.
+   */
+  async function corridaNaConfirmacao(consultaManual: () => void, confirmar: () => Promise<number>): Promise<number> {
+    const original = repo.findManyByIds.bind(repo);
+    const espiao = jest.spyOn(repo, 'findManyByIds').mockImplementationOnce(async (ids, tx) => {
+      const lidos = await original(ids, tx); // a releitura vê o estado ANTIGO (alerta devido)…
+      consultaManual();
+      await service.consultarUm(scope, ids[0]); // …e a consulta manual que dá certo entra antes da escrita
+      return lidos;
+    });
+    try {
+      return await confirmar();
+    } finally {
+      espiao.mockRestore();
+    }
+  }
+  const consultaDe = (status: 'AUTHORIZED' | 'PROCESSING', d: { id: string }) => () =>
+    mockPort.consultar.mockResolvedValue({ status, partnerRef: `${d.id}:1`, chaveOuCodigo: 'CH-1', numero: '1', errors: [] } as EmissaoResult);
+
+  it.each([['AUTHORIZED'], ['PROCESSING']] as const)(
+    'ressalva (c): consulta manual %s entre a releitura e a gravação da DESISTÊNCIA ⇒ pollGaveUpAt NÃO fica no documento recuperado',
+    async (status) => {
+      const d = await pendente(`corrida-desiste-${status}`);
+      portaCom(d.id, () => new DfeTransporteError('sefaz_http', 'HTTP 503'));
+      let t = await tickSemEntrega();
+      for (let i = 1; i < POLL_MAX_ATTEMPTS; i += 1) t = await tickSemEntrega();
+      expect(t.gaveUpIds).toEqual([d.id]);
+
+      const gravados = await corridaNaConfirmacao(consultaDe(status, d), () => service.confirmarAlertaDePoll('desistencia', [d.id], new Date(relogio)));
+
+      const r = await row(d.id);
+      expect(r.status).toBe(status); // a consulta manual rodou de fato
+      expect(r.pollLastError).toBeNull(); // …e limpou o controle de falha
+      expect(r.pollGaveUpAt).toBeNull(); // o marcador da desistência não sobrevive a ela (PROCESSING ficaria parado até o re-arme)
+      expect(gravados).toBe(0);
+    },
+  );
+
+  it('ressalva (c): consulta manual entre a releitura e a gravação do ADIAMENTO ⇒ pollAlertedAt NÃO fica sem episódio (suprimiria o alerta do próximo)', async () => {
+    const d = await pendente('corrida-adiamento');
+    portaCom(d.id, () => new DfeTransporteIndisponivelError('dfe_assinador_sem_dispositivo', 'caixa desligada'));
+    await tickSemEntrega({ avanco: HORA }); // abre o episódio
+    const t = await tickSemEntrega({ avanco: HORA }); // ≥ 1 h de episódio: alerta devido
+    expect(t.transporteAdiadoIds).toEqual([d.id]);
+
+    const gravados = await corridaNaConfirmacao(consultaDe('PROCESSING', d), () => service.confirmarAlertaDePoll('transporte', [d.id], new Date(relogio)));
+
+    const r = await row(d.id);
+    expect(r.status).toBe('PROCESSING');
+    expect(r.pollDeferredSince).toBeNull(); // episódio encerrado pela consulta que deu certo
+    expect(r.pollAlertedAt).toBeNull(); // "já alertei" sem episódio bloquearia o alerta do episódio seguinte (deveAlertarAdiamento)
+    expect(r.nextPollAt).toBeNull(); // o adiamento de +1 h da confirmação também não se aplica
+    expect(gravados).toBe(0);
   });
 
   it('lacunas cf36/3cf5 (dono 25/11): re-arme explícito zera desistência, tentativas e backoff; o status não muda; o job volta a consultar', async () => {
