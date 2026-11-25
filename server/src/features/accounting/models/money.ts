@@ -14,10 +14,19 @@
  *   - the import validators (`dataExchangeValidators`) — ACC-INCR6-J-001;
  *   - the direct `/post` DTO (`PostingDto`) — ACC-HARDEN-POST-CENTS-001.
  *
- * Raising or removing this ceiling is a product decision (fork F-W2B-2, options b/c), not an
- * engineering one — kept at the pre-migration value until the dono decides otherwise.
+ * F-W2B-2 → (b), decisão do dono (chat, questionário de 24/11/2026): o teto de POLÍTICA sobe do valor
+ * pré-migração (2^31−1 ≈ R$ 21,47 mi, que barrava a receita anual de uma PJ de R$ 78 mi) para "perto de 2^53−1".
+ * A coluna já é BigInt: sem migração de schema. Por que 2^43−1 (≈ R$ 87,96 bi por perna) e não 2^53−1 exato:
+ * os relatórios leem `_sum` por conta e passam por `centsFromDb`; com o teto em 2^53−1 UM lançamento no teto +
+ * qualquer outro na mesma conta estoura a borda e o balancete responde 500 (medido em
+ * `accountingController.integration.test.ts`, 24/11). Dividir 2^53−1 por 1024 deixa folga para ~1.000 pernas no teto
+ * somadas numa conta — muito além de qualquer dado real — sem voltar a barrar a receita de R$ 78 mi. Duas guardas
+ * mantêm o número honesto:
+ *   - `centsFromDb` (abaixo) recusa alto qualquer BigInt fora do intervalo seguro na borda de leitura;
+ *   - `PostingService.assertCentsAndBalance` recusa o lançamento cuja SOMA de pernas deixa de ser inteira segura.
+ * Subir mais é uma linha aqui (e `__dto-shapes__.json`/`openapi.json`): decisão do dono, não de engenharia.
  */
-export const MAX_CENTS = 2_147_483_647;
+export const MAX_CENTS = Math.floor(Number.MAX_SAFE_INTEGER / 1024); // 2^43 − 1 = 8_796_093_022_207
 
 /**
  * BigInt → number bridge for the `*Cents` columns at the read boundary (F-W2B-3).

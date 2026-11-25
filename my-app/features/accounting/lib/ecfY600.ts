@@ -104,7 +104,7 @@ const onlyDigits = (s: string) => s.replace(/\D/g, '');
 
 /** Dinheiro como o `parseBrl` aceita: dígitos com `.`/`,`, sem sinal; nada além disso (o `parseBrl` devolve 0 para lixo). */
 const MONEY_RE = /^\d[\d.,]*$/;
-const MAX_CENTS = 2_147_483_647; // `y600Cents` do servidor (models/money.ts)
+const MAX_CENTS = 8_796_093_022_207; // `y600Cents` do servidor (models/money.ts)
 
 function valoresError(v: ValoresDraft): string | null {
   for (const k of VALOR_KEYS) {
