@@ -12,6 +12,7 @@ import type { DfeCallContext } from '../../DfeEmissorPort';
 import { serializeNfe } from '../../../../../lib/nfeXml';
 import { assinarEnveloped } from '../../../../../lib/dfeXmlSign';
 import type { NfePayload } from '../../../dtos/NfePayloadDto';
+import { DEFAULT_TIMEOUT_MS, SEFAZ_CALL_TOTAL_MS } from '../../../../../lib/outboundHttp';
 
 /**
  * X10a PR-7 — adaptador `sefaz` contra a SEFAZ falsa (HTTPS local com TLS mútuo) e o PSC falso (API v0). EMENDA-1 itens
@@ -70,6 +71,19 @@ describe('SefazNfeEmissor', () => {
     sefaz.controle.atrasoMs = 400;
     const lento = new SefazSoapClient({ transporte: { pfx: pki.clientPfx, passphrase: pki.passphrase, ca: pki.caPem }, connectTimeoutMs: 100, responseTimeoutMs: 100 });
     await expect(lento.call(sefaz.endpoint('SP', 65, 'homologacao', 'NFeStatusServico4'), 'NFeStatusServico4', '<x/>')).rejects.toThrow(/sefaz_timeout/);
+  });
+
+  it('4.2d: prazo TOTAL por chamada — com os timeouts de inatividade folgados, o total (150 ms) corta a resposta lenta', async () => {
+    sefaz.controle.atrasoMs = 800;
+    const total = new SefazSoapClient({ transporte: { pfx: pki.clientPfx, passphrase: pki.passphrase, ca: pki.caPem }, connectTimeoutMs: 10_000, responseTimeoutMs: 10_000, totalTimeoutMs: 150 });
+    const inicio = Date.now();
+    await expect(total.call(sefaz.endpoint('SP', 65, 'homologacao', 'NFeStatusServico4'), 'NFeStatusServico4', '<x/>')).rejects.toThrow(/sefaz_timeout: total/);
+    expect(Date.now() - inicio).toBeLessThan(700);
+  });
+
+  it('4.2d: o prazo total padrão é o ratificado (30 s) e o default de timeout da SEFAZ no wrapper concorda', () => {
+    expect(SEFAZ_CALL_TOTAL_MS).toBe(30_000);
+    expect(DEFAULT_TIMEOUT_MS.sefaz).toBe(SEFAZ_CALL_TOTAL_MS);
   });
 
   it('E-5: lote com UMA nota e indSinc=1; cStat 100 ⇒ AUTHORIZED com nfeProc (NFe + protNFe); partnerRef = chave', async () => {
