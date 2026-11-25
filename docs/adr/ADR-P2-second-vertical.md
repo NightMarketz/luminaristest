@@ -119,6 +119,19 @@
 >
 > Os dois vão com par vermelho→verde em `server/src/jobs/__tests__/proveP2ZeroDiffCli.test.ts`.
 >
+> **EMENDA 2026-11-25 (dono, por questionário, na sessão das lacunas do PR-3.x de `dynamicTables` do
+> ADR-MODULE-BOUNDARIES: *"Congelar como histórico"*) — o `proveP2ZeroDiffCli` fica congelado.** A prova da P2 fechou
+> (emenda de 16/10) e o nó P2 está `done`. O perímetro do CLI é declarado por caminho de pasta, e o renome do
+> `ADR-MODULE-BOUNDARIES.md` desloca esses caminhos a cada PR (lacuna `L-20261124-222012-137a`). A partir desta emenda:
+> 1. As listas do CLI (`PERIMETER_PREFIXES`, `EXPLICITLY_EXEMPT_PREFIXES`, `VETOED_SHARED_FILES`, `SYMBOL_ALLOWLIST`)
+>    descrevem a árvore como estava no #1387 (24/11/2026), depois do primeiro renome (`dynamicTables`), e **não são mais
+>    traduzidas** nos PRs de renome seguintes.
+> 2. O CLI não é gate: não roda no CI, e o resultado dele contra uma árvore posterior ao #1387 não prova nada.
+> 3. O teste `server/src/jobs/__tests__/proveP2ZeroDiffCli.test.ts` fica: cobre as funções puras de classificação com
+>    caminhos de exemplo.
+> 4. O critério do §2 item 2 (vertical novo não toca o motor) segue como decisão. Reativar a prova para um terceiro
+>    vertical pede redefinir o perímetro sobre a árvore do dia, em emenda própria.
+>
 > **Origem:** `docs/ROADMAP-PLATAFORMA.md` Fase P2. **Classe:** PROVA DE PRODUTO (preset + binding;
 > zero código de motor/ledger — se exigir código lá, a prova falhou).
 >

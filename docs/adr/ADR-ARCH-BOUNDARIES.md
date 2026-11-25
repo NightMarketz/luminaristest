@@ -38,10 +38,10 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
 | M1a | feature não importa `repositories/` de outra feature, nem a interface, nem por `import type`. Emenda 2026-11-24 (§8) | 36 (em 24/11) |
 | M1 | feature só importa outra por `features/<x>/public/`. Controller, route, job e `lib/factory.ts` ficam fora do `from`. Emenda 2026-11-24 (§8) | 378 (em 24/11); 359 depois da emenda §8.1; 322 depois da §8.2 |
 | M3 | `features/<x>/public/` não importa nem reexporta `repositories/` (F-MBE-3 a). Emenda 2026-11-24 (§8) | **0** |
-| D2 | `domain/` é pura: não importa repository, service, controller, route, `lib/prisma` nem Express (F-MBE-4 a). Emenda 2026-11-24 (§8) | **0** |
+| D2 | `domain/` é pura: não importa repository, service, controller, route, `lib/prisma` nem Express (F-MBE-4 a). Emenda 2026-11-24 (§8). Desde 25/11 (§8.3), nem `lib/factory.ts` | **0** |
 | J1 | `src/jobs/` não importa repository nem `lib/prisma`; fora da regra: `jobs/repositories/` e as CLIs `migratePlano4NiveisCli`, `rekeyLegacyUnitCli`, `seedAccountingFixtureCli`. Emenda 2026-11-24 (§8) | 16 (em 24/11) |
 | M4 | `features/<x>/public/<nome>.types.ts` só importa `models/` e `dtos/` da própria feature: carrega tipo, enum e constante, nada executável (dono, questionário, 24/11: "Tudo em user.types.ts"). Emenda 2026-11-24 (§8.1) | **0** |
-| M2 | peça de feature mora em pasta de camada (`services`, `repositories`, `policies`, `models`, `dtos`, `controllers`, `domain`, `ports`, `adapters`, `public`); sem exceção para `index.ts`; `dynamicTables/rules/` isenta por nome. Vale por feature (F-MBE-2 c): hoje `dynamicTables`. Emenda 2026-11-24 (§8.2) | **0** |
+| M2 | peça de feature mora em pasta de camada (`services`, `repositories`, `policies`, `models`, `dtos`, `controllers`, `domain`, `ports`, `adapters`, `public`); sem exceção para `index.ts`; `dynamicTables/rules/` isenta por nome. Vale por feature (F-MBE-2 c): hoje `dynamicTables`. Emenda 2026-11-24 (§8.2). Desde 25/11 (§8.3) são três regras com o mesmo alvo — `M2` (arquivo importado, teste inclusive), `M2b` (arquivo que importa algo) e `M2c` (órfão) — e todo `.ts` de produção fora de pasta de camada reprova, com ou sem importador | **0** |
 
 **Imports `type`-only contam.** Interface de repository dentro de policy é exatamente o sinal de policy impura que L5 quer ver.
 
@@ -291,3 +291,23 @@ sem arquivo de sonda).
   `dynamicTables/domain/` ⇒ exit 0 ("no dependency violations found", 376 conhecidas ignoradas). Sondas removidas.
 - **Ponto cego declarado:** a regra casa pelo `to`. Arquivo fora de pasta de camada que ninguém importa não aparece
   (lacuna `L-20261124-222007-2aaa`).
+
+### 8.3 Emenda 2026-11-25 — `M2` cobre arquivo sem importador; `D2` barra `lib/factory`
+
+- **Decisão:** dono, chat, 25/11/2026: "aborda as lacunas"; questionário de 25/11: "Fechar no check:arch" e "Apagar e
+  travar a D2". Detalhe, os 11 plantios e os pontos declarados estão no
+  [`ADR-MODULE-BOUNDARIES.md`](ADR-MODULE-BOUNDARIES.md) §11.7.
+- **Regras:** a `M2` deixa de excluir testes do `from` e ganha duas irmãs com o mesmo alvo:
+  `M2b-feature-code-in-layer-folder-importing` (o alvo no `from`, `to` livre) e
+  `M2c-feature-code-in-layer-folder-orphan` (o alvo no `from` com `orphan: true`). A `D2` acrescenta
+  `^src/lib/factory\.ts$` ao `to`. Todas com severidade de erro.
+- **Onde vale:** como o §8, na branch `integration/module-boundaries-be`.
+- **Cobertura:** a exceção de 13/10 (§4): o mesmo gate estático, sem gate, rodada nem revisor novo.
+- **Baseline antes/depois:** server 376 → 376. As regras novas medem 0 e não entram no arquivo; a `D2` segue em 0
+  depois de apagado o único arquivo de `domain/` que importava `lib/factory` (`dynamicTables/domain/RelationUtils.ts`,
+  sem importador). my-app sem mudança (79).
+- **Prova de que mordem (condição que falha, 25/11):** `dynamicTables/__sondaM2.ts` sem importador e sem import ⇒
+  exit 1 com `error M2c-feature-code-in-layer-folder-orphan: src/features/dynamicTables/__sondaM2.ts` (em 24/11 a mesma
+  sonda dava exit 0); a mesma sonda em `dynamicTables/domain/` ⇒ exit 0. `dynamicTables/domain/__sondaD2.ts` importando
+  `lib/factory` ⇒ exit 1 com `error D2-domain-is-pure: … → src/lib/factory.ts` (antes da mudança, exit 0); importando
+  `lib/logger` ⇒ exit 0. Sondas removidas.
