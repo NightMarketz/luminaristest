@@ -48,7 +48,7 @@ PASTA DA PASSAGEM: T="$(git rev-parse --git-common-dir)/turno" (crie se faltar).
 
 5. Escreva o bloco do PR na passagem assim que o revisor voltar (não deixe para o fim: a noite pode ser cortada):
    `## #<n> · <SHA de cabeça> · rodada <k> · PASS|FAIL|BLOCKED` e, abaixo, a saída do revisor: achados `A` e `P` com
-   `arquivo:linha`, classe e reprodução; sabotagem; exit codes. Em PR de fase, uma linha por fatia.
+   `arquivo:linha`, classe e reprodução; melhorias `M` com o id da caixa; sabotagem; exit codes. Em PR de fase, uma linha por fatia.
 
 6. Hora de parar: 07:30. O que não coube fica para a noite seguinte, na ordem do passo 3.
 

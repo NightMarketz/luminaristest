@@ -97,3 +97,32 @@ na execução seguinte. O PC precisa estar ligado nas duas horas.
 - **Quase nada mais entra como verde.** O merge automático do maestro encolhe e o lote do dono passa a ter menos PRs,
   maiores.
 - **Branch longa diverge da `main`.** O merge diário (§1.6) contém isso, com custo de conflito recorrente.
+
+## 6. Os três papéis (dono, chat, 25/11: "Agora crie o planejador, o implementador e o revisor, assim quando a revisão grande vier, podemos corrigir os problemas e documentar as melhorias sugeridas no classificador")
+
+| Papel | Arquivo | Modelo | Formulário |
+|---|---|---|---|
+| Planejador | `.claude/agents/planejador.md` | Fable 5.2 | `sessao-planejamento` |
+| Implementador | `.claude/agents/implementador.md` | Opus 5.5 | `sessao-feature`; na correção, `sessao-instrumentacao` e `sessao-correcao` |
+| Revisor | `.claude/agents/revisor-independente.md` | Opus 5.5 | o do próprio arquivo |
+
+Quem despacha continua sendo um só: o maestro de dia (planejador e implementador) e o turno da noite (revisor).
+
+**O laço da revisão grande:**
+1. A noite revisa o PR de fase e escreve o bloco na passagem.
+2. Achado `A` (o PR introduziu): de manhã o maestro despacha o `implementador` em modo correção, na branch do PR, um
+   commit por achado. O PR volta à revisão na noite seguinte, só no diff novo.
+3. Achado `P` (já estava na `main`) e melhoria `M` (não é defeito): o revisor registra na caixa, com os 6 eixos. A matriz
+   decide: a meta abre sessão; o resto é backlog que o dono revê por semana.
+4. Três rodadas sem PASS: o PR vai ao lote como "repensar a abordagem". Se o dono mandar replanejar, o `planejador`
+   recebe os achados das três rodadas.
+
+**Melhoria não é veredito.** O formulário do revisor proibia sugestão porque revisor mandado achar gap acha gap. A
+proibição continua para o veredito: melhoria nunca muda PASS para FAIL. O que muda é que ela deixa de se perder.
+
+**Dois consertos que vieram junto:**
+- O cabeçalho de `revisor-independente.md` era YAML inválido (`description` sem aspas com `revisor: obrigatório`
+  dentro), e o tipo de agente não carregava: faltava na lista de agentes da sessão e o maestro de 25/11 relatou "não
+  carregou". O `description` agora está entre aspas.
+- `executor.md` sai do repositório (aposentado em 10/11 com os retornos PROVA; lacuna `L-20261125-191944-de23`).
+

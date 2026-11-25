@@ -188,6 +188,7 @@ estruturas implícitas entra como verde com revisor PASS — `docs/plano/decisoe
 - **Turnos:** de dia o maestro (08:00, agendado) abre as sessões que implementam; a revisão de PR vermelho de código é do
   turno da noite (02:00, `.claude/prompts/revisor-noturno.md`), em fatias de até 4 commits de item mais uma passada
   integrada. A passagem entre os dois fica em `<git-common-dir>/turno/`.
+  Papéis em `.claude/agents/`: `planejador` (Fable), `implementador` (Opus) e `revisor-independente` (Opus).
 - **Profundidade máxima entre a `main` e o resto: 2** (`main` → integração → pilha). Dentro de uma `integration/<slug>` a pilha é livre
   (acima de 4 camadas, reporte no lote). **Fora de integração**, filho sobre pai não mergeado continua proibido; a raiz entra primeiro.
 - Dependência que não cabe em 2 níveis fora de integração: separe o contrato em PR próprio, que entra antes.

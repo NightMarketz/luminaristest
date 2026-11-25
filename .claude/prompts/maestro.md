@@ -32,8 +32,8 @@ CICLO
    - VERMELHO com `revisor: não (só texto)` → direto ao lote, sem revisor. Nunca mergeie vermelho.
    - VERMELHO com `revisor: obrigatório` → **de dia você não despacha o revisor**: a revisão é do turno da noite
      (`.claude/prompts/revisor-noturno.md`, D-2026-11-25-BRANCH-LONGA-E-TURNOS §2). Leia na passagem o bloco do SHA de
-     cabeça: PASS → lote (ou, se a base é uma `integration/<slug>`, merge nela com CI verde); FAIL → abra a sessão que
-     corrige na branch do PR, com os achados `A` no brief, e a rodada seguinte é da noite seguinte; sem bloco para o
+     cabeça: PASS → lote (ou, se a base é uma `integration/<slug>`, merge nela com CI verde); FAIL → despache o `implementador`
+     em modo correção na branch do PR, com os achados `A` no brief, e a rodada seguinte é da noite seguinte; sem bloco para o
      SHA → lote marcado "aguarda a revisão da noite". 3 rodadas sem PASS → lote marcado "repensar a abordagem"
      (D-2026-11-06-REVISAO-CONVERGENCIA). Achado `P` (pré-existente) não segura o PR: o revisor o põe na caixa e ele
      segue pelo passo 3b (OPS-007). Nunca mergeie vermelho.
@@ -51,14 +51,17 @@ CICLO
 
 3. Fila. Nó entra se: estado `ready`/`inflight`, `autorizacao` com 'executa' do dono, BRIEF ratificado, nenhum
    fork pendente, e ainda tem PR do BRIEF por abrir (um 'executa' cobre o BRIEF inteiro). Ordem: FILA-ORDEM.
-   `node scripts/paralelo.mjs plano <NÓS>` → ondas. Abra uma sessão por nó da onda (no máximo 4 ao mesmo tempo,
+   `node scripts/paralelo.mjs plano <NÓS>` → ondas. Abra uma sessão por nó da onda, com o agente `implementador` (no máximo 4 ao mesmo tempo,
    worktree próprio, `user_asked`), com este brief: "sessao-feature do <NÓ>, <PR-k> do BRIEF <caminho>; branch longa (D-2026-11-25-BRANCH-LONGA-E-TURNOS §1):
    trabalhe na `integration/<slug>` do nó (nó de PR único, sem irmãos, segue direto na `main`: Regra 1.6 de 10/11),
    traga a `main` para ela por merge antes de começar, PR de fase em draft, um
    commit por item do BRIEF com o id no título, e tire o draft só quando a fase fechar com CI verde; tsc dos
    dois lados, testes do nó, check:arch; fold com `plano-vault.mjs fold` no próprio PR; abre o PR e NÃO mergeia.
    Fork não coberto pelo BRIEF: pare o nó e me reporte o fork com contexto (evidência lida, opções, recomendada)."
-   Nó sem BRIEF mas com autorização de planejamento → sessao-planejamento. Nó sem 'executa' → só lista.
+   Nó sem BRIEF mas com autorização de planejamento → agente `planejador` (sessao-planejamento).
+   Papéis em `.claude/agents/`: `planejador` (Fable), `implementador` (Opus), `revisor-independente` (Opus, só à noite).
+   Se o tipo de agente não carregar na sessão, despache um filho no modelo do cabeçalho dele, com a instrução de seguir
+   o arquivo ao pé da letra. Melhoria `M` da revisão já está na caixa (o revisor registra): segue o passo 3b pela matriz. Nó sem 'executa' → só lista.
    Todo brief de sessão termina com: "Lacuna fora do teu escopo vai à caixa (`node scripts/lacunas.mjs add`, regra
    D-2026-11-11-LACUNA-VAI-AO-MAESTRO §1; se a tua worktree não tem esse arquivo, o mesmo script está em
    `node "$HOME/.claude/tools/lacunas/lacunas.mjs" add`); a do teu escopo você resolve. Toda entrada leva os eixos da matriz (`--dominio`,
