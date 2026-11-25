@@ -82,11 +82,22 @@ async function prepararEnvio(tag: string) {
 const row = (id: string) => prisma.fiscalDocument.findUniqueOrThrow({ where: { id } });
 const HORA = 3_600_000;
 let relogio = Date.now() + 10 * HORA;
-/** Cada tick avança o relógio simulado além de qualquer backoff (o teto do backoff é 1 h). */
-const tick = async (opts: { limit?: number; avanco?: number } = {}) => {
+/**
+ * Cada tick avança o relógio simulado além de qualquer backoff (o teto do backoff é 1 h). Lacuna 2374: o marcador "já alertei"
+ * (`pollGaveUpAt`/`pollAlertedAt`) só é gravado por `confirmarAlertaDePoll`, depois da entrega do webhook — este `tick` simula o
+ * scheduler com o webhook saudável (confirma os dois alertas do resumo); `tickSemEntrega` é o tick com o webhook fora.
+ */
+const tickSemEntrega = async (opts: { limit?: number; avanco?: number } = {}) => {
   relogio += opts.avanco ?? 2 * HORA;
   const now = new Date(relogio);
   return service.pollPendingOnce(now, { limit: opts.limit, now });
+};
+const tick = async (opts: { limit?: number; avanco?: number } = {}) => {
+  const t = await tickSemEntrega(opts);
+  const now = new Date(relogio);
+  await service.confirmarAlertaDePoll('desistencia', t.gaveUpIds ?? [], now);
+  await service.confirmarAlertaDePoll('transporte', t.transporteAdiadoIds ?? [], now);
+  return t;
 };
 
 /** O documento "ruim" falha de um jeito; os demais autorizam. */
@@ -369,6 +380,42 @@ describe('Onda 4 / 4.1 — polling de DF-e: teto, backoff e sem head-of-line (SQ
     expect(await sondar(HORA / 2)).toBe(false);
     expect(await sondar(HORA - 1)).toBe(false);
     expect(await sondar(HORA)).toBe(true);
+  });
+
+  it('lacuna 2374: a desistência só ALERTA no tick (documento fica na fila, sem pollGaveUpAt); o marcador é gravado pela confirmação da entrega', async () => {
+    const d = await pendente('desiste-confirma');
+    portaCom(d.id, () => new DfeTransporteError('sefaz_http', 'HTTP 503'));
+    let t = await tickSemEntrega();
+    for (let i = 1; i < POLL_MAX_ATTEMPTS; i += 1) t = await tickSemEntrega();
+    expect(t.gaveUpIds).toEqual([d.id]); // 8ª falha: alerta devido
+    const pendenteDeAlerta = await row(d.id);
+    expect(pendenteDeAlerta.pollGaveUpAt).toBeNull();
+    expect(pendenteDeAlerta.nextPollAt).toBeNull(); // sem backoff: volta no tick seguinte, não some
+    expect(pendenteDeAlerta.pollAttempts).toBe(POLL_MAX_ATTEMPTS);
+
+    const now = new Date(relogio);
+    expect(await service.confirmarAlertaDePoll('desistencia', [d.id], now)).toBe(1);
+    expect((await row(d.id)).pollGaveUpAt?.getTime()).toBe(relogio);
+    // idempotente: confirmar de novo não regrava nem conta
+    expect(await service.confirmarAlertaDePoll('desistencia', [d.id], new Date(relogio + 1))).toBe(0);
+    expect((await row(d.id)).pollGaveUpAt?.getTime()).toBe(relogio);
+  });
+
+  it('lacuna 2374: confirmar o alerta de documento que já saiu do estado (autorizado depois) NÃO deixa marcador velho', async () => {
+    const d = await pendente('desiste-ja-autorizou');
+    portaCom(d.id, () => new DfeTransporteError('sefaz_http', 'HTTP 503'));
+    let t = await tickSemEntrega();
+    for (let i = 1; i < POLL_MAX_ATTEMPTS; i += 1) t = await tickSemEntrega();
+    expect(t.gaveUpIds).toEqual([d.id]);
+    // entre o alerta e a confirmação a consulta manual resolveu a nota
+    mockPort.consultar.mockReset();
+    mockPort.consultar.mockResolvedValue({ status: 'AUTHORIZED', partnerRef: `${d.id}:1`, chaveOuCodigo: 'CH-1', numero: '1', errors: [] } as EmissaoResult);
+    await service.consultarUm(scope, d.id);
+    expect(await service.confirmarAlertaDePoll('desistencia', [d.id], new Date(relogio))).toBe(0);
+    const r = await row(d.id);
+    expect(r.status).toBe('AUTHORIZED');
+    expect(r.pollGaveUpAt).toBeNull();
+    expect(await service.confirmarAlertaDePoll('desistencia', [], new Date(relogio))).toBe(0); // lista vazia: nada a fazer
   });
 
   it('lacunas cf36/3cf5 (dono 25/11): re-arme explícito zera desistência, tentativas e backoff; o status não muda; o job volta a consultar', async () => {

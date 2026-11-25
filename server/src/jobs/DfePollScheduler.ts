@@ -9,9 +9,9 @@
  * atalho: lock local; upgrade a lease distribuída só se multi-réplica.
  */
 import logger, { type EventLogger } from '../lib/logger';
-import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';
-import { readDfePollAfterMs, runDfePollPending } from './dfePollPending.job';
-import type { PollSummary } from '../features/accounting/services/FiscalDocumentLifecycleService';
+import { deliverAlertWebhook, sendAlertWebhook, type AlertDelivery, type AlertPayload } from '../lib/alertWebhook';
+import { confirmarAlertasDePoll, readDfePollAfterMs, runDfePollPending } from './dfePollPending.job';
+import type { AlertaDePoll, PollSummary } from '../features/accounting/services/FiscalDocumentLifecycleService';
 import { scopeDay } from '../features/accounting/models/dates';
 import type { ContingenciaTickSummary } from '../features/accounting/dtos/NfceContingenciaDto';
 import { readMsEnv } from './readMsEnv';
@@ -30,6 +30,13 @@ export interface DfePollSchedulerDeps {
   log?: JobLogger;
   /** Nó OBS, item 10 (F-OBS-7 a): remote alert on failure. Default = the fire-and-forget webhook. */
   alert?: (payload: AlertPayload) => void;
+  /**
+   * Lacuna 2374: entrega do alerta cujo "já alertei" fica gravado no documento (desistência do poll, adiamento por transporte).
+   * Devolve o resultado da entrega; só `delivered`/`disabled` liberam `confirmarAlertas`. Default = `deliverAlertWebhook`.
+   */
+  entregarAlerta?: (payload: AlertPayload) => Promise<AlertDelivery>;
+  /** Lacuna 2374: grava o marcador dos documentos de um alerta já entregue. Default = `confirmarAlertasDePoll` (serviço). */
+  confirmarAlertas?: (tipo: AlertaDePoll, documentIds: readonly string[]) => Promise<unknown>;
 }
 
 export interface DfePollSchedulerStartOptions {
@@ -45,6 +52,8 @@ export class DfePollScheduler {
   private readonly poll: () => Promise<PollSummary>;
   private readonly log: JobLogger;
   private readonly alert: (payload: AlertPayload) => void;
+  private readonly entregarAlerta: (payload: AlertPayload) => Promise<AlertDelivery>;
+  private readonly confirmarAlertas: (tipo: AlertaDePoll, documentIds: readonly string[]) => Promise<unknown>;
   /** C3: `evento:documentId` → dia do último alerta. Sem teto; o dia que passou sai no próximo tick. Process-local, como o lock. */
   private readonly alertadas = new Map<string, string>();
 
@@ -52,6 +61,32 @@ export class DfePollScheduler {
     this.poll = deps.poll ?? runDfePollPending;
     this.log = deps.log ?? logger;
     this.alert = deps.alert ?? sendAlertWebhook;
+    this.entregarAlerta = deps.entregarAlerta ?? deliverAlertWebhook;
+    this.confirmarAlertas = deps.confirmarAlertas ?? confirmarAlertasDePoll;
+  }
+
+  /**
+   * Lacuna 2374 (dono 25/11/2026) — ALERTA PRIMEIRO, MARCADOR DEPOIS. Entrega o webhook e só com `delivered` (ou `disabled`: sem
+   * webhook configurado não há canal a esperar, e exigir entrega travaria o marcador para sempre) manda o serviço gravar o
+   * "já alertei". `failed` ⇒ marcador não gravado ⇒ o documento segue na fila e o próximo tick elegível realerta (a falha já saiu
+   * como `alert.failed`). Trade-off: entrega ao-menos-uma-vez — dois processos, ou uma gravação que falha depois da entrega,
+   * dão alerta DUPLICADO, nunca alerta perdido. Nunca lança: a falha da confirmação é logada e o marcador fica para o realerta.
+   */
+  private async alertarComMarcador(tipo: AlertaDePoll, payload: AlertPayload, documentIds: readonly string[]): Promise<void> {
+    const entrega = await this.entregarAlerta(payload);
+    if (entrega === 'failed') {
+      logger.warn('dfe_poll_pending: webhook não entregou o alerta — marcador não gravado, o próximo tick realerta', { tipo, documentIds });
+      return;
+    }
+    try {
+      await this.confirmarAlertas(tipo, documentIds);
+    } catch (error) {
+      logger.error('dfe_poll_pending: alerta entregue mas a confirmação do marcador falhou — o próximo tick realerta (duplicado, nunca perdido)', {
+        tipo,
+        documentIds,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   async runOnce(): Promise<PollSummary | { skipped: 'lock' }> {
@@ -80,29 +115,40 @@ export class DfePollScheduler {
         this.log.event('info', 'job.completed', JOB, { job: JOB, ...summary });
       }
       // Onda 4 / 4.1: o job desistiu de consultar documento(s) (teto de falhas seguidas ou erro permanente). O documento segue
-      // SENT/PROCESSING — alguém precisa consultar na mão ou investigar. Alerta só no tick em que desistiu (não repete: o
-      // documento sai da fila do poll).
+      // SENT/PROCESSING — alguém precisa consultar na mão ou investigar. Lacuna 2374: o job só PARA de consultar (`pollGaveUpAt`) depois
+      // que este alerta for entregue; falha de entrega ⇒ o documento volta no tick seguinte e o alerta é refeito.
       if ((summary.gaveUp ?? 0) > 0) {
-        this.alert({
-          source: 'dfe_poll',
-          event: 'reconcile_summary',
-          timestamp: new Date().toISOString(),
-          job: JOB,
-          pollGaveUp: summary.gaveUp,
-          pollGaveUpDocumentIds: summary.gaveUpIds ?? [],
-        });
+        const ids = summary.gaveUpIds ?? [];
+        await this.alertarComMarcador(
+          'desistencia',
+          {
+            source: 'dfe_poll',
+            event: 'reconcile_summary',
+            timestamp: new Date().toISOString(),
+            job: JOB,
+            pollGaveUp: summary.gaveUp,
+            pollGaveUpDocumentIds: ids,
+          },
+          ids,
+        );
       }
       // Lacuna 92c5 (dono 24/11): documento adiado por transporte (assinador local) indisponível há ≥ 1 h. O service devolve o id
-      // UMA vez por episódio (marcador `alertado` no documento), então não há dedupe de dia aqui. O documento segue adiado.
+      // UMA vez por episódio — o marcador `pollAlertedAt` só é gravado depois da entrega (lacuna 2374), então não há dedupe de dia
+      // aqui; sem entrega o id volta no tick seguinte. O documento segue adiado.
       if ((summary.transporteAdiadoAlerta ?? 0) > 0) {
-        this.alert({
-          source: 'dfe_poll',
-          event: 'reconcile_summary',
-          timestamp: new Date().toISOString(),
-          job: JOB,
-          transporteAdiado: summary.transporteAdiadoAlerta,
-          transporteAdiadoDocumentIds: summary.transporteAdiadoIds ?? [],
-        });
+        const ids = summary.transporteAdiadoIds ?? [];
+        await this.alertarComMarcador(
+          'transporte',
+          {
+            source: 'dfe_poll',
+            event: 'reconcile_summary',
+            timestamp: new Date().toISOString(),
+            job: JOB,
+            transporteAdiado: summary.transporteAdiadoAlerta,
+            transporteAdiadoDocumentIds: ids,
+          },
+          ids,
+        );
       }
       // X10a PR-9 (decisões 6, 7 e 9): NFC-e off-line perto do prazo/vencida ou órfã não resolvida ⇒ alerta remoto.
       // C3: no máximo 1 vez por nota, por evento e por dia — o tick de 2 min repetia o mesmo aviso ~720 vezes por dia.

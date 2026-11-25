@@ -5,10 +5,16 @@
  * (SpedGenerationService/SpedEcfGenerationService/DataExchangeExportService).
  *
  * `ALERT_WEBHOOK_URL` is optional: unset means no-op, not a warning — absence is valid
- * configuration. Never `await`ed at the call site by design (the job that triggered the alert
- * must never slow down or fail because the webhook endpoint is slow or unreachable). Any
- * failure — network error, non-2xx response, or the timeout below — collapses into a single
- * `logger.warn` and never propagates to the caller.
+ * configuration. `sendAlertWebhook` is never `await`ed at the call site by design (the job that
+ * triggered the alert must never slow down or fail because the webhook endpoint is slow or
+ * unreachable). Any failure — network error, non-2xx response, or the timeout below — collapses
+ * into a single `logger.warn` and never propagates to the caller.
+ *
+ * Lacuna 2374 (dono, 25/11/2026): a caller that persists a "já alertei" marker needs to know whether
+ * the alert was actually delivered. `deliverAlertWebhook` is the SAME delivery, awaitable, and
+ * resolves to the outcome (`delivered` | `disabled` | `failed`) — it never rejects either. The
+ * fire-and-forget `sendAlertWebhook` is now just `void deliverAlertWebhook(...)`: same request,
+ * same single `alert.failed` line, so its callers see no change.
  */
 import logger from './logger';
 
@@ -32,62 +38,61 @@ export interface AlertPayload {
 }
 
 /**
- * Fire-and-forget: callers must NOT `await` this. Never throws and never rejects visibly — the
- * returned promise chain always resolves via its own `.catch`, so there is nothing for an
- * unhandledRejection listener to see either.
+ * Outcome of one delivery attempt (lacuna 2374). `disabled` = no `ALERT_WEBHOOK_URL`: there is no channel to wait for, which is
+ * valid configuration and NOT a failure — a caller gating a marker on delivery must treat it as settled, or an install without
+ * a webhook would never record anything. `failed` = the alert did not reach the endpoint (already logged as `alert.failed`).
  */
-export function sendAlertWebhook(payload: AlertPayload): void {
+export type AlertDelivery = 'delivered' | 'disabled' | 'failed';
+
+function logDeliveryFailure(url: string, payload: AlertPayload, error: unknown): void {
+  // fetch() can reject with heterogeneous error shapes depending on the failure mode — a DOMException on abort, a TypeError
+  // on network failure, or a plain object. Reading name/message structurally is a safe superset that doesn't depend on any
+  // one prototype chain, rather than asserting `instanceof Error`.
+  const hasNameAndMessage =
+    typeof error === 'object' && error !== null && 'name' in error && 'message' in error;
+  logger.event('warn', 'alert.failed', 'alert webhook failed', {
+    url,
+    source: payload.source,
+    alertEvent: payload.event,
+    errorName: hasNameAndMessage ? String((error as { name: unknown }).name) : 'UnknownError',
+    errorMessage: hasNameAndMessage ? String((error as { message: unknown }).message) : String(error),
+  });
+}
+
+/**
+ * Awaitable delivery: resolves once the endpoint answered 2xx (`delivered`), there is nothing configured (`disabled`) or the
+ * attempt failed (`failed`, logged once as `alert.failed`). Never rejects. Costs up to the timeout above when the endpoint hangs,
+ * so only a caller that needs the outcome should `await` it. No retry here: the caller retries by alerting again on its next run.
+ */
+export async function deliverAlertWebhook(payload: AlertPayload): Promise<AlertDelivery> {
   const url = process.env.ALERT_WEBHOOK_URL;
-  if (!url) return;
+  if (!url) return 'disabled';
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), ALERT_WEBHOOK_TIMEOUT_MS);
-
-  // The whole synchronous assembly below — JSON.stringify(payload) and the fetch() call itself —
-  // can throw before any promise exists to catch it (e.g. a circular payload throws a sync
-  // TypeError). Wrapping it keeps the "never throws" contract even in that case.
   try {
-    fetch(url, {
+    // JSON.stringify(payload) and the fetch() call itself can throw synchronously (e.g. a circular payload) — inside the try.
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
       signal: controller.signal,
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`alert webhook responded with status ${res.status}`);
-      })
-      .catch((error) => {
-        // fetch() can reject with heterogeneous error shapes depending on the failure mode —
-        // a DOMException on abort, a TypeError on network failure, or a plain object. Reading
-        // name/message structurally is a safe superset that doesn't depend on any one prototype
-        // chain, rather than asserting `instanceof Error`.
-        const hasNameAndMessage =
-          typeof error === 'object' && error !== null && 'name' in error && 'message' in error;
-        logger.event('warn', 'alert.failed', 'alert webhook failed', {
-          url,
-          source: payload.source,
-          alertEvent: payload.event,
-          errorName: hasNameAndMessage
-            ? String((error as { name: unknown }).name)
-            : 'UnknownError',
-          errorMessage: hasNameAndMessage
-            ? String((error as { message: unknown }).message)
-            : String(error),
-        });
-      })
-      .finally(() => clearTimeout(timeoutId));
-  } catch (error) {
-    clearTimeout(timeoutId);
-    const hasNameAndMessage =
-      typeof error === 'object' && error !== null && 'name' in error && 'message' in error;
-    logger.event('warn', 'alert.failed', 'alert webhook failed', {
-      url,
-      source: payload.source,
-      alertEvent: payload.event,
-      errorName: hasNameAndMessage ? String((error as { name: unknown }).name) : 'UnknownError',
-      errorMessage: hasNameAndMessage
-        ? String((error as { message: unknown }).message)
-        : String(error),
     });
+    if (!res.ok) throw new Error(`alert webhook responded with status ${res.status}`);
+    return 'delivered';
+  } catch (error) {
+    logDeliveryFailure(url, payload, error);
+    return 'failed';
+  } finally {
+    clearTimeout(timeoutId);
   }
+}
+
+/**
+ * Fire-and-forget: callers must NOT `await` this. Never throws and never rejects visibly — `deliverAlertWebhook` resolves
+ * (never rejects), so there is nothing for an unhandledRejection listener to see either. Use `deliverAlertWebhook` when the
+ * outcome matters.
+ */
+export function sendAlertWebhook(payload: AlertPayload): void {
+  void deliverAlertWebhook(payload);
 }

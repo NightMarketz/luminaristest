@@ -238,6 +238,11 @@ export interface IFiscalDocumentRepository {
    */
   updatePollState(scope: AccountingScope, id: string, patch: PollStatePatch, tx?: Prisma.TransactionClient): Promise<boolean>;
   /**
+   * Lacuna 2374 — os documentos vivos destes ids, de qualquer escopo (mesmo desenho de `listPending`: o job não tem escopo, o
+   * escopo sai de cada linha). Serve à confirmação de alerta entregue, que relê o documento antes de gravar o marcador.
+   */
+  findManyByIds(ids: readonly string[], tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
+  /**
    * BE-INCR-DFE-EVENTOS (PR-2, item 18) — alvo da consulta de eventos: NFS-e `AUTHORIZED*` vivas, com chave, e com
    * `nfseDhProc >= desde` (o teto de 2 anos, Anexo I [114]), de todas as unidades (mesmo desenho de `listPending`). Vêm
    * TODAS as com cancelamento em voo (item 19, sem teto) e, depois, até `limit` das demais em rodízio por `updatedAt`

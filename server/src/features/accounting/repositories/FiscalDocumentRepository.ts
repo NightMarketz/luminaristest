@@ -148,6 +148,11 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     return r.count === 1;
   }
 
+  public async findManyByIds(ids: readonly string[], tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {
+    if (ids.length === 0) return [];
+    return this.db(tx).fiscalDocument.findMany({ where: { id: { in: [...ids] }, deletedAt: null } });
+  }
+
   public async listParaEventos(desde: Date, limit: number, partners: readonly string[], tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {
     const alvo = {
       kind: 'NFSE',

@@ -7,6 +7,7 @@
  * entre 00:00 e 03:00 de Brasília).
  */
 import { DfePollScheduler } from '../DfePollScheduler';
+import type { AlertDelivery } from '../../lib/alertWebhook';
 import type { PollSummary } from '../../features/accounting/services/FiscalDocumentLifecycleService';
 
 type Evento = 'PERTO_DO_PRAZO' | 'VENCIDA' | 'ORFA_FALHOU';
@@ -131,38 +132,97 @@ describe('DfePollScheduler — passo de eventos da NFS-e (BE-INCR-DFE-EVENTOS PR
   });
 });
 
+/** Lacuna 2374 — os alertas de desistência/adiamento saem pela entrega CONFIRMADA e só depois o marcador é gravado. */
+function montarEntrega(...ticks: PollSummary[]) {
+  const poll = jest.fn<Promise<PollSummary>, []>();
+  for (const t of ticks) poll.mockResolvedValueOnce(t);
+  const alert = jest.fn();
+  const ordem: string[] = [];
+  const entregarAlerta = jest.fn(async (_p: unknown): Promise<AlertDelivery> => {
+    ordem.push('entregar');
+    return 'delivered';
+  });
+  const confirmarAlertas = jest.fn(async (_t: unknown, _ids: unknown) => {
+    ordem.push('confirmar');
+    return 1;
+  });
+  const log = { event: jest.fn() };
+  const scheduler = new DfePollScheduler({ poll, log, alert, entregarAlerta, confirmarAlertas });
+  return { scheduler, log, alert, entregarAlerta, confirmarAlertas, ordem };
+}
+
 describe('DfePollScheduler — o job desistiu de consultar documento (Onda 4 / 4.1)', () => {
   const desistiu = (ids: string[]): PollSummary => ({ total: 3, updated: 2, skipped: 0, failed: 1, gaveUp: ids.length, gaveUpIds: ids });
 
   it('gaveUp > 0 ⇒ job.completed em warn e UM alerta remoto com os ids (a nota segue SENT/PROCESSING: alguém precisa olhar)', async () => {
-    const log = { event: jest.fn() };
-    const alert = jest.fn();
-    await new DfePollScheduler({ poll: async () => desistiu(['doc-x']), log, alert }).runOnce();
+    const { scheduler, log, entregarAlerta, alert } = montarEntrega(desistiu(['doc-x']));
+    await scheduler.runOnce();
     expect(log.event).toHaveBeenCalledWith('warn', 'job.completed', 'dfe_poll_pending', expect.objectContaining({ gaveUp: 1 }));
-    expect(alert).toHaveBeenCalledTimes(1);
-    expect(alert).toHaveBeenCalledWith(
+    expect(entregarAlerta).toHaveBeenCalledTimes(1);
+    expect(entregarAlerta).toHaveBeenCalledWith(
       expect.objectContaining({ source: 'dfe_poll', event: 'reconcile_summary', pollGaveUp: 1, pollGaveUpDocumentIds: ['doc-x'] }),
     );
+    expect(alert).not.toHaveBeenCalled(); // não é mais fire-and-forget: o resultado da entrega decide o marcador
   });
 
   it('controle: tick sem desistência não alerta por isso', async () => {
-    const alert = jest.fn();
-    await new DfePollScheduler({ poll: async () => ({ total: 1, updated: 1, skipped: 0, failed: 0 }), log: { event: jest.fn() }, alert }).runOnce();
-    expect(alert).not.toHaveBeenCalled();
+    const { scheduler, entregarAlerta, confirmarAlertas } = montarEntrega({ total: 1, updated: 1, skipped: 0, failed: 0 });
+    await scheduler.runOnce();
+    expect(entregarAlerta).not.toHaveBeenCalled();
+    expect(confirmarAlertas).not.toHaveBeenCalled();
   });
 });
 
 describe('DfePollScheduler — transporte adiado há ≥ 1 h (lacuna 92c5)', () => {
   it('o resumo do tick com documento adiado alerta o job com os ids (o service garante UMA vez por episódio)', async () => {
-    const { scheduler, alert } = montar({ total: 1, updated: 0, skipped: 1, failed: 0, transporteAdiadoAlerta: 1, transporteAdiadoIds: ['doc-x'] } as PollSummary);
+    const { scheduler, entregarAlerta } = montarEntrega({ total: 1, updated: 0, skipped: 1, failed: 0, transporteAdiadoAlerta: 1, transporteAdiadoIds: ['doc-x'] } as PollSummary);
     await scheduler.runOnce();
-    expect(alert).toHaveBeenCalledTimes(1);
-    expect(alert.mock.calls[0][0]).toMatchObject({ source: 'dfe_poll', event: 'reconcile_summary', job: 'dfe_poll_pending', transporteAdiado: 1, transporteAdiadoDocumentIds: ['doc-x'] });
+    expect(entregarAlerta).toHaveBeenCalledTimes(1);
+    expect(entregarAlerta.mock.calls[0][0]).toMatchObject({ source: 'dfe_poll', event: 'reconcile_summary', job: 'dfe_poll_pending', transporteAdiado: 1, transporteAdiadoDocumentIds: ['doc-x'] });
   });
 
   it('controle: tick sem documento adiado há ≥ 1 h não alerta por isso', async () => {
-    const { scheduler, alert } = montar({ total: 1, updated: 0, skipped: 1, failed: 0 } as PollSummary);
+    const { scheduler, entregarAlerta } = montarEntrega({ total: 1, updated: 0, skipped: 1, failed: 0 } as PollSummary);
     await scheduler.runOnce();
-    expect(alert).not.toHaveBeenCalled();
+    expect(entregarAlerta).not.toHaveBeenCalled();
+  });
+});
+
+describe('DfePollScheduler — marcador "já alertei" só depois da entrega do webhook (lacuna 2374)', () => {
+  const DESISTIU: PollSummary = { total: 1, updated: 0, skipped: 0, failed: 1, gaveUp: 1, gaveUpIds: ['doc-d'] };
+  const ADIADO = { total: 1, updated: 0, skipped: 1, failed: 0, transporteAdiadoAlerta: 1, transporteAdiadoIds: ['doc-t'] } as PollSummary;
+
+  it('entregue ⇒ confirma o marcador com o tipo e os ids certos, DEPOIS do alerta', async () => {
+    const { scheduler, confirmarAlertas, ordem } = montarEntrega({ ...DESISTIU, ...ADIADO, gaveUp: 1, gaveUpIds: ['doc-d'] } as PollSummary);
+    await scheduler.runOnce();
+    expect(confirmarAlertas).toHaveBeenCalledWith('desistencia', ['doc-d']);
+    expect(confirmarAlertas).toHaveBeenCalledWith('transporte', ['doc-t']);
+    expect(ordem).toEqual(['entregar', 'confirmar', 'entregar', 'confirmar']);
+  });
+
+  it('webhook não entregou ⇒ NÃO confirma (marcador fica sem gravar) e o tick seguinte realerta', async () => {
+    const { scheduler, entregarAlerta, confirmarAlertas } = montarEntrega(DESISTIU, DESISTIU, DESISTIU);
+    entregarAlerta.mockResolvedValueOnce('failed').mockResolvedValueOnce('failed').mockResolvedValueOnce('delivered');
+    await scheduler.runOnce();
+    await scheduler.runOnce();
+    expect(confirmarAlertas).not.toHaveBeenCalled();
+    await scheduler.runOnce();
+    expect(entregarAlerta).toHaveBeenCalledTimes(3);
+    expect(confirmarAlertas).toHaveBeenCalledTimes(1);
+  });
+
+  it('webhook não configurado (disabled) não é falha: o marcador é gravado', async () => {
+    const { scheduler, entregarAlerta, confirmarAlertas } = montarEntrega(ADIADO);
+    entregarAlerta.mockResolvedValueOnce('disabled');
+    await scheduler.runOnce();
+    expect(confirmarAlertas).toHaveBeenCalledWith('transporte', ['doc-t']);
+  });
+
+  it('a confirmação que lança não derruba o tick nem os outros alertas (vira log; o marcador fica para o realerta)', async () => {
+    const { scheduler, entregarAlerta, confirmarAlertas } = montarEntrega({ ...DESISTIU, ...ADIADO, gaveUp: 1, gaveUpIds: ['doc-d'] } as PollSummary);
+    confirmarAlertas.mockRejectedValueOnce(new Error('database is locked'));
+    await expect(scheduler.runOnce()).resolves.toMatchObject({ total: 1 });
+    expect(entregarAlerta).toHaveBeenCalledTimes(2);
+    expect(confirmarAlertas).toHaveBeenCalledTimes(2);
   });
 });
