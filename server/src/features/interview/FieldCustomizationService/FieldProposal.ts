@@ -1,5 +1,5 @@
-import { AdvancedFieldSchema } from '../../dynamicTables/dtos/DynamicTable.dto';
-import type { ISchemaField } from '../../dynamicTables/models/DynamicTable.model';
+import { AdvancedFieldSchema } from '../../dynamicTables/public/dynamicTableDto.types';
+import type { ISchemaField } from '../../dynamicTables/public/dynamicTable.types';
 import type { ModelChange } from './ModelOutput';
 import type { FieldPresetMatcher } from './FieldPresetMatcher';
 import {

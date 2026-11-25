@@ -13,7 +13,7 @@ import {
   type ModuleSelector,
   resolveModuleSelection,
 } from '../../dynamicTables/public/presets';
-import { presetService } from '../../dynamicTables/services/PresetService';
+import { presetService } from '../../dynamicTables/public/presetService';
 import { TableExtractor } from './TableExtractor';
 import { AIInteractions } from './AIInteractions';
 import { IInterviewSessionHandle, StateManager } from './StateManager';

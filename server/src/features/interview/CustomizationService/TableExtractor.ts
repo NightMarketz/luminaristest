@@ -1,6 +1,6 @@
 import { logger } from '../../../lib/logger';
 import { ICustomizableTable } from '../models/InterviewTypes';
-import type { ISchemaField } from '../../../features/dynamicTables/models/DynamicTable.model';
+import type { ISchemaField } from '../../dynamicTables/public/dynamicTable.types';
 import {
   type BridgeKey,
   type PresetTableDefinition,

@@ -1,5 +1,5 @@
 import { logger } from '../../../lib/logger';
-import type { ISchemaField } from '../../dynamicTables/models/DynamicTable.model';
+import type { ISchemaField } from '../../dynamicTables/public/dynamicTable.types';
 import type { FieldChange } from './Types';
 
 /**

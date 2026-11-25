@@ -5,7 +5,7 @@ import {
   InterviewSessionNotFoundError,
 } from '../models/InterviewSession.model';
 import type { IInterviewSessionRepository } from '../repositories/IInterviewSessionRepository';
-import { presetService } from '../../dynamicTables/services/PresetService';
+import { presetService } from '../../dynamicTables/public/presetService';
 import {
   computeTableLocks,
   CoreSystemPreset,
@@ -13,8 +13,8 @@ import {
   moduleOfTable,
   type ModuleKey,
 } from '../../dynamicTables/public/presets';
-import type { ISchemaField } from '../../dynamicTables/models/DynamicTable.model';
-import { ADDED_TABLE_KEY_PATTERN } from '../../dynamicTables/dtos/CreateDashboard.dto';
+import type { ISchemaField } from '../../dynamicTables/public/dynamicTable.types';
+import { ADDED_TABLE_KEY_PATTERN } from '../../dynamicTables/public/dynamicTableDto.types';
 import { composeSessionTables } from './sessionComposition';
 
 /**

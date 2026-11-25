@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { AdvancedFieldSchema } from '../../dynamicTables/dtos/DynamicTable.dto';
+import type { AdvancedFieldSchema } from '../../dynamicTables/public/dynamicTableDto.types';
 
 /**
  * Contratos do W6 (BRIEF WIZARD-W6 §2.2–§2.4). A entrada é o `CustomizeFieldsDto`; a saída do modelo é o
