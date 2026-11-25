@@ -34,7 +34,7 @@ import {
   mapMercadoPagoStatus,
   type CollectionChargeStatus,
 } from '../models/CollectionCharge.model';
-import type { CreateChargeInputDto, ListCollectionChargesQueryDto } from '../dtos/CollectionChargeDto';
+import { PayerSchema, type CreateChargeInputDto, type ListCollectionChargesQueryDto } from '../dtos/CollectionChargeDto';
 import { writtenDocumentNumber } from '../models/Receivable.model';
 import type { ICollectionChargeRepository } from '../repositories/ICollectionChargeRepository';
 import type { IPaymentAccountRepository } from '../repositories/IPaymentAccountRepository';
@@ -447,7 +447,11 @@ export class CollectionChargeService {
     const last = await this.repo.findLastByCounterparty(scope, receivable.counterpartyId);
     if (last) return JSON.parse(last.payerSnapshotJson) as PayerInput;
     const counterparty = await this.counterpartyRepo.findById(scope, receivable.counterpartyId);
-    return counterparty?.taxId ? { identification: { number: counterparty.taxId } } as Partial<PayerInput> : {};
+    // Só pré-preenche o que o `PayerSchema` aceita: CNPJ alfanumérico daria 400 enquanto o MP não o confirmar (lacuna bff7).
+    const number = counterparty?.taxId;
+    return number && PayerSchema.shape.identification.shape.number.safeParse(number).success
+      ? ({ identification: { number } } as Partial<PayerInput>)
+      : {};
   }
 
   // ── Internos ───────────────────────────────────────────────────────────────
@@ -671,9 +675,16 @@ function isLiveChargeUniqueViolation(error: unknown): boolean {
   return Array.isArray(target) ? target.includes('receivableId') : String(target ?? '').includes('receivableId');
 }
 
-/** 4xx definitivo =qualquer 4xx exceto 401 (credencial, P2-4), 409 e 429 (transitórios) — P2-3. */
+/**
+ * 4xx definitivo =qualquer 4xx exceto 401 (credencial, P2-4), 409, 423 e 429 (transitórios) — P2-3. 423 `resource_locked`
+ * do MP = "Idempotency key locked, retry later" (requisição anterior com a mesma chave ainda em voo): FAILED faria a
+ * próxima cobrança nascer com chave nova e poderia duplicar a ordem; fica CREATING e o job reenvia com a MESMA chave
+ * (lacuna d0ed).
+ */
 function isDefinitive(status: number | null): boolean {
-  return status !== null && status >= 400 && status < 500 && status !== 401 && status !== 409 && status !== 429;
+  return (
+    status !== null && status >= 400 && status < 500 && status !== 401 && status !== 409 && status !== 423 && status !== 429
+  );
 }
 
 /** F4 (a): prazo sempre explícito. Boleto = dias corridos até o 3º dia útil (seg–sex, fuso de Brasília); Pix = 24 h. */
