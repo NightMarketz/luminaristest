@@ -226,20 +226,6 @@
   },
   {
     "type": "dependency",
-    "from": "src/features/accounting/dtos/FiscalProfileDto.ts",
-    "to": "src/features/legalParameters/models/hoje.ts",
-    "unresolvedTo": "../../legalParameters/models/hoje",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/features/accounting/models/FixedAsset.model.ts",
     "to": "src/features/legalParameters/models/formatoLinha.ts",
     "unresolvedTo": "../../legalParameters/models/formatoLinha",
@@ -311,6 +297,20 @@
   {
     "type": "dependency",
     "from": "src/features/accounting/models/ibsCbsParams.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/ibsCbsTabelas.ts",
     "to": "src/features/legalParameters/models/legalParameter.ts",
     "unresolvedTo": "../../legalParameters/models/legalParameter",
     "dependencyTypes": [
@@ -409,6 +409,20 @@
   },
   {
     "type": "dependency",
+    "from": "src/features/accounting/models/marcoLegal.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
     "from": "src/features/accounting/models/meiAnexoXi.ts",
     "to": "src/features/legalParameters/models/formatoLinha.ts",
     "unresolvedTo": "../../legalParameters/models/formatoLinha",
@@ -438,6 +452,21 @@
   {
     "type": "dependency",
     "from": "src/features/accounting/models/nfceContingencia.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/nfeIbsCbsMontagem.ts",
     "to": "src/features/legalParameters/models/legalParameter.ts",
     "unresolvedTo": "../../legalParameters/models/legalParameter",
     "dependencyTypes": [
@@ -607,6 +636,20 @@
   },
   {
     "type": "dependency",
+    "from": "src/features/accounting/models/taxAssessmentCalc.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
     "from": "src/features/accounting/models/taxAssessmentParams.ts",
     "to": "src/features/legalParameters/models/formatoLinha.ts",
     "unresolvedTo": "../../legalParameters/models/formatoLinha",
@@ -667,6 +710,36 @@
     "from": "src/features/accounting/services/AccountantAssignmentService.ts",
     "to": "src/features/users/repositories/IUserRepository.ts",
     "unresolvedTo": "../../users/repositories/IUserRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/BankSettlementService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/CompanyFiscalProfileService.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
     "dependencyTypes": [
       "local",
       "type-only",
@@ -3786,6 +3859,34 @@
     "from": "src/features/legalParameters/models/formatoLinha.ts",
     "to": "src/features/accounting/models/ibsCbsParams.ts",
     "unresolvedTo": "../../accounting/models/ibsCbsParams",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/legalParameters/models/formatoLinha.ts",
+    "to": "src/features/accounting/models/ibsCbsTabelas.ts",
+    "unresolvedTo": "../../accounting/models/ibsCbsTabelas",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/legalParameters/models/formatoLinha.ts",
+    "to": "src/features/accounting/models/marcoLegal.ts",
+    "unresolvedTo": "../../accounting/models/marcoLegal",
     "dependencyTypes": [
       "local",
       "import"
