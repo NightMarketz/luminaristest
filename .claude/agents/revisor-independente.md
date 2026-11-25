@@ -102,7 +102,7 @@ num bloco próprio (`M1`, `M2`…):
 
 `node scripts/lacunas.mjs add --classe <debito|spec|feature> --dominio <d> --gravidade|--impacto <G3..G5> --exposicao <E1..E4>
 --deteccao <silencioso|ruidoso> --certeza <verificado|inferido|assumido> --local <arquivo:linha> --o-que … --evidencia …
---pr <n> --rodada revisao-noturna`
+--pr <n>`
 
 - Só com `arquivo:linha` que você abriu e leu, e com a consequência escrita em uma frase. Sem consequência, é G5.
 - **Melhoria nunca muda PASS para FAIL.** Se tem consequência de runtime ou quebra requisito da spec, não é melhoria: é achado.
