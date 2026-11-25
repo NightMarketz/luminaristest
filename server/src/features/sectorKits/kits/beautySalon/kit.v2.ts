@@ -1,5 +1,5 @@
 import { SectorKitV1Schema, type SectorKitV1 } from '../../dtos/SectorKitDto';
-import { SALE_BINDING_V1, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../../accountingBinding/fixtures/saleBinding';
+import { SALE_BINDING_V1, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../../accountingBinding/public/saleBinding';
 
 /**
  * Referencial RFB 2025 (L100A/L300A e P100A/P150A, mesmos códigos nos dois regimes) das 15 folhas canônicas

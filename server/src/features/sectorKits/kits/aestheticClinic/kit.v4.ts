@@ -1,5 +1,5 @@
 import { SectorKitV1Schema, type SectorKitV1 } from '../../dtos/SectorKitDto';
-import { CLINIC_BINDING_V1, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../../accountingBinding/fixtures/clinicBinding';
+import { CLINIC_BINDING_V1, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../../accountingBinding/public/clinicBinding';
 import { REFERENCIAL_2025_CANONICO } from '../_shared/referencial2025Canonico';
 import { CONTAS_FISCAIS, PERFIL_FISCAL_PADRAO, REFERENCIAL_2025_FISCAL } from '../_shared/conteudoFiscalCanonico';
 import { CATALOGO_SERVICOS_FISCAIS } from '../_shared/catalogoServicosFiscais';

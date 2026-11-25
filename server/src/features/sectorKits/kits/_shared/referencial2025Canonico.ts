@@ -1,4 +1,4 @@
-import { codigoPosL8 } from '../../../accounting/fixtures/ChartOfAccountsFixture';
+import { codigoPosL8 } from '../../../accounting/public/chartOfAccounts';
 /**
  * Referencial RFB 2025 (L100A/L300A e P100A/P150A, mesmos códigos nos dois regimes) das 15 folhas do plano CANÔNICO —
  * compartilhado pelos kits porque o de-para é do canônico, não do setor (BE-INCR-KIT-SETOR-EMENDA-1, PR-K1, item 1;

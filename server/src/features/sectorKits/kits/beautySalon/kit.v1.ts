@@ -1,5 +1,5 @@
 import { SectorKitV1Schema, type SectorKitV1 } from '../../dtos/SectorKitDto';
-import { SALE_BINDING_V1, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../../accountingBinding/fixtures/saleBinding';
+import { SALE_BINDING_V1, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../../accountingBinding/public/saleBinding';
 
 /**
  * Kit do salão, v1 — migração LITERAL de `SALE_BINDING_V1` + `SALE_OPERATIONAL_SCHEMA_SNAPSHOT`
