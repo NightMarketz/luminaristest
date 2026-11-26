@@ -8,7 +8,7 @@ import { CANONICAL_ACCOUNTS, CANONICAL_ACCOUNTS_PRE_L8, REFERENCIAL_PLANO_PADRAO
 import { findMappingRule } from '../../services/StatementMappingFixture';
 
 const PESSOAL: ReadonlyArray<{ code: string; nature: string; referentialCode: string }> = [
-  { code: '1.1.7.01', nature: 'Asset', referentialCode: '1.01.02.01.03' },
+  { code: '1.1.10.01', nature: 'Asset', referentialCode: '1.01.02.01.03' },
   { code: '2.1.10.01', nature: 'Liability', referentialCode: '2.01.01.01.01' },
   { code: '2.1.10.02', nature: 'Liability', referentialCode: '2.01.01.01.01' },
   { code: '2.1.10.03', nature: 'Liability', referentialCode: '2.01.01.01.03' },

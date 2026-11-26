@@ -12,7 +12,7 @@ import { REFERENCIAL_PLANO_PADRAO } from '@/features/accounting/fixtures/ChartOf
 const app = makeApp();
 const UNIT = 'unit-dp-pessoal-plano';
 const VERSAO = '2025';
-const PESSOAL = ['1.1.7.01', '2.1.10.01', '2.1.10.02', '2.1.10.03', '2.1.10.04', '2.1.10.05', '2.1.10.06', '4.10.01', '4.10.02', '4.10.03', '4.10.04', '4.10.05', '4.10.06', '4.10.07', '4.10.08'];
+const PESSOAL = ['1.1.10.01', '2.1.10.01', '2.1.10.02', '2.1.10.03', '2.1.10.04', '2.1.10.05', '2.1.10.06', '4.10.01', '4.10.02', '4.10.03', '4.10.04', '4.10.05', '4.10.06', '4.10.07', '4.10.08'];
 
 let dono: { id: string; username: string };
 

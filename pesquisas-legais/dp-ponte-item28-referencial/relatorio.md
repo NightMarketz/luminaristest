@@ -13,13 +13,13 @@ do plano padrão até a resposta do dono (§4).
 
 | Folha do plano | Papel | Referencial | Grau |
 |---|---|---|---|
-| 1.1.7.01 Adiantamentos Salariais | SALARY_ADVANCES | 1.01.02.01.03 Adiantamentos a Funcionários – Circulante | verificado |
+| 1.1.10.01 Adiantamentos Salariais | SALARY_ADVANCES | 1.01.02.01.03 Adiantamentos a Funcionários – Circulante | verificado |
 | 2.1.10.01 Salários a Pagar | SALARIES_PAYABLE | 2.01.01.01.01 Salários e Remunerações a Pagar | verificado |
 | 2.1.10.02 Pró-labore a Pagar | OWNER_PAY_PAYABLE | 2.01.01.01.01 (a ORIENTAÇÃO cita "pro labore") | verificado |
 | 2.1.10.03 INSS a Recolher | INSS_A_RECOLHER | 2.01.01.01.03 INSS a Recolher | verificado (com nota §4) |
 | 2.1.10.04 FGTS a Recolher | FGTS_A_RECOLHER | 2.01.01.01.04 FGTS a Recolher | verificado |
-| 2.1.10.05 Provisão de Férias | VACATION_PROVISION | 2.01.01.15.03 Férias a Pagar (grupo PROVISÕES – CIRCULANTE) | verificado |
-| 2.1.10.06 Provisão de 13º Salário | PROVISAO_13 | 2.01.01.15.04 13º Salário a Pagar (grupo PROVISÕES) | verificado |
+| 2.1.10.05 Provisão de Férias | VACATION_PROVISION | 2.01.01.15.03 Férias a Pagar (grupo PROVISÕES – CIRCULANTE) | inferido (nota §4) |
+| 2.1.10.06 Provisão de 13º Salário | PROVISAO_13 | 2.01.01.15.04 13º Salário a Pagar (grupo PROVISÕES) | inferido (nota §4) |
 | 4.10.01 Salários e Ordenados | SALARIES_EXPENSE | 3.01.01.07.01.02 Ordenados, Salários, Gratificações… a Empregados | verificado |
 | 4.10.02 Pró-labore | OWNER_PAY_EXPENSE | 3.01.01.07.01.01 Remuneração a Dirigentes ("titular de firma individual, aos sócios") | verificado |
 | 4.10.03 INSS Patronal | INSS_PATRONAL | 3.01.01.07.01.05 Encargos Sociais – Previdência Social (Lei 8.212 art. 22 I [D02]) | verificado |
@@ -70,6 +70,10 @@ estão em `docs/D01_linhas-citadas.txt`. O teste `ChartOfAccountsFixture.contasP
   tabela, mas muda o catálogo de papéis do item 18. São papéis do PR-P4.
 
 **Ao contador, no P-FOL-5 (as folhas entram como PROVISÓRIAS):**
+- Duas linhas analíticas nomeiam o passivo de férias e 13º: a 2.01.01.15.03/.04, sob PROVISÕES, e a 2.01.01.01.01, cuja
+  ORIENTAÇÃO inclui "o valor das férias do período aquisitivo já completo, 13 salários a pagar". A provisão mensal foi para
+  a 2.01.01.15.03/.04 porque é provisão e o período aquisitivo ainda corre. Pergunta: férias de período já completo
+  migram para a 2.01.01.01.01, ou a provisão fica toda na 2.01.01.15.03?
 - A .27 diz "no caso de apuração trimestral do imposto". Pergunta: no Lucro Real anual, a despesa de 13º do ano vai à .27
   ou à .02?
 - Terceiros na despesa .07, e no passivo junto do INSS a Recolher (2.01.01.01.03), porque o item 20 credita tudo numa

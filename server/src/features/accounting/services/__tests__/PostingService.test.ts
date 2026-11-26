@@ -856,7 +856,7 @@ describe('PostingService', () => {
 
       it('analítica de ativo com 3 segmentos → 400, sem escrever', async () => {
         const { svc, accountRepo } = buildService({ accountRepo: plano({ '1.1': false }) });
-        await expect(svc.createAccount(scope, { code: '1.1.6', name: 'X', nature: 'Asset', acceptsEntries: true, unitId }))
+        await expect(svc.createAccount(scope, { code: '1.1.7', name: 'X', nature: 'Asset', acceptsEntries: true, unitId }))
           .rejects.toThrow(/no mínimo 4 níveis/);
         expect(accountRepo.create).not.toHaveBeenCalled();
       });

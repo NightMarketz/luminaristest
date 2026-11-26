@@ -47,10 +47,11 @@ export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   { code: '1.1.3.01', name: 'Mercadorias para Revenda', nature: 'Asset', acceptsEntries: true },
   // BE-INCR-DP-PONTE-RAZAO item 28 (F-PNT-4 a, dono 21/11; referencial: dono 26/11, "Pesquisar referencial e incluir"):
   // contas de pessoal do plano padrão. PROVISÓRIAS até o P-FOL-5 do contador. Grupos fora dos códigos dos kits (1.1.4–1.1.6
-  // legados, 2.1.3–2.1.6, 4.5) e das folhas reservadas às retenções (1.1.8/2.1.9, P-RET-4). Referencial em
+  // legados, 2.1.3–2.1.6, 4.5) e das folhas reservadas às retenções (1.1.8/2.1.9, P-RET-4). `1.1.10`, não `1.1.7`: o 1.1.7 é o
+  // "próximo livre" que os testes de papel do kit usam como conta do usuário (RoleAccountOverrideService.integration). Referencial em
   // `REFERENCIAL_PLANO_PADRAO`; a folha que não fechou referencial não entra (bolsa de estágio e encargos sobre a provisão).
-  { code: '1.1.7', name: 'Adiantamentos', nature: 'Asset', acceptsEntries: false },
-  { code: '1.1.7.01', name: 'Adiantamentos Salariais', nature: 'Asset', acceptsEntries: true },
+  { code: '1.1.10', name: 'Adiantamentos', nature: 'Asset', acceptsEntries: false },
+  { code: '1.1.10.01', name: 'Adiantamentos Salariais', nature: 'Asset', acceptsEntries: true },
   // IBS-CBS-2027 PR-3 (item 14; dono 22/10: "Folhas + 1.01.02.03.40 provisório"): o crédito de IBS/CBS da NF-e de entrada
   // (D na entrada, C na compensação da apuração mensal). 1.1.9 fica fora do 1.1.4–1.1.6 legados dos kits.
   { code: '1.1.9', name: 'Tributos sobre o Consumo a Recuperar', nature: 'Asset', acceptsEntries: false },
@@ -360,7 +361,7 @@ export const REFERENCIAL_PLANO_PADRAO: ReadonlyArray<{ accountCode: string; refe
   // na tabela dinâmica da ECF, Leiaute 12 (atualização 28/05/2026, AC 2025) — a mais recente em sped.rfb.gov.br/pasta/show/1644
   // em 26/11/2026; linhas citadas em pesquisas-legais/dp-ponte-item28-referencial/docs/D01_linhas-citadas.txt. Todas
   // analíticas, sem DT_FIM. PROVISÓRIO até o P-FOL-5 do contador.
-  { accountCode: '1.1.7.01', referentialCode: '1.01.02.01.03', label: 'Adiantamentos a Funcionários – Circulante' },
+  { accountCode: '1.1.10.01', referentialCode: '1.01.02.01.03', label: 'Adiantamentos a Funcionários – Circulante' },
   // 2.01.01.01.01: a ORIENTAÇÃO cita "salários, ordenados, pro labore" — salários e pró-labore a pagar.
   { accountCode: '2.1.10.01', referentialCode: '2.01.01.01.01', label: 'Salários e Remunerações a Pagar' },
   { accountCode: '2.1.10.02', referentialCode: '2.01.01.01.01', label: 'Salários e Remunerações a Pagar' },
