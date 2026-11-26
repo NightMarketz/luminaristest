@@ -220,13 +220,15 @@ describe('itens 10 e 11 — venda de pacote: bloco de validade, checkbox e grava
         fireEvent.click(screen.getByLabelText('Li este texto ao cliente e ele concordou'));
         expect(finalizeBtn().disabled).toBe(false);
         // volta ao Cabeçalho e muda a data
-        vi.mocked(packageAcceptancesService.getNotice).mockResolvedValue(notice({ saleDate: '2026-11-26', expiresOn: '2026-12-27', textSha256: 'b'.repeat(64) }));
+        // Data NOVA fixa e longe de hoje: o campo nasce com a data de hoje, e o literal antigo ('2026-11-26') coincidia com ela
+        // em 26/11/2026 — o change virava no-op e o teste caía (CI do #1428).
+        vi.mocked(packageAcceptancesService.getNotice).mockResolvedValue(notice({ saleDate: '2031-03-10', expiresOn: '2031-04-09', textSha256: 'b'.repeat(64) }));
         fireEvent.click(screen.getByText('Cabeçalho'));
         const date = document.querySelector('input[type="date"]') as HTMLInputElement;
-        fireEvent.change(date, { target: { value: '2026-11-26' } });
+        fireEvent.change(date, { target: { value: '2031-03-10' } });
         fireEvent.click(screen.getByText('Próximo'));
-        await waitFor(() => expect(packageAcceptancesService.getNotice).toHaveBeenLastCalledWith('u1', 'pkg1', '2026-11-26'));
-        await screen.findByText('Válido até 27/12/2026');
+        await waitFor(() => expect(packageAcceptancesService.getNotice).toHaveBeenLastCalledWith('u1', 'pkg1', '2031-03-10'));
+        await screen.findByText('Válido até 09/04/2031');
         expect((screen.getByLabelText('Li este texto ao cliente e ele concordou') as HTMLInputElement).checked).toBe(false);
         expect(finalizeBtn().disabled).toBe(true);
     });
