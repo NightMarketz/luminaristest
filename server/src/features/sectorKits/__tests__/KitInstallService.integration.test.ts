@@ -11,7 +11,7 @@ import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import type { BindingScope } from '@/features/accountingBinding/public/bindingScope.types';
 import { SectorKitV1Schema, type SectorKitV1 } from '@/features/sectorKits/dtos/SectorKitDto';
-import { BEAUTY_SALON_KIT_V6 } from '@/features/sectorKits/kits/beautySalon/kit.v6';
+import { BEAUTY_SALON_KIT_V6 } from '@/features/sectorKits/domain/kits/beautySalon/kit.v6';
 import { KitInstallStepFailedError } from '@/features/sectorKits/models/kitInstallTypes';
 import { CANONICAL_ACCOUNTS } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
 import type { InstallKitInput } from '@/features/sectorKits/dtos/KitInstallationDto';

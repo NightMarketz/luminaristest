@@ -6,7 +6,7 @@ import type { PendingServiceSuggestion, Suggestion } from '../dtos/ServiceFiscal
 import type { ISectorKitPolicy } from '../policies/ISectorKitPolicy';
 import type { IKitInstallationRepository } from '../repositories/IKitInstallationRepository';
 import { suggestFromCatalog } from '../models/suggestFromCatalog';
-import { KIT_REGISTRY } from '../registry';
+import { KIT_REGISTRY } from '../domain/registry';
 import type { KitVersionsLookup } from './KitInstallService';
 import type { ServiceCatalogPort, ServiceClassifierPort, ServiceProfileRefsPort } from './serviceFiscalSuggestionPorts';
 

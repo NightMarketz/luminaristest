@@ -7,9 +7,9 @@ import { SaleCogsMapper } from '../../accounting/sync/mappers/SaleCogsMapper';
 import { SaleFinalizedMapper } from '../../accounting/sync/mappers/SaleFinalizedMapper';
 import { SaleReturnedMapper } from '../../accounting/sync/mappers/SaleReturnedMapper';
 import { SaleSettledMapper } from '../../accounting/sync/mappers/SaleSettledMapper';
-import { archetypeCatalog } from '../archetypes/catalog';
-import { SALE_BINDING_V2 } from '../fixtures/saleBinding';
-import { InterpretedEventMapper } from '../interpreter/InterpretedEventMapper';
+import { archetypeCatalog } from '../domain/archetypes/catalog';
+import { SALE_BINDING_V2 } from '../domain/fixtures/saleBinding';
+import { InterpretedEventMapper } from '../domain/interpreter/InterpretedEventMapper';
 
 /**
  * Golden test, FASE 1 (BE-INCR-BINDING-PRESS, Fase B, item 12 do BRIEF — a metade que faltava
@@ -21,8 +21,8 @@ import { InterpretedEventMapper } from '../interpreter/InterpretedEventMapper';
  * eventos, mesmos valores; o dossiê fala em prosa "15 casos", o arquivo irmão real tem 17 — ver
  * nota na asserção de contagem abaixo), gera o `PostEntryInput` de DUAS formas:
  *   1. mapper-à-mão de produção (`server/src/features/accounting/sync/mappers/*`) — a REFERÊNCIA;
- *   2. `InterpretedEventMapper` sobre o binding do salão compilado (`fixtures/saleBinding.ts`,
- *      Corpo C) + o catálogo de arquétipos em código (`archetypes/catalog.ts`, Corpo A).
+ *   2. `InterpretedEventMapper` sobre o binding do salão compilado (`domain/fixtures/saleBinding.ts`,
+ *      Corpo C) + o catálogo de arquétipos em código (`domain/archetypes/catalog.ts`, Corpo A).
  *
  * As duas saídas são serializadas pelo MESMO canonicalizador (ordem de chave fixa, `undefined`
  * sempre omitido, `.toBe` sobre STRING — nunca `.toEqual` sobre objeto) e comparadas byte a byte.

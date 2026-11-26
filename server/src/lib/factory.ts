@@ -7,7 +7,7 @@ import { LegalParameterRecalcJobRepository } from '../features/legalParameters/r
 import type { ILegalParameterRecalcJobRepository } from '../features/legalParameters/repositories/ILegalParameterRecalcJobRepository';
 import { PtaxRateRepository } from '../features/fx/repositories/PtaxRateRepository';
 import type { IPtaxRateRepository } from '../features/fx/repositories/IPtaxRateRepository';
-import { BcbPtaxClient } from '../features/fx/clients/BcbPtaxClient';
+import { BcbPtaxClient } from '../features/fx/adapters/BcbPtaxClient';
 import type { IPtaxClient } from '../features/fx/ports/IPtaxClient';
 import { PtaxSyncService } from '../features/fx/services/PtaxSyncService';
 import { TaxAssessmentRecalcService } from '../features/accounting/services/TaxAssessmentRecalcService';
@@ -262,15 +262,16 @@ import { LalurService } from '../features/accounting/services/LalurService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { PackageAcceptanceService } from '../features/packages/services/PackageAcceptanceService';
 import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
+import { serializeReload } from '../features/accountingBinding/domain/serializeReload';
 import { CrmReceivableBridge } from '../features/accounting/sync/bridges/CrmReceivableBridge';
 // BE-INCR-BINDING-PRESS (F-P1-3a, item 14 do BRIEF) — os 5 mappers-à-mão de salão saíram daqui:
 // o array de IAccountingEventMapper agora é CONSTRUÍDO a partir do binding compilado do salão +
 // o intérprete fixo (`buildSaleAccountingMappers`, abaixo). As classes de mapper continuam
 // existindo em `features/accounting/sync/mappers/*` (são a referência do golden test, Fases 0/1),
 // só não são mais instanciadas em produção por este factory.
-import { archetypeCatalog } from '../features/accountingBinding/archetypes/catalog';
-import { SALE_BINDING_V2 } from '../features/accountingBinding/fixtures/saleBinding';
-import { InterpretedEventMapper } from '../features/accountingBinding/interpreter/InterpretedEventMapper';
+import { archetypeCatalog } from '../features/accountingBinding/domain/archetypes/catalog';
+import { SALE_BINDING_V2 } from '../features/accountingBinding/domain/fixtures/saleBinding';
+import { InterpretedEventMapper } from '../features/accountingBinding/domain/interpreter/InterpretedEventMapper';
 // A Prensa (BE-INCR-BINDING-PRESS, item 15 do BRIEF, Fase B) — fiação das 3 rotas
 // POST /accounting-binding/compile|validate, GET /accounting-binding.
 import { AccountingBindingPolicy } from '../features/accountingBinding/policies/AccountingBindingPolicy';
@@ -289,7 +290,7 @@ import type {
 import { Prisma } from 'generated/prisma';
 import { KitInstallService, type KitVersionsLookup } from '../features/sectorKits/services/KitInstallService';
 import { ServiceFiscalSuggestionService } from '../features/sectorKits/services/ServiceFiscalSuggestionService';
-import { declaredEventKeys } from '../features/sectorKits/registry';
+import { declaredEventKeys } from '../features/sectorKits/domain/registry';
 import { KitTraceService } from '../features/sectorKits/services/KitTraceService';
 import type {
   IKitAuditPort,
@@ -329,10 +330,10 @@ import { AttachmentService } from '../features/attachments/services/AttachmentSe
 import { SavedTableViewService } from '../features/savedViews/services/SavedTableViewService';
 import { LlmCredentialService } from '../features/teammates/services/LlmCredentialService';
 import { TeammateService } from '../features/teammates/services/TeammateService';
-import { StateManager } from '../features/interview/CustomizationService/StateManager';
-import { CustomizationService } from '../features/interview/CustomizationService/CustomizationService';
-import { InterviewService } from '../features/interview/InterviewService/InterviewService';
-import { FieldCustomizationService } from '../features/interview/FieldCustomizationService';
+import { StateManager } from '../features/interview/services/CustomizationService/StateManager';
+import { CustomizationService } from '../features/interview/services/CustomizationService/CustomizationService';
+import { InterviewService } from '../features/interview/services/InterviewService/InterviewService';
+import { FieldCustomizationService } from '../features/interview/services/FieldCustomizationService';
 import { SystemProvisioningService } from '../features/onboarding/services/SystemProvisioningService';
 import * as attachmentStorage from './attachmentStorage';
 import { kpiCacheService } from '../features/analytics/services/KpiCacheService';
@@ -451,8 +452,8 @@ import type { IPackageAcceptancePolicy } from '../features/packages/policies/IPa
 
 /**
  * BE-INCR-BINDING-PRESS (F-P1-3a, item 14 do BRIEF) — constrói o array de `IAccountingEventMapper`
- * do salão a partir do binding compilado (`fixtures/saleBinding.ts`, Corpo C) + o catálogo de
- * arquétipos em código (`archetypes/catalog.ts`, Corpo A), via o intérprete fixo
+ * do salão a partir do binding compilado (`domain/fixtures/saleBinding.ts`, Corpo C) + o catálogo de
+ * arquétipos em código (`domain/archetypes/catalog.ts`, Corpo A), via o intérprete fixo
  * (`InterpretedEventMapper`, Corpo D) — em vez dos 5 mappers escritos à mão. Pré-condição deste
  * swap: `goldenPhase1.test.ts` verde (item 12 do BRIEF) — a saída byte-idêntica está provada ANTES
  * deste código existir, não depois. `AccountingSyncService` recebe exatamente o mesmo shape de
@@ -2719,6 +2720,22 @@ export class ApplicationFactory {
   public async initializeAccountingSyncFromBindings(): Promise<void> {
     const registrations = await this.getAccountingBindingFeederService().buildActiveMapperRegistrations();
     this.services.accountingSync = new AccountingSyncService(this.services.posting, registrations, { declaredEventKeys: declaredEventKeys() });
+  }
+
+  /** A cadeia serial da recarga: uma por factory (um processo — T11). */
+  private readonly reloadAccountingMappersChain = serializeReload(() => this.initializeAccountingSyncFromBindings());
+
+  /**
+   * Recarga dos mappers contábeis em runtime — UMA implementação para todos os pontos de entrada (rota do binding,
+   * `dashboardController` do onboarding e o CLI de instalação de kit; FE-INCR-BINDING-ACTIVATION EMENDA-1 item 0b,
+   * BE-INCR-ONBOARDING-ACTIVATION item 13). Relê todo binding `Active` e troca a referência de
+   * `services.accountingSync`; as chamadas entram numa cadeia de `Promise` (`serializeReload`), então duas ativações
+   * simultâneas recarregam em série e uma recarga rejeitada não quebra a cadeia.
+   * Mora aqui desde 25/11/2026 (ADR-MODULE-BOUNDARIES §11.9; dono, questionário: "Factory dona da recarga"): antes
+   * era `accountingBinding/runtime/mapperReload.ts`, que rota, controller e job importavam direto.
+   */
+  public reloadAccountingMappersSerialized(): Promise<void> {
+    return this.reloadAccountingMappersChain();
   }
 
   // Service Getters

@@ -76,10 +76,10 @@ describe('nenhum código patrimonial antigo literal em produção (item 2)', () 
   const SRC = join(__dirname, '..', '..', '..', '..');
   const CONGELADOS = new Set([
     'features/accounting/fixtures/ChartOfAccountsFixture.ts',
-    'features/accountingBinding/fixtures/saleBinding.ts',
-    'features/accountingBinding/fixtures/clinicBinding.ts',
-    'features/sectorKits/kits/beautySalon/kit.v2.ts',
-    'features/sectorKits/kits/_shared/referencial2025Canonico.ts',
+    'features/accountingBinding/domain/fixtures/saleBinding.ts',
+    'features/accountingBinding/domain/fixtures/clinicBinding.ts',
+    'features/sectorKits/domain/kits/beautySalon/kit.v2.ts',
+    'features/sectorKits/domain/kits/_shared/referencial2025Canonico.ts',
   ]);
   const LITERAL = /['"](1\.1\.[1-6]|2\.1\.[12]|2\.3\.1)['"]/;
 

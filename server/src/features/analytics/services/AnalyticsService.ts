@@ -11,11 +11,11 @@ import {
   type PresetTableDefinition,
   type PresetSuite,
 } from '../../dynamicTables/public/presets';
-import type { AnalyticsPresetGroup, ChartPreset, ChartType } from '../core/models/ChartPreset';
-import type { AnalyticsConfiguration } from '../core/models/AnalyticsConfiguration';
-import type { PipelineSpec } from '../core/pipeline/Pipeline';
-import { getTemplate } from '../core';
-import { mapConfigurationToProcessorParams, getProcessorKeyFromConfig } from '../engine/FieldMapper';
+import type { AnalyticsPresetGroup, ChartPreset, ChartType } from '../models/ChartPreset';
+import type { AnalyticsConfiguration } from '../models/AnalyticsConfiguration';
+import type { PipelineSpec } from '../domain/core/pipeline/Pipeline';
+import { getTemplate } from '../domain/core';
+import { mapConfigurationToProcessorParams, getProcessorKeyFromConfig } from './FieldMapper';
 import { validateConfigurations } from './AnalyticsValidator';
 import { kpiCacheService } from './KpiCacheService';
 import { getFactory } from '@/lib/factory';

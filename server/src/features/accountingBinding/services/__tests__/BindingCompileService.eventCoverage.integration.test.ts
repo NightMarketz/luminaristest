@@ -23,7 +23,7 @@ import {
 } from '@/features/accountingBinding/services/BindingCompileService';
 import type { AccountingBindingV1 } from '@/features/accountingBinding/dtos/AccountingBindingDto';
 import type { BindingValidationResult } from '@/features/accountingBinding/models/validationResult';
-import { CLINIC_BINDING_V2, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '@/features/accountingBinding/fixtures/clinicBinding';
+import { CLINIC_BINDING_V2, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '@/features/accountingBinding/domain/fixtures/clinicBinding';
 
 const UNIT = 'unit-coverage';
 const DONO_A = 'u-coverage-a';

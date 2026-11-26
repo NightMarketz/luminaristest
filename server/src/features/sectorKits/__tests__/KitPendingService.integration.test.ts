@@ -11,10 +11,10 @@ import { resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import type { BindingScope } from '@/features/accountingBinding/public/bindingScope.types';
 import type { SectorKitV1 } from '@/features/sectorKits/dtos/SectorKitDto';
-import { BEAUTY_SALON_KIT_V1 } from '@/features/sectorKits/kits/beautySalon/kit.v1';
-import { BEAUTY_SALON_KIT_V4 } from '@/features/sectorKits/kits/beautySalon/kit.v4';
+import { BEAUTY_SALON_KIT_V1 } from '@/features/sectorKits/domain/kits/beautySalon/kit.v1';
+import { BEAUTY_SALON_KIT_V4 } from '@/features/sectorKits/domain/kits/beautySalon/kit.v4';
 import { CANONICAL_ACCOUNTS_PRE_L8 } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
-import { KIT_REGISTRY, latestKit } from '@/features/sectorKits/registry';
+import { KIT_REGISTRY, latestKit } from '@/features/sectorKits/domain/registry';
 import type { KitVersionsLookup } from '@/features/sectorKits/services/KitInstallService';
 import { LogEntrySchema } from '@/lib/logEvents';
 

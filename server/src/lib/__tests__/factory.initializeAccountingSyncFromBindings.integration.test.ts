@@ -21,7 +21,7 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import { NoActiveAccountingBindingsError, NoMapperForUnitError } from '@/lib/errors';
-import { SALE_BINDING_V1 } from '@/features/accountingBinding/fixtures/saleBinding';
+import { SALE_BINDING_V1 } from '@/features/accountingBinding/domain/fixtures/saleBinding';
 import type { AccountingEvent } from '@/features/accounting/sync/AccountingSyncPort';
 
 const DONO = 'u-feeder-boot';

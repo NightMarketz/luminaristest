@@ -22,7 +22,7 @@ Antes de escrever qualquer componente, classe, helper ou padrão, **procure o ca
 | Erro de API (controller) | `handleApiError` de `lib/apiUtils` |
 | Erros tipados (service) | `lib/errors` (`ForbiddenError`, `NotFoundError`, …) |
 | Field presets (preset gen) | `server/.../domain/presets/fields/*` |
-| Money math | `addMoney` / `DataSanitizer` / `DateUtils` de `features/analytics/utils` |
+| Money math | `addMoney` / `DataSanitizer` / `DateUtils` de `features/analytics/domain/utils` |
 | Formatação de exibição (data/hora/moeda no **frontend**) | `features/dashboard/shared/utils/formatters.ts` (`formatCurrency` — fan-in 14, `formatDate`, `formatDateBR`) + `useFormatCurrency` de `lib/context/CurrencyContext`. **NÃO** re-rolar `formatTimestamp`/`formatDate`/`formatDayLabel` local em panel/modal. (≠ a linha "Money math", que é cálculo backend/analytics.) **Anti-exemplo: `formatTimestamp` clonado em `LeadTimelinePanel`/`LeadNotesPanel`/`LeadAttachmentsPanel` (jaccard 1.0); `finance/utils/formatters.ts` duplicando `formatDateBR`.** |
 
 ---

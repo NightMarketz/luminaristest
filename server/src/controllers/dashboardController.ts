@@ -27,9 +27,8 @@ import { InstallModuleSchema } from '@/features/dynamicTables/dtos/InstallModule
 import { Role } from '@/features/users/models/User.model';
 import { ISchemaField } from '@/features/dynamicTables/models/DynamicTable.model';
 import { keyToPascalCase } from '@/features/dynamicTables/domain/presets/PresetManager';
-import { SECTOR_BINDING_REGISTRY } from '@/features/accountingBinding/fixtures/sectorBindingRegistry';
+import { SECTOR_BINDING_REGISTRY } from '@/features/accountingBinding/domain/fixtures/sectorBindingRegistry';
 import { resolveBindingScope } from '@/features/accountingBinding/models/BindingScope';
-import { reloadAccountingMappersSerialized } from '@/features/accountingBinding/runtime/mapperReload';
 import { OnboardingAccountingResultSchema } from '@/features/accountingBinding/dtos/ActivateDefaultBindingDto';
 import type { ActivateDefaultBindingResult, OnboardingAccountingResult } from '@/features/accountingBinding/dtos/ActivateDefaultBindingDto';
 import { composeModuleTables, expandModuleSelectors, moduleOfTable, suiteModuleOptions, type ModuleKey, type ModuleSelector } from '@/features/dynamicTables/domain/presets/modules/registry';
@@ -152,7 +151,7 @@ async function activateAccountingOrReport(ctx: UserContext, unitId: string, sect
   }
   if (result.status === 'Active') {
     try {
-      await reloadAccountingMappersSerialized();
+      await getFactory().reloadAccountingMappersSerialized();
     } catch (error) {
       logger.error('Recarga dos mappers contábeis falhou depois da ativação do onboarding', {
         unitId,

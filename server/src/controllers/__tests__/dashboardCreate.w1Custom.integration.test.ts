@@ -7,9 +7,9 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { InterviewSessionRepository } from '@/features/interview/repositories/InterviewSessionRepository';
-import { StateManager } from '@/features/interview/CustomizationService/StateManager';
-import { CustomizationService } from '@/features/interview/CustomizationService/CustomizationService';
-import { toCustomCreation } from '@/features/interview/CustomizationService/sessionComposition';
+import { StateManager } from '@/features/interview/services/CustomizationService/StateManager';
+import { CustomizationService } from '@/features/interview/services/CustomizationService/CustomizationService';
+import { toCustomCreation } from '@/features/interview/services/CustomizationService/sessionComposition';
 import { presetService } from '@/features/dynamicTables/services/PresetService';
 import type { OpenAIService } from '@/lib/openai/OpenAIService';
 

@@ -123,12 +123,12 @@ For DynamicTable-backed domains (leads, ERP, CRM) the service orchestrates `Dyna
 
 ## Analytics KPI Contract
 
-- Processor file: `server/src/features/analytics/kpis/<name>/<Name>KpiProcessor.ts`
+- Processor file: `server/src/features/analytics/domain/kpis/<name>/<Name>KpiProcessor.ts`
 - Processor type: `export const <name>KpiProcessor: AnalyticsProcessor = async (context): Promise<ChartDataPoint[]> => { ... }`
 - Context destructure: `const { rows, params, table } = context`
 - Single-pass: iterate rows ONCE accumulating all metrics
-- Template file: `server/src/features/analytics/kpis/<name>/<Name>KpiTemplate.ts`
-- Registration: Add to `server/src/features/analytics/kpis/index.ts`
+- Template file: `server/src/features/analytics/domain/kpis/<name>/<Name>KpiTemplate.ts`
+- Registration: Add to `server/src/features/analytics/domain/kpis/index.ts`
 - Test: `__tests__/<Name>KpiProcessor.test.ts` with mock rows
 
 ## Workflow Transition Service Contract

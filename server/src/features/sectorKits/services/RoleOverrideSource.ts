@@ -3,7 +3,7 @@ import type { EventBinding } from '../../accountingBinding/dtos/AccountingBindin
 import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
 import type { IRoleOverrideSource } from '../../accountingBinding/services/BindingCompileService';
 import type { IRoleAccountOverrideRepository } from '../repositories/IRoleAccountOverrideRepository';
-import { KIT_REGISTRY } from '../registry';
+import { KIT_REGISTRY } from '../domain/registry';
 import { applyRoleOverrides } from './applyRoleOverrides';
 
 /** `sectorKey` de todos os kits publicados (um kit = um setor). */

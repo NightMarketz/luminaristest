@@ -9,8 +9,8 @@ import type {
 } from '../models/types';
 import type { BindingValidationIssue, BindingValidationResult } from '../models/validationResult';
 import type { AccountingBindingV1, EventBinding, FieldSlot } from '../dtos/AccountingBindingDto';
-import { interpret } from '../interpreter/interpret';
-import type { AccountingEventLike } from '../interpreter/interpret';
+import { interpret } from '../domain/interpreter/interpret';
+import type { AccountingEventLike } from '../domain/interpreter/interpret';
 
 /**
  * BindingValidationService — validador determinístico da Prensa (BE-INCR-BINDING-PRESS, F-P1-6,
@@ -103,9 +103,9 @@ export const ROLE_ALLOWED_NATURES: Readonly<Record<AccountRole, readonly string[
  * pode carregar sub-chave embutida na convenção `"<papel>:<subChave>"`. Hoje só o papel
  * `caixa-por-metodo` usa essa convenção (`SaleSettledMapper.ts:36-42`, resolvido por
  * `paymentMethod`) — documentada em `dtos/CompileBindingDto.ts:16-22` ("decisão local... não um
- * fork do ADR") e ESPELHADA por `interpreter/interpret.ts:166-171,179-190`, que já consome
+ * fork do ADR") e ESPELHADA por `domain/interpreter/interpret.ts:166-171,179-190`, que já consome
  * exatamente essa convenção (`roleToAccount.get('caixa-por-metodo:' + methodValue)`). O binding
- * real do salão (`fixtures/saleBinding.ts:105-109`) grava uma `roleSlot` por sub-chave
+ * real do salão (`domain/fixtures/saleBinding.ts:105-109`) grava uma `roleSlot` por sub-chave
  * (`'caixa-por-metodo:Cash'`, `'caixa-por-metodo:Pix'`, ...) — o validador precisa reconhecer essas
  * entradas como o MESMO papel `caixa-por-metodo` do arquétipo (`SettlementArchetype.ts:47`), senão
  * rejeita o próprio binding de referência com `SLOT_UNFILLED`/`SLOT_ORPHAN` falsos-positivos e a
@@ -402,7 +402,7 @@ function buildSyntheticEvent(
 }
 
 /** Valor mínimo válido para UM slot, por `slot.type`/`fieldSlot.transform` — mesmas 2 variantes de
- *  guard monetário que `interpreter/money.ts` documenta (`cents_from_reais` vs. já-em-centavos). */
+ *  guard monetário que `domain/interpreter/money.ts` documenta (`cents_from_reais` vs. já-em-centavos). */
 function syntheticSlotValue(
   slot: ArchetypeSlotSpec,
   fieldSlot: FieldSlot,

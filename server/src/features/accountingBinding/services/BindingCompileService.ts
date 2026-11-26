@@ -1,4 +1,3 @@
-import { createHash } from 'crypto';
 import { ForbiddenError, ValidationError } from '../../../lib/errors';
 import type { AccountingBinding, Prisma } from 'generated/prisma';
 import { AccountingBindingV1Schema } from '../dtos/AccountingBindingDto';
@@ -10,6 +9,7 @@ import type { IAccountingBindingRepository } from '../repositories/IAccountingBi
 import type { BindingScope } from '../models/BindingScope';
 import type { IAccountingBindingPolicy } from '../policies/IAccountingBindingPolicy';
 import { BindingSectorConflictError } from '../models/bindingSectorConflict';
+import { computeCompiledFromHash } from '../domain/compiledFromHash';
 
 /**
  * A Prensa (BE-INCR-BINDING-PRESS, Fase P1) — porta que o compilador consome para rodar o
@@ -348,35 +348,4 @@ export class BindingCompileService {
     // (1 Active) se sustenta de qualquer forma.
     await this.repo.supersedeIfActive(scope, currentActive.id, tx);
   }
-}
-
-/**
- * `compiledFromHash = sha256(schema + chart canônicos)` (BRIEF item 9). Canonicaliza (ordena
- * chaves de objeto recursivamente; ordena o array do chart por `code`) antes de serializar, para
- * que o MESMO conteúdo semântico sempre produza o MESMO hash independente da ordem de inserção —
- * senão o hash "detecta staleness" por acidente de ordenação, não por mudança real de dado.
- */
-export function computeCompiledFromHash(
-  operationalSchema: Record<string, unknown>,
-  chart: ChartAccountSnapshot[],
-): string {
-  const canonicalSchema = canonicalize(operationalSchema);
-  const canonicalChart = [...chart]
-    .sort((a, b) => a.code.localeCompare(b.code))
-    .map((a) => canonicalize(a));
-  const digest = createHash('sha256')
-    .update(JSON.stringify({ operationalSchema: canonicalSchema, chart: canonicalChart }))
-    .digest('hex');
-  return `sha256:${digest}`;
-}
-
-/** Ordena chaves de objeto recursivamente (arrays preservam ordem — só o chart acima é reordenado
- *  explicitamente, por semântica de conjunto). */
-function canonicalize(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(canonicalize);
-  if (value !== null && typeof value === 'object') {
-    const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b));
-    return Object.fromEntries(entries.map(([k, v]) => [k, canonicalize(v)]));
-  }
-  return value;
 }

@@ -78,10 +78,10 @@ const sampleFields = {
 };
 
 describe('rename salon.* -> sale.* — guarda de VOCABULÁRIO (F-RN-1/F-RN-2)', () => {
-  describe('fixture do binding (accountingBinding/fixtures/saleBinding.ts, lida como texto — ver nota de fronteira acima)', () => {
+  describe('fixture do binding (accountingBinding/domain/fixtures/saleBinding.ts, lida como texto — ver nota de fronteira acima)', () => {
     // FIXTURE_PATH é montado com segmentos separados (join de strings soltas) — não é uma
     // declaração de import TypeScript, é só leitura de arquivo (fs.readFileSync).
-    const FIXTURE_PATH = join(__dirname, '..', '..', '..', 'accountingBinding', 'fixtures', 'saleBinding.ts');
+    const FIXTURE_PATH = join(__dirname, '..', '..', '..', 'accountingBinding', 'domain', 'fixtures', 'saleBinding.ts');
     const fixtureSource = readFileSync(FIXTURE_PATH, 'utf8');
 
     it('não deveria mais conter nenhum literal do namespace legado salon.(sale|package).*', () => {

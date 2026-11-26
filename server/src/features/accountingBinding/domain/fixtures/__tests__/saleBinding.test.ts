@@ -1,0 +1,165 @@
+import { AccountingBindingV1Schema } from '../../../dtos/AccountingBindingDto';
+import { computeCompiledFromHash } from '../../compiledFromHash';
+import { SALE_BINDING_V1 } from '../saleBinding';
+
+/**
+ * Gate do fixture (Corpo C, item 10 do BRIEF) — insumo do golden test do Corpo D. Não repete a
+ * asserção de shape genérico (`AccountingBindingV1Schema` já é testado em
+ * `dtos/__tests__/AccountingBindingDto.test.ts`); prova o que É específico deste dado: os 5
+ * sourceTypes classe-1, os accountCodes citados dos mappers, e que `caixa-por-metodo` cobre os 5
+ * métodos que `SaleSettledMapper.DEBIT_ACCOUNT_BY_METHOD` mapeia hoje.
+ */
+describe('SALE_BINDING_V1 — CONTROLE', () => {
+  it('valida contra o AccountingBindingV1Schema — não é vacuidade, o módulo já falharia no import se não validasse', () => {
+    expect(AccountingBindingV1Schema.safeParse(SALE_BINDING_V1).success).toBe(true);
+  });
+
+  it('sectorKey é beautySalon e bindingVersion é 1 (fixture de referência, não versão real)', () => {
+    expect(SALE_BINDING_V1.sectorKey).toBe('beautySalon');
+    expect(SALE_BINDING_V1.bindingVersion).toBe(1);
+  });
+});
+
+describe('SALE_BINDING_V1 — cobertura dos 5 sourceTypes classe-1 (item 10 do BRIEF) + sale.package.expired', () => {
+  const eventKeys = SALE_BINDING_V1.eventBindings.map((eb) => eb.eventKey);
+
+  it('cobre exatamente os 5 sourceTypes dos mappers de produção + o vencimento de pacote — nem a mais nem a menos', () => {
+    expect(eventKeys.sort()).toEqual(
+      [
+        'sale.package.expired', // BE-INCR-PACOTE-VALIDADE item 12 (1º eventKey sem mapper à mão)
+        'sale.package.sold',
+        'sale.cogs',
+        'sale.finalized',
+        'sale.returned',
+        'sale.settled',
+      ].sort(),
+    );
+  });
+
+  it('NÃO inclui subledger_command — a classe 2 (CrmReceivableBridge) fica fora do escopo v1 do salão', () => {
+    const archetypeKeys = SALE_BINDING_V1.eventBindings.map((eb) => eb.archetypeKey);
+    expect(archetypeKeys).not.toContain('subledger_command');
+  });
+});
+
+describe('SALE_BINDING_V1 — accountCodes citados dos mappers, por eventKey', () => {
+  const byEvent = (eventKey: string) =>
+    SALE_BINDING_V1.eventBindings.find((eb) => eb.eventKey === eventKey)!;
+  const codes = (eventKey: string) => byEvent(eventKey).roleSlots.map((r) => r.accountCode);
+
+  it('sale.finalized — 1.1.2 (D) / 3.1+3.3 (C), SaleFinalizedMapper.ts + revenueSplit.ts', () => {
+    expect(codes('sale.finalized').sort()).toEqual(['1.1.2', '3.1', '3.3']);
+    expect(byEvent('sale.finalized').archetypeKey).toBe('revenue_recognition');
+  });
+
+  it('sale.settled — os 4 códigos de DEBIT_ACCOUNT_BY_METHOD + 1.1.2, SaleSettledMapper.ts:36-42', () => {
+    const settled = byEvent('sale.settled');
+    const byRole = Object.fromEntries(settled.roleSlots.map((r) => [r.role, r.accountCode]));
+    expect(byRole['caixa-por-metodo:Cash']).toBe('1.1.3');
+    expect(byRole['caixa-por-metodo:Pix']).toBe('1.1.1');
+    expect(byRole['caixa-por-metodo:Debit Card']).toBe('1.1.4');
+    expect(byRole['caixa-por-metodo:Credit Card']).toBe('1.1.4');
+    // Package Balance NUNCA cash (D1-Q10) — trava o mesmo invariante que o guard defensivo do mapper.
+    expect(byRole['caixa-por-metodo:Package Balance']).toBe('2.1.1');
+    expect(byRole['controle-recebível']).toBe('1.1.2');
+    expect(settled.archetypeKey).toBe('settlement');
+  });
+
+  it('sale.returned — 3.2 (D) / 1.1.2 (C), SaleReturnedMapper.ts', () => {
+    expect(codes('sale.returned').sort()).toEqual(['1.1.2', '3.2']);
+    expect(byEvent('sale.returned').archetypeKey).toBe('reversal');
+  });
+
+  it('sale.package.sold — 1.1.2 (D) / 2.1.1 (C), SalePackageSoldMapper.ts', () => {
+    expect(codes('sale.package.sold').sort()).toEqual(['1.1.2', '2.1.1']);
+    expect(byEvent('sale.package.sold').archetypeKey).toBe('performance_liability');
+  });
+
+  it('sale.package.expired — 2.1.1 (D) / 3.4 (C), releasedCents já em centavos (BE-INCR-PACOTE-VALIDADE)', () => {
+    const eb = byEvent('sale.package.expired');
+    expect(eb.archetypeKey).toBe('performance_liability_release');
+    expect(eb.roleSlots).toEqual([
+      { role: 'passivo-diferido', accountCode: '2.1.1' },
+      { role: 'receita-nao-uso', accountCode: '3.4' },
+    ]);
+    expect(eb.fieldSlots[0]).toMatchObject({ slotName: 'releasedCents', sourceField: 'event.releasedCents', transform: 'identity' });
+  });
+
+  it('sale.cogs — 4.2 (D) / 1.1.6 (C), SaleCogsMapper.ts — costCents já em centavos', () => {
+    expect(codes('sale.cogs').sort()).toEqual(['1.1.6', '4.2']);
+    expect(byEvent('sale.cogs').archetypeKey).toBe('cogs');
+    expect(byEvent('sale.cogs').fieldSlots[0]).toMatchObject({
+      slotName: 'costCents',
+      transform: 'identity', // NÃO cents_from_reais — já é inteiro exato (moneyCentsExact)
+    });
+  });
+});
+
+describe('SALE_BINDING_V1 — slot `dimension` presente em todo eventBinding', () => {
+  /**
+   * Os 5 arquétipos de código (`archetypes/*.ts`, Corpo A) declaram um slot `dimension` em TODO
+   * arquétipo (emenda 2, ADR §11) e `interpret.ts` (`resolveSlotValues`, Corpo D) lança
+   * `ValidationError` se QUALQUER slot declarado não tiver um `fieldSlot` correspondente no
+   * binding — não há exceção de "opcional" implementada nem em `ArchetypeSlotSpec` (sem campo
+   * `optional`) nem no laço do intérprete. Sem esta entrada, o fixture não sobreviveria a
+   * `interpret()`/à checagem #2 do validador real — não é redundância, é o que faz este dado ser
+   * consumível de ponta a ponta pelos Corpos A/B/D.
+   */
+  it.each(SALE_BINDING_V1.eventBindings.map((eb) => eb.eventKey))(
+    '%s carrega fieldSlot "dimension"',
+    (eventKey) => {
+      const eb = SALE_BINDING_V1.eventBindings.find((e) => e.eventKey === eventKey)!;
+      const dimensionSlot = eb.fieldSlots.find((s) => s.slotName === 'dimension');
+      expect(dimensionSlot).toBeDefined();
+      expect(dimensionSlot!.transform).toBe('identity');
+    },
+  );
+});
+
+describe('SALE_BINDING_V1 — compiledFromHash é determinístico', () => {
+  it('recalcular o hash do mesmo snapshot canônico produz o MESMO valor — controle de não-vacuidade incluso', () => {
+    // Controle primeiro: dois inputs DIFERENTES produzem hashes DIFERENTES — sem isto, uma função
+    // que sempre devolve a mesma string passaria no teste positivo abaixo por vacuidade.
+    const hashA = computeCompiledFromHash({ a: 1 }, [{ code: '1.1.2', nature: 'Asset', acceptsEntries: true }]);
+    const hashB = computeCompiledFromHash({ a: 2 }, [{ code: '1.1.2', nature: 'Asset', acceptsEntries: true }]);
+    expect(hashA).not.toBe(hashB);
+
+    // Positivo: mesmo conteúdo semântico, ORDEM de chave diferente no objeto e ORDEM diferente no
+    // array do chart → mesmo hash (canonicalização, não serialização ingênua).
+    const chartEmOrdem = [
+      { code: '1.1.2', nature: 'Asset', acceptsEntries: true },
+      { code: '3.1', nature: 'Revenue', acceptsEntries: true },
+    ];
+    const chartForaDeOrdem = [chartEmOrdem[1], chartEmOrdem[0]];
+    const h1 = computeCompiledFromHash({ x: 1, y: 2 }, chartEmOrdem);
+    const h2 = computeCompiledFromHash({ y: 2, x: 1 }, chartForaDeOrdem);
+    expect(h1).toBe(h2);
+  });
+
+  it('SALE_BINDING_V1.compiledFromHash bate com um recálculo independente do MESMO snapshot', () => {
+    const recomputed = computeCompiledFromHash(
+      {
+        'sale.finalized': ['amount', 'revenueByNature', 'dimension'],
+        'sale.settled': ['amount', 'paymentMethod', 'dimension'],
+        'sale.returned': ['amount', 'dimension'],
+        'sale.package.sold': ['amount', 'dimension'],
+        'sale.cogs': ['costCents', 'dimension'],
+        'sale.package.expired': ['releasedCents', 'dimension'],
+      },
+      [
+        { code: '1.1.1', nature: 'Asset', acceptsEntries: true },
+        { code: '1.1.2', nature: 'Asset', acceptsEntries: true },
+        { code: '1.1.3', nature: 'Asset', acceptsEntries: true },
+        { code: '1.1.4', nature: 'Asset', acceptsEntries: true },
+        { code: '1.1.6', nature: 'Asset', acceptsEntries: true },
+        { code: '2.1.1', nature: 'Liability', acceptsEntries: true },
+        { code: '3.1', nature: 'Revenue', acceptsEntries: true },
+        { code: '3.2', nature: 'Revenue', acceptsEntries: true },
+        { code: '3.3', nature: 'Revenue', acceptsEntries: true },
+        { code: '3.4', nature: 'Revenue', acceptsEntries: true }, // BE-INCR-PACOTE-VALIDADE
+        { code: '4.2', nature: 'Expense', acceptsEntries: true },
+      ],
+    );
+    expect(SALE_BINDING_V1.compiledFromHash).toBe(recomputed);
+  });
+});

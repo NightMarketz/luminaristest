@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { getFactory } from '../lib/factory';
 import { createAccountingBindingController } from '../features/accountingBinding/controllers/accountingBindingController';
-import { reloadAccountingMappersSerialized } from '../features/accountingBinding/runtime/mapperReload';
 
 /**
  * A Prensa (BE-INCR-BINDING-PRESS, item 15 do BRIEF) — mounted at `/api/accounting-binding`
@@ -16,7 +15,7 @@ import { reloadAccountingMappersSerialized } from '../features/accountingBinding
 const controller = createAccountingBindingController({
   buildCompileService: (scope) => getFactory().getAccountingBindingCompileService(scope),
   buildActivationService: (scope) => getFactory().getAccountingBindingActivationService(scope),
-  reloadAccountingMappers: reloadAccountingMappersSerialized,
+  reloadAccountingMappers: () => getFactory().reloadAccountingMappersSerialized(),
 });
 
 const router = Router();

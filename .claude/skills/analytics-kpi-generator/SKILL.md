@@ -1,9 +1,9 @@
 ---
 name: analytics-kpi-generator
-description: Gera a camada BACKEND de um KPI do engine analítico — um `<Name>KpiProcessor.ts` (função pura single-pass sobre `rows`, devolvendo `ChartDataPoint[]`) + o `<Name>KpiTemplate.ts` com os params configuráveis, registrados via `registerProcessor` + `registerTemplate`. Use quando o pedido for "novo KPI", "processor de KPI", "métrica de receita/custo/vendas no backend", "calcular indicador sobre as rows", ou só a camada de analytics do server — SEM frontend. Termos-gatilho: KPI, processor, template, ChartDataPoint, single-pass, AnalyticsProcessor, addMoney, previousValue. Para a cadeia ponta-a-ponta (processor + hook + card no frontend) use `dashboard-kpi-end-to-end-generator`. Domínio/arquivos: `server/src/features/analytics/kpis/<category>/`.
+description: Gera a camada BACKEND de um KPI do engine analítico — um `<Name>KpiProcessor.ts` (função pura single-pass sobre `rows`, devolvendo `ChartDataPoint[]`) + o `<Name>KpiTemplate.ts` com os params configuráveis, registrados via `registerProcessor` + `registerTemplate`. Use quando o pedido for "novo KPI", "processor de KPI", "métrica de receita/custo/vendas no backend", "calcular indicador sobre as rows", ou só a camada de analytics do server — SEM frontend. Termos-gatilho: KPI, processor, template, ChartDataPoint, single-pass, AnalyticsProcessor, addMoney, previousValue. Para a cadeia ponta-a-ponta (processor + hook + card no frontend) use `dashboard-kpi-end-to-end-generator`. Domínio/arquivos: `server/src/features/analytics/domain/kpis/<category>/`.
 argument-hint: "[NomeDoKpi] [categoria]"
 allowed-tools: Read, Grep, Glob, Write, Edit
-compatibility: Claude Code; requer o monorepo Luminaris (server/ com Prisma + tsc + o engine de analytics em server/src/features/analytics/core e os helpers em analytics/utils). Sem efeitos externos — apenas gera/edita arquivos no repositório.
+compatibility: Claude Code; requer o monorepo Luminaris (server/ com Prisma + tsc + o engine de analytics em server/src/features/analytics/domain/core e os helpers em analytics/domain/utils). Sem efeitos externos — apenas gera/edita arquivos no repositório.
 metadata:
   governance-skill-id: "SKL-ANALYTICS-KPI"
   governance-version: "1.0.0"
@@ -46,7 +46,7 @@ Cada item com ID `[AKPI-NNN]` é uma REGRA DE GERAÇÃO auditável (mapeada a um
 
 - Novo KPI de negócio precisa ser calculado (apenas backend: processor + template)
 - Adicionando variante de KPI existente (por categoria, por período)
-- Criando processor dinâmico para `analytics/dynamic/`
+- Criando processor dinâmico para `analytics/domain/dynamic/`
 
 ## When NOT to use
 
@@ -60,25 +60,25 @@ Cada item com ID `[AKPI-NNN]` é uma REGRA DE GERAÇÃO auditável (mapeada a um
 ## Repository patterns to inspect first
 
 ```
-server/src/features/analytics/kpis/revenue/RevenueKpiProcessor.ts
-server/src/features/analytics/kpis/revenue/RevenueKpiTemplate.ts
-server/src/features/analytics/kpis/cashflow/CashflowKpiProcessor.ts
-server/src/features/analytics/core/models/AnalyticsConfiguration.ts
-server/src/features/analytics/utils/DateUtils.ts
-server/src/features/analytics/utils/CurrencyUtils.ts
-server/src/features/analytics/utils/DataSanitizer.ts
-server/src/features/analytics/kpis/index.ts
+server/src/features/analytics/domain/kpis/revenue/RevenueKpiProcessor.ts
+server/src/features/analytics/domain/kpis/revenue/RevenueKpiTemplate.ts
+server/src/features/analytics/domain/kpis/cashflow/CashflowKpiProcessor.ts
+server/src/features/analytics/models/AnalyticsConfiguration.ts
+server/src/features/analytics/domain/utils/DateUtils.ts
+server/src/features/analytics/domain/utils/CurrencyUtils.ts
+server/src/features/analytics/domain/utils/DataSanitizer.ts
+server/src/features/analytics/domain/kpis/index.ts
 ```
 
 ## ⭐ Exemplo de referência canônico (espelhe este arquivo)
 
-`server/src/features/analytics/kpis/revenue/RevenueKpiProcessor.ts` — processor single-pass perfeito: desestrutura `const { rows, params, table }`, lê params com `?? default` + cast explícito, acumula dinheiro só via `addMoney()` (nunca `+=`), exclui `rawAmount <= 0`, valida `Number.isFinite`, usa `referenceDate` com fallback (`params.referenceDate ? new Date(...) : new Date()`), e define `previousValue` como `undefined` (não `0`) quando não há dado anterior. Pareie com o template `revenue/RevenueKpiTemplate.ts` e o registro em `revenue/index.ts` (re-exporta processor/template) + `kpis/index.ts`. Leia-o ANTES de gerar.
+`server/src/features/analytics/domain/kpis/revenue/RevenueKpiProcessor.ts` — processor single-pass perfeito: desestrutura `const { rows, params, table }`, lê params com `?? default` + cast explícito, acumula dinheiro só via `addMoney()` (nunca `+=`), exclui `rawAmount <= 0`, valida `Number.isFinite`, usa `referenceDate` com fallback (`params.referenceDate ? new Date(...) : new Date()`), e define `previousValue` como `undefined` (não `0`) quando não há dado anterior. Pareie com o template `revenue/RevenueKpiTemplate.ts` e o registro em `revenue/index.ts` (re-exporta processor/template) + `kpis/index.ts`. Leia-o ANTES de gerar.
 
 ## Generation contract
 
 ### Processor
 
-1. Arquivo: `server/src/features/analytics/kpis/<category>/<Name>KpiProcessor.ts`
+1. Arquivo: `server/src/features/analytics/domain/kpis/<category>/<Name>KpiProcessor.ts`
 2. Tipo: `import type { AnalyticsProcessor, ChartDataPoint } from '../../core'`
 3. Exportar: `export const <name>KpiProcessor: AnalyticsProcessor = async (context): Promise<ChartDataPoint[]> => { ... }`
 4. Desestruturar: `const { rows, params, table } = context`
@@ -100,8 +100,8 @@ server/src/features/analytics/kpis/index.ts
 
 ### Template
 
-1. Arquivo: `server/src/features/analytics/kpis/<category>/<Name>KpiTemplate.ts`
-2. Tipo: `import type { AnalyticsTemplate } from '../../core/models'`
+1. Arquivo: `server/src/features/analytics/domain/kpis/<category>/<Name>KpiTemplate.ts`
+2. Tipo: `import type { AnalyticsTemplate } from '../../../models'`
 3. Campos: `key`, `name`, `description`, `processor` (string = key do `registerProcessor`), `requiredFields[]`, `optionalFields[]`
 4. `requiredFields` usa `types: ['number']` (array, plural), `key`, `label`, `description`, `required`
 5. No fim do arquivo, auto-registrar: `registerTemplate(<name>KpiTemplate)`
@@ -116,24 +116,24 @@ server/src/features/analytics/kpis/index.ts
 
 ### Teste
 
-1. Arquivo: `server/src/features/analytics/kpis/<category>/__tests__/<Name>KpiProcessor.test.ts`
+1. Arquivo: `server/src/features/analytics/domain/kpis/<category>/__tests__/<Name>KpiProcessor.test.ts`
 2. Mock rows com `data` object contendo os campos esperados
 3. Verificar: valores calculados, período atual vs anterior, edge cases (0 rows, valores nulos)
 
 ## Files usually created or changed
 
 ```
-server/src/features/analytics/kpis/<category>/<Name>KpiProcessor.ts              ← NEW
-server/src/features/analytics/kpis/<category>/<Name>KpiTemplate.ts               ← NEW
-server/src/features/analytics/kpis/<category>/__tests__/<Name>Processor.test.ts  ← NEW
-server/src/features/analytics/kpis/index.ts                                       ← EDIT
+server/src/features/analytics/domain/kpis/<category>/<Name>KpiProcessor.ts              ← NEW
+server/src/features/analytics/domain/kpis/<category>/<Name>KpiTemplate.ts               ← NEW
+server/src/features/analytics/domain/kpis/<category>/__tests__/<Name>Processor.test.ts  ← NEW
+server/src/features/analytics/domain/kpis/index.ts                                       ← EDIT
 ```
 
 ## Required checks
 
 ```bash
 cd server && npx tsc --noEmit
-cd server && npx jest features/analytics/kpis/<category> --passWithNoTests
+cd server && npx jest features/analytics/domain/kpis/<category> --passWithNoTests
 ```
 
 ## Anti-patterns

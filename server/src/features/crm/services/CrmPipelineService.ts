@@ -8,7 +8,7 @@ import type { IDynamicTableWriteEffects } from '../../integration/services/IDyna
 import type { ITableSchema } from '../../dynamicTables/models/DynamicTable.model';
 import type { AdvanceStageInput, ConvertLeadInput, CreateProposalInput, RecordNoShowInput } from '../dtos/CrmPipelineDto';
 import type { AdvanceOpportunityInput, ConvertLeadToOpportunityInput } from '../dtos/CrmOpportunityDto';
-import { DEFAULT_CURRENCY } from '../constants';
+import { DEFAULT_CURRENCY } from '../models/currencies';
 
 /**
  * CrmPipelineService — server-side orchestration of CRM pipeline transitions.

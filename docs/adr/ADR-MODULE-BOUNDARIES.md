@@ -343,7 +343,7 @@ comentada no código, onboarding na tx do install) e jobs/`server.ts` (`PurgeDel
 - Limite da medida: regex, não AST. A regra de lint é a medida definitiva; se ela achar mais que o baseline acima,
   o achado vai à caixa antes de qualquer supressão.
 
-## 11. Emenda de 24/11/2026 — ligação das regras (PR-2 do BRIEF de execução; §11.5 = `users/public/` e `M4`; §11.6 = renome de `dynamicTables` e `M2`; §11.7 = `M2` sem ponto cego, `D2` e CLI do P2)
+## 11. Emenda de 24/11/2026 — ligação das regras (PR-2 do BRIEF de execução; §11.5 = `users/public/` e `M4`; §11.6 = renome de `dynamicTables` e `M2`; §11.7 = `M2` sem ponto cego, `D2` e CLI do P2; §11.8 = renome de `analytics` e `sectorKits`; §11.9 = renome de `crm`, `fx`, `interview` e `accountingBinding`)
 
 Autorização: dono, chat, 24/11/2026: "Executa o BRIEF inteiro". Esta emenda registra o que o §8 item 4 pede: o baseline
 antes/depois de cada regra ligada e a prova de que cada uma morde. As regras valem na branch
@@ -686,4 +686,191 @@ sondas passavam: a órfã na raiz da feature dava exit 0 em 24/11 (§11.6, últi
   `lib/prisma` são barrados.
 - **CLI do P2:** as listas ainda citam os dois arquivos apagados nesta emenda. Não foram tiradas: a lista está
   congelada na árvore do #1387, e mexer nela agora seria a manutenção que a decisão encerrou.
+- **Ambiente da prova:** Windows, com o `node_modules` pela junção do depósito. O resultado do CI (Linux) é o que vale.
+
+### 11.8 Emenda de 25/11/2026 — renome de `analytics` e `sectorKits` (segundo PR de renome, em fase)
+
+Autorização: dono, chat, 24/11/2026: "Executa o BRIEF inteiro" e, em 25/11, "Pode seguir executando aqui"; questionário
+de 25/11, duas respostas: "Pagar as 29 (Recommended)" e "analytics/models/ (Recommended)"
+(`docs/plano/decisoes/D-2026-11-25-MODULE-BOUNDARIES-PR3-ANALYTICS-SECTORKITS-RESPOSTAS.md`). PR de fase em draft (#1422),
+sobre o #1411, no regime de `D-2026-11-25-BRANCH-LONGA-E-TURNOS`: um commit por item, as duas features no mesmo PR.
+
+**O que entrou**
+
+| Feature | De | Para | Nota |
+|---|---|---|---|
+| `analytics` | `kpis/` | `domain/kpis/` | |
+| | `dynamic/` | `domain/dynamic/` | |
+| | `core/` (registros, `engine/`, `pipeline/`) | `domain/core/` | |
+| | `core/models/` | `models/` | resposta 2; o BRIEF §5.3 dizia "`core/models/` já casa" e não o movia |
+| | `utils/` | `domain/utils/` | |
+| | `engine/` | `services/` | `AnalyticsResolver` e `FieldMapper`, com os 3 testes |
+| | `index.ts` | apagado | sem importador de produção nem de teste. Os processadores se registram pelos imports de `services/AnalyticsResolver.ts` em `domain/kpis` e `domain/dynamic` (fecha o insumo ausente do BRIEF §9) |
+| `sectorKits` | `kits/` | `domain/kits/` | as 12 versões, `_shared/` e os `published.json` |
+| | `registry.ts` | `domain/registry.ts` | |
+
+`M2_FEATURES` passa a `(dynamicTables|analytics|sectorKits)`.
+
+**As 29 entradas `M1` que trocariam de chave, pagas por porta em `public/`** (resposta 1)
+
+| Porta (arquivo novo) | Quem passa a importar por ela | Arestas |
+|---|---|---|
+| `analytics/public/processor.ts` (contrato do processador, tipos do pipeline, `aggregatePipelineProcessor`) | `crm/services/CrmAnalyticsService.ts`, `CrmReportService.ts` | 4 |
+| `analytics/public/crmKpis.ts` (os 7 processadores de KPI do CRM) | `crm/services/CrmAnalyticsService.ts` | 1 |
+| `analytics/public/money.ts` (`addMoney`) | `crm/services/CrmReportService.ts` | 1 |
+| `dynamicTables/public/dynamicTable.types.ts` (tipos do model) | 4 arquivos de `analytics/domain/` e `analytics/services/AnalyticsResolver.ts` | 5 |
+| `dynamicTables/public/dynamicTableService.ts` (só o tipo do serviço) | `analytics/services/AnalyticsResolver.ts` | 1 |
+| `crm/public/constants.ts` (ordem dos status e sentinela de etapa) | 3 processadores de `analytics/domain/kpis/crm/` | 3 |
+| `sectorKits/public/registry.ts` (`KIT_REGISTRY`, `latestKit`) | `accountingBinding/fixtures/sectorBindingRegistry.ts` | 1 |
+| `accountingBinding/public/clinicBinding.ts` e `saleBinding.ts` | as 12 versões de kit | 12 |
+| `accounting/public/chartOfAccounts.ts` (`codigoPosL8`) | `sectorKits/domain/kits/_shared/referencial2025Canonico.ts` | 1 |
+
+Todas reexportam por nome (a R6 barra `export *`) e nenhuma importa `repositories/` (`M3`).
+
+**Baseline (server):** 376 → 361 (portas de `analytics`) → **347** (portas de `sectorKits`), só remoção: `M1` 322 → 293;
+`M1a` 36, `J1` 15 e `X3` 3 sem mudança. Os dois commits de movimento não mudam nenhuma chave. A `M2` (as três regras) e a
+`D2` medem 0 para as duas features e não entram no arquivo. Módulos cruzados: 2174 → 2183 (10 portas novas, 1 arquivo
+apagado). my-app sem mudança (79).
+
+**Prova de que a `M2` morde nas duas features** (saída literal de `npm run check:arch`, 25/11; 347 conhecidas ignoradas)
+
+| Caso | Sonda | Saída | Exit |
+|---|---|---|---|
+| raiz de `analytics`, importada por um service | `analytics/__sondaM2.ts` ← `analytics/services/__sondaImp.ts` | `error M2-feature-code-in-layer-folder: src/features/analytics/services/__sondaImp.ts → src/features/analytics/__sondaM2.ts` | 1 |
+| pasta antiga `kpis/` | `analytics/kpis/__sondaM2.ts` ← `analytics/services/__sondaImp.ts` | `error M2-feature-code-in-layer-folder: src/features/analytics/services/__sondaImp.ts → src/features/analytics/kpis/__sondaM2.ts` | 1 |
+| órfã na raiz de `analytics` | `analytics/__sondaM2c.ts`, sem import | `error M2c-feature-code-in-layer-folder-orphan: src/features/analytics/__sondaM2c.ts` | 1 |
+| contraprova `analytics` | a mesma sonda em `analytics/domain/` | `✔ no dependency violations found (2185 modules, 10020 dependencies cruised)` | 0 |
+| pasta antiga `kits/` | `sectorKits/kits/__sondaM2.ts` ← `sectorKits/services/__sondaImp.ts` | `error M2-feature-code-in-layer-folder: src/features/sectorKits/services/__sondaImp.ts → src/features/sectorKits/kits/__sondaM2.ts` | 1 |
+| raiz de `sectorKits`, importa um model | `sectorKits/__sondaM2b.ts` com `import type` de `./models/kitInstallTypes` | `error M2b-feature-code-in-layer-folder-importing: src/features/sectorKits/__sondaM2b.ts → src/features/sectorKits/models/kitInstallTypes.ts` | 1 |
+| contraprova `sectorKits` | a mesma sonda em `sectorKits/domain/` | `✔ no dependency violations found (2185 modules, 10020 dependencies cruised)` | 0 |
+
+Sondas removidas depois de cada caso.
+
+**Declarado**
+
+- **Teste-guarda do `sectorKits`:** `sectorKits/__tests__/importBoundary.test.ts` tem a lista do que a feature pode
+  importar de `accounting` (decisão de 08/10, `D-2026-10-08-KIT-SETOR-FORKS-KB6-KB9`). A lista ganhou a porta
+  `accounting/public/chartOfAccounts`, só com `codigoPosL8`, o mesmo nome que ela já aceitava do fixture. Sem isso o
+  teste reprovava o import pela porta. O invariante não muda: de `accounting`, só o plano canônico nomeado.
+- **`accounting/public/` nasce antes do PR-3.x da `accounting`**, com um arquivo. O plano de contas padrão vai para
+  `accounting/paises/br/` naquele PR (F-MBE-6 a); muda então só a linha de reexport. Não conferi se a regra `P1` do
+  ADR-PAIS-NA-BORDA aceita `public/` reexportando de `paises/`: ela não está nesta branch.
+- **`check-registries.mjs`** (gate de wiring do `skill-audit`) cita `analytics/kpis` em duas linhas, e a pasta
+  `.claude/skills/skill-audit/` é negada para escrita de agente. O patch (2 linhas, só caminho) fica com o dono, como no
+  §11.6. Até ele ser aplicado e commitado, o `skill-audit run` dá 1 finding e o job "Skill governance" do CI reprova o PR.
+- **`analytics/public/analyticsConfiguration.ts`** segue sem o sufixo `*.types.ts`, embora o tipo agora more em
+  `analytics/models/`: a troca mexeria nos importadores criados no §11.6.
+- **Arestas que não mudaram de chave seguem no baseline**, por exemplo as de `analytics/services/` para
+  `dynamicTables/models/DynamicTable.model`. A resposta 1 cobre só as 29 que o renome deslocava.
+- **`dynamicTables/public/dynamicTableService.ts`** expõe só o tipo do serviço. Não substitui o `DynamicTableReader` do
+  PR-4, que troca a injeção do repositório.
+- **Testes de integração:** não rodaram aqui; valem os do CI.
+
+### 11.9 Emenda de 25/11/2026 — renome de `crm`, `fx`, `interview` e `accountingBinding` (mesma fase do §11.8)
+
+Autorização: dono, chat, 24/11/2026: "Executa o BRIEF inteiro"; 25/11/2026: "Pode seguir aqui"; questionário de 25/11
+(esta sessão), quatro respostas: "Pagar as 14 (Recommended)", "crm/models/ (Recommended)", "Portas e lista ajustada
+(Recommended)" e "Factory dona da recarga (Recommended)". Commits novos no PR de fase #1422, um por item. A feature
+`accounting` fica para depois (BRIEF §3.3 item 4).
+
+**O que entrou**
+
+- **Renome (tabela §5.3 do BRIEF):**
+  - `crm/constants.ts` → `crm/domain/constants.ts`.
+  - `fx/clients/` → `fx/adapters/`.
+  - `interview/{InterviewService,CustomizationService,FieldCustomizationService}/` → `interview/services/<pasta>/`.
+  - `accountingBinding/{archetypes,interpreter,fixtures}/` → `accountingBinding/domain/<pasta>/`.
+- **`M2_FEATURES`** passa a `(dynamicTables|analytics|sectorKits|interview|crm|fx|accountingBinding)`. As três regras
+  (`M2`, `M2b`, `M2c`) medem 0 para as quatro features novas.
+- **22 entradas `M1` pagas antes de cada movimento** (o commit de caminho não troca chave nenhuma):
+  - `crm` (1): `fx/models/ptax.ts` lia `CURRENCIES` de `crm/constants.ts`. Um model só importa `public/*.types.ts`, e
+    esse arquivo só lê `models/` e `dtos/` (`M4`). A lista de moedas foi para `crm/models/currencies.ts` e sai por
+    `crm/public/currencies.types.ts` ("crm/models/"); os 2 DTOs e os 2 services do `crm` importam de `models/`.
+  - `fx` (1): o cliente da PTAX lê `isValidDateOnly` por `accounting/public/dates.ts`.
+  - `interview` (12): `dynamicTables/public/presetService.ts` (a instância `presetService`),
+    `public/dynamicTable.types.ts` (`ISchemaField`, que já existia) e `public/dynamicTableDto.types.ts`
+    (`AdvancedFieldSchema`, `ADDED_TABLE_KEY_PATTERN`).
+  - `accountingBinding` (8): portas em `accounting/public/` — `postingDto.types.ts` (`PostEntryInput`),
+    `money.types.ts` (`MAX_CENTS`), `accountingEventMapper.ts` (`IAccountingEventMapper`), `revenueSplit.ts` e a
+    `chartOfAccounts.ts` que já existia. São as 7 que o movimento trocaria de chave mais a do
+    `AccountingBindingFeederService`, que usa a mesma porta.
+- **Três mudanças que a tabela §5.3 não previa**, cada uma forçada por regra que está em 0 e não tem baseline:
+  - `interview/FieldCustomizationService/Types.ts` → `interview/models/FieldCustomizationTypes.ts`. É arquivo de
+    contrato (tipos e constantes do W6) que `models/InterviewTypes.ts` importa; dentro de `services/` a aresta reprovava
+    na `L6`. Mesma classe do "Mover BindingScope já" (dono, 24/11).
+  - `accountingBinding/runtime/mapperReload.ts` não foi para `services/`: lá a rota `routes/accounting-binding.ts`
+    reprovava na `L1` ("Factory dona da recarga"). A função pura `serializeReload` foi para
+    `accountingBinding/domain/serializeReload.ts`; a cadeia serial virou campo da `lib/factory.ts`
+    (`reloadAccountingMappersSerialized()`), e a rota, o `dashboardController` e o `installSectorKitCli` pedem a
+    recarga ao `getFactory()`. A pasta `runtime/` deixa de existir.
+  - `computeCompiledFromHash` saiu do `BindingCompileService` para `accountingBinding/domain/compiledFromHash.ts`
+    (função pura; pré-requisito do F-MB-5 a, que o BRIEF já mandava). Corpo sem mudança.
+- **Teste-guarda `accountingBinding/__tests__/importBoundary.test.ts`:** a lista permitida passa a citar as portas de
+  `accounting/public/`, com os mesmos nomes ("Portas e lista ajustada"). `accounting/models/dates` segue pelo caminho
+  direto: o importador é um DTO, que não pode ler porta executável.
+- **Ledger de supressões sancionadas** (`docs/architecture/lint-layer-gate.md`): a chave do arquivo trocou de
+  `accountingBinding/runtime/mapperReload.ts` para `accountingBinding/domain/serializeReload.ts`.
+- **Caminhos em texto:** skill `interview-setup-generator` (SKILL.md e `evals/evals.json`),
+  `scripts/activate-salon-binding.mjs`, READMEs de `interview`, comentários. O `jobs/proveP2ZeroDiffCli.ts` não foi
+  tocado (congelado, §11.7).
+- **Três testes que apontam a pasta por string** (o `tsc` não vê): a lista de caminhos do
+  `ChartOfAccountsFixture.plano4niveis.test.ts`; o `accounting/sync/__tests__/renameVocabularyGuard.test.ts`, que lê
+  `accountingBinding/domain/fixtures/saleBinding.ts` por `join(__dirname, …)` e quebrava com `ENOENT`; e o
+  `accounting/__tests__/core-boundary.test.ts`, cuja lista `CORE_DIRS` citava `accountingBinding/archetypes` e
+  `interpreter`. Este último **passava no vazio**: a função que varre a pasta devolve lista vazia quando ela não
+  existe. Com a lista corrigida, uma sonda em `domain/interpreter/` importando `crm/public/constants` reprova o teste
+  (1 falha em 10); sem a sonda, 10 de 10. O silêncio do guarda foi à caixa (`L-20261126-000119-940b`).
+
+**Baseline antes/depois (server, `.dependency-cruiser-known-violations.json`)**
+
+| Regra | Antes (ponta do §11.8, depois do rebase sobre a `main`) | Depois |
+|---|---|---|
+| `M1` | 300 | **278** (−1 `crm`, −1 `fx`, −12 `interview`, −8 `accountingBinding`) |
+| `M1a` | 36 | 36 |
+| `J1` | 15 | 15 |
+| `X3` | 3 | 3 |
+| `M2`, `M2b`, `M2c` | 0 | **0** (não entram no arquivo) |
+| Total | 354 | **332** |
+
+Diff do baseline: 22 entradas removidas, 0 acrescentadas (conferido por conjunto de `regra + from → to` a cada commit
+de conteúdo). Os números de baseline dos §11.6 a §11.8 são os de antes do rebase da pilha sobre a `main`; depois dele
+todos sobem 7 (376 → 383, 347 → 354).
+
+**Prova de que a `M2` morde nas quatro features** (saída literal de `npm run check:arch`, 25/11; 332 conhecidas
+ignoradas; sem sonda, 2244 módulos)
+
+| Caso | Sonda | Saída | Exit |
+|---|---|---|---|
+| `interview`: pasta antiga recriada | `interview/InterviewService/__sondaM2.ts` importando `../models/InterviewTypes` | `error M2b-feature-code-in-layer-folder-importing: src/features/interview/InterviewService/__sondaM2.ts → src/features/interview/models/InterviewTypes.ts` · 2245 módulos | 1 |
+| `crm`: raiz da feature, importada por um service | `crm/__sondaM2.ts` ← `crm/services/__sondaM2Importer.ts` | `error M2-feature-code-in-layer-folder: src/features/crm/services/__sondaM2Importer.ts → src/features/crm/__sondaM2.ts` · 2246 módulos | 1 |
+| `fx`: pasta antiga recriada, órfã | `fx/clients/__sondaM2.ts` | `error M2c-feature-code-in-layer-folder-orphan: src/features/fx/clients/__sondaM2.ts` · 2245 módulos | 1 |
+| `accountingBinding`: pasta antiga recriada | `accountingBinding/runtime/__sondaM2.ts` importando `lib/logger` | `error M2b-feature-code-in-layer-folder-importing: src/features/accountingBinding/runtime/__sondaM2.ts → src/lib/logger.ts` · 2245 módulos | 1 |
+| contraprova: órfã em `interview/services/` | `interview/services/__sondaM2.ts` | `✔ no dependency violations found (2245 modules, 10356 dependencies cruised)` | 0 |
+| contraprova: a sonda do `crm` em `domain/` | `crm/domain/__sondaM2.ts` ← o mesmo service | `✔ no dependency violations found (2246 modules, 10357 dependencies cruised)` | 0 |
+| contraprova: órfã em `fx/adapters/` | `fx/adapters/__sondaM2.ts` | `✔ no dependency violations found (2245 modules, 10356 dependencies cruised)` | 0 |
+| contraprova: órfã em `accountingBinding/domain/` | `accountingBinding/domain/__sondaM2.ts` | `✔ no dependency violations found (2245 modules, 10356 dependencies cruised)` | 0 |
+| contraprova: feature fora de `M2_FEATURES` | `accounting/__sondaM2.ts` (órfã na raiz) | `✔ no dependency violations found (2245 modules, 10356 dependencies cruised)` | 0 |
+
+Sondas e pastas criadas para o plantio removidas depois de cada caso; `git status` sem sobra.
+
+**Prova do teste-guarda do binding** (`importBoundary.test.ts`, depois de trocar a lista): sonda
+`accountingBinding/domain/__sondaBoundary.ts` com três imports ⇒ o teste reprova citando os três — módulo não permitido
+(`accounting/services/PostingService`), nome não permitido numa porta (`OUTRO_NOME` de `accounting/public/money.types`)
+e o caminho antigo direto (`accounting/models/money`). Sem a sonda, 2 de 2 passam.
+
+**Declarado**
+
+- **Sem mudança de comportamento esperada, com uma mudança de fiação:** a cadeia da recarga dos mappers era um valor
+  de módulo e agora é um campo da factory. Em produção há uma factory por processo, então é a mesma cadeia. Os testes
+  de integração da recarga (`dashboardCreate.accountingReload`, `activateDefault.reload`) não rodaram aqui; valem os do
+  CI. O teste unitário do CLI (`activateAccountingBindingCli.test.ts`) trocou o nome do método no duplo da factory.
+- **`computeCompiledFromHash`:** o corpo veio sem mudança, e os testes que recomputam o hash dos bindings de fixture
+  passam. Não há teste com o valor literal do hash fixado.
+- **`dynamicTables/public/presetService.ts` expõe uma instância de módulo** (`presetService`), não um serviço da
+  factory. A porta paga a aresta; o singleton fora da factory é dívida anterior, registrada na caixa.
+- **Arestas de `interview` que ficaram:** `interview/models/InterviewTypes.ts` e `interview/dtos/CustomCreationDraft.dto.ts`
+  seguem importando `dynamicTables/models/` e `dynamicTables/dtos/` direto. Não mudaram de chave (os arquivos não se
+  moveram), então seguem no baseline.
+- **`accounting/public/` ganhou cinco portas antes do PR-3.x da `accounting`.** Quando `sync/` e `fixtures/` da
+  `accounting` se moverem, só o caminho de dentro das portas muda.
 - **Ambiente da prova:** Windows, com o `node_modules` pela junção do depósito. O resultado do CI (Linux) é o que vale.

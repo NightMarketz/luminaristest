@@ -145,7 +145,7 @@ em silêncio (o script falha se achar mais de um).
   "DEBT: apiClient": {},
   "DEBT: fetch": {},
   "SANCTIONED": {
-    "server/src/features/accountingBinding/runtime/mapperReload.ts": 1,
+    "server/src/features/accountingBinding/domain/serializeReload.ts": 1,
     "server/src/features/dynamicTables/services/DynamicTableService.ts": 1,
     "server/src/jobs/AccountingSyncScheduler.ts": 1,
     "server/src/jobs/CollectionChargePollScheduler.ts": 1,

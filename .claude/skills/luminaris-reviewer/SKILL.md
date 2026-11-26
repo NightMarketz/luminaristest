@@ -397,7 +397,7 @@ node .claude/skills/skill-audit/skill-audit.mjs wiring
 
 Cobre (cada um é tsc-cego):
 - **rota** montada em `server/src/routes/index.ts`
-- **categoria de KPI** importada em `analytics/kpis/index.ts`
+- **categoria de KPI** importada em `analytics/domain/kpis/index.ts`
 - **preset suite** em `dynamicTables/domain/presets/index.ts` (`tablePresetSuites`)
 - **i18n** paridade de chaves `en`↔`pt`
 

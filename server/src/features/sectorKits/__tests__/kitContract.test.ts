@@ -1,8 +1,8 @@
 import { SectorKitV1Schema } from '../dtos/SectorKitDto';
-import { BEAUTY_SALON_KIT_V1 } from '../kits/beautySalon/kit.v1';
-import { AESTHETIC_CLINIC_KIT_V1 } from '../kits/aestheticClinic/kit.v1';
-import { SALE_BINDING_V1, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../accountingBinding/fixtures/saleBinding';
-import { CLINIC_BINDING_V1, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../accountingBinding/fixtures/clinicBinding';
+import { BEAUTY_SALON_KIT_V1 } from '../domain/kits/beautySalon/kit.v1';
+import { AESTHETIC_CLINIC_KIT_V1 } from '../domain/kits/aestheticClinic/kit.v1';
+import { SALE_BINDING_V1, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../accountingBinding/domain/fixtures/saleBinding';
+import { CLINIC_BINDING_V1, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../accountingBinding/domain/fixtures/clinicBinding';
 
 /** BE-INCR-KIT-SETOR, PR-1 — contrato do kit (item 2) e kits v1 zero-diff (item 3). */
 

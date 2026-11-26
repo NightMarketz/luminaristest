@@ -85,10 +85,10 @@ Se falhar → diagnosticar e corrigir antes de avançar ao próximo passo.
 ### Para `analytics-kpi-generator` / `dashboard-kpi-end-to-end-generator`
 
 **Referências obrigatórias:**
-- Ler um processor existente completo: `server/src/features/analytics/kpis/revenue/RevenueKpiProcessor.ts`
-- Ler `server/src/features/analytics/utils/DataSanitizer.ts`
-- Ler `server/src/features/analytics/utils/DateUtils.ts`
-- Ler `server/src/features/analytics/kpis/index.ts` antes de registrar
+- Ler um processor existente completo: `server/src/features/analytics/domain/kpis/revenue/RevenueKpiProcessor.ts`
+- Ler `server/src/features/analytics/domain/utils/DataSanitizer.ts`
+- Ler `server/src/features/analytics/domain/utils/DateUtils.ts`
+- Ler `server/src/features/analytics/domain/kpis/index.ts` antes de registrar
 
 **Padrões obrigatórios no processor:**
 ```typescript
@@ -133,7 +133,7 @@ const previousValue = previousCount > 0 ? previousTotal / previousCount : undefi
 ### Para `backend-test-suite-generator`
 
 **Referências obrigatórias para cada tipo:**
-- `kpi-processor` → ler `server/src/features/analytics/kpis/revenue/__tests__/RevenueKpiProcessor.test.ts`
+- `kpi-processor` → ler `server/src/features/analytics/domain/kpis/revenue/__tests__/RevenueKpiProcessor.test.ts`
 - `service` → ler `server/src/features/users/__tests__/user-deletion-qdrant.test.ts`
 - `security` → ler `server/src/features/documents/__tests__/rag-tenant-isolation.test.ts`
 - `middleware` → ler `server/src/middleware/__tests__/auth.test.ts`

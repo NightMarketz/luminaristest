@@ -1,5 +1,5 @@
-import type { PipelineSpec } from '../core/pipeline/Pipeline';
-import { compilePipeline } from '../core/pipeline/Compiler';
+import type { PipelineSpec } from '../domain/core/pipeline/Pipeline';
+import { compilePipeline } from '../domain/core/pipeline/Compiler';
 import type { ITableSchema } from '@/features/dynamicTables/models/DynamicTable.model';
 
 /**

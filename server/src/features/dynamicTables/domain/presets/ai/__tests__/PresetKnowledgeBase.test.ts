@@ -4,7 +4,7 @@
  */
 import { deriveKnowledgeBase, presetKnowledgeBase } from '../PresetKnowledgeBase';
 import { tablePresetSuites, type SelectablePresetSuite } from '../..';
-import { PresetMatcher } from '../../../../../interview/InterviewService/PresetMatcher';
+import { PresetMatcher } from '../../../../../interview/services/InterviewService/PresetMatcher';
 import type { OpenAIService } from '../../../../../../lib/openai/OpenAIService';
 
 beforeEach(() => jest.clearAllMocks());

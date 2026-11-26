@@ -8,14 +8,14 @@ import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import type { BindingScope } from '@/features/accountingBinding/public/bindingScope.types';
 import { KitUpgradeService } from '@/features/sectorKits/services/KitUpgradeService';
-import { KIT_REGISTRY } from '@/features/sectorKits/registry';
+import { KIT_REGISTRY } from '@/features/sectorKits/domain/registry';
 import { parseArgs, runUpgrade } from '@/jobs/upgradeSectorKitsCli';
 import { CANONICAL_ACCOUNTS_PRE_L8 } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
 
 // BE-INCR-PLANO-4-NIVEIS (F-L8-12 a): a passagem ao v6 é da migração de dado (migratePlano4NiveisCli), não do upgrade.
 // O CLI de upgrade segue exercitado no plano de 3 níveis: registro preso no v5, unidade nascida no plano da época.
-jest.mock('@/features/sectorKits/registry', () => {
-  const real = jest.requireActual('@/features/sectorKits/registry');
+jest.mock('@/features/sectorKits/domain/registry', () => {
+  const real = jest.requireActual('@/features/sectorKits/domain/registry');
   const registry = Object.fromEntries(
     Object.entries(real.KIT_REGISTRY as Record<string, { kitVersion: number }[]>).map(([k, vs]) => [k, vs.filter((v) => v.kitVersion <= 5)]),
   );

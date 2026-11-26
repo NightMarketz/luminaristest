@@ -1,0 +1,59 @@
+import type { PostEntryInput } from '../../../accounting/public/postingDto.types';
+import type { IAccountingEventMapper } from '../../../accounting/public/accountingEventMapper';
+import type { EventBinding } from '../../dtos/AccountingBindingDto';
+import type { Archetype } from '../../models/types';
+import { type AccountingEventLike, interpret, isSubledgerCommand } from './interpret';
+
+/**
+ * `InterpretedEventMapper` — adaptador fino (P1-DOSSIER-interprete.md §b, literal) implementando
+ * `IAccountingEventMapper`. Fecha sobre UM `EventBinding` já resolvido + o `Archetype` que
+ * `binding.archetypeKey` referencia — a resolução `archetypeKey → Archetype` (lookup no catálogo)
+ * é responsabilidade de quem CONSTRÓI o array de mappers (Fase B, `lib/factory.ts:402-408`), fora
+ * do escopo deste corpo (BRIEF item 14).
+ *
+ * `sourceType` vem de `binding.eventKey` — a mesma chave que `AccountingSyncService` já usa como
+ * chave de registro (`this.mappers.get(event.sourceType)`, `AccountingSyncService.ts:45,51`),
+ * preservando o ponto de extensão T10 sem tocar `AccountingSyncPort`/`AccountingSyncService`
+ * (dossiê §b: "Nada muda em AccountingSyncPort.ts... AccountingSyncService.ts... zero linha tocada").
+ *
+ * `map()` só aceita arquétipos `kind: 'postEntry'` — `IAccountingEventMapper.map()` retorna
+ * `PostEntryInput`, nunca `SubledgerCommand` (a classe 2 não implementa este contrato; é consumida
+ * por outro ponto de wiring, fora de escopo desta fase). Um binding apontando para um arquétipo
+ * classe 2 aqui é erro de FIAÇÃO (constrói o mapper errado para o efeito errado), não um erro de
+ * dado de evento — falha na construção do adaptador, não no runtime de um evento específico.
+ */
+export class InterpretedEventMapper implements IAccountingEventMapper {
+  public readonly sourceType: string;
+
+  /**
+   * `bindingRef` (BE-INCR-KIT-SETOR PR-6, item 50): a linha `AccountingBinding` compilada de onde veio `binding`. Quando
+   * presente, todo `PostEntryInput` sai com ela e o `JournalEntry` grava a versão que o interpretou. Ausente no
+   * bootstrap síncrono da Factory e nos testes do golden (sem linha no banco).
+   */
+  constructor(
+    private readonly archetype: Archetype,
+    private readonly binding: EventBinding,
+    private readonly bindingRef?: { bindingId: string; bindingVersion: number },
+  ) {
+    if (archetype.kind !== 'postEntry') {
+      throw new Error(
+        `InterpretedEventMapper só serve arquétipos 'postEntry' — '${archetype.name}' é ` +
+          `'${archetype.kind}' (fiação errada: a classe createSubledgerRecord não implementa ` +
+          `IAccountingEventMapper).`,
+      );
+    }
+    // eventKey do binding é a chave de registro do evento (mesmo valor que AccountingEvent.sourceType
+    // usa). Desde o PR-6 do KIT-SETOR o sourceType é `string` aberto (F-KB-4 → b): sem cast.
+    this.sourceType = binding.eventKey;
+  }
+
+  public map(event: AccountingEventLike): PostEntryInput {
+    const result = interpret({ archetype: this.archetype, binding: this.binding, event });
+    if (isSubledgerCommand(result)) {
+      // Não deveria ser alcançável (guard no construtor já rejeita arquétipo classe 2) — defesa em
+      // profundidade contra o `archetype` mutar depois da construção.
+      throw new Error('interpret() retornou SubledgerCommand para um arquétipo postEntry — bug de dispatch.');
+    }
+    return this.bindingRef ? { ...result, bindingRef: this.bindingRef } : result;
+  }
+}

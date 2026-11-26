@@ -27,8 +27,8 @@ Toda extensão (backend de serviços e qualquer UI de wizard/onboarding) deve cu
 O wizard de onboarding real vive nos dois lados — leia ambos antes de estender:
 
 ```
-server/src/features/interview/InterviewService/InterviewService.ts   ← dispatcher principal (máquina de estados)
-server/src/features/interview/InterviewService/PromptConfig.ts        ← system prompts por estágio
+server/src/features/interview/services/InterviewService/InterviewService.ts   ← dispatcher principal (máquina de estados)
+server/src/features/interview/services/InterviewService/PromptConfig.ts        ← system prompts por estágio
 server/src/features/interview/models/InterviewTypes.ts                ← enums InterviewStage / ProcessableStage e tipos
 my-app/features/interview/components/AiInterviewSetup/index.tsx        ← UI do wizard (entry point do chat de setup)
 my-app/features/interview/hooks/useAiInterview.ts                     ← hook que orquestra o fluxo de turnos no frontend
@@ -84,15 +84,15 @@ InterviewService.processTurn(stage, messages, presetKey?, sessionId?)
 ## Repository patterns to inspect first
 
 ```
-server/src/features/interview/InterviewService/InterviewService.ts     ← dispatcher principal
-server/src/features/interview/InterviewService/PromptConfig.ts          ← system prompts por estágio
-server/src/features/interview/InterviewService/StageHandlers.ts         ← AI response helpers
-server/src/features/interview/InterviewService/PresetMatcher.ts         ← matching de preset
-server/src/features/interview/CustomizationService/CustomizationService.ts ← table customization
-server/src/features/interview/CustomizationService/StateManager.ts      ← in-memory session state
-server/src/features/interview/CustomizationService/AIInteractions.ts    ← intent analysis
-server/src/features/interview/FieldCustomizationService/index.ts        ← field customization
-server/src/features/interview/FieldCustomizationService/FieldIntentParser.ts ← Zod JSON validator
+server/src/features/interview/services/InterviewService/InterviewService.ts     ← dispatcher principal
+server/src/features/interview/services/InterviewService/PromptConfig.ts          ← system prompts por estágio
+server/src/features/interview/services/InterviewService/StageHandlers.ts         ← AI response helpers
+server/src/features/interview/services/InterviewService/PresetMatcher.ts         ← matching de preset
+server/src/features/interview/services/CustomizationService/CustomizationService.ts ← table customization
+server/src/features/interview/services/CustomizationService/StateManager.ts      ← in-memory session state
+server/src/features/interview/services/CustomizationService/AIInteractions.ts    ← intent analysis
+server/src/features/interview/services/FieldCustomizationService/index.ts        ← field customization
+server/src/features/interview/services/FieldCustomizationService/FieldIntentParser.ts ← Zod JSON validator
 server/src/features/interview/models/InterviewTypes.ts                  ← todos os tipos e enums
 ```
 
@@ -236,12 +236,12 @@ O `FieldPresetMatcher` tenta match semântico antes de criar campo custom:
 
 ```
 server/src/features/interview/models/InterviewTypes.ts             ← EDIT (novo stage na enum)
-server/src/features/interview/InterviewService/PromptConfig.ts     ← EDIT (novo prompt)
-server/src/features/interview/InterviewService/InterviewService.ts ← EDIT (novo case no switch)
-server/src/features/interview/InterviewService/StageHandlers.ts    ← EDIT (se novo handler AI)
-server/src/features/interview/CustomizationService/AIInteractions.ts ← EDIT (novo intent)
-server/src/features/interview/CustomizationService/CustomizationService.ts ← EDIT (novo handler)
-server/src/features/interview/FieldCustomizationService/index.ts   ← EDIT (novo modification type)
+server/src/features/interview/services/InterviewService/PromptConfig.ts     ← EDIT (novo prompt)
+server/src/features/interview/services/InterviewService/InterviewService.ts ← EDIT (novo case no switch)
+server/src/features/interview/services/InterviewService/StageHandlers.ts    ← EDIT (se novo handler AI)
+server/src/features/interview/services/CustomizationService/AIInteractions.ts ← EDIT (novo intent)
+server/src/features/interview/services/CustomizationService/CustomizationService.ts ← EDIT (novo handler)
+server/src/features/interview/services/FieldCustomizationService/index.ts   ← EDIT (novo modification type)
 ```
 
 ## Required checks

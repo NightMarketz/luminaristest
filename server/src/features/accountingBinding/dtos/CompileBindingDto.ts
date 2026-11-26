@@ -18,7 +18,7 @@ import { ACCOUNTING_BINDING_STATUSES } from '../models/accountingBindingStatus';
  * campo `role` de `RoleSlotSchema` já é string livre (não um enum fechado no nível Zod; o
  * catálogo de 9 papéis do BRIEF item 3 é fechado em `models/types.ts`, não aqui), então este é
  * o encaixe mais simples dentro do shape JÁ COMMITADO pela Fase 0 (`AccountingBindingDto.ts`) sem
- * tocar nele — decisão local deste arquivo, documentada aqui para quem ler `fixtures/saleBinding.ts`
+ * tocar nele — decisão local deste arquivo, documentada aqui para quem ler `domain/fixtures/saleBinding.ts`
  * (mesma convenção) e para o Corpo D consumir sem surpresa.
  */
 

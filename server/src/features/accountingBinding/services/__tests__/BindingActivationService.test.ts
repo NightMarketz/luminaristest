@@ -10,8 +10,8 @@ import {
   type ActivationPeriodPort,
   type ActivationPeriodStatus,
 } from '../BindingActivationService';
-import { SALE_BINDING_V2, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../fixtures/saleBinding';
-import { CLINIC_BINDING_V2 } from '../../fixtures/clinicBinding';
+import { SALE_BINDING_V2, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../domain/fixtures/saleBinding';
+import { CLINIC_BINDING_V2 } from '../../domain/fixtures/clinicBinding';
 import { KitInstallService } from '../../../sectorKits/services/KitInstallService';
 import { SectorKitPolicy } from '../../../sectorKits/policies/SectorKitPolicy';
 import type { IKitInstallationRepository } from '../../../sectorKits/repositories/IKitInstallationRepository';

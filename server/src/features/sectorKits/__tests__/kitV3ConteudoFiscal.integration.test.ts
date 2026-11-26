@@ -10,9 +10,9 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import type { BindingScope } from '@/features/accountingBinding/public/bindingScope.types';
-import { BEAUTY_SALON_KIT_V3 } from '@/features/sectorKits/kits/beautySalon/kit.v3';
-import { AESTHETIC_CLINIC_KIT_V3 } from '@/features/sectorKits/kits/aestheticClinic/kit.v3';
-import { KIT_REGISTRY } from '@/features/sectorKits/registry';
+import { BEAUTY_SALON_KIT_V3 } from '@/features/sectorKits/domain/kits/beautySalon/kit.v3';
+import { AESTHETIC_CLINIC_KIT_V3 } from '@/features/sectorKits/domain/kits/aestheticClinic/kit.v3';
+import { KIT_REGISTRY } from '@/features/sectorKits/domain/registry';
 import { CANONICAL_ACCOUNTS_PRE_L8 } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
 
 const UNIT = 'unit-kit-v3';

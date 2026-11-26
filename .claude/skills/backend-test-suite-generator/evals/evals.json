@@ -52,9 +52,9 @@
         "TEST-004",
         "TEST-007"
       ],
-      "prompt": "Gere a suíte Jest do KPI processor RevenueKpiProcessor em server/src/features/analytics/kpis/revenue/__tests__/RevenueKpiProcessor.test.ts. Inclua as suítes Math, Float Safety (1000 × R$0,10) e Empty Safety (rows vazios). Use referenceDate fixo. Saída: o conteúdo completo do arquivo.",
+      "prompt": "Gere a suíte Jest do KPI processor RevenueKpiProcessor em server/src/features/analytics/domain/kpis/revenue/__tests__/RevenueKpiProcessor.test.ts. Inclua as suítes Math, Float Safety (1000 × R$0,10) e Empty Safety (rows vazios). Use referenceDate fixo. Saída: o conteúdo completo do arquivo.",
       "target_files": [
-        "server/src/features/analytics/kpis/revenue/__tests__/RevenueKpiProcessor.test.ts"
+        "server/src/features/analytics/domain/kpis/revenue/__tests__/RevenueKpiProcessor.test.ts"
       ],
       "assertions": [
         "regex:referenceDate\\s*=\\s*new Date\\('20\\d{2}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z'\\)",

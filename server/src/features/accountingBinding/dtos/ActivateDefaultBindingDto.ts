@@ -6,7 +6,7 @@ import { KitRefSchema } from '../../sectorKits/dtos/KitInstallationDto';
  * LAC-B — `POST /accounting-binding/activate-default` (FE-INCR-BINDING-ACTIVATION-brief.md,
  * "Contratos esboçados" + emenda F-I3-1 → a de 2026-09-07). Equivalente HTTP do CLI
  * `activateAccountingBindingCli.ts`: o cliente manda só a unidade (e opcionalmente o setor); o
- * binding/snapshot do setor é embutido server-side (`fixtures/sectorBindingRegistry.ts`).
+ * binding/snapshot do setor é embutido server-side (`domain/fixtures/sectorBindingRegistry.ts`).
  *
  *   - `installChartIfEmpty` (F-B2 → a): plano de contas VAZIO + flag ⇒ instala o plano canônico
  *     antes do compile; sem a flag ⇒ bloqueante `CHART_OF_ACCOUNTS_EMPTY` (comportamento (b)).

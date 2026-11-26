@@ -5,9 +5,9 @@
  * Ensures that all required fields are mapped and have correct types.
  */
 
-import type { AnalyticsConfiguration } from '../core/models/AnalyticsConfiguration';
+import type { AnalyticsConfiguration } from '../models/AnalyticsConfiguration';
 import type { ITableSchema, ISchemaField } from '@/features/dynamicTables/models/DynamicTable.model';
-import { getTemplate } from '../core';
+import { getTemplate } from '../domain/core';
 
 export type ValidationError = {
   field: string;

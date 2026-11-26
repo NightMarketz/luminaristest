@@ -44,8 +44,8 @@ export interface AccountingBindingControllerDeps {
   /** LAC-B — mesma fábrica-por-escopo, para o `activate-default`. */
   buildActivationService: (scope: BindingScope) => BindingActivationService;
   /**
-   * LAC-B PR-0 (EMENDA-1 item 0b, F-BA-2 → b): recarga dos mappers depois de `Active`. Na rota, a função serializada de
-   * `runtime/mapperReload.ts` (a mesma do onboarding, I4 item 13).
+   * LAC-B PR-0 (EMENDA-1 item 0b, F-BA-2 → b): recarga dos mappers depois de `Active`. Na rota, a recarga serializada da
+   * `lib/factory.ts` (`reloadAccountingMappersSerialized()`, a mesma do onboarding, I4 item 13).
    */
   reloadAccountingMappers: () => Promise<void>;
 }

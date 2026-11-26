@@ -33,8 +33,8 @@ const REGISTRIES = [
   },
   {
     name: 'categoria de KPI importada em kpis/index.ts',
-    dir: 'server/src/features/analytics/kpis', kind: 'dirs',
-    registry: 'server/src/features/analytics/kpis/index.ts',
+    dir: 'server/src/features/analytics/domain/kpis', kind: 'dirs',
+    registry: 'server/src/features/analytics/domain/kpis/index.ts',
     ref: (d) => `'./${d}'`, // side-effect import — esquecer = processor nunca registra, tsc verde
   },
   {

@@ -8,8 +8,8 @@ import type { EventBinding } from '@/features/accountingBinding/dtos/AccountingB
 import { CANONICAL_ACCOUNTS_PRE_L8 } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
 import type { SectorKitV1 } from '@/features/sectorKits/dtos/SectorKitDto';
 import type { KitDiff } from '@/features/sectorKits/dtos/KitUpgradeDto';
-import { BEAUTY_SALON_KIT_V1 } from '@/features/sectorKits/kits/beautySalon/kit.v1';
-import { BEAUTY_SALON_KIT_V4 } from '@/features/sectorKits/kits/beautySalon/kit.v4';
+import { BEAUTY_SALON_KIT_V1 } from '@/features/sectorKits/domain/kits/beautySalon/kit.v1';
+import { BEAUTY_SALON_KIT_V4 } from '@/features/sectorKits/domain/kits/beautySalon/kit.v4';
 import { applyRoleOverrides } from '@/features/sectorKits/services/applyRoleOverrides';
 import {
   classifyKitDiff,

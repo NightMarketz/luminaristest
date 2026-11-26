@@ -5,7 +5,7 @@
  * sintéticas 3.6/4.5 (F-L8-11 a). Varre o plano; não é uma lista fixa.
  */
 import { CANONICAL_ACCOUNTS } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
-import { KIT_REGISTRY, latestKit } from '@/features/sectorKits/registry';
+import { KIT_REGISTRY, latestKit } from '@/features/sectorKits/domain/registry';
 
 // A fronteira do sectorKits só importa o plano canônico; a regra do Manual vai literal (COD_NAT 01/02/03, nível 4).
 const PATRIMONIAL = ['Asset', 'Liability', 'Equity'];

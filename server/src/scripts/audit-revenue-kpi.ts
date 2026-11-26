@@ -1,5 +1,5 @@
-import { revenueKpiProcessor } from '../features/analytics/kpis/revenue/RevenueKpiProcessor';
-import { DatePreset, getPeriodBoundaries } from '../features/analytics/utils/DateUtils';
+import { revenueKpiProcessor } from '../features/analytics/domain/kpis/revenue/RevenueKpiProcessor';
+import { DatePreset, getPeriodBoundaries } from '../features/analytics/domain/utils/DateUtils';
 
 async function runAudit() {
     console.log('--- REVENUE KPI AUDIT START ---');

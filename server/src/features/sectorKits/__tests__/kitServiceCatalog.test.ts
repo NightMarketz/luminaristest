@@ -1,6 +1,6 @@
 import { LISTA_LC116_SEMENTE } from '@test/helpers/legalParams';
-import { KIT_REGISTRY } from '../registry';
-import { CATALOGO_SERVICOS_FISCAIS } from '../kits/_shared/catalogoServicosFiscais';
+import { KIT_REGISTRY } from '../domain/registry';
+import { CATALOGO_SERVICOS_FISCAIS } from '../domain/kits/_shared/catalogoServicosFiscais';
 import { normalizarTermos, suggestFromCatalog } from '../models/suggestFromCatalog';
 import type { ServiceFiscalCatalogItem } from '../dtos/SectorKitDto';
 

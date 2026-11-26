@@ -19,7 +19,7 @@ import prisma from '../lib/prisma';
 import type { BindingScope } from '../features/accountingBinding/public/bindingScope.types';
 import { KitInstallationRepository } from '../features/sectorKits/repositories/KitInstallationRepository';
 import { DEPLOY_CLI_ACTOR, type KitUpgradeMode } from '../features/sectorKits/models/kitUpgradeTypes';
-import { KIT_REGISTRY, latestKit } from '../features/sectorKits/registry';
+import { KIT_REGISTRY, latestKit } from '../features/sectorKits/domain/registry';
 
 export interface UpgradeSectorKitsArgs {
   mode: KitUpgradeMode;

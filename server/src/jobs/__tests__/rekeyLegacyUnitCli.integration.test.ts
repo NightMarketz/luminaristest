@@ -16,7 +16,7 @@ import { ApplicationFactory } from '@/lib/factory';
 import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { NoMapperForUnitError } from '@/lib/errors';
-import { SALE_BINDING_V1 } from '@/features/accountingBinding/fixtures/saleBinding';
+import { SALE_BINDING_V1 } from '@/features/accountingBinding/domain/fixtures/saleBinding';
 import {
   runCli, buildInventory, tableDigest, REKEY_MODELS, KEEP_MODELS, EXCLUDED_UNIT_IDS, UNIT_REKEYED_EVENT,
 } from '../rekeyLegacyUnitCli';

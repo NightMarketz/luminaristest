@@ -18,11 +18,10 @@
  * NÃO é chamado por Dockerfile CMD/ENTRYPOINT nem pelo boot: humano ou etapa de migração do pipeline, antes do
  * boot (o leitor do boot, F8, pega o binding Active que a instalação deixa).
  */
-import { ApplicationFactory } from '../lib/factory';
+import { ApplicationFactory, getFactory } from '../lib/factory';
 import prisma from '../lib/prisma';
-import { KIT_REGISTRY } from '../features/sectorKits/registry';
+import { KIT_REGISTRY } from '../features/sectorKits/domain/registry';
 import { KitInstallStepFailedError } from '../features/sectorKits/models/kitInstallTypes';
-import { reloadAccountingMappersSerialized } from '../features/accountingBinding/runtime/mapperReload';
 import type { BindingScope } from '../features/accountingBinding/public/bindingScope.types';
 
 export interface InstallSectorKitArgs {
@@ -134,7 +133,7 @@ export async function runInstall(args: InstallSectorKitArgs): Promise<number> {
     // LAC-B (dono, chat, 2026-10-14): a recarga do activate-default. Neste processo ela só prova que o registro de
     // mappers monta; o servidor já no ar segue pedindo reinício.
     try {
-      await reloadAccountingMappersSerialized();
+      await getFactory().reloadAccountingMappersSerialized();
     } catch (error) {
       console.error(
         `FALHOU: kit '${outcome.kit.kitKey}' instalado (binding versão ${outcome.bindingVersion} Active), mas a recarga dos ` +

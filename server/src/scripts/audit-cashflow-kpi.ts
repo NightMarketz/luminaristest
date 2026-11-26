@@ -1,5 +1,5 @@
-import { cashflowKpiProcessor } from '../features/analytics/kpis/cashflow/CashflowKpiProcessor';
-import { DatePreset } from '../features/analytics/utils/DateUtils';
+import { cashflowKpiProcessor } from '../features/analytics/domain/kpis/cashflow/CashflowKpiProcessor';
+import { DatePreset } from '../features/analytics/domain/utils/DateUtils';
 
 async function runCashflowAudit() {
     console.log('--- CASHFLOW KPI AUDIT START ---');

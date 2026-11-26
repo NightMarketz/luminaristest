@@ -11,8 +11,8 @@
 import {
   classifySubledgerIdempotency,
   type SubledgerRecordRow,
-} from '../archetypes/SubledgerCreateReceivableArchetype';
-import { archetypeCatalog } from '../archetypes/catalog';
+} from '../domain/archetypes/SubledgerCreateReceivableArchetype';
+import { archetypeCatalog } from '../domain/archetypes/catalog';
 
 const DOC = 'CRM-opp-123';
 

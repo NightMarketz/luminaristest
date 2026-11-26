@@ -12,8 +12,8 @@
 import { BindingValidationService } from '../BindingValidationService';
 import type { Archetype, ArchetypeCatalog, ChartAccountLookup, ChartLookupPort, PostingValidatePort } from '../../models/types';
 import type { AccountingBindingV1 } from '../../dtos/AccountingBindingDto';
-import { archetypeCatalog } from '../../archetypes/catalog';
-import { SALE_BINDING_V1 } from '../../fixtures/saleBinding';
+import { archetypeCatalog } from '../../domain/archetypes/catalog';
+import { SALE_BINDING_V1 } from '../../domain/fixtures/saleBinding';
 
 // ---------------------------------------------------------------------------------------------
 // Arquétipo fixture — 1:1 com o "reconhecimento-receita" real (SaleFinalizedMapper): débito
@@ -373,8 +373,8 @@ describe('createSubledgerRecord — arquétipo classe-2 não declara papéis exi
 // -------------------------------------------------------------------------------------------
 // CORREÇÃO (review independente, finding high) — o papel `caixa-por-metodo` é resolvido por
 // sub-chave (`"caixa-por-metodo:<método>"`, convenção de `dtos/CompileBindingDto.ts` §header,
-// espelhada por `interpreter/interpret.ts:166-171`). O binding real do salão
-// (`fixtures/saleBinding.ts`) grava uma `roleSlot` por sub-chave — sem reconhecer o papel-base,
+// espelhada por `domain/interpreter/interpret.ts:166-171`). O binding real do salão
+// (`domain/fixtures/saleBinding.ts`) grava uma `roleSlot` por sub-chave — sem reconhecer o papel-base,
 // o validador rejeitava o próprio binding de referência. Testes abaixo provam, com o arquétipo
 // REAL (`settlementArchetype`, via `archetypeCatalog`) e — no último teste — o BINDING real
 // (`SALE_BINDING_V1`), que isso não acontece mais.

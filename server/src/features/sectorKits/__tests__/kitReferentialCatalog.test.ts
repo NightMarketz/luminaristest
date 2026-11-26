@@ -1,7 +1,7 @@
 import catalog2025 from './fixtures/referential-catalog-2025.json';
-import { KIT_REGISTRY } from '../registry';
+import { KIT_REGISTRY } from '../domain/registry';
 import { SectorKitV1Schema, type SectorKitV1 } from '../dtos/SectorKitDto';
-import { BEAUTY_SALON_KIT_V1 } from '../kits/beautySalon/kit.v1';
+import { BEAUTY_SALON_KIT_V1 } from '../domain/kits/beautySalon/kit.v1';
 
 /**
  * BE-INCR-KIT-SETOR PR-2, item 13 — "código referencial que não seja analítico no catálogo ⇒ o kit é inválido (erro

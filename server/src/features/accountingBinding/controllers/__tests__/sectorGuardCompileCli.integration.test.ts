@@ -13,7 +13,7 @@
  *     O "um kit por unidade" (item 9) o segura quando a unidade tem `KitInstallation`; a unidade cujo salão foi
  *     ativado pelo `/compile` (ou legada) não tem, e o CLI grava o 2º setor.
  * Salão e clínica emitem os MESMOS 6 eventKey (`sale.finalized`…`sale.package.expired`). Dois `Active` na unidade ⇒
- * `initializeAccountingSyncFromBindings()` (boot e `runtime/mapperReload.ts`) lança
+ * `initializeAccountingSyncFromBindings()` (boot e a recarga serializada da `lib/factory.ts`) lança
  * `AccountingEventMapperCollisionError`: o boot de TODOS os tenants cai, e todo activate-default seguinte volta
  * `Draft ACCOUNTING_SYNC_RELOAD_FAILED`.
  *
@@ -25,7 +25,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
-import { SECTOR_BINDING_REGISTRY } from '@/features/accountingBinding/fixtures/sectorBindingRegistry';
+import { SECTOR_BINDING_REGISTRY } from '@/features/accountingBinding/domain/fixtures/sectorBindingRegistry';
 import { runCli } from '@/jobs/activateAccountingBindingCli';
 
 const app = makeApp();

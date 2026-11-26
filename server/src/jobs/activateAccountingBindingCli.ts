@@ -28,7 +28,7 @@
  * `scripts/migrate-deploy.mjs` (ADR-M2 decisão 4): invocado explicitamente por humano ou pela
  * etapa dedicada de migração do pipeline, DEPOIS que o chart de contas já existe no alvo.
  */
-import { DEFAULT_SECTOR_KEY } from '../features/accountingBinding/fixtures/sectorBindingRegistry';
+import { DEFAULT_SECTOR_KEY } from '../features/accountingBinding/domain/fixtures/sectorBindingRegistry';
 import { runInstall } from './installSectorKitCli';
 
 export interface ActivateBindingArgs {
@@ -38,7 +38,7 @@ export interface ActivateBindingArgs {
   sectorKey: string;
 }
 
-// Registry de setores: desde o PR-2 do kit, o `KIT_REGISTRY` (`features/sectorKits/registry.ts`), lido pelo
+// Registry de setores: desde o PR-2 do kit, o `KIT_REGISTRY` (`features/sectorKits/domain/registry.ts`), lido pelo
 // `installSectorKitCli` — o `SECTOR_BINDING_REGISTRY` é derivado dele (PR-1).
 
 /** Lê `--flag valor` de um array argv — mesma convenção de `scripts/migrate-deploy.mjs`. */

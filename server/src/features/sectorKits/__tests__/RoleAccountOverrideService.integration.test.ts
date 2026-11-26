@@ -9,7 +9,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { resetDb } from '@test/helpers/db';
-import { latestKit } from '@/features/sectorKits/registry';
+import { latestKit } from '@/features/sectorKits/domain/registry';
 import { getFactory } from '@/lib/factory';
 import { BindingCompileService } from '@/features/accountingBinding/services/BindingCompileService';
 

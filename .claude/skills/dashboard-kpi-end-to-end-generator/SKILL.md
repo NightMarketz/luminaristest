@@ -1,6 +1,6 @@
 ---
 name: dashboard-kpi-end-to-end-generator
-description: Gera um KPI completo ponta a ponta — a CADEIA backend analytics processor (single-pass sobre rows → ChartDataPoint[]) + template registrado + hook de dados analíticos no frontend + KPI card widget que consome o hook e reusa o card canônico. Use quando o pedido envolve TODAS as camadas ("quero ver a métrica X no dashboard", "adicione um KPI de receita do backend ao frontend", "métrica nova ponta a ponta"). NÃO use para uma única camada: só processor backend → analytics-kpi-generator; só widget estático sem KPI → frontend-widget-generator. Domínio/arquivos: server/src/features/analytics/kpis/<category>/* + my-app/features/dashboard/category-views/<cat>/{hooks,components}/*.
+description: Gera um KPI completo ponta a ponta — a CADEIA backend analytics processor (single-pass sobre rows → ChartDataPoint[]) + template registrado + hook de dados analíticos no frontend + KPI card widget que consome o hook e reusa o card canônico. Use quando o pedido envolve TODAS as camadas ("quero ver a métrica X no dashboard", "adicione um KPI de receita do backend ao frontend", "métrica nova ponta a ponta"). NÃO use para uma única camada: só processor backend → analytics-kpi-generator; só widget estático sem KPI → frontend-widget-generator. Domínio/arquivos: server/src/features/analytics/domain/kpis/<category>/* + my-app/features/dashboard/category-views/<cat>/{hooks,components}/*.
 argument-hint: "[NomeDoKpi] [categoria]"
 allowed-tools: Read, Grep, Glob, Write, Edit
 compatibility: Claude Code; requer o monorepo Luminaris (server/ com Express + Prisma + analytics engine e Jest; my-app/ com React + Next.js Pages Router + tsc). Sem efeitos externos — apenas gera/edita arquivos no repositório.
@@ -30,9 +30,9 @@ Esta skill gera múltiplas camadas (processor + template + hook + widget) — TO
 O vertical-slice ponta-a-ponta de KPI é a cadeia **processor → card canônico → ChartRenderer** — todos verificados e existentes:
 
 ```
-server/src/features/analytics/kpis/revenue/RevenueKpiProcessor.ts                                   ← backend: single-pass, addMoney, previousValue undefined
-server/src/features/analytics/kpis/revenue/RevenueKpiTemplate.ts                                     ← template do KPI
-server/src/features/analytics/kpis/revenue/__tests__/RevenueKpiProcessor.test.ts                     ← teste (inclui Empty Safety)
+server/src/features/analytics/domain/kpis/revenue/RevenueKpiProcessor.ts                                   ← backend: single-pass, addMoney, previousValue undefined
+server/src/features/analytics/domain/kpis/revenue/RevenueKpiTemplate.ts                                     ← template do KPI
+server/src/features/analytics/domain/kpis/revenue/__tests__/RevenueKpiProcessor.test.ts                     ← teste (inclui Empty Safety)
 my-app/features/dashboard/category-views/finance/components/analytics/dashboard/DashboardKpiCard.tsx ← card de KPI canônico (REUSE, não recrie)
 my-app/features/dashboard/category-views/finance/components/analytics/charts/ChartRenderer.tsx       ← orquestrador de chart (REUSE, delega a PieDonut/BarLineArea + empty state)
 my-app/features/dashboard/category-views/finance/components/analytics/dashboard/AnalyticsDashboard.tsx ← board completo (KPIs + charts + explicações)
@@ -57,8 +57,8 @@ Cada item marcado `[DASHKPI-*]` abaixo é uma REGRA DE GERAÇÃO auditável. Est
 
 ### Backend (aplicar contrato de `analytics-kpi-generator`)
 
-1. **[DASHKPI-001]** Criar `server/src/features/analytics/kpis/<category>/<Name>KpiProcessor.ts` que **itera `rows` em single-pass** (um único loop, acumulando todas as métricas) e **retorna `ChartDataPoint[]`** (`import type { AnalyticsProcessor, ChartDataPoint } from '../../core'`; money via `addMoney()`, `previousValue` `undefined` sem dados). Múltiplos passes = FAIL.
-2. **[DASHKPI-002]** Criar `server/src/features/analytics/kpis/<category>/<Name>KpiTemplate.ts` e **registrar o KPI**: `registerProcessor('<key>', <name>KpiProcessor)` + `import './<Name>KpiTemplate'` no `kpis/<category>/index.ts` (e `import './<category>'` no `kpis/index.ts` se a categoria for nova). Sem registro o KPI é órfão.
+1. **[DASHKPI-001]** Criar `server/src/features/analytics/domain/kpis/<category>/<Name>KpiProcessor.ts` que **itera `rows` em single-pass** (um único loop, acumulando todas as métricas) e **retorna `ChartDataPoint[]`** (`import type { AnalyticsProcessor, ChartDataPoint } from '../../core'`; money via `addMoney()`, `previousValue` `undefined` sem dados). Múltiplos passes = FAIL.
+2. **[DASHKPI-002]** Criar `server/src/features/analytics/domain/kpis/<category>/<Name>KpiTemplate.ts` e **registrar o KPI**: `registerProcessor('<key>', <name>KpiProcessor)` + `import './<Name>KpiTemplate'` no `kpis/<category>/index.ts` (e `import './<category>'` no `kpis/index.ts` se a categoria for nova). Sem registro o KPI é órfão.
 3. Criar `__tests__/<Name>KpiProcessor.test.ts` (inclui Empty Safety — rows vazios → `0` finito, nunca `NaN`).
 
 ### Frontend hook
@@ -80,10 +80,10 @@ Cada item marcado `[DASHKPI-*]` abaixo é uma REGRA DE GERAÇÃO auditável. Est
 ## Files usually created or changed
 
 ```
-server/src/features/analytics/kpis/<category>/<Name>KpiProcessor.ts               ← NEW
-server/src/features/analytics/kpis/<category>/<Name>KpiTemplate.ts                ← NEW
-server/src/features/analytics/kpis/<category>/__tests__/<Name>Processor.test.ts   ← NEW
-server/src/features/analytics/kpis/index.ts                                        ← EDIT
+server/src/features/analytics/domain/kpis/<category>/<Name>KpiProcessor.ts               ← NEW
+server/src/features/analytics/domain/kpis/<category>/<Name>KpiTemplate.ts                ← NEW
+server/src/features/analytics/domain/kpis/<category>/__tests__/<Name>Processor.test.ts   ← NEW
+server/src/features/analytics/domain/kpis/index.ts                                        ← EDIT
 my-app/features/dashboard/category-views/<cat>/hooks/use<Name>Kpi.ts              ← NEW
 my-app/features/dashboard/category-views/<cat>/components/kpi/<Name>KpiCard.tsx   ← NEW
 ```
@@ -92,7 +92,7 @@ my-app/features/dashboard/category-views/<cat>/components/kpi/<Name>KpiCard.tsx 
 
 ```bash
 cd server && npx tsc --noEmit
-cd server && npx jest features/analytics/kpis/<category> --passWithNoTests
+cd server && npx jest features/analytics/domain/kpis/<category> --passWithNoTests
 cd my-app && npx tsc --noEmit
 ```
 
