@@ -43,6 +43,9 @@ export const ALERTA_LABEL: Record<AlertaSimples['codigo'], string> = {
   PROJECAO_LIMITE_EPP: 'Projeção do ano perto do limite da EPP',
   PROJECAO_SUBLIMITE_ICMS_ISS: 'Projeção do ano perto do sublimite do ICMS/ISS',
   BENEFICIO_ISS_TRANSICAO_8B: 'Benefício municipal de ISS cruza a transição de 2029',
+  FOLHA_DP_INCOMPLETA: 'Folha do DP incompleta no mês',
+  HISTORICO_FOLHA_IGNORADO: 'Folha digitada no histórico ignorada',
+  FOLHA_FATOR_R_LEITURA_PROVISORIA: 'Folha do fator r pela leitura de caixa (provisória)',
 };
 
 const MOTIVO: Record<NonNullable<AlertaSimples['motivoInformativo']>, { key: string; label: string }> = {

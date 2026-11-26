@@ -15948,7 +15948,10 @@
             "INTERDEPENDENCIA_RECEITA_NAO_INFORMADA",
             "PROJECAO_LIMITE_EPP",
             "PROJECAO_SUBLIMITE_ICMS_ISS",
-            "BENEFICIO_ISS_TRANSICAO_8B"
+            "BENEFICIO_ISS_TRANSICAO_8B",
+            "FOLHA_DP_INCOMPLETA",
+            "HISTORICO_FOLHA_IGNORADO",
+            "FOLHA_FATOR_R_LEITURA_PROVISORIA"
           ]
         },
         "detalhe": {

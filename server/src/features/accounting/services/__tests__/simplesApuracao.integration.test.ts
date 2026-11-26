@@ -17,6 +17,8 @@ import { PostingService } from '@/features/accounting/services/PostingService';
 import { SIMPLES_DAS_PROVISION_SOURCE_TYPE } from '@/features/accounting/services/SimplesApuracaoService';
 import { scopeToday } from '@/features/accounting/models/dates';
 import { storePublished } from '@/features/legalParameters/services/legalParameterCache';
+import type { FolhaFatorR, FolhaFatorRPort } from '@/features/accounting/paises/br/ports/FolhaFatorRPort';
+import { FolhaFatorRNulo } from '@/features/dp/paises/br/adapters/FolhaFatorRNulo';
 
 const app = makeApp();
 const CNPJ = '11222333000181';
@@ -106,6 +108,29 @@ describe('itens 17–18 — calcular e espelho', () => {
     expect(a.totalCalculadoCents).toBe(528_000);
     expect(a.alertas.map((x: { codigo: string }) => x.codigo)).toEqual(['HISTORICO_IGNORADO', 'NFSE_DIVERGE_RECEITA']);
     await prisma.simplesHistoricoMensal.deleteMany({ where: { competencia: '2026-06' } });
+  });
+
+  it('BE-INCR-DP-PONTE-RAZAO itens 35–38: a folha do DP chega pela porta montada no factory e vira alerta na apuração', async () => {
+    type ComPorta = { folhaFatorR: FolhaFatorRPort };
+    const svc = f().getSimplesApuracaoService() as unknown as ComPorta;
+    const original = svc.folhaFatorR;
+    expect(original).toBeInstanceOf(FolhaFatorRNulo); // item 35: sem folha FECHADA no DP, o adaptador nulo
+    const folha = (mes: string, completa: boolean): FolhaFatorR => ({ mes, folhaCents: 1_000n, origem: 'DP', completa, falta: completa ? null : 'recolhimento de FGTS/CPP (F5)' });
+    try {
+      await f().getSimplesEntradasService().upsertHistorico(scope(), '2026-05', { unitId: UNIT, receitaBrutaCents: 1, folhaCents: 7 });
+      svc.folhaFatorR = { folhaPorMes: async () => new Map([['2026-05', folha('2026-05', false)]]) };
+      const incompleta = (await calcular('2026-06')).body.data.alertas.map((x: { codigo: string }) => x.codigo);
+      expect(incompleta).toContain('FOLHA_DP_INCOMPLETA');
+      expect(incompleta).not.toContain('FOLHA_FATOR_R_LEITURA_PROVISORIA');
+
+      svc.folhaFatorR = { folhaPorMes: async () => new Map([['2026-05', folha('2026-05', true)]]) };
+      const completa = (await calcular('2026-06')).body.data.alertas.map((x: { codigo: string }) => x.codigo);
+      expect(completa).toEqual(expect.arrayContaining(['HISTORICO_FOLHA_IGNORADO', 'FOLHA_FATOR_R_LEITURA_PROVISORIA']));
+      expect(completa).not.toContain('FOLHA_DP_INCOMPLETA');
+    } finally {
+      svc.folhaFatorR = original;
+      await prisma.simplesHistoricoMensal.deleteMany({ where: { competencia: '2026-05' } });
+    }
   });
 
   it('perfil fora do Simples = 400', async () => {

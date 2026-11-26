@@ -148,6 +148,10 @@ export const CODIGOS_ALERTA_SIMPLES = [
   'PROJECAO_SUBLIMITE_ICMS_ISS',
   // ISS-TRANSICAO-IBS PR-2 (item 12): benefício municipal de ISS que cruza 01/01/2029 — aviso, não bloqueio.
   'BENEFICIO_ISS_TRANSICAO_8B',
+  // BE-INCR-DP-PONTE-RAZAO itens 37–38 (F-PNT-6 a, F-PNT-7 b): folha do fator r lida do DP — só aviso.
+  'FOLHA_DP_INCOMPLETA',
+  'HISTORICO_FOLHA_IGNORADO',
+  'FOLHA_FATOR_R_LEITURA_PROVISORIA',
 ] as const;
 /** D-2026-10-10-X14-ALERTA-INFORMATIVO (dono, chat, 2026-10-10), item 1: o código fica estável; o alerta ganha severidade. */
 export const SEVERIDADES_ALERTA_SIMPLES = ['INFO', 'WARNING'] as const;
