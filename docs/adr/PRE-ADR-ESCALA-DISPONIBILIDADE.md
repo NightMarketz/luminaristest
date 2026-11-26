@@ -1,7 +1,8 @@
 # PRE-ADR-ESCALA-DISPONIBILIDADE — Escala como módulo base: a disponibilidade de um recurso, lida pela agenda e pelo DP
 
 - **Data:** 2026-11-26
-- **Status:** **Proposed** — forks F-ESC-1..16 **RATIFICAÇÃO PENDENTE** (§5). Não autoriza código.
+- **Status:** **Accepted 2026-11-26** — forks F-ESC-1..16 **DECIDIDOS** pelo dono em questionário, todos na recomendação
+  (§5; cédula [`D-2026-11-26-ESCALA-BASE-FORKS`](../plano/decisoes/D-2026-11-26-ESCALA-BASE-FORKS.md)). Não autoriza código: cada PR do BRIEF pede o `executa`.
 - **Autorização:** dono, chat, 2026-11-26, questionário. Pergunta: *"Escala como módulo base (disponibilidade do
   profissional, CLT ou parceiro, lida pela agenda e pelo DP): autoriza planejar o PRE-ADR e o BRIEF? É só documento, sem
   código e sem 'executa'."* Resposta: *"Planejar (Recomendado)"*.
@@ -143,12 +144,15 @@ chamadas são fixas no código.
 | Conflito, folga e feriado na agenda | Conflito: `noOverlap` por pessoa (sem a unidade no escopo) e por recurso. Folga e ausência: exceção na escala; a exceção com alvo vale para a pessoa ou o recurso em qualquer unidade, e a sem alvo vale para a unidade inteira. Feriado: exceção projetada pela borda BR, que o usuário pode apagar para abrir no feriado. Fora da disponibilidade: recusa, salvo encaixe explícito e registrado | F-ESC-5, F-ESC-6, F-ESC-7, F-ESC-11, F-ESC-14, F-ESC-15, F-ESC-16 |
 | Outros setores | Clínica: médico em plantão (ciclo), sala e equipamento como `resources`. Oficina: box e elevador como recurso, mecânico com escala. Loja com turno: escala de caixa e vendedor sem agenda (a escala não depende de AGE-0). Indústria e saúde: 12×36 e revezamento pelo ciclo de N dias | F-ESC-2, F-ESC-3, F-ESC-4 |
 
-## 5. Forks — RATIFICAÇÃO PENDENTE
+## 5. Forks — ✅ DECIDIDOS 2026-11-26
+
+Dono, chat, 26/11, questionário em quatro blocos: os dezesseis na opção recomendada (respostas literais na cédula
+[`D-2026-11-26-ESCALA-BASE-FORKS`](../plano/decisoes/D-2026-11-26-ESCALA-BASE-FORKS.md)). O texto de cada fork abaixo fica como foi perguntado.
 
 Cada fork traz a opção estrutural primeiro (D-2026-11-21). "Reabre" lista a decisão fechada que a opção desfaria; opção que
 reabre decisão é `DECISÃO ARQUITETURAL` e não é recomendada aqui.
 
-| Fork | Recomendação | Reabre algo? |
+| Fork | Recomendação = decisão | Reabre algo? |
 |---|---|---|
 | F-ESC-1 Onde mora a escala | (a) DynamicTable | não |
 | F-ESC-2 Posição no registro | (a) Core | não |

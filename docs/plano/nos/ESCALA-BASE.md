@@ -4,9 +4,9 @@ tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Escala como módulo base — disponibilidade de recurso (CLT, parceiro, sala, equipamento) lida pela agenda e pelo DP (BE-INCR-ESCALA-BASE)"
 estado: "planned"
-estado_detalhe: "26/11: PRE-ADR (docs/adr/PRE-ADR-ESCALA-DISPONIBILIDADE.md, Proposed) e BRIEF (docs/accounting/BE-INCR-ESCALA-BASE-brief.md, 48 itens, PR-0..PR-5) escritos; forks F-ESC-1..16 com RATIFICAÇÃO PENDENTE; sem 'executa'. Nó criado antes da ratificação do PRE-ADR a pedido da tarefa (divergência com docs/plano/README.md §Fold, declarada no PRE-ADR). Achado: a agenda já confere employees.workSchedule (AppointmentsPlugin), com dois defeitos na caixa (L-20261126-180055-8f07, L-20261126-180056-7893); e o agendamento automático da venda grava fora do gate (L-20261126-180939-51cf). Próximo: questionário dos forks com o dono"
-depende_de: ["[[PES-4]]?", "[[PAIS-NA-BORDA]]?"]
-autorizacao: "dono, chat, 2026-11-26, questionário — pergunta: \"Escala como módulo base (disponibilidade do profissional, CLT ou parceiro, lida pela agenda e pelo DP): autoriza planejar o PRE-ADR e o BRIEF? É só documento, sem código e sem 'executa'.\" Resposta: \"Planejar (Recomendado)\". Cobre só o PRE-ADR, o BRIEF e esta nota; não ratifica fork e não é 'executa' de PR algum"
+estado_detalhe: "26/11: PRE-ADR (docs/adr/PRE-ADR-ESCALA-DISPONIBILIDADE.md, Accepted) e BRIEF (docs/accounting/BE-INCR-ESCALA-BASE-brief.md, 48 itens, PR-0..PR-5) escritos; forks F-ESC-1..16 DECIDIDOS pelo dono em 26/11, todos na recomendação ([[D-2026-11-26-ESCALA-BASE-FORKS]]); sem 'executa'. Nó criado antes da ratificação do PRE-ADR a pedido da tarefa (divergência com docs/plano/README.md §Fold, declarada no PRE-ADR; o PRE-ADR foi ratificado no mesmo dia). Achado: a agenda já confere employees.workSchedule (AppointmentsPlugin), com dois defeitos na caixa (L-20261126-180055-8f07, L-20261126-180056-7893); e o agendamento automático da venda grava fora do gate (L-20261126-180939-51cf). Próximo: 'executa' do dono (sessao-feature em integration/escala-base)"
+depende_de: ["[[D-2026-11-26-ESCALA-BASE-FORKS]]", "[[PES-4]]?", "[[PAIS-NA-BORDA]]?"]
+autorizacao: "dono, chat, 2026-11-26, questionário — pergunta: \"Escala como módulo base (disponibilidade do profissional, CLT ou parceiro, lida pela agenda e pelo DP): autoriza planejar o PRE-ADR e o BRIEF? É só documento, sem código e sem 'executa'.\" Resposta: \"Planejar (Recomendado)\". Cobre só o PRE-ADR, o BRIEF e esta nota; não ratifica fork e não é 'executa' de PR algum. FORKS (dono, chat, 2026-11-26: \"faz o questionário dos forks F-ESC comigo\" + \"Segue\"): F-ESC-1..16 decididos por questionário, todos na recomendação ([[D-2026-11-26-ESCALA-BASE-FORKS]]); também não é 'executa'"
 perfil_previsto: "opus-medio"
 perfil_evidencia: "BRIEF §9: PR-0, PR-2 e PR-5 opus-medio (fuso e meia-noite; mudança de comportamento da agenda e migração; costura com o DP); PR-1, PR-3 e PR-4 opus-baixo"
 atualizado: "2026-11-26"
@@ -16,8 +16,8 @@ prs: ["#1424"]
 ---
 # ESCALA-BASE — Escala como módulo base
 
-**Estado:** `planned` — 26/11: PRE-ADR (docs/adr/PRE-ADR-ESCALA-DISPONIBILIDADE.md, Proposed) e BRIEF (docs/accounting/BE-INCR-ESCALA-BASE-brief.md, 48 itens, PR-0..PR-5) escritos; forks F-ESC-1..16 com RATIFICAÇÃO PENDENTE; sem 'executa'. Nó criado antes da ratificação do PRE-ADR a pedido da tarefa (divergência com docs/plano/README.md §Fold, declarada no PRE-ADR). Achado: a agenda já confere employees.workSchedule (AppointmentsPlugin), com dois defeitos na caixa (L-20261126-180055-8f07, L-20261126-180056-7893). Próximo: questionário dos forks com o dono  
-**Autorização:** frontmatter. Cobre o PRE-ADR, o BRIEF e esta nota; não é `executa`.
+**Estado:** `planned` — 26/11: PRE-ADR (docs/adr/PRE-ADR-ESCALA-DISPONIBILIDADE.md, Accepted) e BRIEF (docs/accounting/BE-INCR-ESCALA-BASE-brief.md, 48 itens, PR-0..PR-5) escritos; forks F-ESC-1..16 DECIDIDOS pelo dono em 26/11, todos na recomendação ([[D-2026-11-26-ESCALA-BASE-FORKS]]); sem 'executa'. Nó criado antes da ratificação do PRE-ADR a pedido da tarefa (divergência com docs/plano/README.md §Fold, declarada no PRE-ADR; o PRE-ADR foi ratificado no mesmo dia). Achado: a agenda já confere employees.workSchedule (AppointmentsPlugin), com dois defeitos na caixa (L-20261126-180055-8f07, L-20261126-180056-7893). Próximo: 'executa' do dono (sessao-feature em integration/escala-base)  
+**Autorização:** frontmatter. Cobre o PRE-ADR, o BRIEF, esta nota e a ratificação dos forks; não é `executa`.
 **Depende de:** pontilhada [[PES-4]] (o item 44 lê o DP; a etapa a2 do F-ESC-7 e a porta do F-ESC-8 entram num BRIEF do DP);
 pontilhada [[PAIS-NA-BORDA]] (feriado e default de fuso na borda `paises/br`).
 **Desbloqueia:** o nó FE `FE-INCR-ESCALA` (tela da escala, horário livre na agenda, encaixe), a abrir; a porta de escala
@@ -32,6 +32,7 @@ Feriado e afastamento do DP chegam à escala como dado projetado, sem serviço P
 
 ## Docs
 - [`PRE-ADR-ESCALA-DISPONIBILIDADE.md`](../../adr/PRE-ADR-ESCALA-DISPONIBILIDADE.md) — fronteira, as cinco perguntas, forks F-ESC-1..16
+- [[D-2026-11-26-ESCALA-BASE-FORKS]] — ratificação dos forks
 - [`BE-INCR-ESCALA-BASE-brief.md`](../../accounting/BE-INCR-ESCALA-BASE-brief.md) — 48 itens, PR-0..PR-5, contratos Zod, write-set
 
 ## Origem

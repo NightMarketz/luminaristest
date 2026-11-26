@@ -1,10 +1,11 @@
 # BE-INCR-ESCALA-BASE — BRIEF: escala como módulo base (disponibilidade de recurso, lida pela agenda e pelo DP)
 
 - **Data:** 2026-11-26 · **Autor:** `sessao-planejamento` (agente) · **Base:** `origin/main` `40b6ab8f4`
-- **Estado:** BRIEF escrito; forks F-ESC-1..16 **RATIFICAÇÃO PENDENTE** (no [PRE-ADR](../adr/PRE-ADR-ESCALA-DISPONIBILIDADE.md) §5);
+- **Estado:** BRIEF escrito; forks F-ESC-1..16 **DECIDIDOS** pelo dono em 26/11, todos na recomendação ([`D-2026-11-26-ESCALA-BASE-FORKS`](../plano/decisoes/D-2026-11-26-ESCALA-BASE-FORKS.md);
+  [PRE-ADR](../adr/PRE-ADR-ESCALA-DISPONIBILIDADE.md) §5);
   **sem `executa`**. Nó: [`ESCALA-BASE`](../plano/nos/ESCALA-BASE.md).
-- **Condicional:** o checklist segue o caminho recomendado de cada fork. Cada item diz de que fork depende (`[F-ESC-n]`).
-  Fork decidido contra a recomendação → o item marcado é reescrito antes do `executa`. Item sem marca é direto.
+- **Forks:** o checklist foi escrito no caminho recomendado, e o dono decidiu todos nele (26/11). A marca `[F-ESC-n]` em
+  cada item diz de que fork ele depende. Item sem marca é direto.
 - **Escopo:** backend. O FE (tela da escala, seletor de horário livre na agenda, encaixe) é o nó vizinho `FE-INCR-ESCALA`,
   a abrir. As rotas de leitura que ele consome saem no PR-3. Até lá, a tabela genérica edita a escala (item 10).
 - **Branch:** `integration/escala-base` (feature com 6 PRs no mesmo tema, D-2026-11-10). Um PR por fase, nascido em draft;
@@ -322,12 +323,12 @@ export const HolidaySyncResponseSchema = z.object({ created: z.number().int(), s
 Códigos de erro novos (inglês, R1): `OUTSIDE_AVAILABILITY`, `OVERRIDE_REASON_REQUIRED`, `SCHEDULE_OVERLAP`,
 `SCHEDULE_TARGET_REQUIRED`, `EXCEPTION_READ_ONLY`, `RANGE_TOO_LARGE`.
 
-## 4. Forks — RATIFICAÇÃO PENDENTE
+## 4. Forks — ✅ DECIDIDOS 2026-11-26 (todos na recomendação)
 
-Os dezesseis forks, com caminhos e recomendação, estão no [PRE-ADR §5](../adr/PRE-ADR-ESCALA-DISPONIBILIDADE.md#5-forks--ratificação-pendente).
+Os dezesseis forks, com caminhos e recomendação, estão no [PRE-ADR §5](../adr/PRE-ADR-ESCALA-DISPONIBILIDADE.md).
 Índice de quais itens cada um muda:
 
-| Fork | Recomendação | Itens que dependem |
+| Fork | Decisão | Itens que dependem |
 |---|---|---|
 | F-ESC-1 Onde mora | (a) DynamicTable | 10, e o desenho inteiro |
 | F-ESC-2 Registro | (a) Core, tabelas visíveis | 10, 12, 17, 20 |
