@@ -10,7 +10,7 @@
 import fs from 'fs';
 import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO_V2, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
-import { SemLinhaVigenteError, type LegalParameterTabela, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
+import { SemLinhaVigenteError, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
 import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
 import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
@@ -42,7 +42,7 @@ describe('semente do PR-2 (item 10)', () => {
       ['ISS_LIMITE', 'ALIQUOTA_MIN_BP', '2031-01-01', '2031-12-31', 140, 'PUBLISHED'],
       ['ISS_LIMITE', 'ALIQUOTA_MIN_BP', '2032-01-01', '2032-12-31', 120, 'PUBLISHED'],
     ]);
-    for (const l of pr2) expect([l.id, erroDeFormato({ ...l, tabela: l.tabela as LegalParameterTabela })]).toEqual([l.id, null]);
+    for (const l of pr2) expect([l.id, erroDeFormato({ ...l, tabela: l.tabela })]).toEqual([l.id, null]);
     expect(erroDeFormato({ tabela: 'ISS_LIMITE', chave: 'ALIQUOTA_MIN_BP', valorInt: 20_000 })).toMatch(/0\.\.10000/);
     expect(erroDeFormato({ tabela: 'ISS_LIMITE', chave: 'ALIQUOTA_PISO', valorInt: 200 })).not.toBeNull();
   });

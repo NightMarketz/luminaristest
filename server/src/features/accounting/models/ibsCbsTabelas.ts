@@ -13,7 +13,8 @@
  */
 
 import { z } from 'zod';
-import { LinhaLegalIlegivelError, ParametroLegalAusenteError, linhasEmVigor, type LinhaLegal, type LegalParameterTabela } from '../../legalParameters/models/legalParameter';
+import { LinhaLegalIlegivelError, ParametroLegalAusenteError, linhasEmVigor, type LinhaLegal } from '../../legalParameters/models/legalParameter';
+import type { AccountingLegalTable } from './legalTables';
 
 export type Ind = 0 | 1;
 
@@ -78,7 +79,7 @@ export interface CCredPresIbsCbs {
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 
-export const TABELAS_IBS_CBS = ['CST_IBS_CBS', 'CCLASSTRIB_IBS_CBS', 'CCREDPRES_IBS_CBS'] as const satisfies readonly LegalParameterTabela[];
+export const TABELAS_IBS_CBS = ['CST_IBS_CBS', 'CCLASSTRIB_IBS_CBS', 'CCREDPRES_IBS_CBS'] as const satisfies readonly AccountingLegalTable[];
 
 const IndJson = z.union([z.literal(0), z.literal(1)]);
 const Ordem = z.number().int().min(1);

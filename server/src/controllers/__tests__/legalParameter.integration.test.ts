@@ -68,7 +68,25 @@ describe('BE-INCR-LEGAL-PARAMS PR-1 — /api/legal-parameters', () => {
     expect(row).toMatchObject({ status: 'DRAFT', proposedById: PADMIN.id, publishedAt: null });
   });
 
-  it('itens 2–3 + DTO — fonte vazia, tabela fora do enum, data fora do calendário, dois valores, tabela não migrada ⇒ 400', async () => {
+  it('PAIS-NA-BORDA-F3 item 13 — tabela fora do registro ⇒ 400 PARAMETRO_LEGAL_TABELA_DESCONHECIDA no propose, no list e no vigente', async () => {
+    const r = await request(app).post(BASE).set(authHeader(PADMIN)).send(proposta({ tabela: 'NAO_EXISTE' }));
+    expect([r.status, r.body.code]).toEqual([400, 'PARAMETRO_LEGAL_TABELA_DESCONHECIDA']);
+    const l = await request(app).get(`${BASE}?tabela=NAO_EXISTE`).set(authHeader(USER));
+    expect([l.status, l.body.code]).toEqual([400, 'PARAMETRO_LEGAL_TABELA_DESCONHECIDA']);
+    const v = await request(app).get(`${BASE}/vigente?tabela=NAO_EXISTE&chave=X&data=2027-01-01`).set(authHeader(USER));
+    expect([v.status, v.body.code]).toEqual([400, 'PARAMETRO_LEGAL_TABELA_DESCONHECIDA']);
+  });
+
+  it('PAIS-NA-BORDA-F3 item 13 — GET /tabelas: o catálogo do registro, 50 itens com pais br; qualquer autenticado lê', async () => {
+    expect((await request(app).get(`${BASE}/tabelas`)).status).toBe(401);
+    const r = await request(app).get(`${BASE}/tabelas`).set(authHeader(USER));
+    expect(r.status).toBe(200);
+    expect(r.body.data).toHaveLength(50);
+    expect((r.body.data as { pais: string }[]).every((t) => t.pais === 'br')).toBe(true);
+    expect(r.body.data).toContainEqual({ tabela: 'INSS_EMPREGADO', dominio: 'dp', pais: 'br', tipoValor: 'json' });
+  });
+
+  it('itens 2–3 + DTO — fonte vazia, tabela fora do registro, data fora do calendário, dois valores ⇒ 400', async () => {
     const casos: Record<string, unknown>[] = [
       { fonte: '   ' },
       { tabela: 'INVENTADA' },

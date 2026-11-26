@@ -4,7 +4,7 @@ import { LEGAL_PARAMS_SEED_FILE_INUT_NAO_SE_APLICA, legalParamsSeedRows } from '
 import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
 import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
 import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
-import type { LegalParameterTabela, LinhaLegal } from '../../../legalParameters/models/legalParameter';
+import type { LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { NFCE_PRESUNCAO, STATUS_QUE_OCUPAM_NUMERO, avisoDeInutilizacao, guardaDaFaixa, lacunasDeNumeracao } from '../inutilizacao';
 
 // PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
@@ -33,7 +33,7 @@ describe('semente INUT_NAO_SE_APLICA (EMENDA-3 E3-2 a)', () => {
     expect(seed.map((l) => `${l.chave}/${l.discriminador}`).sort()).toEqual(['NFCE/12', 'NFCE/29', 'NFCE/35', 'NFE/12', 'NFE/29', 'NFE/35']);
     for (const l of seed) {
       expect(l).toMatchObject({ tabela: 'INUT_NAO_SE_APLICA', vigenteDesde: '2026-11-01', vigenteAte: null, status: 'PUBLISHED' });
-      expect([l.id, erroDeFormato({ ...l, tabela: l.tabela as LegalParameterTabela })]).toEqual([l.id, null]);
+      expect([l.id, erroDeFormato({ ...l, tabela: l.tabela })]).toEqual([l.id, null]);
       expect((l as { fonteSha256?: string | null }).fonteSha256).toMatch(/^[0-9a-f]{64}$/);
     }
     expect(seed.find((l) => l.chave === 'NFE')?.fonte).toContain('Ajuste SINIEF 40/26');

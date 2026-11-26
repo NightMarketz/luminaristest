@@ -8,7 +8,8 @@ import { z } from 'zod';
  * (EC 103/2019 art. 28 I–IV e § 1º). Tabela ausente na data ⇒ `ParametroLegalAusenteError` (F-PR4-7): o leitor nunca cai
  * na tabela de outro ano.
  */
-import { exigirLinhaVigente, linhasEmVigor, ParametroLegalAusenteError, type LegalParameterTabela, type LinhaLegal } from '../../legalParameters/models/legalParameter';
+import { exigirLinhaVigente, linhasEmVigor, ParametroLegalAusenteError, type LinhaLegal } from '../../legalParameters/models/legalParameter';
+import type { DpLegalTable } from './legalTables';
 import { tabelaIrrfPfDe, type FaixaIrrfPf, type TabelaIrrfPf } from '../../accounting/models/retencaoParams';
 import { encargosFolhaDe } from '../../accounting/models/taxSimulation';
 
@@ -16,7 +17,7 @@ import { encargosFolhaDe } from '../../accounting/models/taxSimulation';
 export const InssEmpregadoFaixaJson = z.object({ ateCents: z.number().int().positive().nullable(), aliquotaBp: z.number().int().min(0).max(10_000) }).strict();
 
 /** As tabelas que o leitor consome — o que o serviço pede à `fotografia`. */
-export const TABELAS_PARAMETROS_FOLHA = ['INSS_EMPREGADO', 'ENCARGO_FOLHA', 'SALARIO_MINIMO', 'IRRF_PF_MENSAL'] as const satisfies readonly LegalParameterTabela[];
+export const TABELAS_PARAMETROS_FOLHA = ['INSS_EMPREGADO', 'ENCARGO_FOLHA', 'SALARIO_MINIMO', 'IRRF_PF_MENSAL'] as const satisfies readonly DpLegalTable[];
 
 /** Faixa do INSS do empregado. `ateCents: null` = até o teto do RGPS (`tetoRgpsCents`), EC 103 art. 28 IV. */
 export interface FaixaInss {
@@ -72,7 +73,7 @@ export function parametrosFolha(fotografia: readonly LinhaLegal[], data: string)
   if (encargos.tetoRgpsCents === null) throw new ParametroLegalAusenteError('ENCARGO_FOLHA', data, 'TETO_RGPS_CENTS');
   const irrf = tabelaIrrfPfDe(fotografia, data);
   if (!irrf) throw new ParametroLegalAusenteError('IRRF_PF_MENSAL', data);
-  const inteiro = (tabela: LegalParameterTabela, chave: string): number => {
+  const inteiro = (tabela: DpLegalTable, chave: string): number => {
     const v = exigirLinhaVigente(fotografia, tabela, chave, data).valorInt;
     if (v === null) throw new ParametroLegalAusenteError(tabela, data, chave);
     return v;

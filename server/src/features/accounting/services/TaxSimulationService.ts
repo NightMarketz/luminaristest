@@ -1,6 +1,7 @@
 import type { CompanyFiscalProfile } from 'generated/prisma';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
-import { SemLinhaVigenteError, linhaLegalVigente, type LegalParameterTabela, type LinhaLegal } from '../../legalParameters/models/legalParameter';
+import { SemLinhaVigenteError, linhaLegalVigente, type LinhaLegal } from '../../legalParameters/models/legalParameter';
+import type { AccountingLegalTable } from '../models/legalTables';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type {
   FatorRSimulacao,
@@ -46,7 +47,7 @@ import type { SimplesApuracaoService } from './SimplesApuracaoService';
 import { quarterWindows } from './SpedEcfGenerationService';
 import type { TaxOptimizationService } from './TaxOptimizationService';
 
-const TABELAS_REGIME: readonly LegalParameterTabela[] = [
+const TABELAS_REGIME: readonly AccountingLegalTable[] = [
   'SIMPLES_ANEXO_FAIXA',
   'SIMPLES_ANEXO_REPARTICAO',
   'SIMPLES_TETO_ISS',
@@ -61,7 +62,7 @@ const TABELAS_REGIME: readonly LegalParameterTabela[] = [
   'ENCARGO_FOLHA',
   'ISS_LIMITE',
 ];
-const TABELAS_REMUNERACAO: readonly LegalParameterTabela[] = ['IRRF_PF_MENSAL', 'IRRF_DISTRIBUICAO', 'ENCARGO_FOLHA', 'SALARIO_MINIMO', 'TAX_ASSESSMENT', 'CSLL_ALIQUOTA', 'CODIGO_RECEITA'];
+const TABELAS_REMUNERACAO: readonly AccountingLegalTable[] = ['IRRF_PF_MENSAL', 'IRRF_DISTRIBUICAO', 'ENCARGO_FOLHA', 'SALARIO_MINIMO', 'TAX_ASSESSMENT', 'CSLL_ALIQUOTA', 'CODIGO_RECEITA'];
 
 /** Item 18 — base legal de cada prática simulada, copiada do BRIEF/ADR (nunca texto livre). */
 const LEGAL_BASIS: Record<'FATOR_R_FOLHA' | 'TROCA_DE_REGIME' | 'REMUNERACAO_SOCIO', ReadonlyArray<{ norma: string; artigo: string }>> = {

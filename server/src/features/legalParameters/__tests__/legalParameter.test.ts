@@ -6,14 +6,16 @@ import fs from 'fs';
 import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V8, legalParamsSeedRows, tabelaApuracaoSemente } from '@test/helpers/legalParams';
 import anexoFixture from '../../accounting/fixtures/anexo-iii-in-1700-2017.json';
-import { LEGAL_PARAMETER_TABELAS, TABELAS_MIGRADAS, linhaLegalVigente, linhasEmVigor, type LinhaLegal } from '../models/legalParameter';
+import { linhaLegalVigente, linhasEmVigor, type LinhaLegal } from '../models/legalParameter';
 import { createFormatRegistry, type LinhaParaFormato } from '../models/formatRegistry';
 import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../accounting/paises/br/legalParameters';
 import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../dp/paises/br/legalParameters';
 import { LegalParameterPolicy } from '../policies/LegalParameterPolicy';
 
 // PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
-const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
+// PAIS-NA-BORDA-F3 item 13 (F-F3-1 a): o mesmo registro é o catálogo de nomes (no lugar do enum e do TABELAS_MIGRADAS).
+const catalogo = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]);
+const erroDeFormato = catalogo.formatError;
 
 const MIGRATION = path.resolve(__dirname, '../../../../prisma/migrations/20261007150000_add_legal_parameters/migration.sql');
 const MIGRATION_V2 = path.resolve(__dirname, '../../../../prisma/migrations/20261007160000_add_legal_parameters_v2/migration.sql');
@@ -44,14 +46,15 @@ describe('semente da migração (item 6)', () => {
     });
     expect(v2).toHaveLength(509);
     for (const r of v2) {
-      expect([r.id, r.status, r.fonte.trim() !== '', TABELAS_MIGRADAS.has(r.tabela as never)]).toEqual([r.id, 'PUBLISHED', true, true]);
+      expect([r.id, r.status, r.fonte.trim() !== '', catalogo.has(r.tabela)]).toEqual([r.id, 'PUBLISHED', true, true]);
       const linha = { ...r, tabela: r.tabela, valorJson: r.valorJson === null ? undefined : (JSON.parse(r.valorJson) as unknown) } as LinhaParaFormato;
       expect([r.id, erroDeFormato(linha)]).toEqual([r.id, null]);
     }
   });
 
-  it('PR-3: TABELAS_MIGRADAS = todas (DEPRECIACAO_ANEXO_III aberta; MEI_ANEXO_XI desde o consumidor do SIMPLES-PISO-ANEXO-XI)', () => {
-    expect(LEGAL_PARAMETER_TABELAS.filter((t) => !TABELAS_MIGRADAS.has(t))).toEqual([]);
+  it('PR-3 → F3 item 13: toda tabela do catálogo aceita proposta (o TABELAS_MIGRADAS saiu; o registro é o catálogo)', () => {
+    for (const t of ['DEPRECIACAO_ANEXO_III', 'MEI_ANEXO_XI']) expect(catalogo.has(t)).toBe(true);
+    expect(catalogo.has('NAO_EXISTE')).toBe(false);
   });
 
   it('PR-3: o migration.sql v3 carrega o texto de prisma/data/legal_parameters_v3.sql, byte a byte', () => {
@@ -91,12 +94,12 @@ describe('semente da migração (item 6)', () => {
     for (const r of rows) {
       expect(r.status).toBe('PUBLISHED');
       expect(r.fonte.trim()).not.toBe('');
-      expect(TABELAS_MIGRADAS.has(r.tabela as never)).toBe(true);
+      expect(catalogo.has(r.tabela)).toBe(true);
     }
   });
 
   it('o catálogo (+ CST_IBS_CBS, CCLASSTRIB_IBS_CBS e CCREDPRES_IBS_CBS da Onda 3.2 fatia 5) tem as 14 tabelas do item 2 (o item 27 do inventário fica fora) + as 7 do Simples (X14 PR-1) + MEI_ANEXO_XI (SIMPLES-PISO-ANEXO-XI) + FERIADO_LOCAL (F-E4-1 a) + IBS_CBS (IBS-CBS-2027 PR-1) + IRRF_DISTRIBUICAO e TJLP (IRRF-DISTRIBUICAO PR-1) + IBS_CBS_USO_CONSUMO e IBS_CBS_PROVISORIA (IBS-CBS-2027 PR-3) + RETENCAO, RETENCAO_CODIGO, NATUREZA_RENDIMENTO e IRRF_PF_MENSAL (RETENCOES-FONTE PR-1) + ISS_TRANSICAO (ISS-TRANSICAO-IBS PR-1) + NFCE_LIMITE (X10a PR-3) + INUT_NAO_SE_APLICA (X10a PR-4) + ICMS_ST_NCM_UF (EFICIENCIA-FISCAL PR-2) + ENCARGO_FOLHA (EFICIENCIA-FISCAL PR-3) + IBS_CBS_REDUCAO_NBS (EFICIENCIA-FISCAL PR-5) + INSS_EMPREGADO e as 4 ESOCIAL_* (DP-F0-F1 PR-2) + FOLHA_REGRA e DP_CATEGORIA_ENCARGO (DP-F2 PR-0R) + ESOCIAL_TIPO_DEPENDENTE (DP-F2 PR-1) + MARCO_LEGAL (Onda 3.2 fatia 4)', () => {
-    expect(LEGAL_PARAMETER_TABELAS).toHaveLength(50);
+    expect(catalogo.tables()).toHaveLength(50);
   });
 });
 

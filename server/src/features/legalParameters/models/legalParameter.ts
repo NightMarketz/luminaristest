@@ -1,109 +1,13 @@
 /**
- * BE-INCR-LEGAL-PARAMS (nó LEGAL-PARAMS; BRIEF §3 itens 2 e 4, emenda §9 L-6/L-7) — catálogo fechado de tabelas de
- * lei e o lookup PURO por data do fato gerador. Guarda números e listas, nunca lógica (`R-motor-regras`).
+ * BE-INCR-LEGAL-PARAMS (nó LEGAL-PARAMS; BRIEF §3 itens 2 e 4, emenda §9 L-6/L-7) — o lookup PURO por data do fato
+ * gerador. Guarda números e listas, nunca lógica (`R-motor-regras`).
+ *
+ * BE-INCR-PAIS-NA-BORDA-F3 item 13 (F-F3-1 a): a plataforma não tem mais catálogo de nomes. O catálogo é o registro de
+ * formato (`formatRegistry.ts`), composto pelas bordas de cada domínio e país; cada domínio declara os nomes que lê ao
+ * lado do leitor (`AccountingLegalTable`, `DpLegalTable`), e o lookup aceita `string`.
  */
 import { createHash } from 'crypto';
 import { AppError, ValidationError } from '../../../lib/errors';
-
-/** Item 2 — uma tabela por fonte de verdade que hoje está em código. Fora do enum ⇒ 400 no DTO. */
-export const LEGAL_PARAMETER_TABELAS = [
-  'TAX_ASSESSMENT',
-  'CSLL_ALIQUOTA',
-  'CODIGO_RECEITA',
-  'PIS_COFINS',
-  'PIS_COFINS_MONOFASICO_NCM',
-  'CST_PIS_COFINS',
-  'CFOP_IMOBILIZADO',
-  'NFE_CSTAT_AUTORIZADA',
-  'OBRIGACAO_REGIME',
-  'LC116_SERVICO',
-  'ISS_LIMITE',
-  'DEPRECIACAO_ANEXO_III',
-  'LEIAUTE_SPED',
-  'FERIADO_NACIONAL',
-  // BE-INCR-SIMPLES-NACIONAL PR-1 (nó X14, BRIEF item 1; F-SN-2 → b): tabelas do Simples no canônico, sem model novo.
-  'SIMPLES_ANEXO_FAIXA',
-  'SIMPLES_ANEXO_REPARTICAO',
-  'SIMPLES_TETO_ISS',
-  'SIMPLES_ENQUADRAMENTO',
-  'SIMPLES_LIMITE',
-  'SIMEI_VALOR',
-  'SALARIO_MINIMO',
-  // SIMPLES-PISO-ANEXO-XI bloco 2 (BRIEF item 11): ocupações permitidas ao MEI (Res. CGSN 140 Anexo XI, Tabelas A e B).
-  'MEI_ANEXO_XI',
-  // F-E4-1 (a) (dono, 12/10; executa 17/10): feriados estaduais e municipais (CC 132 § 1º; Lei 9.093/1995 arts. 1º e 2º).
-  'FERIADO_LOCAL',
-  // BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 5; F-IRD-13, F-IRD-18): IRRF na distribuição de lucros e no JCP; TJLP trimestral.
-  'IRRF_DISTRIBUICAO',
-  'TJLP',
-  // IBS-CBS-2027 PR-1 (BRIEF item 1): alíquotas de IBS/CBS por vigência (LC 214 arts. 343, 344, 346, 347).
-  'IBS_CBS',
-  // IBS-CBS-2027 PR-3 (BRIEF item 15): lista de uso ou consumo pessoal (LC 214 art. 57), chave = prefixo de NCM (dono 21/10).
-  // Nasce vazia — o conteúdo é do contador (P-IBS-2); consumidor = NfeImportService (models/ibsCbsCredito.ts).
-  'IBS_CBS_USO_CONSUMO',
-  // IBS-CBS-2027 PR-3 (dono 22/10): taxa de referência PROVISÓRIA da CBS para a prévia enquanto a linha IBS_CBS/CBS de 2027 for
-  // DRAFT (sem fonte oficial — o operador da plataforma publica; a confirmação nunca a usa). Nasce vazia.
-  'IBS_CBS_PROVISORIA',
-  // RETENCOES-FONTE PR-1 (BRIEF itens 1, 2, 3 e 7; Emenda 22/10 item 1): alíquotas e mínimos das retenções, código de
-  // receita por natureza do rendimento × tributo, natureza do rendimento (Tabela 01 da Reinf) e a tabela mensal do IRRF de
-  // PF. RETENCAO_CODIGO e NATUREZA_RENDIMENTO são as ÚNICAS tabelas desse dado — a EFD-REINF lê estas.
-  'RETENCAO',
-  'RETENCAO_CODIGO',
-  'NATUREZA_RENDIMENTO',
-  'IRRF_PF_MENSAL',
-  // ISS-TRANSICAO-IBS PR-1 (BRIEF item 2): fator de redução do ISS em 2029–2032 (LC 116 art. 8º-B I–IV, incl. LC 214 art. 508).
-  'ISS_TRANSICAO',
-  // BE-INCR-NFCE PR-3 (nó X10a, item 17 pela A9; D-2026-10-26-X10A-EXECUCAO): limites da NFC-e (Aj. SINIEF 19/16 cl. 4ª VII
-  // "a" e § 4º), valor nacional sem discriminador e redução por UF (§ 5º) com o código IBGE da UF.
-  'NFCE_LIMITE',
-  // BE-INCR-NFCE PR-4 (nó X10a, EMENDA-3 F-NFCE-E3-2 a): UF onde o pedido de inutilização "não se aplica" desde 01/11/2026
-  // (Aj. SINIEF 40/26 na NF-e, 38/26 na NFC-e) — aviso na lista de lacunas, não recusa (E3-1 c).
-  'INUT_NAO_SE_APLICA',
-  // BE-INCR-EFICIENCIA-FISCAL PR-2 (item 11; F-EF-5 a; D-2026-10-27-EFICIENCIA-FISCAL-PR2-EXECUCAO): NCM sob ICMS-ST por UF
-  // (IBGE no discriminador) — segregação do Simples (LC 123 art. 18 § 4º-A I). Consumidor = models/segregacaoNcm.ts.
-  'ICMS_ST_NCM_UF',
-  // BE-INCR-EFICIENCIA-FISCAL PR-3 (itens 15–17; D-2026-10-28-EFICIENCIA-FISCAL-PR3-EXECUCAO decisão 1): encargos da folha
-  // (INSS do contribuinte individual, patronal, FGTS, teto do RGPS). Consumidor = models/taxSimulation.ts.
-  'ENCARGO_FOLHA',
-  // EFICIENCIA-FISCAL PR-5 (item 32; F-EF-8/11 a): serviços de saúde com redução de 60 % do IBS/CBS a partir de 2027 (LC 214
-  // art. 130 e Anexo III), chave = prefixo de NBS. Consumidor = models/servicoFiscalAvaliacao.ts.
-  'IBS_CBS_REDUCAO_NBS',
-  // Onda 3.2 fatia 5 (dono, 24/11/2026: tabelas NT CST/cClassTrib viram LegalParameter): as três tabelas do IT 2025.002 v1.70 que
-  // as regras do grupo UB da NF-e consultam, uma por forma de linha (chave = código; valorJson = colunas da planilha, `ordem` =
-  // posição na aba; cClassTrib leva a vigência da planilha em vigenteDesde/vigenteAte). Consumidor = models/ibsCbsTabelas.ts.
-  'CST_IBS_CBS',
-  'CCLASSTRIB_IBS_CBS',
-  'CCREDPRES_IBS_CBS',
-  // BE-INCR-DP-F0-F1 PR-2 (nó PES-4, itens 20 e 23): tabela progressiva do INSS do empregado (EC 103 art. 28) e as tabelas
-  // do eSocial como dado (precedente NATUREZA_RENDIMENTO). Consumidor = features/dp/models/parametrosFolha.ts e o
-  // cadastro do DP (categoria do vínculo, natureza e incidência das rubricas, motivo do afastamento).
-  'INSS_EMPREGADO',
-  'ESOCIAL_CATEGORIA',
-  'ESOCIAL_NATUREZA_RUBRICA',
-  'ESOCIAL_INCIDENCIA_RUBRICA',
-  'ESOCIAL_MOTIVO_AFASTAMENTO',
-  // BE-INCR-DP-F2 PR-0R (nó PES-4, itens 65–66; regra de parâmetro do dono, 06/11): número de lei da folha como dado
-  // (adicionais, hora noturna, dias, limites de jornada, idades e prazos, arredondamento) e o que cada categoria do
-  // núcleo recolhe. Consumidor = features/dp/models/regrasFolha.ts.
-  'FOLHA_REGRA',
-  'DP_CATEGORIA_ENCARGO',
-  // BE-INCR-DP-F2 PR-1 (item 13): Tabela 07 do eSocial (tipos de dependente), no padrão do D-8 do F0+F1. Consumidor =
-  // features/dp/services/DpDependenteService.ts.
-  'ESOCIAL_TIPO_DEPENDENTE',
-  // Onda 3.2 fatia 4 (dono, 24/11/2026): marcos de lei sem linha temática própria — chave = nome do marco, valorTexto = data
-  // (YYYY-MM-DD), fonte obrigatória. Consumidor = models/marcoLegal.ts (hoje: INICIO_LC214_RBT12 em simplesCalc.ts).
-  'MARCO_LEGAL',
-] as const;
-export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
-
-/**
- * Tabelas cujo consumidor já lê do banco (emenda §9 L-4: PR-1 = IRPJ/CSLL e PIS/Cofins; PR-2 = as demais, menos a
- * depreciação; PR-3 = DEPRECIACAO_ANEXO_III). Desde o PR-3 são todas; o conjunto fica como guarda de que tabela nova
- * no enum só se propõe quando um consumidor a lê.
- */
-// MEI_ANEXO_XI (SIMPLES-PISO-ANEXO-XI bloco 2) entrou quando o consumidor passou a ler a tabela (itens 12-15: perfil e
-// apuração do SIMEI) — mesmo tratamento que a DEPRECIACAO_ANEXO_III teve entre o PR-2 e o PR-3.
-export const TABELAS_MIGRADAS: ReadonlySet<LegalParameterTabela> = new Set(LEGAL_PARAMETER_TABELAS);
 
 export const LEGAL_PARAMETER_STATUS = ['DRAFT', 'PUBLISHED', 'REVOKED'] as const;
 export type LegalParameterStatus = (typeof LEGAL_PARAMETER_STATUS)[number];
@@ -167,7 +71,7 @@ function linhasDoMarco(linhas: readonly LinhaLegal[], tabela: string, chave: str
  * linha, no lugar do literal em código. Sem nenhuma linha ⇒ `ParametroLegalAusenteError` (fail-closed, nunca um
  * default). `dataConsultada` só nomeia o fato gerador na mensagem.
  */
-export function inicioDeVigencia(linhas: readonly LinhaLegal[], tabela: LegalParameterTabela, chave: string | null, dataConsultada: string): string {
+export function inicioDeVigencia(linhas: readonly LinhaLegal[], tabela: string, chave: string | null, dataConsultada: string): string {
   const doMarco = linhasDoMarco(linhas, tabela, chave);
   if (doMarco.length === 0) throw new ParametroLegalAusenteError(tabela, dataConsultada, chave ?? undefined);
   return doMarco.reduce((menor, l) => (l.vigenteDesde < menor ? l.vigenteDesde : menor), doMarco[0].vigenteDesde);
@@ -180,7 +84,7 @@ export function inicioDeVigencia(linhas: readonly LinhaLegal[], tabela: LegalPar
  * código `PARAMETRO_LEGAL_AUSENTE`) — uma linha aberta não pode apagar o fim que a lei fixa (devolver `null` ligava de novo
  * o ISS/o monofásico para sempre). Caso contrário o dia seguinte ao último `vigenteAte`.
  */
-export function diaSeguinteAoFimDeVigencia(linhas: readonly LinhaLegal[], tabela: LegalParameterTabela, chave: string | null, dataConsultada: string): string {
+export function diaSeguinteAoFimDeVigencia(linhas: readonly LinhaLegal[], tabela: string, chave: string | null, dataConsultada: string): string {
   const doMarco = linhasDoMarco(linhas, tabela, chave);
   if (doMarco.length === 0) throw new ParametroLegalAusenteError(tabela, dataConsultada, chave ?? undefined);
   const abertas = doMarco.filter((l) => l.vigenteAte === null);
@@ -199,7 +103,7 @@ export function diaSeguinteAoFimDeVigencia(linhas: readonly LinhaLegal[], tabela
  * qualquer chave. Ausência de UMA chave = "não está na lista"; ausência da tabela INTEIRA na data é erro explícito
  * (item 4: sem linha vigente ⇒ erro), nunca uma lista vazia que recusaria tudo em silêncio.
  */
-export function linhasVigentesDaTabela<T extends LinhaLegal>(linhas: readonly T[], tabela: LegalParameterTabela, data: string): T[] {
+export function linhasVigentesDaTabela<T extends LinhaLegal>(linhas: readonly T[], tabela: string, data: string): T[] {
   const porChave = new Map<string, T>();
   for (const l of linhasEmVigor(linhas)) {
     if (l.tabela !== tabela || l.vigenteDesde > data || (l.vigenteAte !== null && data > l.vigenteAte)) continue;
@@ -229,6 +133,19 @@ export class SemLinhaVigenteError extends ValidationError {
     super(`Sem linha vigente de ${tabela}${chave ? `/${chave}` : ''} em ${data} (parâmetros legais da plataforma).`, null, errorCode);
     Object.setPrototypeOf(this, SemLinhaVigenteError.prototype); // ValidationError fixa o próprio protótipo
     this.name = 'SemLinhaVigenteError';
+  }
+}
+
+/**
+ * BE-INCR-PAIS-NA-BORDA-F3 item 13 (F-F3-1 a) — tabela fora do registro de formato: 400
+ * `PARAMETRO_LEGAL_TABELA_DESCONHECIDA` no `propose`, no filtro do `list` e no `vigente` (o DTO só confere a sintaxe do
+ * nome). Completa o conjunto `PARAMETRO_LEGAL_AUSENTE` / `PARAMETRO_LEGAL_ILEGIVEL` (F-PBA-1 a).
+ */
+export class TabelaLegalDesconhecidaError extends ValidationError {
+  constructor(tabela: string) {
+    super(`${tabela}: tabela sem formato registrado — nenhum domínio a declara (GET /api/legal-parameters/tabelas lista as registradas).`, null, 'PARAMETRO_LEGAL_TABELA_DESCONHECIDA');
+    Object.setPrototypeOf(this, TabelaLegalDesconhecidaError.prototype);
+    this.name = 'TabelaLegalDesconhecidaError';
   }
 }
 
@@ -264,7 +181,7 @@ export class FimDeVigenciaNaoPublicadoError extends ParametroLegalAusenteError {
  */
 export function exigirLinhaVigente<T extends LinhaLegal>(
   linhas: readonly T[],
-  tabela: LegalParameterTabela,
+  tabela: string,
   chave: string,
   data: string,
   discriminador: string | null = null,
