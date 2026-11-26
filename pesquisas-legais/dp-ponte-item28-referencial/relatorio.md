@@ -7,9 +7,10 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
 
 <!-- ANALISE -->
 ## 1. Conclusão
-Quinze das dezoito folhas de pessoal que a ponte pede têm linha própria na tabela dinâmica da ECF [D01], com o mesmo
-código no Lucro Real (L100A/L300A) e no Presumido (P100A/P150A), analítica e sem DT_FIM. Três não fecham e ficam fora
-do plano padrão até a resposta do dono (§4).
+Dezoito folhas de pessoal entram no plano padrão com linha própria na tabela dinâmica da ECF [D01], com o mesmo código
+no Lucro Real (L100A/L300A) e no Presumido (P100A/P150A), analítica e sem DT_FIM. Três delas (bolsa de estágio e encargos
+de férias e de 13º) entraram pela decisão do dono de 26/11 (§4). Os dois passivos dos encargos sobre a provisão ficam fora:
+nenhuma linha do grupo PROVISÕES cita encargo (§4).
 
 | Folha do plano | Papel | Referencial | Grau |
 |---|---|---|---|
@@ -28,6 +29,9 @@ do plano padrão até a resposta do dono (§4).
 | 4.10.06 FGTS | FGTS | 3.01.01.07.01.06 Encargos Sociais – FGTS | verificado |
 | 4.10.07 Férias | VACATION_EXPENSE | 3.01.01.07.01.26 Provisões para Férias | verificado |
 | 4.10.08 13º Salário | DESPESA_13 | 3.01.01.07.01.27 Provisões para 13º Salário de Empregados | verificado (com nota §4) |
+| 4.10.09 Bolsa de Estágio | INTERNSHIP_STIPEND_EXPENSE | 3.01.01.07.01.03 Outros Gastos com Pessoal | decisão do dono, 26/11 |
+| 4.10.10 Encargos sobre Férias | VACATION_CHARGES_EXPENSE | 3.01.01.07.01.26 ("inclusive encargos sociais") | verificado + decisão do dono, 26/11 |
+| 4.10.11 Encargos sobre 13º Salário | DESPESA_ENCARGOS_13 | 3.01.01.07.01.27 ("inclusive encargos sociais") | verificado + decisão do dono, 26/11 |
 
 O IRRF da folha reusa a 2.1.7.03 → 2.01.01.09.01, que já existe (F-RET-19 a).
 
@@ -56,7 +60,9 @@ estão em `docs/D01_linhas-citadas.txt`. O teste `ChartOfAccountsFixture.contasP
   `irrf-referencial-sped/docs/`.
 
 ## 4. Ambiguidades (só o que precisa de decisão humana)
-**Ao dono (fora do plano até a resposta):**
+**Respondido pelo dono (chat, 26/11, repassado pela sessão da ponte): "bolsa de estágio na .03, encargos divididos em
+férias e 13º".** O papel único virou VACATION_CHARGES_EXPENSE/VACATION_PROVISION_CHARGES (centro) e
+DESPESA_ENCARGOS_13/ENCARGOS_PROVISAO_13 (borda BR). As perguntas como foram feitas:
 - **Bolsa de estágio (INTERNSHIP_STIPEND_EXPENSE).** Leitura 1: 3.01.01.07.01.03 "Outros Gastos com Pessoal" ("demais
   gastos com pessoal não especificados"). Leitura 2: 3.01.01.07.01.04 "Outros Serviços Prestados por Pessoa Física ou
   Jurídica", que diz "que não tenha vínculo empregatício"; o estágio não cria vínculo (Lei 11.788, art. 3º, não lido
@@ -68,6 +74,19 @@ estão em `docs/D01_linhas-citadas.txt`. O teste `ChartOfAccountsFixture.contasP
   dividir o papel em encargos de férias e encargos de 13º, cada par na sua linha (.26/.27 e 2.01.01.15.03/.04). Leitura
   2: uma conta só, na 3.01.01.07.01.07 / 2.01.01.15.05 "Provisões de Natureza Trabalhista". A Leitura 1 segue o texto da
   tabela, mas muda o catálogo de papéis do item 18. São papéis do PR-P4.
+
+**Volta ao dono: os passivos dos encargos sobre a provisão (VACATION_PROVISION_CHARGES e ENCARGOS_PROVISAO_13).** O dono
+pediu o passivo no grupo 2.01.01.15 PROVISÕES, "ao lado das provisões .03 e .04", e que eu parasse se o texto da linha não
+fechasse. Nenhuma linha do grupo cita encargo:
+- 2.01.01.15.03 "Férias a Pagar": "o valor de férias a pagar de administradores e empregados";
+- 2.01.01.15.04 "13º Salário a Pagar": "o valor de 13º salário a pagar de administradores e empregados";
+- 2.01.01.15.05 "Provisões de Natureza Trabalhista – Circulante": "o valor da provisão de natureza trabalhista";
+- 2.01.01.15.28 "Outras Provisões": "as demais provisões não classificadas em contas mais específicas".
+Fora do grupo, a 2.01.01.01.09 "Demais Encargos a Recolher" exclui INSS e FGTS. As duas folhas ficam fora do plano padrão.
+Leituras possíveis:
+- .03/.04, pela simetria com a despesa (.26/.27 "inclusive encargos sociais");
+- .05;
+- .28.
 
 **Ao contador, no P-FOL-5 (as folhas entram como PROVISÓRIAS):**
 - Duas linhas analíticas nomeiam o passivo de férias e 13º: a 2.01.01.15.03/.04, sob PROVISÕES, e a 2.01.01.01.01, cuja
@@ -82,7 +101,7 @@ estão em `docs/D01_linhas-citadas.txt`. O teste `ChartOfAccountsFixture.contasP
   dos profissionais vão a custo (3.01.01.03.01.03) ou ficam em despesa operacional?
 
 ## 5. Lacunas
-- Lei 11.788/2008 (estágio) não foi lida nesta sessão. Ela só sustentaria a Leitura 2 da bolsa.
+- Lei 11.788/2008 (estágio) não foi lida nesta sessão. Ela só sustentaria a Leitura 2 da bolsa, que o dono não escolheu.
 <!-- /ANALISE -->
 
 ## Fontes consultadas

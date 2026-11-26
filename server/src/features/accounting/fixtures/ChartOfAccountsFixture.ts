@@ -49,7 +49,8 @@ export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   // contas de pessoal do plano padrão. PROVISÓRIAS até o P-FOL-5 do contador. Grupos fora dos códigos dos kits (1.1.4–1.1.6
   // legados, 2.1.3–2.1.6, 4.5) e das folhas reservadas às retenções (1.1.8/2.1.9, P-RET-4). `1.1.10`, não `1.1.7`: o 1.1.7 é o
   // "próximo livre" que os testes de papel do kit usam como conta do usuário (RoleAccountOverrideService.integration). Referencial em
-  // `REFERENCIAL_PLANO_PADRAO`; a folha que não fechou referencial não entra (bolsa de estágio e encargos sobre a provisão).
+  // `REFERENCIAL_PLANO_PADRAO`; a folha que não fechou referencial não entra (os passivos dos encargos sobre a provisão: nenhuma
+  // linha do grupo 2.01.01.15 PROVISÕES cita encargo).
   { code: '1.1.10', name: 'Adiantamentos', nature: 'Asset', acceptsEntries: false },
   { code: '1.1.10.01', name: 'Adiantamentos Salariais', nature: 'Asset', acceptsEntries: true },
   // IBS-CBS-2027 PR-3 (item 14; dono 22/10: "Folhas + 1.01.02.03.40 provisório"): o crédito de IBS/CBS da NF-e de entrada
@@ -150,8 +151,9 @@ export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   // da prestação do serviço vai a custo (4.7) é pergunta do P-FOL-5, não deste plano. `4.10`, não `4.8`/`4.9`: esses são os
   // "próximos livres" que os testes de kit e de lançamento usam como conta do usuário, e o `ensureChartOfAccounts` criaria
   // folha canônica debaixo de uma analítica do usuário. A regra de prefixo da DRE (`StatementMappingFixture`) não tem
-  // fronteira de ponto, mas nenhuma usa `4.1`. Folhas com 2 dígitos para caber as que esperam referencial (bolsa de estágio,
-  // encargos sobre a provisão).
+  // fronteira de ponto, mas nenhuma usa `4.1`. Folhas com 2 dígitos porque o grupo passa de 9. Bolsa de estágio e encargos
+  // sobre a provisão (férias e 13º, separados): dono, chat, 2026-11-26 ("bolsa de estágio na .03, encargos divididos em
+  // férias e 13º").
   { code: '4.10', name: 'Despesas com Pessoal', nature: 'Expense', acceptsEntries: false },
   { code: '4.10.01', name: 'Salários e Ordenados', nature: 'Expense', acceptsEntries: true },
   { code: '4.10.02', name: 'Pró-labore', nature: 'Expense', acceptsEntries: true },
@@ -161,6 +163,9 @@ export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   { code: '4.10.06', name: 'FGTS', nature: 'Expense', acceptsEntries: true },
   { code: '4.10.07', name: 'Férias', nature: 'Expense', acceptsEntries: true },
   { code: '4.10.08', name: '13º Salário', nature: 'Expense', acceptsEntries: true },
+  { code: '4.10.09', name: 'Bolsa de Estágio', nature: 'Expense', acceptsEntries: true },
+  { code: '4.10.10', name: 'Encargos sobre Férias', nature: 'Expense', acceptsEntries: true },
+  { code: '4.10.11', name: 'Encargos sobre 13º Salário', nature: 'Expense', acceptsEntries: true },
 ];
 
 /**
@@ -383,6 +388,11 @@ export const REFERENCIAL_PLANO_PADRAO: ReadonlyArray<{ accountCode: string; refe
   // .26/.27 são a despesa de constituição da provisão; a .27 diz "no caso de apuração trimestral" — anotado para o P-FOL-5.
   { accountCode: '4.10.07', referentialCode: '3.01.01.07.01.26', label: '(-) Provisões para Férias' },
   { accountCode: '4.10.08', referentialCode: '3.01.01.07.01.27', label: '(-) Provisões para 13º Salário de Empregados' },
+  // Dono, chat, 2026-11-26: "bolsa de estágio na .03" ("demais gastos com pessoal não especificados em contas anteriores").
+  { accountCode: '4.10.09', referentialCode: '3.01.01.07.01.03', label: '(-) Outros Gastos com Pessoal' },
+  // Dono, 26/11: "encargos divididos em férias e 13º". A .26 e a .27 incluem "inclusive encargos sociais" da provisão.
+  { accountCode: '4.10.10', referentialCode: '3.01.01.07.01.26', label: '(-) Provisões para Férias' },
+  { accountCode: '4.10.11', referentialCode: '3.01.01.07.01.27', label: '(-) Provisões para 13º Salário de Empregados' },
 ];
 
 /**

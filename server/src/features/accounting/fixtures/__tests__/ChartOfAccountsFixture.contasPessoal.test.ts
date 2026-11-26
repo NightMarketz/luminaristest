@@ -23,6 +23,9 @@ const PESSOAL: ReadonlyArray<{ code: string; nature: string; referentialCode: st
   { code: '4.10.06', nature: 'Expense', referentialCode: '3.01.01.07.01.06' },
   { code: '4.10.07', nature: 'Expense', referentialCode: '3.01.01.07.01.26' },
   { code: '4.10.08', nature: 'Expense', referentialCode: '3.01.01.07.01.27' },
+  { code: '4.10.09', nature: 'Expense', referentialCode: '3.01.01.07.01.03' },
+  { code: '4.10.10', nature: 'Expense', referentialCode: '3.01.01.07.01.26' },
+  { code: '4.10.11', nature: 'Expense', referentialCode: '3.01.01.07.01.27' },
 ];
 
 describe('Item 28 da ponte — contas de pessoal no plano padrão', () => {
