@@ -7,7 +7,9 @@
  * ele a torna IMPOSSÍVEL DE SER SILENCIOSA: qualquer alteração de forma num DTO obriga um
  * diff legível em `__dto-shapes__.json` no MESMO PR, onde o revisor (humano ou não) a vê.
  *
- * COMO: para cada `src/features/<domínio>/dtos/`, importa TODOS os módulos do diretório,
+ * COMO: para cada `src/features/<domínio>/dtos/` (e cada `src/features/<domínio>/paises/<cc>/dtos/`,
+ * G2 do ADR-PAIS-NA-BORDA §3, 25/11 — gravados no MESMO JSON do domínio, com a chave prefixada
+ * `paises/<cc>/<arquivo>` e o `.gen.ts` em `my-app/types/contracts/<domínio>/paises/<cc>/`), importa TODOS os módulos do diretório,
  * coleta todo export que é schema Zod e serializa com o `z.toJSONSchema()` nativo do Zod 4 —
  * sem dependência nova, sem walker próprio. `io:'input'` (a fronteira valida entrada) e
  * `unrepresentable:'any'`. O JSON de cada domínio mora em
@@ -78,7 +80,7 @@ async function render(entry: Record<string, unknown>): Promise<string> {
 
 type ShapeMap = Record<string, Record<string, unknown>>;
 
-function collectShapes(dtoDir: string): ShapeMap {
+function collectShapes(dtoDir: string, prefix = ''): ShapeMap {
   const files = fs
     .readdirSync(dtoDir)
     .filter((f) => f.endsWith('.ts') && !f.endsWith('.d.ts'))
@@ -93,7 +95,8 @@ function collectShapes(dtoDir: string): ShapeMap {
         entry[name] = z.toJSONSchema(value, { io: 'input', unrepresentable: 'any' });
       }
     }
-    if (Object.keys(entry).length > 0) shapes[file] = entry;
+    // Chave POSIX (`paises/br/X.ts`), nunca path.sep: o JSON é comitado e lido no Linux do CI.
+    if (Object.keys(entry).length > 0) shapes[prefix + file] = entry;
   }
   return shapes;
 }
@@ -116,15 +119,32 @@ interface Dominio {
 // dos testes — e é o nome do teste que carrega o NOME DO ARQUIVO divergente (a primeira versão
 // embrulhava o shape em `{ [file]: … }` e o diff do Jest ELIDIA a chave igual dos dois lados:
 // vermelho sem endereço — medido na mordida, corrigido aqui).
+/** `paises/<cc>/dtos/` do domínio (borda de país, ADR-PAIS-NA-BORDA R2), em ordem. */
+const paisDtoDirs = (nome: string): Array<{ dir: string; prefix: string }> => {
+  const paises = path.join(FEATURES_DIR, nome, 'paises');
+  if (!fs.existsSync(paises)) return [];
+  return fs
+    .readdirSync(paises, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && fs.existsSync(path.join(paises, e.name, 'dtos')))
+    .map((e) => e.name)
+    .sort()
+    .map((cc) => ({ dir: path.join(paises, cc, 'dtos'), prefix: `paises/${cc}/` }));
+};
+
 const dominios: Dominio[] = fs
   .readdirSync(FEATURES_DIR, { withFileTypes: true })
-  .filter((d) => d.isDirectory() && fs.existsSync(path.join(FEATURES_DIR, d.name, 'dtos')))
+  .filter(
+    (d) => d.isDirectory() && (fs.existsSync(path.join(FEATURES_DIR, d.name, 'dtos')) || paisDtoDirs(d.name).length > 0),
+  )
   .map((d) => d.name)
   .sort()
   .map((nome) => {
     const dtoDir = path.join(FEATURES_DIR, nome, 'dtos');
     const snapshotPath = path.join(dtoDir, '__tests__', '__dto-shapes__.json');
-    const atual = collectShapes(dtoDir);
+    const atual: ShapeMap = {
+      ...(fs.existsSync(dtoDir) ? collectShapes(dtoDir) : {}),
+      ...Object.assign({}, ...paisDtoDirs(nome).map((p) => collectShapes(p.dir, p.prefix))),
+    };
     const snapshotExiste = fs.existsSync(snapshotPath);
     const snapshot: ShapeMap = snapshotExiste ? (JSON.parse(fs.readFileSync(snapshotPath, 'utf8')) as ShapeMap) : {};
     const arquivos = [...new Set([...Object.keys(atual), ...Object.keys(snapshot)])].sort();
@@ -146,21 +166,25 @@ const dominios: Dominio[] = fs
   });
 
 const genFile = (d: Dominio, f: string) => path.join(d.genDir, f.replace(/\.ts$/, '.gen.ts'));
+/** Caminho POSIX do `.gen.ts` relativo à pasta do domínio (`X.gen.ts` ou `paises/br/X.gen.ts`). */
+const genRel = (f: string) => f.replace(/\.ts$/, '.gen.ts');
+/** `.gen.ts` sob `dir`, recursivo (a borda de país grava em `<domínio>/paises/<cc>/`), como caminho POSIX relativo. */
+const genSob = (dir: string, rel = ''): string[] =>
+  fs.existsSync(dir)
+    ? fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+        const r = rel ? `${rel}/${e.name}` : e.name;
+        if (e.isDirectory()) return genSob(path.join(dir, e.name), r);
+        return e.name.endsWith('.gen.ts') ? [r] : [];
+      })
+    : [];
 /** Todo `.gen.ts` esperado em `my-app/types/contracts`, como caminho relativo `<domínio>/<arquivo>`. */
-const esperadosGlobais = new Set(
-  dominios.flatMap((d) => Object.keys(d.fonte).map((f) => `${d.nome}/${path.basename(genFile(d, f))}`)),
-);
+const esperadosGlobais = new Set(dominios.flatMap((d) => Object.keys(d.fonte).map((f) => `${d.nome}/${genRel(f)}`)));
 const genExistentes = (): string[] =>
   fs.existsSync(CONTRACTS_DIR)
     ? fs
         .readdirSync(CONTRACTS_DIR, { withFileTypes: true })
         .filter((e) => e.isDirectory())
-        .flatMap((e) =>
-          fs
-            .readdirSync(path.join(CONTRACTS_DIR, e.name))
-            .filter((g) => g.endsWith('.gen.ts'))
-            .map((g) => `${e.name}/${g}`),
-        )
+        .flatMap((e) => genSob(path.join(CONTRACTS_DIR, e.name)).map((g) => `${e.name}/${g}`))
     : [];
 
 beforeAll(() => {
@@ -175,8 +199,10 @@ for (const d of dominios) {
     beforeAll(async () => {
       for (const f of Object.keys(d.fonte)) d.gerado.set(f, await render(d.fonte[f]));
       if (!UPDATE) return;
-      fs.mkdirSync(d.genDir, { recursive: true });
-      for (const [f, txt] of d.gerado) fs.writeFileSync(genFile(d, f), txt);
+      for (const [f, txt] of d.gerado) {
+        fs.mkdirSync(path.dirname(genFile(d, f)), { recursive: true });
+        fs.writeFileSync(genFile(d, f), txt);
+      }
     });
 
     it('o snapshot comitado existe', () => {
@@ -197,10 +223,8 @@ for (const d of dominios) {
     });
 
     it(`não há .gen.ts órfão em my-app/types/contracts/${d.nome}`, () => {
-      const esperados = new Set(Object.keys(d.fonte).map((f) => path.basename(genFile(d, f))));
-      const orfaos = fs.existsSync(d.genDir)
-        ? fs.readdirSync(d.genDir).filter((g) => g.endsWith('.gen.ts') && !esperados.has(g))
-        : [];
+      const esperados = new Set(Object.keys(d.fonte).map(genRel));
+      const orfaos = genSob(d.genDir).filter((g) => !esperados.has(g));
       expect(orfaos).toEqual([]);
     });
 
