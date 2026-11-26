@@ -14,7 +14,7 @@ import type {
   VigenteLegalParameterQuery,
 } from '../dtos/LegalParameterDto';
 import { LEGAL_PARAMETER_TABELAS, LinhaLegalIlegivelError, TABELAS_MIGRADAS, linhaLegalVigente, linhasEmVigor, type LegalParameterTabela } from '../models/legalParameter';
-import { TEM_REGRA_DE_FORMATO, erroDeFimObrigatorio, erroDeFormato } from '../models/formatoLinha';
+import type { CrossTableRows, LegalParameterFormatRegistry, LinhaParaFormato } from '../models/formatRegistry';
 import { cachedPublished, storePublished } from './legalParameterCache';
 
 /**
@@ -30,31 +30,24 @@ export const PLATFORM_AUDIT_SCOPE: AccountingScope = {
   timeZone: 'America/Sao_Paulo',
 };
 
-/**
- * Formato do valor por tabela migrada. PR-1: `ARREDONDAMENTO` é a única linha de texto do TAX_ASSESSMENT. PR-2: as
- * demais tabelas pela regra de `formatoLinha.ts` (§4 — `valorJson` com schema por tabela).
- */
-function erroDoFormato(d: Pick<ProposeLegalParameterInput, 'tabela' | 'chave' | 'discriminador' | 'valorInt' | 'valorTexto' | 'valorJson'>): string | null {
-  if (TEM_REGRA_DE_FORMATO(d.tabela)) return erroDeFormato(d);
-  const texto = d.tabela === 'TAX_ASSESSMENT' && d.chave === 'ARREDONDAMENTO';
-  if (texto ? d.valorTexto === undefined : d.valorInt === undefined) {
-    return `${d.tabela}/${d.chave}: o valor desta tabela é ${texto ? 'valorTexto' : 'valorInt'} (bp ou centavos).`;
-  }
-  if (d.tabela === 'PIS_COFINS' && (!['PIS', 'COFINS'].includes(d.chave) || !['CUMULATIVO', 'NAO_CUMULATIVO'].includes(d.discriminador ?? ''))) {
-    return 'PIS_COFINS: chave PIS|COFINS e discriminador CUMULATIVO|NAO_CUMULATIVO.';
-  }
-  return null;
+/** As linhas lidas das tabelas requeridas, como o registro as pede (BE-INCR-PAIS-NA-BORDA-F3 item 7). */
+function linhasDe(rows: readonly LegalParameter[]): CrossTableRows {
+  return { rowsOf: (t) => rows.filter((r) => r.tabela === t) };
 }
 
-function exigirFormato(d: Parameters<typeof erroDoFormato>[0]): void {
-  const erro = erroDoFormato(d);
-  if (erro) throw new ValidationError(erro);
-}
-
-/** Lacuna 03e4: a linha que marca o fim da lei não entra (proposta nem publicação) sem `vigenteAte`. */
-function exigirFim(l: Parameters<typeof erroDeFimObrigatorio>[0]): void {
-  const erro = erroDeFimObrigatorio(l);
-  if (erro) throw new ValidationError(erro);
+/** A linha gravada como o registro a enxerga (valorJson já parseado; vigência para a checagem entre tabelas). */
+function paraFormato(r: LegalParameter): LinhaParaFormato {
+  const v = toView(r);
+  return {
+    tabela: v.tabela,
+    chave: v.chave,
+    discriminador: v.discriminador ?? undefined,
+    valorInt: v.valorInt ?? undefined,
+    valorTexto: v.valorTexto ?? undefined,
+    valorJson: v.valorJson ?? undefined,
+    vigenteDesde: v.vigenteDesde,
+    vigenteAte: v.vigenteAte,
+  };
 }
 
 /** Linha PUBLISHED que a regra de formato de hoje recusaria (`checkLegalParamsFormatoCli`). */
@@ -124,7 +117,30 @@ export class LegalParameterService {
     private readonly auditService: AuditService,
     /** BE-INCR-LEGAL-PARAMS PR-4 (item 10; L-3, dono 07/10 "Tabela de jobs"): publicar/revogar enfileira o recálculo. */
     private readonly recalcJobs: ILegalParameterRecalcJobRepository,
+    /**
+     * BE-INCR-PAIS-NA-BORDA-F3 itens 6–7 — o formato de cada tabela, declarado pela borda de cada domínio e país e composto
+     * no `lib/factory.ts` (`LEGAL_PARAMETER_FORMATS`). A plataforma não conhece nenhuma tabela.
+     */
+    private readonly formats: LegalParameterFormatRegistry,
   ) {}
+
+  /** Linha fora do formato (inclusive a checagem entre tabelas, com as linhas de `deps`) ⇒ 400. */
+  private exigirFormato(l: LinhaParaFormato, deps: CrossTableRows): void {
+    const erro = this.formats.formatError(l, deps);
+    if (erro) throw new ValidationError(erro);
+  }
+
+  /** Lacuna 03e4 (F-F3-6 a): a linha que marca o fim da lei não entra (proposta nem publicação) sem `vigenteAte`. */
+  private exigirFim(l: Pick<LinhaParaFormato, 'tabela' | 'chave' | 'discriminador' | 'vigenteAte'>): void {
+    const erro = this.formats.endRequiredError(l);
+    if (erro) throw new ValidationError(erro);
+  }
+
+  /** As tabelas que a checagem entre tabelas de `tabela` lê, pelo `tx` quando dado (gate dentro da tx). */
+  private async dependencias(tabela: string, tx?: Parameters<ILegalParameterRepository['findPublished']>[1]): Promise<CrossTableRows> {
+    const requeridas = this.formats.requiredTables(tabela);
+    return linhasDe(requeridas.length === 0 ? [] : await this.repo.findPublished(requeridas, tx));
+  }
 
   /** PR-4 — o factory liga o agendador do recálculo depois de construir os dois (sem ciclo de construção). */
   setAoEnfileirar(fn: () => void): void {
@@ -165,9 +181,11 @@ export class LegalParameterService {
    */
   async linhasPublicadasForaDoFormato(): Promise<LinhaPublicadaForaDoFormato[]> {
     const fora: LinhaPublicadaForaDoFormato[] = [];
-    for (const r of await this.repo.findPublished(LEGAL_PARAMETER_TABELAS)) {
-      const v = toView(r);
-      const erro = erroDoFormato({ tabela: v.tabela as LegalParameterTabela, chave: v.chave, discriminador: v.discriminador ?? undefined, valorInt: v.valorInt ?? undefined, valorTexto: v.valorTexto ?? undefined, valorJson: v.valorJson ?? undefined });
+    const publicadas = await this.repo.findPublished(LEGAL_PARAMETER_TABELAS);
+    // Item 10: a checagem entre tabelas também roda aqui, contra o conjunto publicado inteiro (a dependência revogada acusa).
+    const deps = linhasDe(publicadas);
+    for (const r of publicadas) {
+      const erro = this.formats.formatError(paraFormato(r), deps);
       if (erro) fora.push({ id: r.id, tabela: r.tabela, chave: r.chave, discriminador: r.discriminador, vigenteDesde: r.vigenteDesde, erro });
     }
     return fora;
@@ -218,8 +236,9 @@ export class LegalParameterService {
     if (!TABELAS_MIGRADAS.has(d.tabela)) {
       throw new ValidationError(`${d.tabela}: tabela ainda não migrada para o banco — nenhum cálculo a lê (BE-INCR-LEGAL-PARAMS, PR-2/PR-3).`);
     }
-    exigirFormato(d);
-    exigirFim({ tabela: d.tabela, chave: d.chave, vigenteAte: d.vigenteAte ?? null });
+    // Item 7: fora da tx, como antes; as dependências pelo repositório (o publish re-checa dentro da tx).
+    this.exigirFormato({ ...d, vigenteAte: d.vigenteAte ?? null }, await this.dependencias(d.tabela));
+    this.exigirFim({ tabela: d.tabela, chave: d.chave, discriminador: d.discriminador ?? null, vigenteAte: d.vigenteAte ?? null });
     const row = await this.repo.runTransaction(async (tx) => {
       if (d.supersedesId) {
         const alvo = await this.repo.findById(d.supersedesId, tx);
@@ -273,9 +292,10 @@ export class LegalParameterService {
       if (linha.status !== 'DRAFT') throw new ConflictError(`Parâmetro legal ${id} não é rascunho (${linha.status}).`);
       // Dono 23/10 ("(a) 400 no publish"): a regra de formato do propose vale também aqui — o rascunho sem valor da migração
       // (ex.: CBS 2027) não entra em vigor.
-      const v = toView(linha);
-      exigirFormato({ tabela: v.tabela as LegalParameterTabela, chave: v.chave, discriminador: v.discriminador ?? undefined, valorInt: v.valorInt ?? undefined, valorTexto: v.valorTexto ?? undefined, valorJson: v.valorJson ?? undefined });
-      exigirFim({ tabela: v.tabela as LegalParameterTabela, chave: v.chave, vigenteAte: v.vigenteAte });
+      // Item 7 (F3): a checagem entre tabelas lê as dependências pelo MESMO tx (gate autoritativo dentro da tx).
+      const l = paraFormato(linha);
+      this.exigirFormato(l, await this.dependencias(linha.tabela, tx));
+      this.exigirFim(l);
       if (linha.supersedesId) {
         const alvo = await this.repo.findById(linha.supersedesId, tx);
         if (alvo?.status !== 'PUBLISHED') throw new ConflictError(`A linha substituída ${linha.supersedesId} já não está publicada.`);

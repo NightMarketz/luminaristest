@@ -5,6 +5,9 @@ import { LegalParameterService } from '../features/legalParameters/services/Lega
 import type { ILegalParameterRepository } from '../features/legalParameters/repositories/ILegalParameterRepository';
 import { LegalParameterRecalcJobRepository } from '../features/legalParameters/repositories/LegalParameterRecalcJobRepository';
 import type { ILegalParameterRecalcJobRepository } from '../features/legalParameters/repositories/ILegalParameterRecalcJobRepository';
+import { createFormatRegistry, type LegalParameterFormatRegistration } from '../features/legalParameters/models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../features/accounting/paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../features/dp/paises/br/legalParameters';
 import { PtaxRateRepository } from '../features/fx/repositories/PtaxRateRepository';
 import type { IPtaxRateRepository } from '../features/fx/repositories/IPtaxRateRepository';
 import { BcbPtaxClient } from '../features/fx/clients/BcbPtaxClient';
@@ -853,6 +856,17 @@ function buildAccountingBindingAuditPort(
   };
 }
 
+/**
+ * BE-INCR-PAIS-NA-BORDA-F3 item 6 — a ÚNICA composição dos formatos de `LegalParameter`: a borda de cada domínio e país
+ * declara as suas tabelas, e esta lista fixa as entrega ao serviço (composição no código, ADR-DOMAIN-MOTOR-rejected §3).
+ * Tabela nova de país entra no `index.ts` da borda dela; esta lista só muda quando nasce um domínio ou um país.
+ * Os testes transversais (cobertura do catálogo, CLI) importam esta mesma constante.
+ */
+export const LEGAL_PARAMETER_FORMATS: readonly LegalParameterFormatRegistration[] = [
+  ...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS,
+  ...DP_BR_LEGAL_PARAMETER_FORMATS,
+];
+
 export class ApplicationFactory {
   private static instance: ApplicationFactory;
 
@@ -1313,6 +1327,7 @@ export class ApplicationFactory {
       this.policies.legalParameter,
       auditService,
       this.repositories.legalParameterRecalcJob, // PR-4 (item 10): publicar/revogar enfileira o recálculo na mesma tx
+      createFormatRegistry(LEGAL_PARAMETER_FORMATS), // PAIS-NA-BORDA-F3 item 6: formatos declarados pela borda
     );
 
     const packageBalanceService = new PackageBalanceService(
