@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — politica-privacidade-landing
 
 **Pergunta:** Politica de privacidade da landing Luminaris (lista de espera): conteudo minimo do art. 9 da LGPD e da regulamentacao da ANPD; prazos e forma de atender o titular (art. 18 par. 5, art. 19); encarregado e dispensa de agente de pequeno porte; o que informar sobre transferencia internacional (art. 33) se a analise de uso for ligada
-**Aberto em:** 2026-11-26T14:34:23-03:00 · **Atualizado em:** 2026-11-26T15:06:23-03:00
+**Aberto em:** 2026-11-26T14:34:23-03:00 · **Atualizado em:** 2026-11-26T15:31:06-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -129,7 +129,10 @@ cláusulas-padrão, os itens do art. 17 §2º da Res. 19/2024.
 
 ## 4. Ambiguidades (só o que precisa de decisão humana)
 
-**A1. O controlador é agente de pequeno porte?**
+**A1. O controlador é agente de pequeno porte?** **Decidida pelo dono em 26/11/2026: nomear um encarregado de
+qualquer forma** (a leitura mais segura). A página publica nome e e-mail do encarregado a partir de
+`NEXT_PUBLIC_DPO_NAME` e `NEXT_PUBLIC_DPO_EMAIL`, obrigatórias no build de produção (LGPD art. 41 §1º). Com isso a
+pergunta ao contador deixa de bloquear a página; ela só decide se os prazos podem dobrar (A2).
 - Leitura 1: é (ME, EPP, MEI, startup ou pessoa natural, dentro do teto, sem alto risco) [D03 arts. 2º e 3º].
   - Basta o canal de contato [D03 art. 11 §1º], que a página já traz.
   - Os prazos dobram [D03 art. 14].
