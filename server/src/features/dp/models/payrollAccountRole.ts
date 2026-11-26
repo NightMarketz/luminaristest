@@ -3,7 +3,13 @@
  * inglês. O lançamento da folha troca o papel pela conta configurada no `AccountingScopeSettings` (item 19, PR-P3); os
  * papéis do Brasil (INSS, RAT, terceiros, FGTS, IRRF, 13º) são instância e moram em `paises/br/models/contabil/papeis.ts`.
  *
- * `VACATION_*` e `PROVISION_CHARGES*` são do PR-P4 (provisões), declarados aqui porque o catálogo é fechado (F-PES-9).
+ * `VACATION_*` são do PR-P4 (provisões), declarados aqui porque o catálogo é fechado (F-PES-9).
+ *
+ * Encargos sobre a provisão divididos por provisão (dono, chat, 2026-11-26, repassado pela sessão da ponte: "encargos
+ * divididos em férias e 13º"): o referencial da ECF põe a despesa de encargos junto da provisão de cada uma (L300A
+ * 3.01.01.07.01.26 e .27, "inclusive encargos sociais"). Férias são universais e ficam no centro
+ * (`VACATION_PROVISION_CHARGES`, `VACATION_CHARGES_EXPENSE`); o 13º é lei BR e fica na borda (`ENCARGOS_PROVISAO_13`,
+ * `DESPESA_ENCARGOS_13` em `paises/br/models/contabil/papeis.ts`).
  */
 export const PAYROLL_ACCOUNT_ROLES = [
   'SALARIES_EXPENSE',
@@ -14,7 +20,7 @@ export const PAYROLL_ACCOUNT_ROLES = [
   'SALARY_ADVANCES',
   'VACATION_PROVISION',
   'VACATION_EXPENSE',
-  'PROVISION_CHARGES',
-  'PROVISION_CHARGES_EXPENSE',
+  'VACATION_PROVISION_CHARGES',
+  'VACATION_CHARGES_EXPENSE',
 ] as const;
 export type PayrollAccountRole = (typeof PAYROLL_ACCOUNT_ROLES)[number];
