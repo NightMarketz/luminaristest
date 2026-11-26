@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, afterEach, beforeEach, onTestFinished } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup, within, act } from '@testing-library/react';
 
 vi.mock('next-i18next', async () => (await import('./i18nPt')).nextI18nextPt());
 vi.mock('../../../../../lib/context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'eu' } }) }));
@@ -613,6 +613,10 @@ describe('rascunho e exclusão', () => {
       fireEvent.click(screen.getByText('Salvar'));
       await waitFor(() => expect(svc.create).toHaveBeenCalled());
       await waitFor(() => expect(screen.getByText('Salvar')).toBeDisabled());
+      // Lacuna 64a1: a linha de base do rascunho é recapturada num useEffect [mode, saved] (passivo, depois do commit).
+      // O clique logo após o waitFor caía no render com o relatório salvo mas a base ainda vazia (dirty = true) e abria a
+      // confirmação. O act vazio descarrega os efeitos pendentes, como acontece entre o salvar e o clique de uma pessoa.
+      await act(async () => {});
       fireEvent.click(screen.getByText('Voltar à lista'));
       expect(await screen.findByText('Novo relatório')).toBeInTheDocument();
       expect(screen.queryByRole('dialog')).toBeNull();
