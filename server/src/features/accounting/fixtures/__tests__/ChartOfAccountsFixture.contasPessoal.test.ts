@@ -15,6 +15,8 @@ const PESSOAL: ReadonlyArray<{ code: string; nature: string; referentialCode: st
   { code: '2.1.10.04', nature: 'Liability', referentialCode: '2.01.01.01.04' },
   { code: '2.1.10.05', nature: 'Liability', referentialCode: '2.01.01.15.03' },
   { code: '2.1.10.06', nature: 'Liability', referentialCode: '2.01.01.15.04' },
+  { code: '2.1.10.07', nature: 'Liability', referentialCode: '2.01.01.15.05' },
+  { code: '2.1.10.08', nature: 'Liability', referentialCode: '2.01.01.15.05' },
   { code: '4.10.01', nature: 'Expense', referentialCode: '3.01.01.07.01.02' },
   { code: '4.10.02', nature: 'Expense', referentialCode: '3.01.01.07.01.01' },
   { code: '4.10.03', nature: 'Expense', referentialCode: '3.01.01.07.01.05' },

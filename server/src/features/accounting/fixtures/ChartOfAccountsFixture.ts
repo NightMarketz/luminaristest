@@ -49,8 +49,7 @@ export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   // contas de pessoal do plano padrão. PROVISÓRIAS até o P-FOL-5 do contador. Grupos fora dos códigos dos kits (1.1.4–1.1.6
   // legados, 2.1.3–2.1.6, 4.5) e das folhas reservadas às retenções (1.1.8/2.1.9, P-RET-4). `1.1.10`, não `1.1.7`: o 1.1.7 é o
   // "próximo livre" que os testes de papel do kit usam como conta do usuário (RoleAccountOverrideService.integration). Referencial em
-  // `REFERENCIAL_PLANO_PADRAO`; a folha que não fechou referencial não entra (os passivos dos encargos sobre a provisão: nenhuma
-  // linha do grupo 2.01.01.15 PROVISÕES cita encargo).
+  // `REFERENCIAL_PLANO_PADRAO`. Folha sem referencial não entra.
   { code: '1.1.10', name: 'Adiantamentos', nature: 'Asset', acceptsEntries: false },
   { code: '1.1.10.01', name: 'Adiantamentos Salariais', nature: 'Asset', acceptsEntries: true },
   // IBS-CBS-2027 PR-3 (item 14; dono 22/10: "Folhas + 1.01.02.03.40 provisório"): o crédito de IBS/CBS da NF-e de entrada
@@ -89,6 +88,8 @@ export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   { code: '2.1.10.04', name: 'FGTS a Recolher', nature: 'Liability', acceptsEntries: true },
   { code: '2.1.10.05', name: 'Provisão de Férias', nature: 'Liability', acceptsEntries: true },
   { code: '2.1.10.06', name: 'Provisão de 13º Salário', nature: 'Liability', acceptsEntries: true },
+  { code: '2.1.10.07', name: 'Encargos sobre Provisão de Férias', nature: 'Liability', acceptsEntries: true },
+  { code: '2.1.10.08', name: 'Encargos sobre Provisão de 13º Salário', nature: 'Liability', acceptsEntries: true },
   // Patrimônio Líquido (BE-INCR-SPED-APURACAO / D4): the closing entry (encerramento do
   // resultado) posts the exercise's net result here. `2.3` is the synthetic PL branch under the
   // `2` Passivo group (COD_NAT is per-account in I050, so a PL leaf under Passivo is conforme).
@@ -375,6 +376,10 @@ export const REFERENCIAL_PLANO_PADRAO: ReadonlyArray<{ accountCode: string; refe
   // Grupo 2.01.01.15 PROVISÕES – CIRCULANTE: "Férias a Pagar" e "13º Salário a Pagar" (de administradores e empregados).
   { accountCode: '2.1.10.05', referentialCode: '2.01.01.15.03', label: 'Férias a Pagar' },
   { accountCode: '2.1.10.06', referentialCode: '2.01.01.15.04', label: '13º Salário a Pagar' },
+  // Encargos sobre a provisão (VACATION_PROVISION_CHARGES e ENCARGOS_PROVISAO_13): nenhuma linha do grupo PROVISÕES cita
+  // encargo; dono, chat, 2026-11-26: "2.01.01.15.05" (Provisões de Natureza Trabalhista). Duas folhas, um código, como IBS/CBS.
+  { accountCode: '2.1.10.07', referentialCode: '2.01.01.15.05', label: 'Provisões de Natureza Trabalhista – Circulante' },
+  { accountCode: '2.1.10.08', referentialCode: '2.01.01.15.05', label: 'Provisões de Natureza Trabalhista – Circulante' },
   { accountCode: '4.10.01', referentialCode: '3.01.01.07.01.02', label: '(-) Ordenados, Salários, Gratificações e Outras Remunerações a Empregados' },
   // 3.01.01.07.01.01: "remuneração mensal e fixa atribuída ao titular de firma individual, aos sócios, diretores e administradores".
   { accountCode: '4.10.02', referentialCode: '3.01.01.07.01.01', label: '(-) Remuneração a Dirigentes e a Conselho de Administração' },

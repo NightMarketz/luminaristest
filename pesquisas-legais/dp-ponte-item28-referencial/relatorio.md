@@ -7,10 +7,9 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
 
 <!-- ANALISE -->
 ## 1. Conclusão
-Dezoito folhas de pessoal entram no plano padrão com linha própria na tabela dinâmica da ECF [D01], com o mesmo código
-no Lucro Real (L100A/L300A) e no Presumido (P100A/P150A), analítica e sem DT_FIM. Três delas (bolsa de estágio e encargos
-de férias e de 13º) entraram pela decisão do dono de 26/11 (§4). Os dois passivos dos encargos sobre a provisão ficam fora:
-nenhuma linha do grupo PROVISÕES cita encargo (§4).
+Vinte folhas de pessoal entram no plano padrão, todas com linha própria na tabela dinâmica da ECF [D01]. O código é o
+mesmo no Lucro Real (L100A/L300A) e no Presumido (P100A/P150A), analítico e sem DT_FIM. Cinco delas entraram por decisão do
+dono em 26/11 (§4): a bolsa de estágio, os encargos de férias e de 13º na despesa e os dois passivos desses encargos.
 
 | Folha do plano | Papel | Referencial | Grau |
 |---|---|---|---|
@@ -21,6 +20,8 @@ nenhuma linha do grupo PROVISÕES cita encargo (§4).
 | 2.1.10.04 FGTS a Recolher | FGTS_A_RECOLHER | 2.01.01.01.04 FGTS a Recolher | verificado |
 | 2.1.10.05 Provisão de Férias | VACATION_PROVISION | 2.01.01.15.03 Férias a Pagar (grupo PROVISÕES – CIRCULANTE) | inferido (nota §4) |
 | 2.1.10.06 Provisão de 13º Salário | PROVISAO_13 | 2.01.01.15.04 13º Salário a Pagar (grupo PROVISÕES) | inferido (nota §4) |
+| 2.1.10.07 Encargos sobre Provisão de Férias | VACATION_PROVISION_CHARGES | 2.01.01.15.05 Provisões de Natureza Trabalhista | decisão do dono, 26/11 |
+| 2.1.10.08 Encargos sobre Provisão de 13º Salário | ENCARGOS_PROVISAO_13 | 2.01.01.15.05 Provisões de Natureza Trabalhista | decisão do dono, 26/11 |
 | 4.10.01 Salários e Ordenados | SALARIES_EXPENSE | 3.01.01.07.01.02 Ordenados, Salários, Gratificações… a Empregados | verificado |
 | 4.10.02 Pró-labore | OWNER_PAY_EXPENSE | 3.01.01.07.01.01 Remuneração a Dirigentes ("titular de firma individual, aos sócios") | verificado |
 | 4.10.03 INSS Patronal | INSS_PATRONAL | 3.01.01.07.01.05 Encargos Sociais – Previdência Social (Lei 8.212 art. 22 I [D02]) | verificado |
@@ -75,14 +76,16 @@ DESPESA_ENCARGOS_13/ENCARGOS_PROVISAO_13 (borda BR). As perguntas como foram fei
   2: uma conta só, na 3.01.01.07.01.07 / 2.01.01.15.05 "Provisões de Natureza Trabalhista". A Leitura 1 segue o texto da
   tabela, mas muda o catálogo de papéis do item 18. São papéis do PR-P4.
 
-**Volta ao dono: os passivos dos encargos sobre a provisão (VACATION_PROVISION_CHARGES e ENCARGOS_PROVISAO_13).** O dono
+**Respondido pelo dono (chat, 26/11): "2.01.01.15.05".** As duas folhas mapeiam para esse código, como as de IBS e CBS
+compartilham a 2.01.01.09.28. A pergunta foi esta: **os passivos dos encargos sobre a provisão (VACATION_PROVISION_CHARGES e
+ENCARGOS_PROVISAO_13).** O dono
 pediu o passivo no grupo 2.01.01.15 PROVISÕES, "ao lado das provisões .03 e .04", e que eu parasse se o texto da linha não
 fechasse. Nenhuma linha do grupo cita encargo:
 - 2.01.01.15.03 "Férias a Pagar": "o valor de férias a pagar de administradores e empregados";
 - 2.01.01.15.04 "13º Salário a Pagar": "o valor de 13º salário a pagar de administradores e empregados";
 - 2.01.01.15.05 "Provisões de Natureza Trabalhista – Circulante": "o valor da provisão de natureza trabalhista";
 - 2.01.01.15.28 "Outras Provisões": "as demais provisões não classificadas em contas mais específicas".
-Fora do grupo, a 2.01.01.01.09 "Demais Encargos a Recolher" exclui INSS e FGTS. As duas folhas ficam fora do plano padrão.
+Fora do grupo, a 2.01.01.01.09 "Demais Encargos a Recolher" exclui INSS e FGTS.
 Leituras possíveis:
 - .03/.04, pela simetria com a despesa (.26/.27 "inclusive encargos sociais");
 - .05;
