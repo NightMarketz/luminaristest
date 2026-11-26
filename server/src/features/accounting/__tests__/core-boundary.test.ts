@@ -18,8 +18,8 @@ const norm = (p: string) => p.replace(/\\/g, '/');
 /** Item 41 — diretórios do núcleo (relativos a `src/`). */
 const CORE_DIRS = [
   'features/accounting',
-  'features/accountingBinding/archetypes',
-  'features/accountingBinding/interpreter',
+  'features/accountingBinding/domain/archetypes',
+  'features/accountingBinding/domain/interpreter',
   'features/accountingBinding/models',
   'features/accountingBinding/dtos',
   'features/legalParameters',

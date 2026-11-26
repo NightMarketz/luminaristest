@@ -813,6 +813,13 @@ Autorização: dono, chat, 24/11/2026: "Executa o BRIEF inteiro"; 25/11/2026: "P
 - **Caminhos em texto:** skill `interview-setup-generator` (SKILL.md e `evals/evals.json`),
   `scripts/activate-salon-binding.mjs`, READMEs de `interview`, comentários. O `jobs/proveP2ZeroDiffCli.ts` não foi
   tocado (congelado, §11.7).
+- **Três testes que apontam a pasta por string** (o `tsc` não vê): a lista de caminhos do
+  `ChartOfAccountsFixture.plano4niveis.test.ts`; o `accounting/sync/__tests__/renameVocabularyGuard.test.ts`, que lê
+  `accountingBinding/domain/fixtures/saleBinding.ts` por `join(__dirname, …)` e quebrava com `ENOENT`; e o
+  `accounting/__tests__/core-boundary.test.ts`, cuja lista `CORE_DIRS` citava `accountingBinding/archetypes` e
+  `interpreter`. Este último **passava no vazio**: a função que varre a pasta devolve lista vazia quando ela não
+  existe. Com a lista corrigida, uma sonda em `domain/interpreter/` importando `crm/public/constants` reprova o teste
+  (1 falha em 10); sem a sonda, 10 de 10. O silêncio do guarda foi à caixa (`L-20261126-000119-940b`).
 
 **Baseline antes/depois (server, `.dependency-cruiser-known-violations.json`)**
 
