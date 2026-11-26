@@ -140,3 +140,25 @@ export function isCovered(available: Interval[], appointment: Interval): boolean
   if (appointment.end <= appointment.start) return false;
   return available.some((a) => a.start <= appointment.start && appointment.end <= a.end);
 }
+
+function overlaps(a: Interval, b: Interval): boolean {
+  return a.start < b.end && b.start < a.end;
+}
+
+/**
+ * Item 6 — inícios possíveis alinhados ao passo (grade de `stepMinutes` contada da época, que no fuso de hora cheia é a
+ * grade local), com a duração inteira dentro de uma faixa disponível e sem tocar em `busy`.
+ */
+export function freeSlots(available: Interval[], busy: Interval[], durationMinutes: number, stepMinutes: number): Interval[] {
+  const step = stepMinutes * MINUTE_MS;
+  const dur = durationMinutes * MINUTE_MS;
+  if (step <= 0 || dur <= 0) return [];
+  const out: Interval[] = [];
+  for (const a of mergeIntervals(available)) {
+    for (let s = Math.ceil(a.start / step) * step; s + dur <= a.end; s += step) {
+      const slot = { start: s, end: s + dur };
+      if (!busy.some((b) => overlaps(slot, b))) out.push(slot);
+    }
+  }
+  return out;
+}
