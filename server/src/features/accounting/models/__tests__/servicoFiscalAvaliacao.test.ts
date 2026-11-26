@@ -2,10 +2,15 @@
  * EFICIENCIA-FISCAL PR-5 (BRIEF itens 30, 31, 32; ADR §13 I-17, I-19) — alertas de enquadramento dos serviços e a carga de
  * IBS/CBS de 2027 do serviço (LC 214 art. 130 e Anexo III, lido na compilada do Planalto — dossiê eficiencia-fiscal-pr5-servicos).
  */
-import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
+import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
 import { LEGAL_PARAMETER_TABELAS, type LegalParameterTabela, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { alertaPacote, alertasDeEnquadramento, cargaIbsCbsDoServico, reducaoNbsVigente, type ServicoParaAvaliar } from '../servicoFiscalAvaliacao';
 import { LEGAL_PARAMS_SEED_FILE_EFICIENCIA_SERVICOS, fotografiaSemente, legalParamsSeedRows } from '@test/helpers/legalParams';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 const svc = (serviceRef: string, finalidade: string | null, cTribNac = '060101', cNBS: string | null = null): ServicoParaAvaliar => ({ serviceRef, cTribNac, cNBS, finalidade });
 const empresa = (o: Partial<Parameters<typeof alertasDeEnquadramento>[1]> = {}) => ({

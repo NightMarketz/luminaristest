@@ -7,9 +7,14 @@
 import { pushTestSchema, resetDb, disconnectDb } from '@test/helpers';
 import { LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL_V2, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { getFactory } from '@/lib/factory';
-import { erroDeFormato } from '../models/formatoLinha';
+import { createFormatRegistry } from '../models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../accounting/paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../dp/paises/br/legalParameters';
 import { ParametroLegalAusenteError, type LinhaLegal } from '../models/legalParameter';
 import { dataDoMarco, inicioLc214Competencia } from '@/features/accounting/models/marcoLegal';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 /** O valor que o literal `INICIO_LC214` tinha em `simplesCalc.ts` antes desta fatia (origin/main d3f3a201c). */
 const LITERAL_ANTIGO_INICIO_LC214 = '2027-01';

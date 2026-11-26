@@ -21,7 +21,7 @@ import { resolveEcdCodVerLc } from '@/lib/sped';
 import { resolveEcfCodVer } from '@/lib/ecf';
 import { isNationalHoliday } from '@/features/packages/models/validity';
 import { dateOnlyFromDayNumber, dayNumberFromDateOnly } from '@/features/accounting/models/dates';
-import type { NomeCodigoReceita } from '../models/formatoLinha';
+import type { NomeCodigoReceita } from '../../accounting/models/taxAssessmentParams';
 
 const fimDoMes = (ano: number, m: number): string => new Date(Date.UTC(ano, m, 0)).toISOString().slice(0, 10);
 /** Datas apuráveis (o 1º ano apurável é 2025): fim de cada mês 2025–2027 + o 1º dia da vigência L-10. */

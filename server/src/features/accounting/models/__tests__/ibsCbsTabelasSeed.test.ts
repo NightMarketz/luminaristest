@@ -3,9 +3,14 @@ import fs from 'fs';
 import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE_IBS_CBS_TABELAS, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { LEGAL_PARAMS_SEEDS } from '@test/helpers/templateDb';
-import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
+import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
 import { ParametroLegalAusenteError, TABELAS_MIGRADAS, type LegalParameterTabela } from '../../../legalParameters/models/legalParameter';
 import { TABELAS_IBS_CBS, buscarCClassTrib, buscarCCredPres, buscarCst, tabelasIbsCbsDe } from '../ibsCbsTabelas';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 /**
  * Onda 3.2 fatia 5 (dono, 24/11/2026) — o SEED das três tabelas do IT 2025.002 v1.70 é gerado da TSV da transcrição. A

@@ -8,11 +8,16 @@ import fs from 'fs';
 import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE_DP_DEPENDENTE, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { ValidationError } from '../../../../lib/errors';
-import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
+import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../../accounting/paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
 import { linhaLegalVigente, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { assertSalarioFamilia, dependentesIrrfNaData, TIPOS_DEPENDENTE_SALARIO_FAMILIA } from '../dependente';
 import { regraInt } from '../regrasFolha';
 import { alterada, REAL } from '../folha/__tests__/fotografias';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 const norm = (s: string) => s.replace(/\r\n/g, '\n');
 const LINHAS = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_DP_DEPENDENTE) as (LinhaLegal & { fonteSha256: string | null })[];

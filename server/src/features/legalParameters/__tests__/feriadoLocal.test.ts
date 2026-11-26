@@ -7,7 +7,12 @@ import fs from 'fs';
 import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE_FERIADO_LOCAL, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { LEGAL_PARAMETER_TABELAS } from '../models/legalParameter';
-import { erroDeFormato } from '../models/formatoLinha';
+import { createFormatRegistry } from '../models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../accounting/paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../dp/paises/br/legalParameters';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 const MIGRATION = path.resolve(__dirname, '../../../../prisma/migrations/20261017200000_legal_parameters_fer_feriado_local/migration.sql');
 const norm = (s: string) => s.replace(/\r\n/g, '\n');

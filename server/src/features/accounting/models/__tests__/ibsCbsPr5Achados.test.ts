@@ -6,10 +6,15 @@
  */
 import type { ConsumptionTaxAssessment } from 'generated/prisma';
 import { legalParamsSeedRows } from '@test/helpers/legalParams';
-import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
+import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
 import { vencimentoIbsCbsDe } from '../ibsCbsParams';
 import { resumoIbsCbs, type ApuracaoParaResumo } from '../../../../lib/ibsCbsApuracao';
 import { linhasDaApuracaoIbsCbs } from '../ibsCbsMemoExport';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 const todas = legalParamsSeedRows();
 
