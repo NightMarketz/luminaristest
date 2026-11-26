@@ -1,12 +1,12 @@
 # BE-INCR-ESCALA-BASE — BRIEF: escala como módulo base (disponibilidade de recurso, lida pela agenda e pelo DP)
 
 - **Data:** 2026-11-26 · **Autor:** `sessao-planejamento` (agente) · **Base:** `origin/main` `40b6ab8f4`
-- **Estado:** BRIEF escrito; forks F-ESC-1..15 **RATIFICAÇÃO PENDENTE** (no [PRE-ADR](../adr/PRE-ADR-ESCALA-DISPONIBILIDADE.md) §5);
+- **Estado:** BRIEF escrito; forks F-ESC-1..16 **RATIFICAÇÃO PENDENTE** (no [PRE-ADR](../adr/PRE-ADR-ESCALA-DISPONIBILIDADE.md) §5);
   **sem `executa`**. Nó: [`ESCALA-BASE`](../plano/nos/ESCALA-BASE.md).
 - **Condicional:** o checklist segue o caminho recomendado de cada fork. Cada item diz de que fork depende (`[F-ESC-n]`).
   Fork decidido contra a recomendação → o item marcado é reescrito antes do `executa`. Item sem marca é direto.
 - **Escopo:** backend. O FE (tela da escala, seletor de horário livre na agenda, encaixe) é o nó vizinho `FE-INCR-ESCALA`,
-  a abrir depois do PR-4.
+  a abrir. As rotas de leitura que ele consome saem no PR-3. Até lá, a tabela genérica edita a escala (item 10).
 - **Branch:** `integration/escala-base` (feature com 6 PRs no mesmo tema, D-2026-11-10). Um PR por fase, nascido em draft;
   cada item é um commit com o número no título (D-2026-11-25).
 
@@ -64,8 +64,9 @@ conflitar). Por isso ele começa medindo o dado real e diz no corpo do PR quanta
    Conversão hora local → instante por `date-fns-tz` (`fromZonedTime`). Teste: 12×36 noturno (N = 2, 19:00 + 720 min),
    intervalo que corta a meia-noite, fuso `America/Manaus` e `America/Sao_Paulo`. [F-ESC-4, F-ESC-13]
 4. `resolveAvailability({ schedules, exceptions, timeZone, range })` = união dos turnos − exceções de indisponibilidade
-   (`DAY_OFF`, `BLOCK`, `ABSENCE`, `HOLIDAY`) + exceções `EXTRA`. A exceção da unidade inteira (sem alvo) vale para todos
-   os alvos da unidade. A `EXTRA` vence a indisponibilidade no mesmo trecho (o encaixe planejado num feriado). Teste de
+   (`DAY_OFF`, `BLOCK`, `ABSENCE`, `HOLIDAY`) + exceções `EXTRA`. A exceção **com alvo** vale para aquela pessoa ou recurso
+   em **qualquer** unidade (a pessoa afastada não atende em lugar nenhum). A exceção **sem alvo** vale para todos os alvos
+   daquela unidade. A `EXTRA` vence a indisponibilidade no mesmo trecho (o encaixe planejado num feriado). Teste de
    propriedade (`fast-check`): o resultado é ordenado e disjunto, fica dentro do intervalo e não muda se a ordem das
    exceções mudar. [F-ESC-6]
 5. `isCovered(available, appointment)`: o agendamento cabe inteiro numa só faixa disponível. Teste das bordas: início igual
@@ -85,7 +86,8 @@ conflitar). Por isso ele começa medindo o dado real e diz no corpo do PR quanta
 ### PR-1 — Tabelas no Core e regras da escala
 
 10. Quatro módulos de preset no Core, com nomes de tabela, campos e relações da §3.3, registrados no `CoreSystemPreset`.
-    `ui.presentation: 'system'` até o FE existir. [F-ESC-1, F-ESC-2, F-ESC-3]
+    As tabelas nascem visíveis (`standalone`): a tabela genérica é a tela de edição da escala até o FE próprio. Sem isso,
+    ninguém editaria a escala depois do item 23. [F-ESC-1, F-ESC-2, F-ESC-3, F-ESC-12]
 11. `units` ganha `timeZone` (string, IANA, opcional). Sem valor, o default é o da borda do país da instância
     (`paises/br`: `America/Sao_Paulo`). O valor é validado por `Intl.supportedValuesOf('timeZone')`. [F-ESC-13]
 12. Instância existente recebe as quatro tabelas e o campo pela sincronização de preset. Teste: usuário criado com o Core
@@ -118,8 +120,8 @@ conflitar). Por isso ele começa medindo o dado real e diz no corpo do PR quanta
 23. Depois da migração, `employees.workSchedule` fica `readOnly` no preset, e o `EmployeesPlugin` deixa de usar o campo
     (a regra "unidade ou um dia de trabalho" passa a ser "unidade", ou fica sem a segunda metade; ver §6 item 4). [F-ESC-12]
 24. `AppointmentsPlugin`: `assertWithinEmployeeHours` sai. No lugar entra `assertWithinAvailability`: lê pelo
-    `ctx.repository` os padrões vivos e as exceções do profissional e do recurso (se houver) na unidade, mais as da unidade
-    inteira; resolve (item 4) no fuso da unidade (item 11); recusa com 400 `OUTSIDE_AVAILABILITY` (detalhe: alvo e
+    `ctx.repository` os padrões vivos do profissional e do recurso (se houver) na unidade, as exceções com esse alvo em
+    qualquer unidade e as exceções sem alvo da unidade (regra do item 4); resolve (item 4) no fuso da unidade (item 11); recusa com 400 `OUTSIDE_AVAILABILITY` (detalhe: alvo e
     intervalo) quando o item 5 falha. Sem padrão vivo para o alvo → passa (F-ESC-15 a). Fecha as lacunas
     `L-20261126-180055-8f07` e `L-20261126-180056-7893`. [F-ESC-5, F-ESC-13, F-ESC-15]
 25. Encaixe: `appointments` ganha `availabilityOverride` (boolean, default `false`) e `availabilityOverrideReason` (string).
@@ -129,9 +131,13 @@ conflitar). Por isso ele começa medindo o dado real e diz no corpo do PR quanta
 27. `noOverlap`: o escopo passa a `['responsibleEmployeeId']`, e entra um segundo `noOverlap` com escopo `['resourceId']`.
     Antes de mudar, ler como o `GovernanceEngine` trata escopo vazio (§6 item 1) e provar que agendamentos sem profissional
     não conflitam entre si. [F-ESC-11]
-28. O gate vale para os dois caminhos de escrita: teste pela rota genérica (`createTableData`) e pelo caminho do agente do
-    chat (`LuminarisAgentService`, mesmo serviço). `isSystem` continua fora do gate de horário, como hoje
-    (`AppointmentsPlugin` não trata `isSystem` no horário; manter e testar).
+28. O gate vale para os quatro caminhos de escrita (PRE-ADR §2.2). Teste pela rota genérica (`createTableData` e
+    `updateTableData`), pelo agente do chat (`LuminarisAgentService`, mesmo serviço) e pela restauração de versão
+    (`DynamicTableVersionService`). O quarto caminho, o agendamento automático da venda (`appointmentSync.ts:133`, direto
+    pelo `ctx.repository`), passa a chamar a mesma função pura do gate: fora da escala ou em conflito, procura o primeiro
+    horário livre do dia; sem horário, grava com `availabilityOverride: true` e motivo `AUTO_FROM_SALE`. A venda não falha
+    por causa da escala. Fecha a lacuna `L-20261126-180939-51cf`. `isSystem` continua fora do gate de horário, como hoje
+    (manter e testar). [F-ESC-16]
 29. Remarcar (`beforeUpdate` que muda `startAt`/`endAt`/profissional/recurso) passa pelo mesmo gate; mudar só o `status`
     não passa (concluir um atendimento antigo não pode falhar porque a escala mudou depois).
 30. Teste de regressão do comportamento de hoje que fica: escala semanal migrada aceita o mesmo horário que o
@@ -161,8 +167,10 @@ conflitar). Por isso ele começa medindo o dado real e diz no corpo do PR quanta
     `sourceId: '<unitId>:<date>'`). Chave idempotente `(sourceType, sourceId)`, **contando a linha apagada**: o feriado que
     o usuário apagou não volta. Devolve `{ created, skipped, deletedByUser }`. [F-ESC-6]
 40. `POST /api/scheduling/holidays/sync` (centro; o serviço chama a porta). Política `canManage`; `docs.paths` + `openapi.json` (+1 path).
-41. `SchedulingHolidaySyncScheduler`: em dezembro gera o ano seguinte para toda unidade; ao criar unidade, gera o ano
-    corrente e o seguinte (chamada no serviço da unidade, não no plugin). Teste do caso de alerta (regra F-OBS-14).
+41. `SchedulingHolidaySyncScheduler` diário: gera o ano corrente e o seguinte das unidades que ainda não os têm. A unidade
+    nova recebe os feriados em até 24 h. Não há gancho na criação da unidade: ela é linha de DT criada por três caminhos
+    (rota genérica, `SystemProvisioningService`, `rekeyLegacyUnitCli`), e o plugin não pode ler o `LegalParameter`. Teste
+    do caso de alerta (regra F-OBS-14).
 42. Feriado municipal novo no `LegalParameter` depois do sync → o próximo sync cria só o que falta (teste).
 
 ### PR-5 — Afastamento do DP na agenda (etapa a1: reconcile, sem tocar `features/dp/**`)
@@ -316,13 +324,13 @@ Códigos de erro novos (inglês, R1): `OUTSIDE_AVAILABILITY`, `OVERRIDE_REASON_R
 
 ## 4. Forks — RATIFICAÇÃO PENDENTE
 
-Os quinze forks, com caminhos e recomendação, estão no [PRE-ADR §5](../adr/PRE-ADR-ESCALA-DISPONIBILIDADE.md#5-forks--ratificação-pendente).
+Os dezesseis forks, com caminhos e recomendação, estão no [PRE-ADR §5](../adr/PRE-ADR-ESCALA-DISPONIBILIDADE.md#5-forks--ratificação-pendente).
 Índice de quais itens cada um muda:
 
 | Fork | Recomendação | Itens que dependem |
 |---|---|---|
 | F-ESC-1 Onde mora | (a) DynamicTable | 10, e o desenho inteiro |
-| F-ESC-2 Registro | (a) Core | 10, 12, 17, 20 |
+| F-ESC-2 Registro | (a) Core, tabelas visíveis | 10, 12, 17, 20 |
 | F-ESC-3 Recurso | (a) `resources` + XOR | 1, 10, 13, 26 |
 | F-ESC-4 Padrão | (a) ciclo de N dias | 1–3, 14 |
 | F-ESC-5 Fora da disponibilidade | (a) recusa + encaixe | 5, 24, 25 |
@@ -336,6 +344,7 @@ Os quinze forks, com caminhos e recomendação, estão no [PRE-ADR §5](../adr/P
 | F-ESC-13 Fuso | (a) `units.timeZone` | 3, 11, 24, 30 |
 | F-ESC-14 Gate fora da tx | (a) aceita | 24 (sem item novo) |
 | F-ESC-15 Sem escala | (a) sem restrição | 24 |
+| F-ESC-16 Agendamento automático da venda | (a) gate + encaixe `AUTO_FROM_SALE` | 28 |
 
 ### Decisões de detalhe sem fork (caminho único pelo que já está decidido)
 
@@ -372,7 +381,10 @@ Os quinze forks, com caminhos e recomendação, estão no [PRE-ADR §5](../adr/P
 ## 7. Achados fora de escopo (na caixa)
 
 - `L-20261126-180055-8f07`: dia desligado no `workSchedule` aceito pela agenda. Fecha no item 24.
-- `L-20261126-180056-7893`: fuso do processo na conferência de horário. Fecha nos itens 11 e 24.
+- `L-20261126-180056-7893`: fuso do processo na conferência de horário (`AppointmentsPlugin.ts:102, 111-112`; a evidência
+  na caixa diz 113-114 por engano). Fecha nos itens 11 e 24.
+- `L-20261126-180939-51cf`: o agendamento automático da venda grava pelo repositório, fora do gate e do `noOverlap`. Fecha
+  no item 28.
 
 Ficam na caixa porque valem hoje, antes do `executa`. Se o dono quiser contenção antes do PR-2, o remendo de duas linhas
 (ler `active`; converter no fuso da unidade) é uma `sessao-correcao` sobre o teste-guarda, e o PR-2 apaga o código depois.
@@ -420,7 +432,7 @@ Classe de risco: PR-2 é vermelho (motor e comportamento da agenda), com revisor
 |---|---|
 | PR-0 | `server/src/features/scheduling/{models,dtos,ports}/**` |
 | PR-1 | `server/src/features/dynamicTables/presets/modules/core/{Resources,Schedules,ScheduleShifts,ScheduleExceptions,Units}Module.ts`, `server/src/features/dynamicTables/presets/systems/CoreSystemPreset.ts`, `server/src/features/dynamicTables/presets/fields/relation/RelationPresets.ts`, `server/src/features/dynamicTables/presets/removability.ts`, `server/src/features/dynamicTables/rules/plugins/SchedulesPlugin.ts`, `server/src/features/dynamicTables/rules/RuleRegistry.ts`, `server/src/features/scheduling/paises/br/models/**`, rótulos i18n (a conferir no PR) |
-| PR-2 | `server/src/features/dynamicTables/rules/plugins/{Appointments,Employees}Plugin.ts`, `server/src/features/dynamicTables/presets/modules/planning/AppointmentsModule.ts`, `server/src/features/dynamicTables/presets/modules/core/EmployeesModule.ts`, `server/src/features/scheduling/services/WorkScheduleMigrationService.ts`, `server/src/scripts/scheduling-*.ts` |
+| PR-2 | `server/src/features/dynamicTables/rules/plugins/{Appointments,Employees}Plugin.ts`, `server/src/features/dynamicTables/rules/plugins/sales/appointmentSync.ts`, `server/src/features/dynamicTables/presets/modules/planning/AppointmentsModule.ts`, `server/src/features/dynamicTables/presets/modules/core/EmployeesModule.ts`, `server/src/features/scheduling/services/WorkScheduleMigrationService.ts`, `server/src/scripts/scheduling-*.ts` |
 | PR-3 | `server/src/features/scheduling/{services,repositories,policies,dtos}/**`, `server/src/controllers/schedulingController.ts`, `server/src/routes/scheduling.ts`, `server/src/routes/docs/scheduling.paths.ts`, `server/public/openapi.json`, `server/src/__tests__/openapi-paths.test.ts` |
 | PR-4 | `server/src/features/scheduling/paises/br/**`, `server/src/features/scheduling/services/HolidayExceptionService.ts`, `server/src/jobs/SchedulingHolidaySyncScheduler.ts` |
 | PR-5 | `server/src/features/scheduling/adapters/**`, `server/src/features/scheduling/services/HrAbsenceProjectionService.ts`, `server/src/jobs/SchedulingHrAbsenceReconcileScheduler.ts` |

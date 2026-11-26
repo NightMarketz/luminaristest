@@ -1,7 +1,7 @@
 # PRE-ADR-ESCALA-DISPONIBILIDADE — Escala como módulo base: a disponibilidade de um recurso, lida pela agenda e pelo DP
 
 - **Data:** 2026-11-26
-- **Status:** **Proposed** — forks F-ESC-1..15 **RATIFICAÇÃO PENDENTE** (§5). Não autoriza código.
+- **Status:** **Proposed** — forks F-ESC-1..16 **RATIFICAÇÃO PENDENTE** (§5). Não autoriza código.
 - **Autorização:** dono, chat, 2026-11-26, questionário. Pergunta: *"Escala como módulo base (disponibilidade do
   profissional, CLT ou parceiro, lida pela agenda e pelo DP): autoriza planejar o PRE-ADR e o BRIEF? É só documento, sem
   código e sem 'executa'."* Resposta: *"Planejar (Recomendado)"*.
@@ -43,8 +43,9 @@ arquivos (grau V):
 | O FE grava `{ [dia]: { active, start, end } }`. Desligar um dia muda só o `active` e deixa `start`/`end` | `my-app/.../dynamic-form-fields/WorkScheduleField.tsx:37-40, 70-95` |
 | O `AppointmentsPlugin` recusa agendamento fora do horário do dia (`assertWithinEmployeeHours`), lendo o `employees` pelo `ctx.repository` | `rules/plugins/AppointmentsPlugin.ts:74-76, 96-117` |
 | O plugin **ignora `active`**: dia desligado com `start`/`end` preenchidos conta como dia de trabalho. Dia ausente no JSON aceita qualquer horário | `AppointmentsPlugin.ts:103-106` |
-| O plugin usa `getDay()` e `getHours()`, que leem o fuso do processo Node. O servidor não fixa `TZ` (só o Vitest do `my-app` fixa `America/Sao_Paulo`, `ci.yml:360-367`). Com o processo em UTC, "09:00–18:00" é conferido em UTC | `AppointmentsPlugin.ts:102, 113-114` |
+| O plugin usa `getDay()` e `getHours()`, que leem o fuso do processo Node. O `server/Dockerfile` (`node:22-slim`) não define `TZ`, e só o Vitest do `my-app` fixa `America/Sao_Paulo` (`ci.yml:360-367`). Com o processo em UTC, "09:00–18:00" é conferido em UTC. **Grau I** quanto ao fuso de produção (não medi o processo em execução) | `AppointmentsPlugin.ts:102, 111-112` |
 | O `EmployeesPlugin` aceita um funcionário sem unidade se houver um dia com `start`/`end`, e também ignora `active` | `rules/plugins/EmployeesPlugin.ts:14-25, 30-39` |
+| A venda cria agendamento sozinha (`autoCreateAppointmentForServiceItem`: agora + 1 h, 60 min) **direto pelo `ctx.repository.createData`**. Esse caminho não passa pelo `AppointmentsPlugin` nem pelo `noOverlap` | `rules/plugins/sales/appointmentSync.ts:116-133` |
 | Conflito entre agendamentos: `noOverlap` com escopo `(unitId, responsibleEmployeeId)`, re-checado na transação sob fila por tabela; `isSystem` pula a fila | `planning/AppointmentsModule.ts:54-61`; `services/DynamicTableService.ts:1049-1058` |
 | `beforeCreate` dos plugins roda **fora** da transação | `DynamicTableService.ts:602-603` |
 
@@ -90,7 +91,7 @@ Além do §0:
 | `DpAfastamento` (`motivo`, `inicio`, `fim`) e leitura por vínculo `listAfastamentos(scope, vinculoId)` | `schema.prisma:4194`; `dp/services/DpAfastamentoFeriasService.ts:60` | V |
 | Férias gozadas com data ainda não existem como registro: só `DpFeriasImplantacao` (saldo) e `getFerias` (período aquisitivo); gozo é do F3 | `DpAfastamentoFeriasService.ts:102-144` | I (não li o F3, que não existe) |
 | `isHoliday(dateOnly, feriados, codMun)` sobre `LegalParameter` `FERIADO_NACIONAL`/`FERIADO_LOCAL` | `packages/models/validity.ts:92` | V |
-| Caminhos de escrita de `appointments`: rota genérica `dynamicTablesController.createTableData` e o agente do chat (`LuminarisAgentService.ts:293`), os dois por `DynamicTableService.createTableData`, que roda os plugins | `controllers/dynamicTablesController.ts:110-122` | V |
+| Caminhos de escrita de `appointments` (grep de todos os chamadores de `createTableData`/`updateTableData` e de `ctx.repository.createData` fora do serviço): rota genérica (`dynamicTablesController.ts:122, 153`), agente do chat (`LuminarisAgentService.ts:293, 297`) e restauração de versão (`DynamicTableVersionService.ts:111`), todos pelo `DynamicTableService`, que roda os plugins; e o agendamento automático da venda (`appointmentSync.ts:133`), direto pelo repositório, **sem** plugin. Os outros chamadores do serviço (CRM, estoque, provisionamento de unidade, venda) não escrevem `appointments` | as linhas citadas | V |
 | `date-fns-tz` já é dependência do server | `server/package.json:62` | V |
 | Registro de módulos com 7 categorias; Core fora do registro (instalado pelo `CoreSystemPreset`) | `presets/modules/registry.ts:64`; `CoreSystemPreset.ts` | V |
 
@@ -98,7 +99,7 @@ Além do §0:
 
 | Ponto | Norma | Grau |
 |---|---|---|
-| O parceiro não tem vínculo enquanto durar a parceria (§ 11); o vínculo se configura sem contrato formalizado ou com função diferente da do contrato (art. 1º-C). As cláusulas obrigatórias do contrato (§ 10, I a VII) **não** tratam de horário; a mais próxima é o inciso IV ("acesso e circulação nas dependências") | Lei 12.592/2012, art. 1º-A §§ 10 e 11, art. 1º-C (red. Lei 13.352/2016). [acervo](https://github.com/ctresb/leis/blob/main/federal/leis-ordinarias/2012/lei-12592-2012-01-18.md) · fonte `https://normas.leg.br/?urn=urn:lex:br:federal:lei:2012-01-18;12592` · `versao_texto` compilada, `baixado_em` 2026-10-13 | V |
+| O parceiro não tem vínculo enquanto durar a parceria (§ 11); o vínculo se configura sem contrato formalizado ou com função diferente da do contrato (art. 1º-C). As cláusulas obrigatórias do contrato (§ 10, I a VII) **não** tratam de horário; a mais próxima é o inciso IV ("acesso e circulação nas dependências") | Lei 12.592/2012, art. 1º-A §§ 10 e 11, art. 1º-C (red. Lei 13.352/2016). [acervo](https://github.com/ctresb/leis/blob/a31cf3cd12073c7b195933a53e733b85c00cfe02/federal/leis-ordinarias/2012/lei-12592-2012-01-18.md) · fonte `https://normas.leg.br/?urn=urn:lex:br:federal:lei:2012-01-18;12592` · `versao_texto` compilada, `baixado_em` 2026-10-13 | V |
 
 A lei não diz se uma escala imposta pelo salão ao parceiro indica subordinação. Isso vai para o §6, como pergunta.
 
@@ -122,9 +123,11 @@ ERP de qualquer país (R5). Vínculo, feriado, CLT e parceria são instâncias d
 **Ligação pessoa ↔ DP:** a escala aponta para a linha `employees`; o DP chega lá por `DpTrabalhador.employeeRef` (F-DP-1).
 Nada novo no DP para achar a pessoa.
 
-**Por que o gate fica no plugin.** Todos os caminhos de escrita de `appointments` passam por
+**Por que o gate fica no plugin.** Três dos quatro caminhos de escrita de `appointments` passam por
 `DynamicTableService.createTableData/updateTableData` e pelos plugins (§2.2). Um gate acima do motor (controller ou serviço
-de aplicação) seria pulado pela rota genérica e pelo agente do chat. Para ficar no único ponto que vê todos os caminhos, o
+de aplicação) seria pulado pela rota genérica, pelo agente do chat e pela restauração de versão. O quarto caminho (o
+agendamento automático da venda) grava pelo repositório, dentro de outro plugin. Ele chama a mesma função pura do gate de
+forma explícita (F-ESC-16). Para ficar no único ponto que vê todos os caminhos, o
 gate só pode ler DynamicTable (`AC-2.1-B1`). Por isso tudo o que a agenda precisa saber e mora em Prisma (feriado, férias,
 afastamento) entra na escala **como dado**, escrito por serviço de aplicação depois do commit, idempotente, com reconcile.
 É a costura do `ADR-PERSISTENCE-BOUNDARY` §4 no sentido inverso: Prisma → DynamicTable. Não é motor de domínio: as
@@ -137,7 +140,7 @@ chamadas são fixas no código.
 | Onde mora a escala | DynamicTable no Core (`schedules` + `scheduleShifts` + `scheduleExceptions` + `resources`), ao lado de `employees` | F-ESC-1, F-ESC-2 |
 | Como o DP consome a escala de um CLT | A `DpJornada` continua a jornada contratual e a fonte da folha. A escala oferece um contrato de leitura (dias e minutos planejados por pessoa e período). O DP o consome por porta própria, no BRIEF do DP que precisar dele, como o `DP-PONTO` para 12×36 e a conformidade escala × jornada. Nada do F2 reabre | F-ESC-8 |
 | Como o parceiro sem vínculo tem escala | Pela mesma escala, porque ela aponta para `employees`, não para `DpVinculo`. O centro não sabe de vínculo. A origem do padrão (`DECLARED` pelo profissional × `ASSIGNED` pela empresa) é dado do centro; o alerta de risco de vínculo é da borda BR, depois do §6 | F-ESC-10 |
-| Conflito, folga e feriado na agenda | Conflito: `noOverlap` por pessoa (sem a unidade no escopo) e por recurso. Folga e ausência: exceção na escala. Feriado: exceção projetada pela borda BR, que o usuário pode apagar para abrir no feriado. Fora da disponibilidade: recusa, salvo encaixe explícito e registrado | F-ESC-5, F-ESC-6, F-ESC-7, F-ESC-11, F-ESC-14, F-ESC-15 |
+| Conflito, folga e feriado na agenda | Conflito: `noOverlap` por pessoa (sem a unidade no escopo) e por recurso. Folga e ausência: exceção na escala; a exceção com alvo vale para a pessoa ou o recurso em qualquer unidade, e a sem alvo vale para a unidade inteira. Feriado: exceção projetada pela borda BR, que o usuário pode apagar para abrir no feriado. Fora da disponibilidade: recusa, salvo encaixe explícito e registrado | F-ESC-5, F-ESC-6, F-ESC-7, F-ESC-11, F-ESC-14, F-ESC-15, F-ESC-16 |
 | Outros setores | Clínica: médico em plantão (ciclo), sala e equipamento como `resources`. Oficina: box e elevador como recurso, mecânico com escala. Loja com turno: escala de caixa e vendedor sem agenda (a escala não depende de AGE-0). Indústria e saúde: 12×36 e revezamento pelo ciclo de N dias | F-ESC-2, F-ESC-3, F-ESC-4 |
 
 ## 5. Forks — RATIFICAÇÃO PENDENTE
@@ -162,6 +165,7 @@ reabre decisão é `DECISÃO ARQUITETURAL` e não é recomendada aqui.
 | F-ESC-13 Fuso | (a) `units.timeZone` IANA | não |
 | F-ESC-14 Gate fora da transação | (a) aceita o preflight | não |
 | F-ESC-15 Recurso sem escala | (a) sem restrição | não |
+| F-ESC-16 Agendamento automático da venda | (a) passa pelo gate e grava encaixe | não |
 
 ### F-ESC-1 — Onde mora a escala
 
@@ -186,8 +190,9 @@ reabre decisão é `DECISÃO ARQUITETURAL` e não é recomendada aqui.
 - **(c)** Submódulo da agenda (`AGE-ESC`). A loja com turno e o DP sem agenda ficam sem escala.
 - **Recomendação: (a).** O dono chamou de "módulo base", e os dois consumidores (agenda e DP) estão em mundos diferentes. Só
   o Core é garantido a ambos. (b) cria uma categoria cuja ausência o DP teria de tratar. (c) amarra a escala à agenda, que é
-  o oposto do pedido. Custo de (a): quatro tabelas a mais em toda instância. As de sistema podem nascer com
-  `ui.presentation: 'system'` (oculta do menu) até o FE da escala existir.
+  o oposto do pedido. Custo de (a): quatro tabelas a mais em toda instância. Elas nascem visíveis (`standalone`), para que a
+  tabela genérica (`GenericTable`) sirva de tela de edição até o FE próprio existir. Se nascessem ocultas, ninguém editaria
+  a escala depois que o `workSchedule` saísse do formulário (F-ESC-12).
 
 ### F-ESC-3 — Recurso que não é pessoa
 
@@ -227,7 +232,10 @@ reabre decisão é `DECISÃO ARQUITETURAL` e não é recomendada aqui.
 - **(a)** Serviço da borda BR (`features/scheduling/paises/br/`) projeta os feriados da unidade (`isHoliday`, com o
   município da unidade) em `scheduleExceptions` de `kind: HOLIDAY`, `origin: HOLIDAY_CALENDAR`, por ano, com chave
   idempotente `(unitId, date)`. O usuário pode apagar a exceção para abrir no feriado. A projeção não recria o que foi
-  apagado, porque o soft-delete conta na chave. Roda por job anual e por ação explícita.
+  apagado, porque o soft-delete conta na chave. Roda por job diário, que gera o ano corrente e o seguinte das unidades que
+  ainda não os têm (a unidade nova recebe em até 24 h), e por ação explícita. Não há gancho na criação da unidade: ela é
+  linha de DT criada por três caminhos (rota genérica, provisionamento, CLI de rekey), e o plugin não pode ler o
+  `LegalParameter`.
 - **(b)** A agenda ignora feriado; o usuário cadastra à mão.
 - **(c)** Configuração da unidade ("abre em feriado") e o gate lê o `LegalParameter`. Impossível no plugin (`B1`).
 - **Recomendação: (a).** Feriado é calendário de país (R2 e): a borda calcula e o centro só vê exceções. Abrir ou não no
@@ -317,6 +325,17 @@ reabre decisão é `DECISÃO ARQUITETURAL` e não é recomendada aqui.
 - **Recomendação: (a).** A regra "gate autoritativo dentro da tx" é para invariante que não se desfaz (período, saldo). Um
   agendamento fora da escala se remarca. Se o dono quiser (b), é PRE-ADR do motor, não desta fase.
 
+### F-ESC-16 — Agendamento automático da venda
+
+- **(a)** O `autoCreateAppointmentForServiceItem` resolve a disponibilidade com a mesma função pura do gate (lendo as linhas
+  pelo `ctx.repository`) e confere conflito com os agendamentos vivos do profissional. Se o horário padrão (agora + 1 h)
+  estiver fora ou em conflito, ele procura o primeiro horário livre do dia. Se não houver, grava com
+  `availabilityOverride: true` e motivo `AUTO_FROM_SALE`. A venda não falha por causa da escala.
+- **(b)** Recusa a venda quando não há horário.
+- **(c)** Mantém como está (fora do gate).
+- **Recomendação: (a).** A venda no balcão não pode travar por agenda, e (c) deixa um caminho que ignora a escala e o
+  conflito (lacuna `L-20261126-180939-51cf`). (a) mantém a venda andando e deixa o encaixe registrado.
+
 ### F-ESC-15 — Recurso sem escala
 
 - **(a)** Sem escala = sem restrição (o que acontece hoje quando o `workSchedule` está vazio).
@@ -328,8 +347,8 @@ reabre decisão é `DECISÃO ARQUITETURAL` e não é recomendada aqui.
 
 | # | Pergunta exata | Para quem | Efeito no desenho |
 |---|---|---|---|
-| P1 | Num contrato de parceria (Lei 12.592), a empresa registrar no sistema uma escala de horário **definida por ela** para o profissional-parceiro é indício de subordinação (CLT art. 3º) que ajude a configurar vínculo? A disponibilidade **informada pelo profissional** tem o mesmo risco? | advogado trabalhista | Só a borda BR: um alerta (`ASSIGNED` + parceiro). O centro já separa `DECLARED`/`ASSIGNED` (F-ESC-10) |
-| P2 | Trabalho do CLT em feriado (Lei 605/1949, art. 9º) e abertura do comércio em feriado por convenção coletiva (Lei 10.101/2000, art. 6º-A) | contador / leitura no acervo no BRIEF do DP | Do DP. A escala só mostra a exceção `HOLIDAY` apagada |
+| P1 | Num contrato de parceria (Lei 12.592), a empresa registrar no sistema uma escala de horário **definida por ela** para o profissional-parceiro é indício de subordinação (CLT art. 3º, não conferido no acervo nesta sessão, grau A) que ajude a configurar vínculo? A disponibilidade **informada pelo profissional** tem o mesmo risco? | advogado trabalhista | Só a borda BR: um alerta (`ASSIGNED` + parceiro). O centro já separa `DECLARED`/`ASSIGNED` (F-ESC-10) |
+| P2 | Trabalho do CLT em feriado (Lei 605/1949, art. 9º) e abertura do comércio em feriado por convenção coletiva (Lei 10.101/2000, art. 6º-A); artigos não conferidos no acervo nesta sessão (grau A) | contador / leitura no acervo no BRIEF do DP | Do DP. A escala só mostra a exceção `HOLIDAY` apagada |
 | P3 | Conformidade da escala do CLT: limite semanal, DSR, interjornada e intervalo (CLT arts. 58, 59-A, 66, 67, 71) e domingo no comércio | DP (BRIEF próprio) | Do DP, pela porta do F-ESC-8. Os artigos ainda não foram conferidos no acervo nesta sessão (grau A) |
 
 ## 7. Insumos ausentes
@@ -337,15 +356,17 @@ reabre decisão é `DECISÃO ARQUITETURAL` e não é recomendada aqui.
 - Como o `noOverlap` trata o escopo nulo (agendamento sem profissional): ler `GovernanceEngine.ts` no PR que mudar o escopo
   (BRIEF item de inventário).
 - Data das férias gozadas: não existe antes do F3 do DP (F-ESC-7, limite).
-- O fuso do processo em produção: o Dockerfile do servidor não fixa `TZ` (lido o `ci.yml`; a imagem `node:22-alpine` roda em
-  UTC por padrão, grau I).
+- O fuso do processo em produção: o `server/Dockerfile` (`node:22-slim`) não define `TZ`, e a imagem roda em UTC por
+  padrão (grau I: não medi o processo em execução).
 
 ## 8. Achados fora de escopo (na caixa)
 
 - `L-20261126-180055-8f07` (defeito · produto · G3 · E1 · silencioso · verificado): dia desligado no `workSchedule` aceito
   pela agenda (`AppointmentsPlugin.ts:103-106` × `WorkScheduleField.tsx:37-40`).
 - `L-20261126-180056-7893` (defeito · produto · G3 · E1 · silencioso · inferido): fuso do processo na conferência de horário
-  (`AppointmentsPlugin.ts:102, 113-114`).
+  (`AppointmentsPlugin.ts:102, 111-112`; a evidência gravada na caixa diz 113-114 por engano).
+- `L-20261126-180939-51cf` (defeito · produto · G3 · E2 · silencioso · inferido): o agendamento automático da venda
+  grava pelo repositório, fora do gate e do `noOverlap` (`appointmentSync.ts:133`). Fecha pelo F-ESC-16.
 
 O BRIEF substitui esse código (F-ESC-12, F-ESC-13). A lacuna fica porque o
 defeito vale hoje e o BRIEF ainda não tem `executa`.
@@ -357,8 +378,8 @@ defeito vale hoje e o BRIEF ainda não tem `executa`.
   `DpJornada` (F-ESC-8 a), e a projeção do DP é idempotente com reconcile.
 - **Premissa errada da tarefa (§0):** um grep por palavra em português perdeu o `workSchedule`. Corrigi lendo os plugins. Os
   forks F-ESC-11 e F-ESC-12 mudam comportamento visível da agenda de hoje; por isso o BRIEF mede antes de mudar.
-- **Quatro tabelas no Core** de toda instância (F-ESC-2 a): custo de UI e de sincronização de preset. Mitigação:
-  `ui.presentation: 'system'` até o FE.
+- **Quatro tabelas no Core** de toda instância (F-ESC-2 a): custo de UI e de sincronização de preset. Elas ficam visíveis
+  na tabela genérica, que é a tela de edição até o FE próprio.
 - **Projeção = dado duplicado** (feriado e afastamento viram linha de DT). A verdade continua no lado Prisma; a linha é
   derivada, com chave idempotente e reconcile. Se a projeção atrasar, a agenda aceita um agendamento que deveria recusar
   (silencioso). O job de reconcile tem caso de alerta (regra F-OBS-14).
