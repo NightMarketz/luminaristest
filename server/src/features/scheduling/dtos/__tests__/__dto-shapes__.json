@@ -1,0 +1,209 @@
+{
+  "rows.ts": {
+    "dateOnly": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "instant": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    },
+    "resourceSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "isActive": {
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "scheduleExceptionSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "employeeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resourceId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "DAY_OFF",
+            "BLOCK",
+            "ABSENCE",
+            "HOLIDAY",
+            "EXTRA"
+          ]
+        },
+        "origin": {
+          "default": "USER",
+          "type": "string",
+          "enum": [
+            "USER",
+            "HOLIDAY_CALENDAR",
+            "HR"
+          ]
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        "endAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "sourceType": {
+          "type": "string",
+          "enum": [
+            "HOLIDAY",
+            "DP_ABSENCE"
+          ]
+        },
+        "sourceId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "kind",
+        "startAt",
+        "endAt"
+      ],
+      "additionalProperties": false
+    },
+    "scheduleSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "employeeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resourceId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cycleLengthDays": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 56
+        },
+        "cycleAnchorDate": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "validFrom": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "validTo": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "origin": {
+          "default": "DECLARED",
+          "type": "string",
+          "enum": [
+            "DECLARED",
+            "ASSIGNED"
+          ]
+        },
+        "migratedFrom": {
+          "type": "string",
+          "const": "workSchedule"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "cycleLengthDays",
+        "cycleAnchorDate",
+        "validFrom"
+      ],
+      "additionalProperties": false
+    },
+    "scheduleShiftSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "scheduleId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dayOfCycle": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 56
+        },
+        "startMinute": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1439
+        },
+        "durationMinutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1440
+        }
+      },
+      "required": [
+        "scheduleId",
+        "dayOfCycle",
+        "startMinute",
+        "durationMinutes"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
