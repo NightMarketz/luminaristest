@@ -31,6 +31,7 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
 | C1 | núcleo do razão (`PostingService`, `PeriodService`, `AuditService`, `ExerciseClosingService`, `ReconciliationService` e os repositórios do razão) só importa uma **lista fechada** (§1.2): fiscal e localização (`paises/**`, `TaxAssessment*`, `ILalurRepository`, `lib/ofx\|cnab\|sped\|ecf…`) entram por porta de `ports/LedgerPorts.ts`. Emenda 2026-11-24 (§1.2) | **0** (5 → 0 no PR) |
 | P1 | o centro (`features/<d>/` fora de `paises/`) não importa `paises/<cc>/**`; exceção nomeada `LEGADO_BR` (legado brasileiro fora da pasta, ADR-PAIS-NA-BORDA §3.1, só encolhe). Emenda 2026-11-26 (§1.3) | **0** (em 26/11) |
 | P2 | `paises/<cc>/**` não importa `paises/<outro>/**`. Emenda 2026-11-26 (§1.3) | **0** (em 26/11) |
+| LP1 | a plataforma `features/legalParameters/**` (fora de teste) não importa outra feature; resíduo nomeado da F2 no `pathNot` (3 arquivos da contabilidade, só encolhe). Emenda 2026-11-26 (§1.4) | **0** (em 26/11) |
 | F1 | libs fiscais puras (`lib/{sped,ecf,ecfReal,nfe*,nfse*,mit,cnab,ofx,cnpj,cpf,referentialCatalog}.ts`) só leem `features/*/models/` — nada de service/repository/Prisma/HTTP | 0 |
 | X1 | `lib/` (exceto `factory.ts`) não importa lógica de feature (models permitidos) | 0 |
 | X2 | produção não importa teste | 0 |
@@ -150,6 +151,19 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
   poderia ler dado sem reprovar. Baseline 11 → 11. **Prova por plantio (26/11):** `accounting/paises/br/legalParameters/__sonda.ts` com
   `import type { IAccountRepository }` ⇒ `error L6-model-dto-are-leaves: …/__sonda.ts → …/repositories/IAccountRepository.ts`, `x 1 dependency violations`;
   sem o plantio, "no dependency violations found".
+- **LP1 nova (PR-F3-1, item 14):** `LP1-legal-params-platform-not-domain`, de `^src/features/legalParameters/` (fora de teste) para
+  `^src/features/(?!legalParameters/)`. É o `comoProvar` da lacuna `0d37`: desde o item 11 (o `formatoLinha.ts` saiu) e o item 13 (o enum de nomes saiu),
+  a plataforma só lê o formato e o nome das tabelas pelo registro que o `lib/factory.ts` compõe. **Resíduo nomeado, só encolhe:** o `to.pathNot` libera
+  `^src/features/accounting/(models/dates|services/AuditService|scope/AccountingScope)\.ts$`, as 3 arestas da fatia F2 (lacuna `b556`:
+  `LegalParameterDto.ts → dates`, `LegalParameterService.ts → AuditService` e `→ AccountingScope`). A F2 esvazia o `pathNot`; entrada nova = emenda datada
+  deste ADR. Nasce em 0 e nunca entra no known-violations; baseline 11 → 11.
+- **Ponto cego declarado da LP1:** o `pathNot` é por arquivo de destino, não por aresta. Qualquer arquivo da plataforma pode importar esses 3 arquivos sem
+  reprovar, não só os dois que os importam hoje. O dependency-cruiser não exprime exceção por par (origem, destino) numa regra só; a revisão de PR cobre
+  a 4ª aresta até a F2 fechar o `pathNot`.
+- **Prova por plantio da LP1 (26/11):** `legalParameters/models/__sonda.ts` com `import { CATEGORIAS_NUCLEO } from '../../dp/models/vinculo'` ⇒
+  `error LP1-legal-params-platform-not-domain: src/features/legalParameters/models/__sonda.ts → src/features/dp/models/vinculo.ts`,
+  `x 1 dependency violations`, exit 1. Sem o plantio: "no dependency violations found", exit 0. A mesma sonda importando `accounting/models/dates`
+  sai com exit 0 (o ponto cego acima, medido).
 
 ## 2. Fronteiras aprovadas — my-app (`my-app/.dependency-cruiser.cjs`)
 
