@@ -60,5 +60,13 @@ export const employeesModule = {
         description: 'Ex: { "monday": { "start": "09:00", "end": "18:00" } }',
       },
     ],
+    // BE-INCR-ESCALA-BASE item 16: pessoa com escala viva não se apaga (as outras referências seguem o RESTRICT padrão).
+    deleteConstraints: [
+      {
+        type: 'RESTRICT',
+        targetTable: '@@PRESET_TABLE_KEY::schedules',
+        errorMessage: 'Cannot delete this employee: they still have a schedule. Delete the schedule first.',
+      },
+    ],
   } as ITableSchema,
 };
