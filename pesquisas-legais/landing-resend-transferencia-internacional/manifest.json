@@ -1,0 +1,149 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei nº 13.709 de 14/08/2018",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2018/lei-13709-2018-08-14.md",
+      "url_final": "https://github.com/ctresb/leis/blob/183a6accb5801eb88fe63d57acdd375ae6339401/federal/leis-ordinarias/2018/lei-13709-2018-08-14.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2018-08-14;13709",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "183a6accb5801eb88fe63d57acdd375ae6339401",
+      "alertas": [],
+      "baixado_em": "2026-11-26T17:49:30-03:00",
+      "sha256": "72d32431037ce85955c6f959f50f11d10971a8ec36f93cdae5ee3459ec66a4dd",
+      "arquivo": "docs/D01_lei-13709-2018-08-14.md",
+      "texto": "docs/D01_lei-13709-2018-08-14.txt",
+      "bytes": 84925,
+      "sha256_texto": "a44195ca61a3bc19ba64bce447c3de118b2c6e254031d0c5bf93c05bd916577a",
+      "captura": {
+        "anterior": {
+          "slug": "lgpd-teammates-ia-mcp",
+          "id": "D01",
+          "baixado_em": "2026-10-29T10:37:18-03:00",
+          "sha256_texto": "a44195ca61a3bc19ba64bce447c3de118b2c6e254031d0c5bf93c05bd916577a"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Resolução Nº 32, DE 26 DE janeiro DE 2026",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/reguladores/mj/resolucoes/2026/resolucao-n-32-de-26-de-janeiro-de-2026-683334547.md",
+      "url_final": "https://github.com/ctresb/leis/blob/1b9bb3ddaa43737703ca11821142da8cb6d6a2cf/reguladores/mj/resolucoes/2026/resolucao-n-32-de-26-de-janeiro-de-2026-683334547.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.in.gov.br/web/dou/-/resolucao-n-32-de-26-de-janeiro-de-2026-683334547",
+      "versao_texto": "publicação original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "1b9bb3ddaa43737703ca11821142da8cb6d6a2cf",
+      "alertas": [
+        "versao_texto = 'publicação original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-26T17:49:31-03:00",
+      "sha256": "a0aa860bd71cd0cbc3f6157e67727dab9e9f7ce8cc8a24d376fed8b5e0cfb0a2",
+      "arquivo": "docs/D02_resolucao-n-32-de-26-de-janeiro-de-2026-683334547.md",
+      "texto": "docs/D02_resolucao-n-32-de-26-de-janeiro-de-2026-683334547.txt",
+      "bytes": 3874,
+      "sha256_texto": "685da24f73f593d2a5766b4d46a24020c731bf937d705bb7b19c562fafcfd52a",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "L13709compilado",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709compilado.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709compilado.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-26T17:49:49-03:00",
+      "sha256": "f761ccb6a39c2c27c18e4c7c986bd7e81d069cbe0883666f2f283e63b0fba299",
+      "arquivo": "docs/D03_l13709compilado-htm.html",
+      "texto": "docs/D03_l13709compilado-htm.txt",
+      "bytes": 230913,
+      "sha256_texto": "ddf703d9a915b517289dd96ba579714275cf663e5c7f238b22f09466182044d2",
+      "captura": {
+        "anterior": {
+          "slug": "lgpd-teammates-ia-mcp",
+          "id": "D02",
+          "baixado_em": "2026-10-29T10:40:20-03:00",
+          "sha256_texto": "ddf703d9a915b517289dd96ba579714275cf663e5c7f238b22f09466182044d2"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "Resolução CD/ANPD nº 19, de 23 de agosto de 2024Portal Gov.br",
+      "url": "https://www.gov.br/anpd/pt-br/acesso-a-informacao/institucional/atos-normativos/regulamentacoes_anpd/resolucao-cd-anpd-no-19-de-23-de-agosto-de-2024",
+      "url_final": "https://www.gov.br/anpd/pt-br/acesso-a-informacao/institucional/atos-normativos/regulamentacoes_anpd/resolucao-cd-anpd-no-19-de-23-de-agosto-de-2024",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-26T17:49:50-03:00",
+      "sha256": "f3702b05f3ad140b46360f5a8d09c4c71a11b9723ade3f67b2369c9049e3bbb0",
+      "arquivo": "docs/D04_resolucao-cd-anpd-no-19-de-23-de-agosto-de-2024.html",
+      "texto": "docs/D04_resolucao-cd-anpd-no-19-de-23-de-agosto-de-2024.txt",
+      "bytes": 712715,
+      "sha256_texto": "ffb742a469ea3a16cda83cfa69a56d15190b82f9a8d84c12503cdca80504390a",
+      "captura": {
+        "anterior": {
+          "slug": "lgpd-teammates-ia-mcp",
+          "id": "D03",
+          "baixado_em": "2026-10-29T10:40:59-03:00",
+          "sha256_texto": "7278fb71424ff4a1c073e421779761592d9d860cea08d1c4c1c40247c82e7ba3"
+        },
+        "tipo": "TEXTO_MUDOU",
+        "citado_em": [
+          {
+            "slug": "lgpd-teammates-ia-mcp",
+            "id": "D03"
+          }
+        ],
+        "diferencas": [
+          "-Auditoria",
+          "+Auditorias"
+        ]
+      },
+      "alertas": [
+        "TEXTO MUDOU desde 2026-10-29. Dossiês que citaram a versão anterior: lgpd-teammates-ia-mcp D03. Conferir se a conclusão deles ainda vale"
+      ]
+    },
+    {
+      "id": "D05",
+      "titulo": "Transferência Internacional de DadosPortal Gov.br",
+      "url": "https://www.gov.br/anpd/pt-br/assuntos/assuntos-internacionais/transferencia-internacional-de-dados",
+      "url_final": "https://www.gov.br/anpd/pt-br/assuntos/assuntos-internacionais/transferencia-internacional-de-dados",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-26T17:49:50-03:00",
+      "sha256": "4976a44ca0d456ed9720243fc938a34cb15e98f257e4aea7acc35ba4571a45aa",
+      "arquivo": "docs/D05_transferencia-internacional-de-dados.html",
+      "texto": "docs/D05_transferencia-internacional-de-dados.txt",
+      "bytes": 366381,
+      "sha256_texto": "757ef42ab4f0f14e4323af77f731746d10d2557891acab283d9c66cdf738c479",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "Regulamentações da ANPDPortal Gov.br",
+      "url": "https://www.gov.br/anpd/pt-br/acesso-a-informacao/institucional/atos-normativos/regulamentacoes_anpd",
+      "url_final": "https://www.gov.br/anpd/pt-br/acesso-a-informacao/institucional/atos-normativos/regulamentacoes_anpd",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-26T17:49:59-03:00",
+      "sha256": "0d81bddeec32453c9d569a84aef78a7977d900f9ef9925903754c549a9f6bc49",
+      "arquivo": "docs/D06_regulamentacoes_anpd.html",
+      "texto": "docs/D06_regulamentacoes_anpd.txt",
+      "bytes": 328767,
+      "sha256_texto": "62baba2314e15468644ac3def2bc3d7e2ac817ff72e25745c6cc123696251474",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "landing-resend-transferencia-internacional",
+  "pergunta": "Landing: enviar o e-mail de confirmação de inscrição pelo Resend (dados nos EUA, sem cláusulas-padrão da ANPD) é transferência internacional permitida pela LGPD? Qual hipótese do art. 33, requisitos, e o que consentimento e política de privacidade devem dizer",
+  "criado": "2026-11-26T17:49:26-03:00"
+}

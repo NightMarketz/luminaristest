@@ -1,0 +1,134 @@
+---
+title: "GDPR"
+slug: gdpr
+description: "Resend is GDPR compliant. We have made it a priority to protect your data."
+image: /static/cover-security.jpg
+updated_at: "2026-11-19"
+---
+
+## What is GDPR?
+
+The General Data Protection Regulation (GDPR) is a data privacy law implemented by the European Union. It went into effect on May 25, 2018, and is considered one of the world's leading data privacy legislations.
+
+The goal of GDPR is to honor the privacy of persons residing in the EU, by protecting their:
+
+* Right to be informed
+* Right of access
+* Right to rectification
+* Right to erasure
+* Right to restriction of processing
+* Right to data portability
+* Right to object
+* Right to avoid automated decision-making
+
+## Why is GDPR necessary?
+
+A majority of the businesses using Resend either reside in the EU or have customers there. We are honoring our responsibility to comply with the rights of the recipients living in the EU.
+
+GDPR compliance is not only an obligation for Resend, but also for many of the businesses using Resend. Resend's compliance allows even more businesses to build their operations on top of Resend's infrastructure without compromises to privacy or compliance.
+
+## Who audited Resend?
+
+Unlike SOC 2 or ISO 27001, GDPR is not a best practice standard but rather a law. Because of this, most companies self-audit to align their operations and technology with the GDPR controls. Resend followed this approach.
+
+Resend also uses [Vanta](https://vanta.com) to monitor all GDPR controls and organize evidence for compliance.
+
+## How do I get a signed DPA?
+
+A GDPR Article 28 Data Processing Addendum is in force for every Resend account. It is pre-signed by Resend and fully executed once you sign up, so there is no separate counter-signature step.
+
+You can download the signed copy from the [Documents](/settings/documents) page (login required). The unsigned reference version is our public [DPA](/legal/dpa).
+
+## Can Resend sign a country-specific DPA, such as for Brazil LGPD / ANPD or Türkiye KVKK?
+
+No. We don't sign third-party or country-specific data processing agreements or standard contracts, including Brazil LGPD / ANPD standard contractual clauses and the Türkiye KVKK Standard Contract, and we can't attach them as annexes to our DPA. Our standard DPA applies to every account on any plan. It's pre-signed and executed when you sign up, includes the EU Standard Contractual Clauses for cross-border transfers, and can be downloaded from the [Documents](/settings/documents) page (login required).
+
+## Where is Resend data stored?
+
+Resend stores customer data in the United States, including message content, delivery logs, webhook payloads, and account records.
+
+The region you select when adding a sending domain (for example, `eu-west-1`) controls where email is routed and sent from. It does not control where data is stored, and there is no setting today that moves stored data to the EU. See [Choosing a Region](/docs/dashboard/domains/regions) for sending-region details.
+
+Transfers to the United States are covered by the Standard Contractual Clauses in our [DPA](/legal/dpa#6-transfers-of-personal-data) and by our participation in the [EU-U.S. Data Privacy Framework](https://www.dataprivacyframework.gov/list) (including the UK Extension).
+
+## How are EU, UK, and Swiss transfers handled?
+
+Resend's primary processing operations take place in the United States, and transferring customer data there is necessary to provide the Services. See [Section 6 of the DPA](/legal/dpa#6-transfers-of-personal-data).
+
+Transfers out of the EEA are made under the EU Standard Contractual Clauses, which are incorporated into the DPA. Module Two applies when you are a controller and Resend is your processor. Module Three applies when you are a processor and Resend is your sub-processor. UK transfers use the UK Addendum. Swiss transfers use the EU SCCs with the modifications described in the DPA.
+
+The EU-U.S. Data Privacy Framework (and the UK Extension) is an additional transfer mechanism, described in [Section 11 of the DPA](/legal/dpa#11-data-privacy-framework). The SCCs stand on their own and are not conditioned on DPF certification status. View our listing on the [Data Privacy Framework website](https://www.dataprivacyframework.gov/list).
+
+## How long is data retained?
+
+While your account is active, email and log data is retained for 30 days on Free, Pro, and Scale plans. Enterprise plans include [flexible data retention](/pricing).
+
+When you terminate your use of the Services, remaining customer data is deleted within 90 days of account termination, as described in Exhibit A of the [DPA](/legal/dpa).
+
+When you delete your account from the dashboard, it is removed after 7 days, and backup copies of its data expire 7 days after that.
+
+Backups persist for 7 days. See [Security](/security) for backup and encryption details.
+
+There is no API endpoint to delete an individual email. To have specific sent emails removed before the retention window ends, [contact us](/support#contact) from the email address on your Resend account and include the email IDs, which you can copy from the [Emails](/emails) page.
+
+Received emails can't be removed before the retention window ends.
+
+## Who are the sub-processors, and how much notice is given for changes?
+
+The current list is on our [subprocessors](/legal/subprocessors) page.
+
+We give at least 14 days' written notice before adding or replacing a sub-processor, so you can object before the change takes effect. If you reasonably object and we cannot provide a commercially reasonable alternative, you may discontinue the affected Service. Resend remains liable for sub-processor performance. See [Section 4 of the DPA](/legal/dpa#4-authorized-sub-processors).
+
+## Do AI subprocessors receive my email content?
+
+Anthropic receives content when you use an AI feature in the dashboard, such as the AI Editor, the in-app AI Support Agent, or AI features in Inboxes such as inbox agents. Anthropic also receives the messages that arrive in an Inbox, even if you use no AI feature there: they are classified automatically to power filters, attention flags, and one-time code detection. For this classification, one-time codes we detect are redacted before the message is sent. The AI features in Inboxes receive message content without this redaction. Normal sending through the Emails API is not sent to Anthropic.
+
+TypeSafe processes a sample of the emails you send, to detect spam and phishing. TypeSafe has zero data retention: it does not store your content, and does not use it to train models.
+
+Neither Resend nor these subprocessors use customer content to train or fine-tune models. Both are listed on our [subprocessors](/legal/subprocessors) page.
+
+## What if there is a personal data breach?
+
+If a personal data breach occurs, Resend will inform you without undue delay and cooperate so you can meet any obligation to notify a supervisory authority or affected data subjects. See [Section 8 of the DPA](/legal/dpa#8-actions-and-access-requests-audits).
+
+To report a security issue or ask about an incident, [contact us](/support#contact).
+
+## How are data subject requests handled?
+
+For Customer Data processed through the Service, you are responsible for responding to data subject requests. If Resend receives a request about your data, we will direct the person to you and, where you cannot respond without our help, assist you in accordance with [Section 7 of the DPA](/legal/dpa#7-rights-of-data-subjects).
+
+For account, billing, and service usage data, Resend is an independent controller. That processing is described in our [Privacy Policy](/legal/privacy-policy). See [Section 9 of the DPA](/legal/dpa#9-companys-role-as-a-controller).
+
+## What measures are taken to protect PII?
+
+Resend encrypts data at rest (AES-256) and in transit (TLS 1.3 or higher). We run annual third-party penetration tests; the Letter of Attestation is on the [Documents](/settings/documents) page. Resend is also [SOC 2 Type II](/security/soc-2) compliant.
+
+See the DPA for the full list of [Technical and Organizational Measures](/legal/dpa#technical-and-organisational-security-measures).
+
+## How does Resend meet the obligations of a processor?
+
+Resend spent over 12 months making the necessary changes to comply with GDPR to properly honor our obligations as a processor according to [Article 28 of GDPR](https://gdpr-info.eu/art-28-gdpr/).
+
+With regard to Customer Data, Resend is a processor and you may act as a controller or a processor. Resend is an independent controller only for account, billing, and usage data, as described in the [Privacy Policy](/legal/privacy-policy).
+
+For California Consumer Privacy Act (CCPA) purposes, Resend is a service provider and does not sell personal information provided by customers. See [Section 2.5 of the DPA](/legal/dpa).
+
+These changes also include updates to our [Terms](/legal/terms-of-service) and [Privacy Policy](/legal/privacy-policy) to adequately incorporate all of these documents together.
+
+## Is Resend HIPAA or ISO 27001 certified?
+
+No. Resend is not HIPAA compliant and cannot sign a Business Associate Agreement. Resend holds SOC 2 Type II, not an ISO 27001 certificate. You can download the SOC 2 report and DPA from the [Documents](/settings/documents) page.
+
+## How can I access GDPR resources?
+
+* View our [DPA](/legal/dpa) (or [download](/settings/documents) the signed copy)
+* View our [subprocessors](/legal/subprocessors)
+* View our [cookie policy](/legal/cookie-policy)
+* Download the DPA, SOC 2 report, and penetration test Letter of Attestation from [Documents](/settings/documents)
+* View our [Data Privacy Framework listing](https://www.dataprivacyframework.gov/list)
+
+## Can you answer a questionnaire?
+
+Most questionnaire items are answered on this page, the [DPA](/legal/dpa), the [subprocessors](/legal/subprocessors) list, and the [Security](/security) overview. If you still need a questionnaire filled, please [contact us](/support#contact).
+
+Please note that requesting changes to our DPA or other legal documents requires an Enterprise Plan.
