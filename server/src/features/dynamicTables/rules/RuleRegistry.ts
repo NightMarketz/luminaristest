@@ -17,6 +17,7 @@ import { LeadsPlugin } from './plugins/LeadsPlugin';
 import { LeadsSeedOnUnitPlugin } from './plugins/LeadsSeedOnUnitPlugin';
 import { CommissionsPlugin } from './plugins/CommissionsPlugin';
 import { GoalsPlugin } from './plugins/GoalsPlugin';
+import { SchedulesPlugin } from './plugins/SchedulesPlugin';
 
 export class RuleRegistry {
   private plugins: RulePlugin[] = [];
@@ -51,3 +52,5 @@ globalRuleRegistry.register(LeadsPlugin);
 globalRuleRegistry.register(LeadsSeedOnUnitPlugin);
 globalRuleRegistry.register(CommissionsPlugin);
 globalRuleRegistry.register(GoalsPlugin);
+// BE-INCR-ESCALA-BASE (itens 11, 13–15): escala, turnos, exceções e o fuso da unidade.
+globalRuleRegistry.register(SchedulesPlugin);

@@ -37,6 +37,16 @@ export const unitsModule = {
         required: false,
       },
       { ...isActive, label: 'Is Active' },
+      {
+        // BE-INCR-ESCALA-BASE item 11 (F-ESC-13): fuso IANA da unidade, onde a escala e a agenda leem a hora local.
+        // Validado por `Intl.supportedValuesOf('timeZone')` no SchedulesPlugin.
+        name: 'timeZone',
+        label: 'Time Zone',
+        type: 'string',
+        required: false,
+        searchable: false,
+        description: 'IANA time zone, e.g. America/Sao_Paulo.',
+      },
     ],
   } as ITableSchema,
 };

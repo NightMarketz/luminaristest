@@ -5,6 +5,10 @@ import { unitsModule } from '../modules/core/UnitsModule';
 import { employeesModule } from '../modules/core/EmployeesModule';
 import { tasksModule } from '../modules/core/TasksModule';
 import { stakeholdersModule } from '../modules/core/StakeholdersModule';
+import { resourcesModule } from '../modules/core/ResourcesModule';
+import { schedulesModule } from '../modules/core/SchedulesModule';
+import { scheduleShiftsModule } from '../modules/core/ScheduleShiftsModule';
+import { scheduleExceptionsModule } from '../modules/core/ScheduleExceptionsModule';
 
 /**
  * @description
@@ -23,6 +27,13 @@ export const CoreSystemPreset: PresetSuite = {
     employees:  createTableFromModule(employeesModule),
     tasks:      createTableFromModule(tasksModule),
     stakeholders: createTableFromModule(stakeholdersModule),
+
+    // --- Escala (BE-INCR-ESCALA-BASE, F-ESC-1/2): disponibilidade de pessoa e de recurso, lida pela agenda e pelo DP.
+    // Core (fora do MODULE_REGISTRY), tabelas visíveis: a tabela genérica é a tela de edição até o FE próprio.
+    resources:          createTableFromModule(resourcesModule),
+    schedules:          createTableFromModule(schedulesModule),
+    scheduleShifts:     createTableFromModule(scheduleShiftsModule),
+    scheduleExceptions: createTableFromModule(scheduleExceptionsModule),
 
     // --- Leads CRM: saíram do Core no I8 (F-CRM-1 → a). Agora são o módulo CRM-0 (+ CRM-1 propostas) do
     // registro `../modules/registry.ts`, instalados só quando o tenant tem CRM. Tenants existentes não mudam.
