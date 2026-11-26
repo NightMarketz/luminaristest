@@ -117,7 +117,7 @@ describe('itens 17–18 — calcular e espelho', () => {
     expect(original).toBeInstanceOf(FolhaFatorRNulo); // item 35: sem folha FECHADA no DP, o adaptador nulo
     const folha = (mes: string, completa: boolean): FolhaFatorR => ({ mes, folhaCents: 1_000n, origem: 'DP', completa, falta: completa ? null : 'recolhimento de FGTS/CPP (F5)' });
     try {
-      await f().getSimplesEntradasService().upsertHistorico(scope(), '2026-05', { unitId: UNIT, receitaBrutaCents: 1, folhaCents: 7 });
+      await f().getSimplesEntradasService().upsertHistorico(scope(), '2026-05', { unitId: UNIT, receitaBrutaCents: 5_000_000, folhaCents: 7 }); // mesmo receita do beforeAll
       svc.folhaFatorR = { folhaPorMes: async () => new Map([['2026-05', folha('2026-05', false)]]) };
       const incompleta = (await calcular('2026-06')).body.data.alertas.map((x: { codigo: string }) => x.codigo);
       expect(incompleta).toContain('FOLHA_DP_INCOMPLETA');
@@ -129,7 +129,8 @@ describe('itens 17–18 — calcular e espelho', () => {
       expect(completa).not.toContain('FOLHA_DP_INCOMPLETA');
     } finally {
       svc.folhaFatorR = original;
-      await prisma.simplesHistoricoMensal.deleteMany({ where: { competencia: '2026-05' } });
+      // Restaura o mês do beforeAll (pré-adoção sem folha): apagar tiraria 2026-05 do RBT12 dos testes seguintes.
+      await f().getSimplesEntradasService().upsertHistorico(scope(), '2026-05', { unitId: UNIT, receitaBrutaCents: 5_000_000, folhaCents: null });
     }
   });
 
