@@ -52,12 +52,16 @@ redundante vai à caixa.
 - A ponte (`dp-ponte-razao`) não implementa o item 0. Ela é avisada com o número do PR e a branch quando o PR-F3-0
   estiver com CI verde.
 
-## Forks novos da execução (26/11) — seguidos pela recomendação, **sem ratificação**
+## Forks novos da execução (26/11) — RATIFICADOS (a) depois de implementados
 
 A execução achou três decisões que o BRIEF não cobria: o código mudou entre 24/11 e 26/11, ou o esboço se contradizia. A
 sessão abriu um questionário com elas. O dono **recusou o questionário** e respondeu no chat *"Segue"*. A sessão seguiu a
 recomendação estrutural de cada uma e a declara no corpo do PR, **para o dono confirmar ou trocar antes do merge**. Nenhuma
 das três é ratificação.
+
+**Ratificação (dono, chat, 26/11/2026):** depois do PR-F3-0 aberto, o dono respondeu à pergunta *"Confirma os forks F-F3-6,
+F-F3-7 e F-F3-8 como foram seguidos (todos (a))?"* com **"Confirmo os três (a)"**. Valem os três como (a). A lacuna
+L-20261126-201331-eda0 passou para `em-pr` (#1428). O histórico abaixo fica como registro.
 
 | Fork | Fato lido | Seguido | Alternativa |
 |---|---|---|---|
