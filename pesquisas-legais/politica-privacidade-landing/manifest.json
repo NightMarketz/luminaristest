@@ -1,0 +1,196 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei nº 13.709 de 14/08/2018",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2018/lei-13709-2018-08-14.md",
+      "url_final": "https://github.com/ctresb/leis/blob/183a6accb5801eb88fe63d57acdd375ae6339401/federal/leis-ordinarias/2018/lei-13709-2018-08-14.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2018-08-14;13709",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "183a6accb5801eb88fe63d57acdd375ae6339401",
+      "alertas": [],
+      "baixado_em": "2026-11-26T14:34:26-03:00",
+      "sha256": "72d32431037ce85955c6f959f50f11d10971a8ec36f93cdae5ee3459ec66a4dd",
+      "arquivo": "docs/D01_lei-13709-2018-08-14.md",
+      "texto": "docs/D01_lei-13709-2018-08-14.txt",
+      "bytes": 84925,
+      "sha256_texto": "a44195ca61a3bc19ba64bce447c3de118b2c6e254031d0c5bf93c05bd916577a",
+      "captura": {
+        "anterior": {
+          "slug": "lgpd-teammates-ia-mcp",
+          "id": "D01",
+          "baixado_em": "2026-10-29T10:37:18-03:00",
+          "sha256_texto": "a44195ca61a3bc19ba64bce447c3de118b2c6e254031d0c5bf93c05bd916577a"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Regulamentações da ANPDPortal Gov.br",
+      "url": "https://www.gov.br/anpd/pt-br/acesso-a-informacao/institucional/atos-normativos/regulamentacoes_anpd",
+      "url_final": "https://www.gov.br/anpd/pt-br/acesso-a-informacao/institucional/atos-normativos/regulamentacoes_anpd",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-26T14:34:52-03:00",
+      "sha256": "f5f71a48cf0d2619d3adc090ebae207e7cd5d1a58b9b7f89638a5b86ace7fdd6",
+      "arquivo": "docs/D02_regulamentacoes_anpd.html",
+      "texto": "docs/D02_regulamentacoes_anpd.txt",
+      "bytes": 328767,
+      "sha256_texto": "62baba2314e15468644ac3def2bc3d7e2ac817ff72e25745c6cc123696251474",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Resolução CD/ANPD nº 2, de 27 de janeiro de 2022Portal Gov.br",
+      "url": "https://www.gov.br/anpd/pt-br/acesso-a-informacao/institucional/atos-normativos/regulamentacoes_anpd/resolucao-cd-anpd-no-2-de-27-de-janeiro-de-2022",
+      "url_final": "https://www.gov.br/anpd/pt-br/acesso-a-informacao/institucional/atos-normativos/regulamentacoes_anpd/resolucao-cd-anpd-no-2-de-27-de-janeiro-de-2022",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-26T14:35:13-03:00",
+      "sha256": "7a62912f1ef458ff9f9a2f630aac9ec9429f415480d08c607d926d5d71a09d50",
+      "arquivo": "docs/D03_resolucao-cd-anpd-no-2-de-27-de-janeiro-de-2022.html",
+      "texto": "docs/D03_resolucao-cd-anpd-no-2-de-27-de-janeiro-de-2022.txt",
+      "bytes": 330242,
+      "sha256_texto": "0a1a0669b0648b04840b4c58a2cd203861e5e11998d48444ddc06430a01fd4a4",
+      "captura": {
+        "anterior": {
+          "slug": "lgpd-teammates-ia-mcp",
+          "id": "D04",
+          "baixado_em": "2026-10-29T10:41:00-03:00",
+          "sha256_texto": "c98eeb282264383f6529cda28d4638d01f663c79e916d6c6add403dfc03cd65d"
+        },
+        "tipo": "TEXTO_MUDOU",
+        "citado_em": [
+          {
+            "slug": "lgpd-teammates-ia-mcp",
+            "id": "D04"
+          }
+        ],
+        "diferencas": [
+          "-Auditoria",
+          "+Auditorias"
+        ]
+      },
+      "alertas": [
+        "TEXTO MUDOU desde 2026-10-29. Dossiês que citaram a versão anterior: lgpd-teammates-ia-mcp D04. Conferir se a conclusão deles ainda vale"
+      ]
+    },
+    {
+      "id": "D04",
+      "titulo": "Resolução CD/ANPD nº 19, de 23 de agosto de 2024Portal Gov.br",
+      "url": "https://www.gov.br/anpd/pt-br/acesso-a-informacao/institucional/atos-normativos/regulamentacoes_anpd/resolucao-cd-anpd-no-19-de-23-de-agosto-de-2024",
+      "url_final": "https://www.gov.br/anpd/pt-br/acesso-a-informacao/institucional/atos-normativos/regulamentacoes_anpd/resolucao-cd-anpd-no-19-de-23-de-agosto-de-2024",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-26T14:35:34-03:00",
+      "sha256": "9b45afdfd004f90dcec6ae0184f712b24fcecbbca1fe20f2d93b7813020659f2",
+      "arquivo": "docs/D04_resolucao-cd-anpd-no-19-de-23-de-agosto-de-2024.html",
+      "texto": "docs/D04_resolucao-cd-anpd-no-19-de-23-de-agosto-de-2024.txt",
+      "bytes": 712716,
+      "sha256_texto": "ffb742a469ea3a16cda83cfa69a56d15190b82f9a8d84c12503cdca80504390a",
+      "captura": {
+        "anterior": {
+          "slug": "lgpd-teammates-ia-mcp",
+          "id": "D03",
+          "baixado_em": "2026-10-29T10:40:59-03:00",
+          "sha256_texto": "7278fb71424ff4a1c073e421779761592d9d860cea08d1c4c1c40247c82e7ba3"
+        },
+        "tipo": "TEXTO_MUDOU",
+        "citado_em": [
+          {
+            "slug": "lgpd-teammates-ia-mcp",
+            "id": "D03"
+          }
+        ],
+        "diferencas": [
+          "-Auditoria",
+          "+Auditorias"
+        ]
+      },
+      "alertas": [
+        "TEXTO MUDOU desde 2026-10-29. Dossiês que citaram a versão anterior: lgpd-teammates-ia-mcp D03. Conferir se a conclusão deles ainda vale"
+      ]
+    },
+    {
+      "id": "D05",
+      "titulo": "Decreto nº 7.962 de 15/03/2013",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2013/dec-7962-2013-03-15.md",
+      "url_final": "https://github.com/ctresb/leis/blob/39239e708b021186cea3d407a5fc7984f2c725f5/federal/decretos/2013/dec-7962-2013-03-15.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2013-03-15;7962",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-16",
+      "commit": "39239e708b021186cea3d407a5fc7984f2c725f5",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-26T14:36:06-03:00",
+      "sha256": "29024d783fd7a78a19ba4f51814649543cfa91bdeb3b2bcf3687579f5d3472d8",
+      "arquivo": "docs/D05_dec-7962-2013-03-15.md",
+      "texto": "docs/D05_dec-7962-2013-03-15.txt",
+      "bytes": 5937,
+      "sha256_texto": "e0e97e847bc909d8504afcfa400443290efd5bcc1e18c93e2628d012d83a25a2",
+      "captura": {
+        "anterior": {
+          "slug": "verif-2026-10-17-lgpd-cdc-obrigacoes",
+          "id": "D15",
+          "baixado_em": "2026-10-17T09:56:21-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "Lei nº 12.965 de 23/04/2014",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2014/lei-12965-2014-04-23.md",
+      "url_final": "https://github.com/ctresb/leis/blob/304b3a90473b9f312cbbff04119cbc81dd492e3c/federal/leis-ordinarias/2014/lei-12965-2014-04-23.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2014-04-23;12965",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "304b3a90473b9f312cbbff04119cbc81dd492e3c",
+      "alertas": [],
+      "baixado_em": "2026-11-26T14:36:08-03:00",
+      "sha256": "3ab62009e0cbb77fa5c2113950e088852347108d8ec05c45f57dedff40923a38",
+      "arquivo": "docs/D06_lei-12965-2014-04-23.md",
+      "texto": "docs/D06_lei-12965-2014-04-23.txt",
+      "bytes": 27930,
+      "sha256_texto": "526706ade652c6680385696c66494e8e9800f5a793a51e1ecf389176fac90879",
+      "captura": {
+        "anterior": {
+          "slug": "marco-civil-guarda-registros",
+          "id": "D01",
+          "baixado_em": "2026-10-23T11:01:38-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "Decreto nº 7962",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2013/decreto/d7962.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2013/decreto/d7962.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-26T14:36:22-03:00",
+      "sha256": "0b4cd5cd2bc1d9ed61a73f270e9184d88f31a82b9c553835cd990687dde2ff12",
+      "arquivo": "docs/D07_d7962-htm.html",
+      "texto": "docs/D07_d7962-htm.txt",
+      "bytes": 16589,
+      "sha256_texto": "26e9d2fd144a974b696e3dd6989d35ff39d60b98eb7284402ad1d2e1296f5baa",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "politica-privacidade-landing",
+  "pergunta": "Politica de privacidade da landing Luminaris (lista de espera): conteudo minimo do art. 9 da LGPD e da regulamentacao da ANPD; prazos e forma de atender o titular (art. 18 par. 5, art. 19); encarregado e dispensa de agente de pequeno porte; o que informar sobre transferencia internacional (art. 33) se a analise de uso for ligada",
+  "criado": "2026-11-26T14:34:23-03:00"
+}
