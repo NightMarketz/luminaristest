@@ -6,7 +6,8 @@
  */
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 import { addDays, dayOfCycle } from './cycle';
-import type { ScheduleRow, ScheduleWithShifts } from './rows';
+import { UNAVAILABLE_EXCEPTION_KINDS } from '../dtos/rows';
+import type { ExceptionRow, ScheduleRow, ScheduleWithShifts } from './rows';
 
 export interface Interval {
   start: number;
@@ -64,4 +65,69 @@ export function expandShifts(schedules: ScheduleWithShifts[], range: Interval, t
     }
   }
   return out.sort(byStart);
+}
+
+/** União: ordena e funde os que se sobrepõem ou se tocam. Resultado ordenado e disjunto. */
+export function mergeIntervals(xs: Interval[]): Interval[] {
+  const sorted = xs.filter((i) => i.end > i.start).sort(byStart);
+  const out: Interval[] = [];
+  for (const i of sorted) {
+    const last = out[out.length - 1];
+    if (last && i.start <= last.end) last.end = Math.max(last.end, i.end);
+    else out.push({ start: i.start, end: i.end });
+  }
+  return out;
+}
+
+/** `a − b`, os dois já fundidos (ordenados e disjuntos). */
+export function subtractIntervals(a: Interval[], b: Interval[]): Interval[] {
+  const out: Interval[] = [];
+  for (const i of a) {
+    let cursor = i.start;
+    for (const cut of b) {
+      if (cut.end <= cursor) continue;
+      if (cut.start >= i.end) break;
+      if (cut.start > cursor) out.push({ start: cursor, end: cut.start });
+      cursor = Math.max(cursor, cut.end);
+      if (cursor >= i.end) break;
+    }
+    if (cursor < i.end) out.push({ start: cursor, end: i.end });
+  }
+  return out;
+}
+
+export type ScheduleTarget = { employeeId: string } | { resourceId: string };
+
+/**
+ * Item 4 — quais exceções valem para um alvo numa unidade. A exceção **com alvo** vale para aquela pessoa ou recurso em
+ * **qualquer** unidade (a pessoa afastada não atende em lugar nenhum). A exceção **sem alvo** vale para todos os alvos
+ * daquela unidade.
+ */
+export function selectApplicableExceptions<E extends ExceptionRow>(exceptions: E[], target: ScheduleTarget, unitId: string | null): E[] {
+  return exceptions.filter((e) => {
+    if (e.employeeId || e.resourceId) {
+      return 'employeeId' in target ? e.employeeId === target.employeeId : e.resourceId === target.resourceId;
+    }
+    return unitId != null && e.unitId === unitId;
+  });
+}
+
+/**
+ * Item 4 (F-ESC-6) — disponibilidade = união dos turnos − exceções de indisponibilidade (`DAY_OFF`, `BLOCK`, `ABSENCE`,
+ * `HOLIDAY`) + exceções `EXTRA`, dentro de `range`. A `EXTRA` vence a indisponibilidade no mesmo trecho (o encaixe
+ * planejado num feriado). As `exceptions` já são as que valem para o alvo (`selectApplicableExceptions`).
+ */
+export function resolveAvailability(i: {
+  schedules: ScheduleWithShifts[];
+  exceptions: ExceptionRow[];
+  timeZone: string;
+  range: Interval;
+}): Interval[] {
+  const base = mergeIntervals(expandShifts(i.schedules, i.range, i.timeZone));
+  const toInterval = (e: ExceptionRow) => clip({ start: Date.parse(e.startAt), end: Date.parse(e.endAt) }, i.range);
+  const unavailable = mergeIntervals(
+    i.exceptions.filter((e) => (UNAVAILABLE_EXCEPTION_KINDS as readonly string[]).includes(e.kind)).map(toInterval).filter((x): x is Interval => x !== null),
+  );
+  const extras = i.exceptions.filter((e) => e.kind === 'EXTRA').map(toInterval).filter((x): x is Interval => x !== null);
+  return mergeIntervals([...subtractIntervals(base, unavailable), ...extras]);
 }
