@@ -8,7 +8,16 @@
  * um teste verde prova a aritmética contra esta tabela, não contra a lei.
  */
 import { SemLinhaVigenteError, type LinhaLegal } from '../../legalParameters/models/legalParameter';
-import type { NomeCodigoReceita } from '../../legalParameters/models/formatoLinha';
+
+/** BE-INCR-PAIS-NA-BORDA-F3 item 5: veio do `legalParameters/models/formatoLinha.ts` (o schema mora com quem o lê; a borda o registra). */
+const NOMES_CODIGO_RECEITA_IRPJ_CSLL = [
+  'IRPJ_PRESUMIDO', 'IRPJ_REAL_TRIMESTRAL_OBRIGADA', 'IRPJ_REAL_TRIMESTRAL_OPTANTE', 'CSLL_PRESUMIDO', 'CSLL_REAL_TRIMESTRAL',
+  'IRPJ_ESTIMATIVA_OBRIGADA', 'IRPJ_ESTIMATIVA_OPTANTE', 'CSLL_ESTIMATIVA', 'IRPJ_AJUSTE_ANUAL_OBRIGADA', 'IRPJ_AJUSTE_ANUAL_OPTANTE',
+  'CSLL_AJUSTE_ANUAL', 'IRPJ_DIFERENCA_POSTERGADA_16_OBRIGADA', 'IRPJ_DIFERENCA_POSTERGADA_16_OPTANTE',
+  'IRPJ_PRESUMIDO_DIFERENCA_POSTERGADA_16',
+] as const;
+export type NomeCodigoReceita = (typeof NOMES_CODIGO_RECEITA_IRPJ_CSLL)[number];
+export const NOMES_CODIGO_RECEITA: ReadonlySet<string> = new Set(NOMES_CODIGO_RECEITA_IRPJ_CSLL);
 
 /**
  * Versão gravada em `TaxAssessment.tabelaVersao` (D3). BE-INCR-LEGAL-PARAMS PR-1: as linhas moram no banco; esta

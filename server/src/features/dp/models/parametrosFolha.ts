@@ -1,3 +1,4 @@
+import { z } from 'zod';
 /**
  * Parâmetros legais da folha — BE-INCR-DP-F0-F1 item 26 (PR-2). Leitor tipado e puro sobre a fotografia do
  * `LegalParameterService`: é o insumo legal do snapshot do cálculo do F2 (F-DP-8).
@@ -8,9 +9,11 @@
  * na tabela de outro ano.
  */
 import { exigirLinhaVigente, linhasEmVigor, ParametroLegalAusenteError, type LegalParameterTabela, type LinhaLegal } from '../../legalParameters/models/legalParameter';
-import { InssEmpregadoFaixaJson } from '../../legalParameters/models/formatoLinha';
 import { tabelaIrrfPfDe, type FaixaIrrfPf, type TabelaIrrfPf } from '../../accounting/models/retencaoParams';
 import { encargosFolhaDe } from '../../accounting/models/taxSimulation';
+
+/** BE-INCR-DP-F0-F1 item 20 — faixa do INSS do empregado. `ateCents: null` = até o teto do RGPS (`TETO_RGPS_CENTS`). BE-INCR-PAIS-NA-BORDA-F3 item 5: veio do `legalParameters/models/formatoLinha.ts` (o schema mora com quem o lê; a borda o registra). */
+export const InssEmpregadoFaixaJson = z.object({ ateCents: z.number().int().positive().nullable(), aliquotaBp: z.number().int().min(0).max(10_000) }).strict();
 
 /** As tabelas que o leitor consome — o que o serviço pede à `fotografia`. */
 export const TABELAS_PARAMETROS_FOLHA = ['INSS_EMPREGADO', 'ENCARGO_FOLHA', 'SALARIO_MINIMO', 'IRRF_PF_MENSAL'] as const satisfies readonly LegalParameterTabela[];

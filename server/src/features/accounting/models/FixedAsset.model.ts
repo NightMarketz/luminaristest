@@ -1,11 +1,27 @@
+import { z } from 'zod';
 /**
  * FixedAsset domain constants + fórmula pura de depreciação (BE-INCR-FIXED-ASSETS, nó C8).
  * PR-1 (execution-plan Passo 4) escreve isto cedo — junto do schema — porque é testável SEM banco;
  * `quotaCumulativa`/`lifeMonths` só ganham chamador real no `runMonth` do PR-3 (Bloco C).
  */
 import { ValidationError } from '../../../lib/errors';
-import { DepreciacaoAnexoJson } from '../../legalParameters/models/formatoLinha';
 import { linhasVigentesDaTabela, type LinhaLegal } from '../../legalParameters/models/legalParameter';
+
+/**
+ * PR-3 (item 9; questionário do dono 07/10: "chave=sourceRow, disc=source") — linha do Anexo III. `valorInt` = taxa
+ * anual em bp; o resto do que o bem e a lista de taxas mostram vai no JSON. As 2 Notas não têm `sourceRow` na fonte:
+ * chave `NOTA`, distinguidas pelo discriminador. BE-INCR-PAIS-NA-BORDA-F3 item 5: veio do `legalParameters/models/formatoLinha.ts` (o schema mora com quem o lê; a borda o registra).
+ */
+export const DEPRECIACAO_ANEXO_III_FONTES = ['ANEXO_III_IN_1700_2017', 'ANEXO_III_NOTA_1', 'ANEXO_III_NOTA_2'] as const;
+export const DepreciacaoAnexoJson = z
+  .object({
+    annualRateBp: z.number().int().min(1).max(10_000),
+    ncm: z.string().trim().min(1).nullable(),
+    description: z.string().trim().min(1),
+    lifeYears: z.number().int().min(1),
+    justification: z.string().trim().min(1).optional(),
+  })
+  .strict();
 
 export const FIXED_ASSET_STATUSES = ['PENDING_ACTIVATION', 'ACTIVE', 'FULLY_DEPRECIATED', 'DISPOSED'] as const;
 export type FixedAssetStatus = (typeof FIXED_ASSET_STATUSES)[number];
