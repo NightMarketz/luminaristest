@@ -69,6 +69,14 @@ L-20261126-201331-eda0 passou para `em-pr` (#1428). O histórico abaixo fica com
 | F-F3-7 texto do fallback | o envelope único do §4.1 e o "texto de hoje" do item 4 não batem para `TAX_ASSESSMENT/ARREDONDAMENTO` (`… valorTexto (bp ou centavos).`) e `PIS_COFINS` (`PIS_COFINS: chave PIS\|COFINS e …`); nenhum teste nem o front comparam esses textos (grep de 26/11) | (a) envelope único para as 50 tabelas; muda só o texto do 400 dessas linhas | (b) campos de mensagem própria na registração |
 | F-F3-8 quem garante o F-F3-5 (a) | o `ctx` do esboço só tem `rowsInForce(table)`, sem data | (a) a plataforma pergunta à regra em cada data de corte de `[vigenteDesde, vigenteAte]` e entrega as linhas que vigoram nela; provado com registro de brinquedo | (b) cada `checkAgainst` recorta a vigência sozinho |
 
+### F-F3-9 (PR-F3-1, #1433) — RATIFICADO (a)
+
+**Ratificação (dono, chat, 26/11/2026, questionário da sessão F3):** resposta **"(a) 'misto' (Recomendado)"**.
+
+| Fork | Fato lido | Decisão | Alternativa recusada |
+|---|---|---|---|
+| F-F3-9 `tipoValor` das tabelas de valor misto no `GET /api/legal-parameters/tabelas` | O item 13 manda o `tipoValor` seguir o formulário do front (`'int' \| 'texto' \| 'json'`, `my-app/features/accounting/lib/legalParameters.ts:44`). Cinco registrações têm `value` função: `TAX_ASSESSMENT`, `IRRF_DISTRIBUICAO`, `IBS_CBS`, `IRRF_PF_MENSAL` e `FOLHA_REGRA` (lido de `registry.tables()`, 26/11) | (a) `'misto'`: o registro devolve `'mixed'`, mapeado como `text` → `texto`; nenhum campo novo no contrato da registração; o front escolhe o tipo por linha | (b) a lista dos tipos possíveis (ex. `['int','texto']`) |
+
 **Outras divergências do BRIEF, mecânicas (não são fork):** são 50 tabelas, não 46 (`MARCO_LEGAL`, `CST_IBS_CBS`,
 `CCLASSTRIB_IBS_CBS` e `CCREDPRES_IBS_CBS` entraram em 24/11 e são da contabilidade, que é a única que as lê). O
 `formatoLinha.ts` importava 9 modelos, não 7. O baseline do `check:arch` é 11, não 27. A emenda do ADR-ARCH-BOUNDARIES é a
