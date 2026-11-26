@@ -11,20 +11,23 @@
 > critérios falham, então o BRIEF vai à pergunta do dia e a execução espera a resposta do dono.
 > **Base:** `origin/main` `40b6ab8f4` (fetch em 26/11/2026). `origin/integration/eficiencia-fiscal-montador` não tem commit à
 > frente da `main`. Nenhum PR aberto toca `simplesCalc.ts` (`gh pr list --state open` em 26/11; os PRs que mexem no Simples
-> são #1428, em `paises/br/legalParameters/simples.ts`, e #1425/#1326, em `SimplesApuracaoService`, `SimplesDto` e o DP).
+> são #1428, em `paises/br/legalParameters/simples.ts`, e #1425/#1326, em `SimplesApuracaoService`, `SimplesDto` e o DP;
+> conferido também com `git diff --name-only origin/main...<branch>` dos dois: nenhum toca `simplesCalc.ts`).
+> **Sem nota de nó:** o grupo vem da caixa, não de um nó do plano; por isso o `write_set` do §9 não foi gravado em frontmatter
+> nenhum (o nó natural seria `X14`, cuja nota esta sessão não edita).
 > **Graus:** **V** = li nesta sessão (arquivo:linha ou texto da fonte) · **I** = inferido · **A** = assumido.
 
 ## 0. Lacunas do grupo e onde cada uma fecha
 
-| Lacuna | Estado ao abrir | O que fecha | Onde |
-|---|---|---|---|
-| `L-20261125-195439-09b7` (defeito, teto do ISS na 6ª faixa sem IBS) | aberta → em-sessao | itens 1 e 2, depois do **F-196-1** | PR-1 |
-| `L-20261125-195502-411d` (spec, o resto da Res. 196 não mapeado) | aberta → em-sessao | §2 (mapa dispositivo a dispositivo) e itens 4, 5, 7, 8 e 9 | PR-1..PR-4 |
-| `L-20261125-195503-a785` (débito, 8 dossiês citam a Res. 140 de antes da 196) | aberta → em-sessao | item 6 | PR de docs |
-| `L-20261124-053025-666e` (spec, Onda 3.2: datas de corte em literal) | aberta → em-sessao | **só** o literal que sobrou em `simplesCalc.ts`: item 3. O resto (#11 `PRINCIPAL_ACESSORIO_DESDE` em `taxOptimization.ts:53`, #14 `ibsCbsTabelas`) é do nó ONDA3-2 e não é planejado aqui | PR-1 |
-| `L-20261114-214052-b25f` (débito, a forma da janela do RBT12 está em código) | aberta → em-sessao | **não fecha aqui.** Espera o **F-ML-0** do `BE-INCR-LEGAL-REGRAS-brief.md` §0.2 (motor × variantes por vigência), que segue RATIFICAÇÃO PENDENTE. O BRIEF do F3 do país na borda já a marca "fora: espera o F-ML-0" (`BE-INCR-PAIS-NA-BORDA-F3-brief.md:81`). Ver §8 | LEGAL-REGRAS |
-| `L-20261121-194911-ffd3` (spec, cenário sem origem para `LOCACAO_MOVEL`, retenções e deduções) | aberta → em-sessao | **não fecha aqui.** O conserto é no motor do PR-1 de SIMULACAO-CENARIO (o `comoProvar` dela diz "BRIEF do PR-1"), e a forma depende do **F-SIM-14** ("campo do contrato sem motor", `BE-INCR-SIMULACAO-CENARIO-PR0-brief.md:615`), que está pendente. `simplesCalc` já aceita `LOCACAO_MOVEL` (`simplesCalc.ts:71`) e não muda | SIMULACAO-CENARIO PR-1 |
-| `L-20261124-122830-f73e` (com-dono, ger 3: `INICIO_PRIMEIRA_FAIXA` anda com o marco da LC 214) | com-dono | **F-196-5** (fork do dono, só citado). Fato novo abaixo | dono |
+| Lacuna | Estado ao abrir | O que fecha | Onde | Comando que prova |
+|---|---|---|---|---|
+| `L-20261125-195439-09b7` (defeito, teto do ISS na 6ª faixa sem IBS) | aberta → em-sessao | itens 1 e 2, depois do **F-196-1** | PR-1 | `cd server && npx jest src/features/accounting/models/__tests__/simplesCalc.test.ts --selectProjects unit` (caso 2027-01, RBT12 R$ 4,5 mi, Anexos III e IV) |
+| `L-20261125-195502-411d` (spec, o resto da Res. 196 não mapeado) | aberta → em-sessao | §2 (mapa dispositivo a dispositivo) e itens 4, 5, 7, 8 e 9 | PR-1..PR-4 | o §2 é o mapa; cada item prova pelo próprio comando (linhas 09b7, 666e e itens 4, 5, 7–9 do §3) |
+| `L-20261125-195503-a785` (débito, 8 dossiês citam a Res. 140 de antes da 196) | aberta → em-sessao | item 6 | PR de docs | `python ~/.claude/tools/pesquisa-legal/legal.py trecho <dossiê> D24 "<dispositivo>"` por dispositivo citado, e o adendo no `relatorio.md` de cada um dos 8 |
+| `L-20261124-053025-666e` (spec, Onda 3.2: datas de corte em literal) | aberta → em-sessao | **só** o literal que sobrou em `simplesCalc.ts`: item 3. O resto (#11 `PRINCIPAL_ACESSORIO_DESDE` em `taxOptimization.ts:53`, #14 `ibsCbsTabelas`, não medido aqui) é do nó ONDA3-2 e não é planejado aqui | PR-1 | `cd server && npx jest src/features/accounting/models/__tests__/simplesCalc.test.ts --selectProjects unit` (virada 2032-12 → 2033-01 só pela linha `ISS_LIMITE`) |
+| `L-20261114-214052-b25f` (débito, a forma da janela do RBT12 está em código) | aberta → em-sessao | **não fecha aqui.** Espera o **F-ML-0** do `BE-INCR-LEGAL-REGRAS-brief.md` §0.2 (motor × variantes por vigência), que segue RATIFICAÇÃO PENDENTE. O BRIEF do F3 do país na borda já a marca "fora: espera o F-ML-0" (`BE-INCR-PAIS-NA-BORDA-F3-brief.md:81`). Ver §8 | LEGAL-REGRAS | o `comoProvar` dela, no nó dono |
+| `L-20261121-194911-ffd3` (spec, cenário sem origem para `LOCACAO_MOVEL`, retenções e deduções) | aberta → em-sessao | **não fecha aqui.** O conserto é no motor do PR-1 de SIMULACAO-CENARIO (o `comoProvar` dela diz "BRIEF do PR-1"), e a forma depende do **F-SIM-14** ("campo do contrato sem motor", `BE-INCR-SIMULACAO-CENARIO-PR0-brief.md:615`), que está pendente. `simplesCalc` já aceita `LOCACAO_MOVEL` (`simplesCalc.ts:71`) e não muda | SIMULACAO-CENARIO PR-1 | o `comoProvar` dela (BRIEF do PR-1) |
+| `L-20261124-122830-f73e` (com-dono, ger 3: `INICIO_PRIMEIRA_FAIXA` anda com o marco da LC 214) | com-dono | **F-196-5** (fork do dono, só citado). Fato novo abaixo | dono | o `comoProvar` dela, depois da resposta do dono |
 
 ## 1. Contexto fixo (fato consumado no repo)
 
@@ -66,8 +69,10 @@
 
 ## 2. Base legal lida e o mapa da Res. CGSN 196/2026
 
-**Fontes.** A Res. CGSN 196/2026 e a 140/2018 **não estão** no acervo `ctresb/leis` (normas da RFB ficam fora dele).
-Li a visão multivigente oficial (API Normas RFB, SIJUT) baixada em 25/11/2026, versionada no repo:
+**Fontes.** A Res. CGSN 196/2026 **não está** no acervo `ctresb/leis` (`achar reguladores/rfb/resolucoes/2026` lista só a
+CGNFS-e 9 e a CGSIM 1). A Res. 140/2018 está (`reguladores/rfb/resolucoes/2018/resolucao-n-140-de-22-de-maio-de-2018-15742358.md`),
+mas o acervo traz as normas da RFB na publicação original, sem as alterações de 2026; há texto mais novo. Por isso li a
+visão multivigente oficial (API Normas RFB, SIJUT), baixada em 25/11/2026 e versionada no repo:
 - [R196] `pesquisas-legais/dp-tabelas-irrf-das-sst/docs/D10_rfb-154694-multivigente.txt`: Res. CGSN 196, de 16/11/2026,
   DOU de 24/11/2026; <https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154694/visao/multivigente>.
 - [R196-AIII] / [R196-AIV]: `…/D13_87479.txt` e `…/D14_87480.txt` (Anexos III e IV da 196).
@@ -97,7 +102,7 @@ dado do produto.
 |---|---|---|---|
 | art. 21 II "c" (art. 1º) | 24/11/2026 | PD "constante dos Anexos I a V desta Resolução" (só tira o "e" do fim) | sem efeito |
 | art. 121 § 4º (art. 1º) | 24/11/2026 | registro da impugnação de indeferimento da opção pelo ente | sem efeito (é do ente federado) |
-| art. 144-C caput e § 1º (art. 1º) | 24/11/2026 | quem estava no caixa em 2026 põe o não recebido até 31/12/2026 na base de dez/2026 | **sem cliente**: é o PA 12/2026. Responde por lei a A1 do `BE-INCR-SIMPLES-CAIXA` (o ano 2026 de `ULTIMO_ANO_RETORNO_DECIDIDO`, `simplesCaixa.ts:70`). Comentário em G5 na caixa (§8) |
+| art. 144-C caput e § 1º (art. 1º) | 24/11/2026 | quem estava no caixa em 2026 põe o não recebido até 31/12/2026 na base de dez/2026 | **sem cliente**: é o PA 12/2026. Responde por lei a A1 do `BE-INCR-SIMPLES-CAIXA` (o ano 2026 de `ULTIMO_ANO_RETORNO_DECIDIDO`, `simplesCaixa.ts:70`). O comentário velho vai descrito no §8 (G5) |
 | art. 144-C § 2º (art. 1º) | 24/11/2026 | devolução ou cancelamento **de 2027 em diante** de operação tributada até 2026 → ajuste no PA de origem | **sem cliente** (I): alcança fato de 2027, mas só sobre venda de 2026 registrada no sistema. Sem go-live em 2026, não há venda de 2026. Se um dia houver importação de histórico de 2026, a regra pesa contra a do produto (DEVOLUCAO na competência do lançamento, `schema.prisma:3536-3537`); vai como observação no §8, sem item |
 | art. 144-F (art. 1º) | 24/11/2026 | Defis do ano-calendário 2026 até 31/03/2027, no PGDAS-D 2018 | **item 5**: o prazo cai em 2027 e tem cliente. Responde por lei à "ambiguidade A1 … pergunta ao contador" da `fonte` de `sn7-obr-defis-simples` (`legal_parameters_simples_v6.sql:5`) |
 | Res. 190 art. 9º (art. 4º) | 24/11/2026 | efeitos da 190: arts. 144-D/E na publicação; o resto em 01/01/2027 | **coberto** (`MARCO_LEGAL/FIM_REGIME_CAIXA_SIMPLES` já cita). É a fonte de data que a f73e pedia (**F-196-5**) |
@@ -246,6 +251,11 @@ percentual de crédito do adquirente (art. 60).
 | (b) percentual efetivo | pesos = % efetivo já calculado de cada tributo (federais 18,50% somados; IBS 0,0310%) | 0,0328% (+0,0018 p.p. ≈ R$ 6,89/mês sobre R$ 375 mil) | quase igual a (a) |
 | (c) tabela da 5ª faixa | pesos = `teto.transferencia` (IRPJ 6,02 / CSLL 5,26 / CBS 23,20 / CPP 65,26 / IBS 0,26) | 0,0338% (+0,0029 p.p.) | muda a partilha federal (a CPP leva 65%) |
 
+**Decisão anterior.** A proporção pela repartição da 6ª é a regra de hoje: X14 PR-3, com o dono em 07/10 ("decide-se pela
+lei", `simplesCalc.ts:399-401`). A ambiguidade para 2029 em diante já estava registrada e aberta como **A4** em
+`BE-INCR-SIMPLES-NACIONAL-brief.md:287`. A Res. 196 a antecipa para 2027. A opção (a) continua a regra de 07/10; (b) e (c)
+reabrem a A4.
+
 **Recomendação: (a).** É a mesma construção que a lei mostra na 5ª faixa ("da mesma faixa" = os percentuais de repartição
 da faixa). Na 6ª, a faixa não dá percentual ao IBS. O número de hoje não muda: o item 1 troca a citação e o gatilho, e o
 teste prende o valor. **Contra (a):** a 196 escreveu "e o IBS" de propósito, e na 6ª faixa (a) torna a inclusão inócua. Se a
@@ -285,7 +295,9 @@ no valor. **Contra:** `ReceitaFiscalLinha` também alimenta Presumido e Real, qu
 | (b) linha fiscal no recebimento, no anexo da atividade principal | mais simples; erra a partilha quando a venda é de outro anexo |
 | (c) só aviso | "juros de mora recebidos fora da base do DAS" e cálculo manual; deixa o DAS menor que o devido |
 
-**Recomendação: (a).** O encargo é "parte do valor da operação", então segue a operação. **Pendente externo:** se a multa
+**Recomendação: (a).** O encargo é "parte do valor da operação", então segue a operação. **Em nenhuma opção muda a
+contabilização:** a conta de receita financeira continua (F-ENC-2 a, `D-2026-10-13-EMENDA-3-3-PR1.md:20`;
+`BankSettlement.model.ts:59-60`). Só o subrazão fiscal do Simples ganha a linha. **Pendente externo:** se a multa
 contratual de atraso (não a de rescisão, que continua fora pelo § 5º V) também entra (§6).
 
 ### F-196-4: Compra pública (art. 25-A)
@@ -328,14 +340,16 @@ continua a do dono: linha própria (`INICIO_CGSN190`) × reaproveitar um marco �
 - Todos os caminhos que escrevem `ReceitaFiscalLinha`: o F-196-3 tem só o grep de `BankSettlement` (I).
 - Como o emissor NF-e/NFS-e preenche os campos do art. 59 § 4º de 2027 (fora deste BRIEF, §8).
 
-## 8. Achados fora de escopo (vão à caixa; ids no relatório e no PR)
+## 8. Achados fora de escopo
 
-- Emissor NF-e/NFS-e do optante: art. 59 §§ 4º, 4º-A, 6º–8º e art. 59-A (optante pendente), red. Res. 196, de 2027 em
-  diante, não conferidos contra o emissor.
-- Art. 106-C p.ú.: nota mensal consolidada do MEI para PF. Feature opcional.
-- `simplesCaixa.ts:70`: o comentário de `ULTIMO_ANO_RETORNO_DECIDIDO` ainda trata 2026 como "A1"; a 144-C respondeu (G5).
-- Crédito do adquirente na compra de MEI (art. 58 § 8º): coberto por inferência, sem teste que prove. Fica como observação
-  dentro do item 4 do PR-1, sem lacuna.
+- **Na caixa: `L-20261126-210839-b9d5`.** Emissor NF-e/NFS-e do optante: art. 59 §§ 4º, 4º-A, 6º–8º e art. 59-A (optante
+  pendente), red. Res. 196, de 2027 em diante, não conferidos contra o emissor.
+- **Só descrito** (o `add` com `--pai` recusou: filha fora da meta, P3, D-2026-11-25-MATRIZ-DE-LACUNAS §8b): art. 106-C
+  p.ú., nota mensal consolidada do MEI para PF. Feature opcional.
+- **Só descrito** (recusado: G5, §8b): `simplesCaixa.ts:70`, o comentário de `ULTIMO_ANO_RETORNO_DECIDIDO` ainda trata 2026
+  como "A1"; a 144-C respondeu.
+- Crédito do adquirente na compra de MEI (art. 58 § 8º): coberto por inferência, sem teste que prove. Fica como
+  observação, sem item e sem lacuna.
 - **Observação para LEGAL-REGRAS (não é lacuna nova):** a Res. 196 é a primeira mudança de **forma** de regra fiscal (quem
   recebe o excesso do ISS) desde o BRIEF do motor de leis. Pela recomendação do F-ML-11 (a), "um cálculo fiscal só vira
   regra quando a lei o muda", seria o gatilho da b25f. A b25f segue esperando o F-ML-0.
