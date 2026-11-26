@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — politica-privacidade-landing
 
 **Pergunta:** Politica de privacidade da landing Luminaris (lista de espera): conteudo minimo do art. 9 da LGPD e da regulamentacao da ANPD; prazos e forma de atender o titular (art. 18 par. 5, art. 19); encarregado e dispensa de agente de pequeno porte; o que informar sobre transferencia internacional (art. 33) se a analise de uso for ligada
-**Aberto em:** 2026-11-26T14:34:23-03:00 · **Atualizado em:** 2026-11-26T14:51:26-03:00
+**Aberto em:** 2026-11-26T14:34:23-03:00 · **Atualizado em:** 2026-11-26T15:06:23-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -11,7 +11,8 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
 **Em duas linhas:** a política da lista de espera tem de cobrir os sete incisos do art. 9º da LGPD; a ANPD não editou
 regulamento de direitos do titular, então o único prazo em texto é o do art. 19 (15 dias para a declaração completa),
 em dobro para agente de pequeno porte. A dispensa de encarregado depende de o controlador ser de pequeno porte, fato
-que só o dono tem; com PostHog fora do Brasil, a página tem de dizer o país e o mecanismo da transferência.
+que só o dono tem; com PostHog fora do Brasil, a página tem de dizer o país de destino e, se a transferência for por
+cláusulas-padrão, os itens do art. 17 §2º da Res. 19/2024.
 
 **(1) Conteúdo mínimo.**
 - O art. 9º manda informar "de forma clara, adequada e ostensiva" [D01 art. 9º]:
@@ -157,6 +158,20 @@ que só o dono tem; com PostHog fora do Brasil, a página tem de dizer o país e
 - Leitura 2: pessoa física, ou lista sem fins econômicos diretos: o caput não se aplica (§1º: só por ordem judicial).
 - Efeito: na leitura 1 a página muda (passa a citar o registro) e a contagem não pode ser cruzada com ele.
 - Lacuna `L-20261126-174904-21bb`, classe fork, na caixa da landing.
+
+**A5. Com que base fica a prova mínima depois que o titular revoga o consentimento?**
+- Fato: desde o commit `30fc13f` da landing (decisão e46d), a saída apaga o contato e guarda datas, versão do
+  consentimento, número Founder e um HMAC do e-mail (`src/entities/lead/model/exit.ts`).
+- Leitura 1: conservação para "cumprimento de obrigação legal" [D01 art. 16 I]. A obrigação é o ônus de provar que o
+  consentimento foi obtido conforme a lei [D01 art. 8º §2º].
+- Leitura 2: "exercício regular de direitos em processo judicial, administrativo ou arbitral" [D01 art. 7º VI], com a
+  prova guardada para uma eventual defesa.
+- Efeito: nas duas a conservação é lícita e a página tem de dizer para que ela serve. A página escrita diz isso
+  citando o art. 8º §2º, sem nomear a hipótese (ponto R8).
+- **Mais segura:** nomear a leitura 1 na página e manter o mínimo só até o fim do prazo de guarda, que é a decisão do
+  dono na lacuna a082.
+- Pergunta ao advogado: "Depois da revogação do consentimento, guardar data, versão do texto e um hash do e-mail para
+  provar o consentimento se apoia no art. 16 I (c/c art. 8º §2º) ou no art. 7º VI da LGPD? Por quanto tempo?"
 
 ## 5. Lacunas
 - **Res. CD/ANPD 18/2024 (encarregado): não lida.** O DOU (in.gov.br) recusou o `baixar` (HTTP 403) e o navegador
