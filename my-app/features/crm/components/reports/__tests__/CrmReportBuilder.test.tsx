@@ -607,16 +607,22 @@ describe('rascunho e exclusão', () => {
     });
 
     it('salvar zera a sujeira: Voltar à lista depois de salvar não pergunta', async () => {
-      svc.create.mockImplementation((body: { name: string }) => ok({ ...saved, userId: 'eu', id: 'n1', name: body.name, spec: { source: 'leadProposals', measures: [{ type: 'count' }] } }));
+      // L-20261114-210543-36f4: "Salvar" desabilitado também vale com o save EM VOO, e a linha de base da sujeira é
+      // recapturada num efeito passivo depois do commit — esperar o botão deixava o clique em "Voltar" correr contra
+      // o efeito (2/10 vermelho local). O save resolve dentro do act, que drena o commit E o efeito da linha de base.
+      let release!: () => void;
+      svc.create.mockImplementation(
+        (body: { name: string }) =>
+          new Promise((r) => {
+            release = () => r({ success: true, data: { ...saved, userId: 'eu', id: 'n1', name: body.name, spec: { source: 'leadProposals', measures: [{ type: 'count' }] } } });
+          }),
+      );
       await newReportOn('leadProposals');
       fireEvent.change(screen.getByLabelText('Nome'), { target: { value: 'Contagem' } });
       fireEvent.click(screen.getByText('Salvar'));
       await waitFor(() => expect(svc.create).toHaveBeenCalled());
-      await waitFor(() => expect(screen.getByText('Salvar')).toBeDisabled());
-      // Lacuna 64a1: a linha de base do rascunho é recapturada num useEffect [mode, saved] (passivo, depois do commit).
-      // O clique logo após o waitFor caía no render com o relatório salvo mas a base ainda vazia (dirty = true) e abria a
-      // confirmação. O act vazio descarrega os efeitos pendentes, como acontece entre o salvar e o clique de uma pessoa.
-      await act(async () => {});
+      await act(async () => release());
+      expect(screen.getByText('Salvar como')).toBeEnabled(); // salvo e fora do voo
       fireEvent.click(screen.getByText('Voltar à lista'));
       expect(await screen.findByText('Novo relatório')).toBeInTheDocument();
       expect(screen.queryByRole('dialog')).toBeNull();
