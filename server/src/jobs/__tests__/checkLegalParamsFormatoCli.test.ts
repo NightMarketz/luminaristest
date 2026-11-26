@@ -6,6 +6,8 @@ import type { LegalParameter } from 'generated/prisma';
 import { checkLegalParamsFormato } from '../checkLegalParamsFormatoCli';
 import { LegalParameterService } from '../../features/legalParameters/services/LegalParameterService';
 import type { ILegalParameterRepository } from '../../features/legalParameters/repositories/ILegalParameterRepository';
+import { createFormatRegistry, type LegalParameterFormatRegistration } from '../../features/legalParameters/models/formatRegistry';
+import { LEGAL_PARAMETER_FORMATS } from '../../lib/factory';
 
 const linha = (o: Partial<LegalParameter>): LegalParameter =>
   ({
@@ -14,9 +16,10 @@ const linha = (o: Partial<LegalParameter>): LegalParameter =>
     publishedById: 'u', publishedAt: null, revokedById: null, revokedAt: null, createdAt: new Date(0), ...o,
   }) as LegalParameter;
 
-function servico(publicadas: LegalParameter[]) {
+// PAIS-NA-BORDA-F3 item 10: o serviço recebe o registro composto da factory (a mesma constante que a produção usa).
+function servico(publicadas: LegalParameter[], formatos: readonly LegalParameterFormatRegistration[] = LEGAL_PARAMETER_FORMATS) {
   const repo = { findPublished: jest.fn(async () => publicadas) } as unknown as ILegalParameterRepository;
-  return new LegalParameterService(repo, {} as never, {} as never, {} as never);
+  return new LegalParameterService(repo, {} as never, {} as never, {} as never, createFormatRegistry(formatos));
 }
 
 describe('linhas PUBLISHED fora do formato', () => {
@@ -35,5 +38,22 @@ describe('linhas PUBLISHED fora do formato', () => {
   it('o comando sai 0 sem linha fora do formato e 1 com alguma', async () => {
     expect(await checkLegalParamsFormato(servico([linha({ id: 'ok' })]))).toBe(0);
     expect(await checkLegalParamsFormato(servico([linha({ id: 'ruim', discriminador: 'OUTRO' })]))).toBe(1);
+  });
+
+  it('PAIS-NA-BORDA-F3 item 10: a checagem entre tabelas também roda no CLI — B publicada cuja dependência A foi revogada sai 1', async () => {
+    const toy: LegalParameterFormatRegistration[] = [
+      { table: 'A', domain: 'toy', country: 'zz', value: 'int', check: () => null },
+      {
+        table: 'B', domain: 'toy', country: 'zz', value: 'int', check: () => null, requires: ['A'],
+        checkAgainst: (_l, ctx) => (ctx.rowsInForce('A').length > 0 ? null : 'sem linha de A em vigor'),
+      },
+    ];
+    const a = linha({ id: 'a', tabela: 'A', chave: 'K', discriminador: null });
+    const b = linha({ id: 'b', tabela: 'B', chave: 'K', discriminador: null });
+    expect(await checkLegalParamsFormato(servico([a, b], toy))).toBe(0);
+    // A revogada não volta no findPublished: só B publicada.
+    const s = servico([b], toy);
+    expect((await s.linhasPublicadasForaDoFormato()).map((l) => [l.id, l.erro])).toEqual([['b', 'B/K: sem linha de A em vigor (em 2026-01-01).']]);
+    expect(await checkLegalParamsFormato(s)).toBe(1);
   });
 });
