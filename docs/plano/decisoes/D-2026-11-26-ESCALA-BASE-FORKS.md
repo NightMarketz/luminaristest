@@ -46,3 +46,16 @@ Nó: [[ESCALA-BASE]]. PR do documento: #1424.
 - O que fica fora deste nó: o P1 (advogado: escala `ASSIGNED` para parceiro e risco de vínculo); P2 e P3 (DP); a etapa a2
   do F-ESC-7 e a porta do F-ESC-8 (BRIEF do DP, serial com o [[PES-4]]); o FE (`FE-INCR-ESCALA`, a abrir).
 - As lacunas `L-20261126-180055-8f07`, `L-20261126-180056-7893` e `L-20261126-180939-51cf` continuam na caixa até o PR-2.
+
+## Emenda (dono, chat, 2026-11-26): lacunas de spec achadas no `executa`
+
+A sessão que executa o BRIEF parou os itens 11, 23 e 27 por três lacunas de spec. Duas foram ao dono por questionário; a
+terceira tem caminho único e foi decidida pela sessão de planejamento.
+
+| Fork | Achado | Decisão (resposta literal) |
+|---|---|---|
+| F-ESC-17 escopo vazio no `noOverlap` (item 27) | `GovernanceEngine.enforceNoOverlap` descarta o campo de escopo vazio, então "vazio casa com tudo". Hoje um agendamento sem profissional conflita com toda a unidade; com `['resourceId']`, todo agendamento sem sala conflitaria com a tabela inteira | **(a)** flag opt-in `skipWhenScopeEmpty` em `INoOverlapRule`, tratada no `GovernanceEngine` (não é o `DynamicTableService`; não fere a `B4`). O conflito segue na tx. Vale nos dois `noOverlap` da agenda — *"Flag opt-in no motor (Recommended)"* |
+| F-ESC-18 fuso padrão (item 11) | O default do fuso é da borda (R2 e), e o plugin não importa `paises/` (R3) | **(a)** o rollout grava `timeZone` = padrão da borda nas unidades sem fuso; o provisionamento do onboarding cria a unidade já com fuso; o job diário da borda BR (o dos feriados) preenche a que nascer sem fuso. Na janela de até 24 h, o gate usa o fuso do processo, como hoje, com lacuna na caixa — *"Grava como dado + job (Recommended)"* |
+| Rollout de esquema em instância existente (itens 23 e 27) | O `PresetSyncService` só leva campo novo, opção de select e `immutableAfter`; não leva mudança de `noOverlap` nem o `readOnly` do `workSchedule` | **Sem fork (caminho único):** o script de rollout da escala (itens 12 e 22, idempotente) aplica as duas mudanças por `updateTableSchemaAsSystem`. Decidido pela sessão de planejamento |
+
+O `GovernanceEngine` entra no write-set do PR-2 (`server/src/features/dynamicTables/validation/GovernanceEngine.ts`).
