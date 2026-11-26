@@ -131,3 +131,12 @@ export function resolveAvailability(i: {
   const extras = i.exceptions.filter((e) => e.kind === 'EXTRA').map(toInterval).filter((x): x is Interval => x !== null);
   return mergeIntervals([...subtractIntervals(base, unavailable), ...extras]);
 }
+
+/**
+ * Item 5 (F-ESC-5) — o agendamento cabe inteiro numa só faixa disponível (`available` fundido: faixas que se tocam já
+ * viraram uma). Bordas inclusivas no semiaberto: começar no início do turno e terminar no fim dele cabe.
+ */
+export function isCovered(available: Interval[], appointment: Interval): boolean {
+  if (appointment.end <= appointment.start) return false;
+  return available.some((a) => a.start <= appointment.start && appointment.end <= a.end);
+}
