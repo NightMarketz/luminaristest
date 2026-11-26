@@ -164,3 +164,25 @@ export const appointmentId: ISchemaField = {
   relation: { targetTable: '@@PRESET_TABLE_KEY::appointments' },
   searchable: false,
 };
+
+// --- Scheduling (BE-INCR-ESCALA-BASE, F-ESC-3) ---
+
+/** Recurso que não é pessoa (sala, box, equipamento) — alvo de escala e, opcional, do agendamento. */
+export const resourceId: ISchemaField = {
+  name: 'resourceId',
+  label: 'Resource',
+  type: 'relation',
+  required: false,
+  relation: { targetTable: '@@PRESET_TABLE_KEY::resources' },
+  searchable: false,
+};
+
+/** Padrão de disponibilidade a que o turno pertence. */
+export const scheduleId: ISchemaField = {
+  name: 'scheduleId',
+  label: 'Schedule',
+  type: 'relation',
+  required: true,
+  relation: { targetTable: '@@PRESET_TABLE_KEY::schedules' },
+  searchable: false,
+};

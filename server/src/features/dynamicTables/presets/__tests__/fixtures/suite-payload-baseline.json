@@ -737,6 +737,13 @@
             "name": "Employees",
             "schema": {
               "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this employee: they still have a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
               "fields": [
                 {
                   "label": "Full Name",
@@ -1962,6 +1969,61 @@
               ]
             }
           },
+          "resources": {
+            "category": "planning",
+            "name": "Resources",
+            "schema": {
+              "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this resource: it still has a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
+              "fields": [
+                {
+                  "label": "Name",
+                  "name": "name",
+                  "required": true,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 120
+                  }
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "Room",
+                    "Station",
+                    "Equipment",
+                    "Other"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": true,
+                  "label": "Active",
+                  "name": "isActive",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
           "saleItems": {
             "category": "finance",
             "name": "Sale Items",
@@ -2471,6 +2533,279 @@
                   },
                   "errorMessage": "Finalized, cancelled or returned sales cannot be edited.",
                   "scope": "all"
+                }
+              ]
+            }
+          },
+          "scheduleExceptions": {
+            "category": "planning",
+            "name": "Schedule Exceptions",
+            "schema": {
+              "defaultDisplayField": "startAt",
+              "fields": [
+                {
+                  "description": "Empty (and no resource) = the whole unit.",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "DAY_OFF",
+                    "BLOCK",
+                    "ABSENCE",
+                    "HOLIDAY",
+                    "EXTRA"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "defaultValue": "USER",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "USER",
+                    "HOLIDAY_CALENDAR",
+                    "HR"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Start",
+                  "name": "startAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "End",
+                  "name": "endAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "Reason",
+                  "name": "reason",
+                  "required": false,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 300
+                  }
+                },
+                {
+                  "label": "Source Type",
+                  "name": "sourceType",
+                  "options": [
+                    "HOLIDAY",
+                    "DP_ABSENCE"
+                  ],
+                  "required": false,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Source Id",
+                  "name": "sourceId",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "schedules": {
+            "category": "planning",
+            "name": "Schedules",
+            "schema": {
+              "defaultDisplayField": "validFrom",
+              "deleteConstraints": [
+                {
+                  "cascadeCondition": "ALWAYS",
+                  "targetTable": "@@PRESET_TABLE_KEY::scheduleShifts",
+                  "type": "CASCADE"
+                }
+              ],
+              "fields": [
+                {
+                  "description": "Person this schedule belongs to (or set a resource).",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "description": "Empty = valid in any unit.",
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": 7,
+                  "label": "Cycle Length (days)",
+                  "name": "cycleLengthDays",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Day 1 of the cycle.",
+                  "label": "Cycle Anchor Date",
+                  "name": "cycleAnchorDate",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "label": "Valid From",
+                  "name": "validFrom",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "description": "Inclusive; empty = no end.",
+                  "label": "Valid To",
+                  "name": "validTo",
+                  "required": false,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "defaultValue": "DECLARED",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "DECLARED",
+                    "ASSIGNED"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Migrated From",
+                  "name": "migratedFrom",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                },
+                {
+                  "label": "Notes",
+                  "name": "notes",
+                  "required": false,
+                  "type": "textarea",
+                  "validation": {
+                    "maxLength": 500
+                  }
+                }
+              ]
+            }
+          },
+          "scheduleShifts": {
+            "category": "planning",
+            "name": "Schedule Shifts",
+            "schema": {
+              "defaultDisplayField": "dayOfCycle",
+              "fields": [
+                {
+                  "label": "Schedule",
+                  "name": "scheduleId",
+                  "relation": {
+                    "targetTable": "@@id:schedules"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Day of Cycle",
+                  "name": "dayOfCycle",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Local time of the unit, e.g. 540 = 09:00.",
+                  "label": "Start (minutes after midnight)",
+                  "name": "startMinute",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1439,
+                    "minValue": 0
+                  }
+                },
+                {
+                  "label": "Duration (minutes)",
+                  "name": "durationMinutes",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1440,
+                    "minValue": 1
+                  }
                 }
               ]
             }
@@ -3007,6 +3342,14 @@
                   "required": false,
                   "searchable": false,
                   "type": "boolean"
+                },
+                {
+                  "description": "IANA time zone, e.g. America/Sao_Paulo.",
+                  "label": "Time Zone",
+                  "name": "timeZone",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ]
             }
@@ -3749,6 +4092,13 @@
             "name": "Employees",
             "schema": {
               "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this employee: they still have a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
               "fields": [
                 {
                   "label": "Full Name",
@@ -4974,6 +5324,61 @@
               ]
             }
           },
+          "resources": {
+            "category": "planning",
+            "name": "Resources",
+            "schema": {
+              "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this resource: it still has a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
+              "fields": [
+                {
+                  "label": "Name",
+                  "name": "name",
+                  "required": true,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 120
+                  }
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "Room",
+                    "Station",
+                    "Equipment",
+                    "Other"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": true,
+                  "label": "Active",
+                  "name": "isActive",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
           "saleItems": {
             "category": "finance",
             "name": "Sale Items",
@@ -5483,6 +5888,279 @@
                   },
                   "errorMessage": "Finalized, cancelled or returned sales cannot be edited.",
                   "scope": "all"
+                }
+              ]
+            }
+          },
+          "scheduleExceptions": {
+            "category": "planning",
+            "name": "Schedule Exceptions",
+            "schema": {
+              "defaultDisplayField": "startAt",
+              "fields": [
+                {
+                  "description": "Empty (and no resource) = the whole unit.",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "DAY_OFF",
+                    "BLOCK",
+                    "ABSENCE",
+                    "HOLIDAY",
+                    "EXTRA"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "defaultValue": "USER",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "USER",
+                    "HOLIDAY_CALENDAR",
+                    "HR"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Start",
+                  "name": "startAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "End",
+                  "name": "endAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "Reason",
+                  "name": "reason",
+                  "required": false,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 300
+                  }
+                },
+                {
+                  "label": "Source Type",
+                  "name": "sourceType",
+                  "options": [
+                    "HOLIDAY",
+                    "DP_ABSENCE"
+                  ],
+                  "required": false,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Source Id",
+                  "name": "sourceId",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "schedules": {
+            "category": "planning",
+            "name": "Schedules",
+            "schema": {
+              "defaultDisplayField": "validFrom",
+              "deleteConstraints": [
+                {
+                  "cascadeCondition": "ALWAYS",
+                  "targetTable": "@@PRESET_TABLE_KEY::scheduleShifts",
+                  "type": "CASCADE"
+                }
+              ],
+              "fields": [
+                {
+                  "description": "Person this schedule belongs to (or set a resource).",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "description": "Empty = valid in any unit.",
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": 7,
+                  "label": "Cycle Length (days)",
+                  "name": "cycleLengthDays",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Day 1 of the cycle.",
+                  "label": "Cycle Anchor Date",
+                  "name": "cycleAnchorDate",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "label": "Valid From",
+                  "name": "validFrom",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "description": "Inclusive; empty = no end.",
+                  "label": "Valid To",
+                  "name": "validTo",
+                  "required": false,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "defaultValue": "DECLARED",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "DECLARED",
+                    "ASSIGNED"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Migrated From",
+                  "name": "migratedFrom",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                },
+                {
+                  "label": "Notes",
+                  "name": "notes",
+                  "required": false,
+                  "type": "textarea",
+                  "validation": {
+                    "maxLength": 500
+                  }
+                }
+              ]
+            }
+          },
+          "scheduleShifts": {
+            "category": "planning",
+            "name": "Schedule Shifts",
+            "schema": {
+              "defaultDisplayField": "dayOfCycle",
+              "fields": [
+                {
+                  "label": "Schedule",
+                  "name": "scheduleId",
+                  "relation": {
+                    "targetTable": "@@id:schedules"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Day of Cycle",
+                  "name": "dayOfCycle",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Local time of the unit, e.g. 540 = 09:00.",
+                  "label": "Start (minutes after midnight)",
+                  "name": "startMinute",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1439,
+                    "minValue": 0
+                  }
+                },
+                {
+                  "label": "Duration (minutes)",
+                  "name": "durationMinutes",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1440,
+                    "minValue": 1
+                  }
                 }
               ]
             }
@@ -6019,6 +6697,14 @@
                   "required": false,
                   "searchable": false,
                   "type": "boolean"
+                },
+                {
+                  "description": "IANA time zone, e.g. America/Sao_Paulo.",
+                  "label": "Time Zone",
+                  "name": "timeZone",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ]
             }
@@ -6623,6 +7309,13 @@
             "name": "Employees",
             "schema": {
               "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this employee: they still have a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
               "fields": [
                 {
                   "label": "Full Name",
@@ -7848,6 +8541,61 @@
               ]
             }
           },
+          "resources": {
+            "category": "planning",
+            "name": "Resources",
+            "schema": {
+              "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this resource: it still has a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
+              "fields": [
+                {
+                  "label": "Name",
+                  "name": "name",
+                  "required": true,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 120
+                  }
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "Room",
+                    "Station",
+                    "Equipment",
+                    "Other"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": true,
+                  "label": "Active",
+                  "name": "isActive",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
           "saleItems": {
             "category": "finance",
             "name": "Sale Items",
@@ -8346,6 +9094,279 @@
                   },
                   "errorMessage": "Finalized, cancelled or returned sales cannot be edited.",
                   "scope": "all"
+                }
+              ]
+            }
+          },
+          "scheduleExceptions": {
+            "category": "planning",
+            "name": "Schedule Exceptions",
+            "schema": {
+              "defaultDisplayField": "startAt",
+              "fields": [
+                {
+                  "description": "Empty (and no resource) = the whole unit.",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "DAY_OFF",
+                    "BLOCK",
+                    "ABSENCE",
+                    "HOLIDAY",
+                    "EXTRA"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "defaultValue": "USER",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "USER",
+                    "HOLIDAY_CALENDAR",
+                    "HR"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Start",
+                  "name": "startAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "End",
+                  "name": "endAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "Reason",
+                  "name": "reason",
+                  "required": false,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 300
+                  }
+                },
+                {
+                  "label": "Source Type",
+                  "name": "sourceType",
+                  "options": [
+                    "HOLIDAY",
+                    "DP_ABSENCE"
+                  ],
+                  "required": false,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Source Id",
+                  "name": "sourceId",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "schedules": {
+            "category": "planning",
+            "name": "Schedules",
+            "schema": {
+              "defaultDisplayField": "validFrom",
+              "deleteConstraints": [
+                {
+                  "cascadeCondition": "ALWAYS",
+                  "targetTable": "@@PRESET_TABLE_KEY::scheduleShifts",
+                  "type": "CASCADE"
+                }
+              ],
+              "fields": [
+                {
+                  "description": "Person this schedule belongs to (or set a resource).",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "description": "Empty = valid in any unit.",
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": 7,
+                  "label": "Cycle Length (days)",
+                  "name": "cycleLengthDays",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Day 1 of the cycle.",
+                  "label": "Cycle Anchor Date",
+                  "name": "cycleAnchorDate",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "label": "Valid From",
+                  "name": "validFrom",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "description": "Inclusive; empty = no end.",
+                  "label": "Valid To",
+                  "name": "validTo",
+                  "required": false,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "defaultValue": "DECLARED",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "DECLARED",
+                    "ASSIGNED"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Migrated From",
+                  "name": "migratedFrom",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                },
+                {
+                  "label": "Notes",
+                  "name": "notes",
+                  "required": false,
+                  "type": "textarea",
+                  "validation": {
+                    "maxLength": 500
+                  }
+                }
+              ]
+            }
+          },
+          "scheduleShifts": {
+            "category": "planning",
+            "name": "Schedule Shifts",
+            "schema": {
+              "defaultDisplayField": "dayOfCycle",
+              "fields": [
+                {
+                  "label": "Schedule",
+                  "name": "scheduleId",
+                  "relation": {
+                    "targetTable": "@@id:schedules"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Day of Cycle",
+                  "name": "dayOfCycle",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Local time of the unit, e.g. 540 = 09:00.",
+                  "label": "Start (minutes after midnight)",
+                  "name": "startMinute",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1439,
+                    "minValue": 0
+                  }
+                },
+                {
+                  "label": "Duration (minutes)",
+                  "name": "durationMinutes",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1440,
+                    "minValue": 1
+                  }
                 }
               ]
             }
@@ -8882,6 +9903,14 @@
                   "required": false,
                   "searchable": false,
                   "type": "boolean"
+                },
+                {
+                  "description": "IANA time zone, e.g. America/Sao_Paulo.",
+                  "label": "Time Zone",
+                  "name": "timeZone",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ]
             }
@@ -9622,6 +10651,13 @@
             "name": "Employees",
             "schema": {
               "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this employee: they still have a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
               "fields": [
                 {
                   "label": "Full Name",
@@ -10743,6 +11779,61 @@
               ]
             }
           },
+          "resources": {
+            "category": "planning",
+            "name": "Resources",
+            "schema": {
+              "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this resource: it still has a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
+              "fields": [
+                {
+                  "label": "Name",
+                  "name": "name",
+                  "required": true,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 120
+                  }
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "Room",
+                    "Station",
+                    "Equipment",
+                    "Other"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": true,
+                  "label": "Active",
+                  "name": "isActive",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
           "saleItems": {
             "category": "finance",
             "name": "Sale Items",
@@ -11252,6 +12343,279 @@
                   },
                   "errorMessage": "Finalized, cancelled or returned sales cannot be edited.",
                   "scope": "all"
+                }
+              ]
+            }
+          },
+          "scheduleExceptions": {
+            "category": "planning",
+            "name": "Schedule Exceptions",
+            "schema": {
+              "defaultDisplayField": "startAt",
+              "fields": [
+                {
+                  "description": "Empty (and no resource) = the whole unit.",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "DAY_OFF",
+                    "BLOCK",
+                    "ABSENCE",
+                    "HOLIDAY",
+                    "EXTRA"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "defaultValue": "USER",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "USER",
+                    "HOLIDAY_CALENDAR",
+                    "HR"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Start",
+                  "name": "startAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "End",
+                  "name": "endAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "Reason",
+                  "name": "reason",
+                  "required": false,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 300
+                  }
+                },
+                {
+                  "label": "Source Type",
+                  "name": "sourceType",
+                  "options": [
+                    "HOLIDAY",
+                    "DP_ABSENCE"
+                  ],
+                  "required": false,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Source Id",
+                  "name": "sourceId",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "schedules": {
+            "category": "planning",
+            "name": "Schedules",
+            "schema": {
+              "defaultDisplayField": "validFrom",
+              "deleteConstraints": [
+                {
+                  "cascadeCondition": "ALWAYS",
+                  "targetTable": "@@PRESET_TABLE_KEY::scheduleShifts",
+                  "type": "CASCADE"
+                }
+              ],
+              "fields": [
+                {
+                  "description": "Person this schedule belongs to (or set a resource).",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "description": "Empty = valid in any unit.",
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": 7,
+                  "label": "Cycle Length (days)",
+                  "name": "cycleLengthDays",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Day 1 of the cycle.",
+                  "label": "Cycle Anchor Date",
+                  "name": "cycleAnchorDate",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "label": "Valid From",
+                  "name": "validFrom",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "description": "Inclusive; empty = no end.",
+                  "label": "Valid To",
+                  "name": "validTo",
+                  "required": false,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "defaultValue": "DECLARED",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "DECLARED",
+                    "ASSIGNED"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Migrated From",
+                  "name": "migratedFrom",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                },
+                {
+                  "label": "Notes",
+                  "name": "notes",
+                  "required": false,
+                  "type": "textarea",
+                  "validation": {
+                    "maxLength": 500
+                  }
+                }
+              ]
+            }
+          },
+          "scheduleShifts": {
+            "category": "planning",
+            "name": "Schedule Shifts",
+            "schema": {
+              "defaultDisplayField": "dayOfCycle",
+              "fields": [
+                {
+                  "label": "Schedule",
+                  "name": "scheduleId",
+                  "relation": {
+                    "targetTable": "@@id:schedules"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Day of Cycle",
+                  "name": "dayOfCycle",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Local time of the unit, e.g. 540 = 09:00.",
+                  "label": "Start (minutes after midnight)",
+                  "name": "startMinute",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1439,
+                    "minValue": 0
+                  }
+                },
+                {
+                  "label": "Duration (minutes)",
+                  "name": "durationMinutes",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1440,
+                    "minValue": 1
+                  }
                 }
               ]
             }
@@ -11788,6 +13152,14 @@
                   "required": false,
                   "searchable": false,
                   "type": "boolean"
+                },
+                {
+                  "description": "IANA time zone, e.g. America/Sao_Paulo.",
+                  "label": "Time Zone",
+                  "name": "timeZone",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ]
             }
@@ -12416,6 +13788,13 @@
             "name": "Employees",
             "schema": {
               "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this employee: they still have a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
               "fields": [
                 {
                   "label": "Full Name",
@@ -13641,6 +15020,61 @@
               ]
             }
           },
+          "resources": {
+            "category": "planning",
+            "name": "Resources",
+            "schema": {
+              "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this resource: it still has a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
+              "fields": [
+                {
+                  "label": "Name",
+                  "name": "name",
+                  "required": true,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 120
+                  }
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "Room",
+                    "Station",
+                    "Equipment",
+                    "Other"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": true,
+                  "label": "Active",
+                  "name": "isActive",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
           "saleItems": {
             "category": "finance",
             "name": "Sale Items",
@@ -14150,6 +15584,279 @@
                   },
                   "errorMessage": "Finalized, cancelled or returned sales cannot be edited.",
                   "scope": "all"
+                }
+              ]
+            }
+          },
+          "scheduleExceptions": {
+            "category": "planning",
+            "name": "Schedule Exceptions",
+            "schema": {
+              "defaultDisplayField": "startAt",
+              "fields": [
+                {
+                  "description": "Empty (and no resource) = the whole unit.",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "DAY_OFF",
+                    "BLOCK",
+                    "ABSENCE",
+                    "HOLIDAY",
+                    "EXTRA"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "defaultValue": "USER",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "USER",
+                    "HOLIDAY_CALENDAR",
+                    "HR"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Start",
+                  "name": "startAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "End",
+                  "name": "endAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "Reason",
+                  "name": "reason",
+                  "required": false,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 300
+                  }
+                },
+                {
+                  "label": "Source Type",
+                  "name": "sourceType",
+                  "options": [
+                    "HOLIDAY",
+                    "DP_ABSENCE"
+                  ],
+                  "required": false,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Source Id",
+                  "name": "sourceId",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "schedules": {
+            "category": "planning",
+            "name": "Schedules",
+            "schema": {
+              "defaultDisplayField": "validFrom",
+              "deleteConstraints": [
+                {
+                  "cascadeCondition": "ALWAYS",
+                  "targetTable": "@@PRESET_TABLE_KEY::scheduleShifts",
+                  "type": "CASCADE"
+                }
+              ],
+              "fields": [
+                {
+                  "description": "Person this schedule belongs to (or set a resource).",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "description": "Empty = valid in any unit.",
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": 7,
+                  "label": "Cycle Length (days)",
+                  "name": "cycleLengthDays",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Day 1 of the cycle.",
+                  "label": "Cycle Anchor Date",
+                  "name": "cycleAnchorDate",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "label": "Valid From",
+                  "name": "validFrom",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "description": "Inclusive; empty = no end.",
+                  "label": "Valid To",
+                  "name": "validTo",
+                  "required": false,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "defaultValue": "DECLARED",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "DECLARED",
+                    "ASSIGNED"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Migrated From",
+                  "name": "migratedFrom",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                },
+                {
+                  "label": "Notes",
+                  "name": "notes",
+                  "required": false,
+                  "type": "textarea",
+                  "validation": {
+                    "maxLength": 500
+                  }
+                }
+              ]
+            }
+          },
+          "scheduleShifts": {
+            "category": "planning",
+            "name": "Schedule Shifts",
+            "schema": {
+              "defaultDisplayField": "dayOfCycle",
+              "fields": [
+                {
+                  "label": "Schedule",
+                  "name": "scheduleId",
+                  "relation": {
+                    "targetTable": "@@id:schedules"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Day of Cycle",
+                  "name": "dayOfCycle",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Local time of the unit, e.g. 540 = 09:00.",
+                  "label": "Start (minutes after midnight)",
+                  "name": "startMinute",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1439,
+                    "minValue": 0
+                  }
+                },
+                {
+                  "label": "Duration (minutes)",
+                  "name": "durationMinutes",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1440,
+                    "minValue": 1
+                  }
                 }
               ]
             }
@@ -14686,6 +16393,14 @@
                   "required": false,
                   "searchable": false,
                   "type": "boolean"
+                },
+                {
+                  "description": "IANA time zone, e.g. America/Sao_Paulo.",
+                  "label": "Time Zone",
+                  "name": "timeZone",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ]
             }
@@ -14766,12 +16481,21 @@
         ],
         "reason": "FIXED_MODULE"
       },
+      "resources": null,
       "saleItems": {
         "reason": "ACCOUNTING"
       },
       "sales": {
         "reason": "ACCOUNTING"
       },
+      "scheduleExceptions": null,
+      "schedules": {
+        "by": [
+          "scheduleShifts"
+        ],
+        "reason": "REQUIRED_RELATION"
+      },
+      "scheduleShifts": null,
       "services": {
         "by": [
           "appointments"
@@ -14789,6 +16513,7 @@
       "tasks": null,
       "units": {
         "by": [
+          "scheduleExceptions",
           "leadPipelines",
           "leads",
           "campaigns",
@@ -15551,6 +17276,13 @@
             "name": "Employees",
             "schema": {
               "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this employee: they still have a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
               "fields": [
                 {
                   "label": "Full Name",
@@ -16776,6 +18508,61 @@
               ]
             }
           },
+          "resources": {
+            "category": "planning",
+            "name": "Resources",
+            "schema": {
+              "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this resource: it still has a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
+              "fields": [
+                {
+                  "label": "Name",
+                  "name": "name",
+                  "required": true,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 120
+                  }
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "Room",
+                    "Station",
+                    "Equipment",
+                    "Other"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": true,
+                  "label": "Active",
+                  "name": "isActive",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
           "saleItems": {
             "category": "finance",
             "name": "Sale Items",
@@ -17285,6 +19072,279 @@
                   },
                   "errorMessage": "Finalized, cancelled or returned sales cannot be edited.",
                   "scope": "all"
+                }
+              ]
+            }
+          },
+          "scheduleExceptions": {
+            "category": "planning",
+            "name": "Schedule Exceptions",
+            "schema": {
+              "defaultDisplayField": "startAt",
+              "fields": [
+                {
+                  "description": "Empty (and no resource) = the whole unit.",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "DAY_OFF",
+                    "BLOCK",
+                    "ABSENCE",
+                    "HOLIDAY",
+                    "EXTRA"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "defaultValue": "USER",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "USER",
+                    "HOLIDAY_CALENDAR",
+                    "HR"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Start",
+                  "name": "startAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "End",
+                  "name": "endAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "Reason",
+                  "name": "reason",
+                  "required": false,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 300
+                  }
+                },
+                {
+                  "label": "Source Type",
+                  "name": "sourceType",
+                  "options": [
+                    "HOLIDAY",
+                    "DP_ABSENCE"
+                  ],
+                  "required": false,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Source Id",
+                  "name": "sourceId",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "schedules": {
+            "category": "planning",
+            "name": "Schedules",
+            "schema": {
+              "defaultDisplayField": "validFrom",
+              "deleteConstraints": [
+                {
+                  "cascadeCondition": "ALWAYS",
+                  "targetTable": "@@PRESET_TABLE_KEY::scheduleShifts",
+                  "type": "CASCADE"
+                }
+              ],
+              "fields": [
+                {
+                  "description": "Person this schedule belongs to (or set a resource).",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "description": "Empty = valid in any unit.",
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": 7,
+                  "label": "Cycle Length (days)",
+                  "name": "cycleLengthDays",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Day 1 of the cycle.",
+                  "label": "Cycle Anchor Date",
+                  "name": "cycleAnchorDate",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "label": "Valid From",
+                  "name": "validFrom",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "description": "Inclusive; empty = no end.",
+                  "label": "Valid To",
+                  "name": "validTo",
+                  "required": false,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "defaultValue": "DECLARED",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "DECLARED",
+                    "ASSIGNED"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Migrated From",
+                  "name": "migratedFrom",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                },
+                {
+                  "label": "Notes",
+                  "name": "notes",
+                  "required": false,
+                  "type": "textarea",
+                  "validation": {
+                    "maxLength": 500
+                  }
+                }
+              ]
+            }
+          },
+          "scheduleShifts": {
+            "category": "planning",
+            "name": "Schedule Shifts",
+            "schema": {
+              "defaultDisplayField": "dayOfCycle",
+              "fields": [
+                {
+                  "label": "Schedule",
+                  "name": "scheduleId",
+                  "relation": {
+                    "targetTable": "@@id:schedules"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Day of Cycle",
+                  "name": "dayOfCycle",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Local time of the unit, e.g. 540 = 09:00.",
+                  "label": "Start (minutes after midnight)",
+                  "name": "startMinute",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1439,
+                    "minValue": 0
+                  }
+                },
+                {
+                  "label": "Duration (minutes)",
+                  "name": "durationMinutes",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1440,
+                    "minValue": 1
+                  }
                 }
               ]
             }
@@ -17821,6 +19881,14 @@
                   "required": false,
                   "searchable": false,
                   "type": "boolean"
+                },
+                {
+                  "description": "IANA time zone, e.g. America/Sao_Paulo.",
+                  "label": "Time Zone",
+                  "name": "timeZone",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ]
             }
@@ -18571,6 +20639,13 @@
             "name": "Employees",
             "schema": {
               "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this employee: they still have a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
               "fields": [
                 {
                   "label": "Full Name",
@@ -19796,6 +21871,61 @@
               ]
             }
           },
+          "resources": {
+            "category": "planning",
+            "name": "Resources",
+            "schema": {
+              "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this resource: it still has a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
+              "fields": [
+                {
+                  "label": "Name",
+                  "name": "name",
+                  "required": true,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 120
+                  }
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "Room",
+                    "Station",
+                    "Equipment",
+                    "Other"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": true,
+                  "label": "Active",
+                  "name": "isActive",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
           "saleItems": {
             "category": "finance",
             "name": "Sale Items",
@@ -20305,6 +22435,279 @@
                   },
                   "errorMessage": "Finalized, cancelled or returned sales cannot be edited.",
                   "scope": "all"
+                }
+              ]
+            }
+          },
+          "scheduleExceptions": {
+            "category": "planning",
+            "name": "Schedule Exceptions",
+            "schema": {
+              "defaultDisplayField": "startAt",
+              "fields": [
+                {
+                  "description": "Empty (and no resource) = the whole unit.",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "DAY_OFF",
+                    "BLOCK",
+                    "ABSENCE",
+                    "HOLIDAY",
+                    "EXTRA"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "defaultValue": "USER",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "USER",
+                    "HOLIDAY_CALENDAR",
+                    "HR"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Start",
+                  "name": "startAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "End",
+                  "name": "endAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "Reason",
+                  "name": "reason",
+                  "required": false,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 300
+                  }
+                },
+                {
+                  "label": "Source Type",
+                  "name": "sourceType",
+                  "options": [
+                    "HOLIDAY",
+                    "DP_ABSENCE"
+                  ],
+                  "required": false,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Source Id",
+                  "name": "sourceId",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "schedules": {
+            "category": "planning",
+            "name": "Schedules",
+            "schema": {
+              "defaultDisplayField": "validFrom",
+              "deleteConstraints": [
+                {
+                  "cascadeCondition": "ALWAYS",
+                  "targetTable": "@@PRESET_TABLE_KEY::scheduleShifts",
+                  "type": "CASCADE"
+                }
+              ],
+              "fields": [
+                {
+                  "description": "Person this schedule belongs to (or set a resource).",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "description": "Empty = valid in any unit.",
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": 7,
+                  "label": "Cycle Length (days)",
+                  "name": "cycleLengthDays",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Day 1 of the cycle.",
+                  "label": "Cycle Anchor Date",
+                  "name": "cycleAnchorDate",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "label": "Valid From",
+                  "name": "validFrom",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "description": "Inclusive; empty = no end.",
+                  "label": "Valid To",
+                  "name": "validTo",
+                  "required": false,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "defaultValue": "DECLARED",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "DECLARED",
+                    "ASSIGNED"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Migrated From",
+                  "name": "migratedFrom",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                },
+                {
+                  "label": "Notes",
+                  "name": "notes",
+                  "required": false,
+                  "type": "textarea",
+                  "validation": {
+                    "maxLength": 500
+                  }
+                }
+              ]
+            }
+          },
+          "scheduleShifts": {
+            "category": "planning",
+            "name": "Schedule Shifts",
+            "schema": {
+              "defaultDisplayField": "dayOfCycle",
+              "fields": [
+                {
+                  "label": "Schedule",
+                  "name": "scheduleId",
+                  "relation": {
+                    "targetTable": "@@id:schedules"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Day of Cycle",
+                  "name": "dayOfCycle",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Local time of the unit, e.g. 540 = 09:00.",
+                  "label": "Start (minutes after midnight)",
+                  "name": "startMinute",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1439,
+                    "minValue": 0
+                  }
+                },
+                {
+                  "label": "Duration (minutes)",
+                  "name": "durationMinutes",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1440,
+                    "minValue": 1
+                  }
                 }
               ]
             }
@@ -20841,6 +23244,14 @@
                   "required": false,
                   "searchable": false,
                   "type": "boolean"
+                },
+                {
+                  "description": "IANA time zone, e.g. America/Sao_Paulo.",
+                  "label": "Time Zone",
+                  "name": "timeZone",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ]
             }
@@ -21453,6 +23864,13 @@
             "name": "Employees",
             "schema": {
               "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this employee: they still have a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
               "fields": [
                 {
                   "label": "Full Name",
@@ -22678,6 +25096,61 @@
               ]
             }
           },
+          "resources": {
+            "category": "planning",
+            "name": "Resources",
+            "schema": {
+              "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this resource: it still has a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
+              "fields": [
+                {
+                  "label": "Name",
+                  "name": "name",
+                  "required": true,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 120
+                  }
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "Room",
+                    "Station",
+                    "Equipment",
+                    "Other"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": true,
+                  "label": "Active",
+                  "name": "isActive",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
           "saleItems": {
             "category": "finance",
             "name": "Sale Items",
@@ -23176,6 +25649,279 @@
                   },
                   "errorMessage": "Finalized, cancelled or returned sales cannot be edited.",
                   "scope": "all"
+                }
+              ]
+            }
+          },
+          "scheduleExceptions": {
+            "category": "planning",
+            "name": "Schedule Exceptions",
+            "schema": {
+              "defaultDisplayField": "startAt",
+              "fields": [
+                {
+                  "description": "Empty (and no resource) = the whole unit.",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "DAY_OFF",
+                    "BLOCK",
+                    "ABSENCE",
+                    "HOLIDAY",
+                    "EXTRA"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "defaultValue": "USER",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "USER",
+                    "HOLIDAY_CALENDAR",
+                    "HR"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Start",
+                  "name": "startAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "End",
+                  "name": "endAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "Reason",
+                  "name": "reason",
+                  "required": false,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 300
+                  }
+                },
+                {
+                  "label": "Source Type",
+                  "name": "sourceType",
+                  "options": [
+                    "HOLIDAY",
+                    "DP_ABSENCE"
+                  ],
+                  "required": false,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Source Id",
+                  "name": "sourceId",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "schedules": {
+            "category": "planning",
+            "name": "Schedules",
+            "schema": {
+              "defaultDisplayField": "validFrom",
+              "deleteConstraints": [
+                {
+                  "cascadeCondition": "ALWAYS",
+                  "targetTable": "@@PRESET_TABLE_KEY::scheduleShifts",
+                  "type": "CASCADE"
+                }
+              ],
+              "fields": [
+                {
+                  "description": "Person this schedule belongs to (or set a resource).",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "description": "Empty = valid in any unit.",
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": 7,
+                  "label": "Cycle Length (days)",
+                  "name": "cycleLengthDays",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Day 1 of the cycle.",
+                  "label": "Cycle Anchor Date",
+                  "name": "cycleAnchorDate",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "label": "Valid From",
+                  "name": "validFrom",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "description": "Inclusive; empty = no end.",
+                  "label": "Valid To",
+                  "name": "validTo",
+                  "required": false,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "defaultValue": "DECLARED",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "DECLARED",
+                    "ASSIGNED"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Migrated From",
+                  "name": "migratedFrom",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                },
+                {
+                  "label": "Notes",
+                  "name": "notes",
+                  "required": false,
+                  "type": "textarea",
+                  "validation": {
+                    "maxLength": 500
+                  }
+                }
+              ]
+            }
+          },
+          "scheduleShifts": {
+            "category": "planning",
+            "name": "Schedule Shifts",
+            "schema": {
+              "defaultDisplayField": "dayOfCycle",
+              "fields": [
+                {
+                  "label": "Schedule",
+                  "name": "scheduleId",
+                  "relation": {
+                    "targetTable": "@@id:schedules"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Day of Cycle",
+                  "name": "dayOfCycle",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Local time of the unit, e.g. 540 = 09:00.",
+                  "label": "Start (minutes after midnight)",
+                  "name": "startMinute",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1439,
+                    "minValue": 0
+                  }
+                },
+                {
+                  "label": "Duration (minutes)",
+                  "name": "durationMinutes",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1440,
+                    "minValue": 1
+                  }
                 }
               ]
             }
@@ -23712,6 +26458,14 @@
                   "required": false,
                   "searchable": false,
                   "type": "boolean"
+                },
+                {
+                  "description": "IANA time zone, e.g. America/Sao_Paulo.",
+                  "label": "Time Zone",
+                  "name": "timeZone",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ]
             }
@@ -24460,6 +27214,13 @@
             "name": "Employees",
             "schema": {
               "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this employee: they still have a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
               "fields": [
                 {
                   "label": "Full Name",
@@ -25581,6 +28342,61 @@
               ]
             }
           },
+          "resources": {
+            "category": "planning",
+            "name": "Resources",
+            "schema": {
+              "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this resource: it still has a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
+              "fields": [
+                {
+                  "label": "Name",
+                  "name": "name",
+                  "required": true,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 120
+                  }
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "Room",
+                    "Station",
+                    "Equipment",
+                    "Other"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": true,
+                  "label": "Active",
+                  "name": "isActive",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
           "saleItems": {
             "category": "finance",
             "name": "Sale Items",
@@ -26090,6 +28906,279 @@
                   },
                   "errorMessage": "Finalized, cancelled or returned sales cannot be edited.",
                   "scope": "all"
+                }
+              ]
+            }
+          },
+          "scheduleExceptions": {
+            "category": "planning",
+            "name": "Schedule Exceptions",
+            "schema": {
+              "defaultDisplayField": "startAt",
+              "fields": [
+                {
+                  "description": "Empty (and no resource) = the whole unit.",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "DAY_OFF",
+                    "BLOCK",
+                    "ABSENCE",
+                    "HOLIDAY",
+                    "EXTRA"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "defaultValue": "USER",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "USER",
+                    "HOLIDAY_CALENDAR",
+                    "HR"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Start",
+                  "name": "startAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "End",
+                  "name": "endAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "Reason",
+                  "name": "reason",
+                  "required": false,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 300
+                  }
+                },
+                {
+                  "label": "Source Type",
+                  "name": "sourceType",
+                  "options": [
+                    "HOLIDAY",
+                    "DP_ABSENCE"
+                  ],
+                  "required": false,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Source Id",
+                  "name": "sourceId",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "schedules": {
+            "category": "planning",
+            "name": "Schedules",
+            "schema": {
+              "defaultDisplayField": "validFrom",
+              "deleteConstraints": [
+                {
+                  "cascadeCondition": "ALWAYS",
+                  "targetTable": "@@PRESET_TABLE_KEY::scheduleShifts",
+                  "type": "CASCADE"
+                }
+              ],
+              "fields": [
+                {
+                  "description": "Person this schedule belongs to (or set a resource).",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "description": "Empty = valid in any unit.",
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": 7,
+                  "label": "Cycle Length (days)",
+                  "name": "cycleLengthDays",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Day 1 of the cycle.",
+                  "label": "Cycle Anchor Date",
+                  "name": "cycleAnchorDate",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "label": "Valid From",
+                  "name": "validFrom",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "description": "Inclusive; empty = no end.",
+                  "label": "Valid To",
+                  "name": "validTo",
+                  "required": false,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "defaultValue": "DECLARED",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "DECLARED",
+                    "ASSIGNED"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Migrated From",
+                  "name": "migratedFrom",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                },
+                {
+                  "label": "Notes",
+                  "name": "notes",
+                  "required": false,
+                  "type": "textarea",
+                  "validation": {
+                    "maxLength": 500
+                  }
+                }
+              ]
+            }
+          },
+          "scheduleShifts": {
+            "category": "planning",
+            "name": "Schedule Shifts",
+            "schema": {
+              "defaultDisplayField": "dayOfCycle",
+              "fields": [
+                {
+                  "label": "Schedule",
+                  "name": "scheduleId",
+                  "relation": {
+                    "targetTable": "@@id:schedules"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Day of Cycle",
+                  "name": "dayOfCycle",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Local time of the unit, e.g. 540 = 09:00.",
+                  "label": "Start (minutes after midnight)",
+                  "name": "startMinute",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1439,
+                    "minValue": 0
+                  }
+                },
+                {
+                  "label": "Duration (minutes)",
+                  "name": "durationMinutes",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1440,
+                    "minValue": 1
+                  }
                 }
               ]
             }
@@ -26626,6 +29715,14 @@
                   "required": false,
                   "searchable": false,
                   "type": "boolean"
+                },
+                {
+                  "description": "IANA time zone, e.g. America/Sao_Paulo.",
+                  "label": "Time Zone",
+                  "name": "timeZone",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ]
             }
@@ -27262,6 +30359,13 @@
             "name": "Employees",
             "schema": {
               "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this employee: they still have a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
               "fields": [
                 {
                   "label": "Full Name",
@@ -28487,6 +31591,61 @@
               ]
             }
           },
+          "resources": {
+            "category": "planning",
+            "name": "Resources",
+            "schema": {
+              "defaultDisplayField": "name",
+              "deleteConstraints": [
+                {
+                  "errorMessage": "Cannot delete this resource: it still has a schedule. Delete the schedule first.",
+                  "targetTable": "@@PRESET_TABLE_KEY::schedules",
+                  "type": "RESTRICT"
+                }
+              ],
+              "fields": [
+                {
+                  "label": "Name",
+                  "name": "name",
+                  "required": true,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 120
+                  }
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "Room",
+                    "Station",
+                    "Equipment",
+                    "Other"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": true,
+                  "label": "Active",
+                  "name": "isActive",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
           "saleItems": {
             "category": "finance",
             "name": "Sale Items",
@@ -28996,6 +32155,279 @@
                   },
                   "errorMessage": "Finalized, cancelled or returned sales cannot be edited.",
                   "scope": "all"
+                }
+              ]
+            }
+          },
+          "scheduleExceptions": {
+            "category": "planning",
+            "name": "Schedule Exceptions",
+            "schema": {
+              "defaultDisplayField": "startAt",
+              "fields": [
+                {
+                  "description": "Empty (and no resource) = the whole unit.",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Kind",
+                  "name": "kind",
+                  "options": [
+                    "DAY_OFF",
+                    "BLOCK",
+                    "ABSENCE",
+                    "HOLIDAY",
+                    "EXTRA"
+                  ],
+                  "required": true,
+                  "type": "select"
+                },
+                {
+                  "defaultValue": "USER",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "USER",
+                    "HOLIDAY_CALENDAR",
+                    "HR"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Start",
+                  "name": "startAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "End",
+                  "name": "endAt",
+                  "required": true,
+                  "searchable": false,
+                  "type": "datetime"
+                },
+                {
+                  "label": "Reason",
+                  "name": "reason",
+                  "required": false,
+                  "type": "string",
+                  "validation": {
+                    "maxLength": 300
+                  }
+                },
+                {
+                  "label": "Source Type",
+                  "name": "sourceType",
+                  "options": [
+                    "HOLIDAY",
+                    "DP_ABSENCE"
+                  ],
+                  "required": false,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Source Id",
+                  "name": "sourceId",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "schedules": {
+            "category": "planning",
+            "name": "Schedules",
+            "schema": {
+              "defaultDisplayField": "validFrom",
+              "deleteConstraints": [
+                {
+                  "cascadeCondition": "ALWAYS",
+                  "targetTable": "@@PRESET_TABLE_KEY::scheduleShifts",
+                  "type": "CASCADE"
+                }
+              ],
+              "fields": [
+                {
+                  "description": "Person this schedule belongs to (or set a resource).",
+                  "label": "Employee",
+                  "name": "employeeId",
+                  "relation": {
+                    "targetTable": "@@id:employees"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "description": "Empty = valid in any unit.",
+                  "label": "Unit",
+                  "name": "unitId",
+                  "relation": {
+                    "targetTable": "@@id:units"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "defaultValue": 7,
+                  "label": "Cycle Length (days)",
+                  "name": "cycleLengthDays",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Day 1 of the cycle.",
+                  "label": "Cycle Anchor Date",
+                  "name": "cycleAnchorDate",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "label": "Valid From",
+                  "name": "validFrom",
+                  "required": true,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "description": "Inclusive; empty = no end.",
+                  "label": "Valid To",
+                  "name": "validTo",
+                  "required": false,
+                  "searchable": false,
+                  "type": "date"
+                },
+                {
+                  "defaultValue": "DECLARED",
+                  "label": "Origin",
+                  "name": "origin",
+                  "options": [
+                    "DECLARED",
+                    "ASSIGNED"
+                  ],
+                  "required": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Migrated From",
+                  "name": "migratedFrom",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
+                },
+                {
+                  "label": "Notes",
+                  "name": "notes",
+                  "required": false,
+                  "type": "textarea",
+                  "validation": {
+                    "maxLength": 500
+                  }
+                }
+              ]
+            }
+          },
+          "scheduleShifts": {
+            "category": "planning",
+            "name": "Schedule Shifts",
+            "schema": {
+              "defaultDisplayField": "dayOfCycle",
+              "fields": [
+                {
+                  "label": "Schedule",
+                  "name": "scheduleId",
+                  "relation": {
+                    "targetTable": "@@id:schedules"
+                  },
+                  "required": true,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Day of Cycle",
+                  "name": "dayOfCycle",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 56,
+                    "minValue": 1
+                  }
+                },
+                {
+                  "description": "Local time of the unit, e.g. 540 = 09:00.",
+                  "label": "Start (minutes after midnight)",
+                  "name": "startMinute",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1439,
+                    "minValue": 0
+                  }
+                },
+                {
+                  "label": "Duration (minutes)",
+                  "name": "durationMinutes",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "maxValue": 1440,
+                    "minValue": 1
+                  }
                 }
               ]
             }
@@ -29532,6 +32964,14 @@
                   "required": false,
                   "searchable": false,
                   "type": "boolean"
+                },
+                {
+                  "description": "IANA time zone, e.g. America/Sao_Paulo.",
+                  "label": "Time Zone",
+                  "name": "timeZone",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ]
             }
@@ -29612,12 +33052,21 @@
         ],
         "reason": "FIXED_MODULE"
       },
+      "resources": null,
       "saleItems": {
         "reason": "ACCOUNTING"
       },
       "sales": {
         "reason": "ACCOUNTING"
       },
+      "scheduleExceptions": null,
+      "schedules": {
+        "by": [
+          "scheduleShifts"
+        ],
+        "reason": "REQUIRED_RELATION"
+      },
+      "scheduleShifts": null,
       "services": {
         "by": [
           "appointments"
@@ -29635,6 +33084,7 @@
       "tasks": null,
       "units": {
         "by": [
+          "scheduleExceptions",
           "leadPipelines",
           "leads",
           "campaigns",

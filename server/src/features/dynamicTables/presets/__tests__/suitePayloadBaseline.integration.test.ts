@@ -46,6 +46,11 @@
  *    a ponte `sales@1` da suíte); VEN-PAC não tem `lockedBy`, então `locks.packages` passa de `ACCOUNTING` para `null`
  *    nas duas suítes. Conferido por script que, com `locks.packages` de volta a `ACCOUNTING`, a fixture é idêntica
  *    (JSON.stringify igual) à de `origin/main` — tabelas gravadas, `response` e demais travas inalterados.
+ *  - BE-INCR-ESCALA-BASE PR-1 (itens 10, 11, 16; F-ESC-1/2): o Core ganha `resources`, `schedules`, `scheduleShifts` e
+ *    `scheduleExceptions` (instaladas com toda suíte), `units.schema.fields` ganha `timeZone` e `employees.schema` ganha
+ *    `deleteConstraints` (RESTRICT de `schedules`). `locks` ganha as quatro tabelas, e a lista `by` da trava de `units`
+ *    ganha `scheduleExceptions` (relação obrigatória `unitId`). Conferido por script: fora dessas chaves, a fixture é
+ *    idêntica à anterior (`response`, demais tabelas e travas).
  *
  * Regenerar (somente num PR que mude comportamento de propósito): `UPDATE_BASELINE=1 npx jest --selectProjects
  * integration --runInBand src/features/dynamicTables/presets/__tests__/suitePayloadBaseline.integration.test.ts`.
