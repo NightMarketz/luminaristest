@@ -141,6 +141,16 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
   país guardada como valor, coluna de país em model do centro e o legado BR fora de `paises/` (que é "centro" para a regra até a fatia dele). `src/jobs/`,
   `src/controllers/`, `src/routes/` e `src/lib/factory.ts` ficam fora do `from` da `P1` (camada de aplicação, F-PBA-3 a).
 
+### 1.4 Emenda 2026-11-26 — a plataforma de parâmetros legais não conhece domínio (fatia F3 do ADR-PAIS-NA-BORDA)
+
+- **Decisão:** F-F3-3 (a), dono, 26/11 ([`D-2026-11-26-PAIS-NA-BORDA-F3-FORKS`](../plano/decisoes/D-2026-11-26-PAIS-NA-BORDA-F3-FORKS.md)):
+  *"(a) LP1 + L6 no check:arch"*. Cobertura: exceção de 13/10 (§4), gate estático.
+- **L6 estendida (PR-F3-0, item 12):** o `from` passa a casar também `/paises/[^/]+/legalParameters/`. O registro de formato que cada domínio e país
+  declara é folha como `models/`: regra pura, sem repositório, serviço, controller, rota nem Prisma. Sem isso a pasta nova (que não é subpasta de camada)
+  poderia ler dado sem reprovar. Baseline 11 → 11. **Prova por plantio (26/11):** `accounting/paises/br/legalParameters/__sonda.ts` com
+  `import type { IAccountRepository }` ⇒ `error L6-model-dto-are-leaves: …/__sonda.ts → …/repositories/IAccountRepository.ts`, `x 1 dependency violations`;
+  sem o plantio, "no dependency violations found".
+
 ## 2. Fronteiras aprovadas — my-app (`my-app/.dependency-cruiser.cjs`)
 
 | ID | Regra | Baseline 13/10 |

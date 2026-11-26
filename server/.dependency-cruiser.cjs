@@ -97,8 +97,10 @@ module.exports = {
     {
       name: 'L6-model-dto-are-leaves',
       severity: 'error',
-      comment: 'models/ e dtos/ são folhas de tipo/contrato: não importam camada executável.',
-      from: { path: '/(models|dtos)/', pathNot: TEST },
+      comment:
+        'models/ e dtos/ são folhas de tipo/contrato: não importam camada executável. PAIS-NA-BORDA-F3 item 12 (F-F3-3 a, ' +
+        '26/11): o registro de formato da borda (paises/<cc>/legalParameters/) também é folha — declara regra pura, nunca lê dado.',
+      from: { path: '(/(models|dtos)/|/paises/[^/]+/legalParameters/)', pathNot: TEST },
       to: { path: `(/repositories/|/services/|/controllers/|^src/routes/|${PRISMA})` },
     },
     // ---- §2.1 DynamicTable × Prisma first-class ----
