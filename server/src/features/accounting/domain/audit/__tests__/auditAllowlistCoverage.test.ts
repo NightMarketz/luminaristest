@@ -17,7 +17,7 @@ import { readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { PAYLOAD_ALLOWLIST } from '../auditCanonical';
 
-const FEATURE_ROOT = join(__dirname, '..', '..'); // server/src/features/accounting
+const FEATURE_ROOT = join(__dirname, '..', '..', '..'); // server/src/features/accounting
 
 function walkTsFiles(dir: string): string[] {
   const out: string[] = [];

@@ -14,7 +14,7 @@ jest.mock('../../../../lib/factory', () => ({
 }));
 
 import { FiscalNumberVoidService } from '../FiscalNumberVoidService';
-import { PAYLOAD_ALLOWLIST } from '../../audit/auditCanonical';
+import { PAYLOAD_ALLOWLIST } from '../../domain/audit/auditCanonical';
 import { VoidNumberRangeSchema } from '../../dtos/FiscalDocumentDto';
 import { NFCE_PRESUNCAO } from '../../models/inutilizacao';
 import type { AccountingScope } from '../../models/AccountingScope';

@@ -1,7 +1,7 @@
 import type { AuditChainHead, AuditEvent, Prisma } from 'generated/prisma';
 import prisma from '../../../lib/prisma';
 import type { AccountingScope } from '../models/AccountingScope';
-import { GENESIS_HASH } from '../audit/auditCanonical';
+import { GENESIS_HASH } from '../domain/audit/auditCanonical';
 import type { AppendAuditInput, IAuditRepository } from './IAuditRepository';
 
 export class AuditRepository implements IAuditRepository {

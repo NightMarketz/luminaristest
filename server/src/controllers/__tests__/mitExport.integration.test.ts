@@ -8,7 +8,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import logger from '@/lib/logger';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
-import { PAYLOAD_ALLOWLIST } from '@/features/accounting/audit/auditCanonical';
+import { PAYLOAD_ALLOWLIST } from '@/features/accounting/domain/audit/auditCanonical';
 import { AVISOS_MIT_FIXOS } from '@/lib/mit';
 
 const app = makeApp();

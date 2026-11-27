@@ -14,7 +14,7 @@ import { SpedEcfRealGenerationService, SPED_ECF_REAL_JOB_KIND } from '../SpedEcf
 import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
 import { logger } from '../../../../lib/logger';
-import { PAYLOAD_ALLOWLIST } from '../../audit/auditCanonical';
+import { PAYLOAD_ALLOWLIST } from '../../domain/audit/auditCanonical';
 import type { SpedEcfRealRequestDto } from '../../dtos/SpedEcfRealDto';
 import type { AccountingDataExchangeJob, LalurParteBAccount } from 'generated/prisma';
 import type { LalurClosingWithBalances, LalurEntryWithRelations, LalurMovementWithRelations } from '../../repositories/ILalurRepository';

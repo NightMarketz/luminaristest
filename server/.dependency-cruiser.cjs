@@ -35,7 +35,7 @@ const LEDGER_CORE =
 // nunca está aqui: entra por porta (`ports/LedgerPorts.ts`) com adaptador em `paises/br/` montado só em `lib/factory.ts`.
 const LEDGER_CORE_ALLOWED =
   '^src/features/accounting/(' +
-  'audit/' +
+  'domain/audit/' + // era `audit/` até o renome da accounting (26/11/2026)
   '|dtos/(PostingDto|ReconciliationDto)\\.ts' +
   // Resíduo declarado: o plano de contas padrão (CANONICAL_ACCOUNTS) ainda é dado do Brasil dentro do núcleo — vai para
   // `paises/br/` em fatia própria (lacuna na caixa; ADR-ARCH-BOUNDARIES §1.2). As regras da ECD já saíram.

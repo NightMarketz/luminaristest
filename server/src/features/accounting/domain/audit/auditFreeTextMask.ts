@@ -1,4 +1,4 @@
-import { normalizeCounterpartyName } from '../models/Counterparty.model';
+import { normalizeCounterpartyName } from '../../models/Counterparty.model';
 
 /**
  * BE-INCR-AUDIT-FREETEXT-MASK — mascaramento de nome de terceiro em campo de TEXTO LIVRE, aplicado

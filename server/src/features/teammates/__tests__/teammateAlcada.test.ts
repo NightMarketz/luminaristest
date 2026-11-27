@@ -8,8 +8,8 @@ import { TeammatePolicy } from '../policies/TeammatePolicy';
 import type { ITeammateRepository } from '../repositories/ITeammateRepository';
 import type { IMcpServerRepository } from '../repositories/IMcpServerRepository';
 import type { ITeammate } from '../models/Teammate.model';
-import { PAYLOAD_ALLOWLIST } from '../../accounting/audit/auditCanonical';
-import { MASKABLE_FREE_TEXT_KEYS } from '../../accounting/audit/auditFreeTextMask';
+import { PAYLOAD_ALLOWLIST } from '../../accounting/domain/audit/auditCanonical';
+import { MASKABLE_FREE_TEXT_KEYS } from '../../accounting/domain/audit/auditFreeTextMask';
 import type { AuditService } from '../../accounting/services/AuditService';
 import type { IUser } from '../../users/models/User.model';
 

@@ -13,8 +13,8 @@ import {
   buildAuditCanonicalTuple,
   canonicalizeAuditPayload,
   hashAuditCanonical,
-} from '../audit/auditCanonical';
-import { MASKABLE_FREE_TEXT_KEYS, maskThirdPartyNames } from '../audit/auditFreeTextMask';
+} from '../domain/audit/auditCanonical';
+import { MASKABLE_FREE_TEXT_KEYS, maskThirdPartyNames } from '../domain/audit/auditFreeTextMask';
 
 export type VerifyFailureReason =
   | 'MISSING_GENESIS'

@@ -9,7 +9,7 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
-import { canonicalizeAuditPayload } from '@/features/accounting/audit/auditCanonical';
+import { canonicalizeAuditPayload } from '@/features/accounting/domain/audit/auditCanonical';
 
 const app = makeApp();
 const URL = '/api/accounting/tax-optimization/servicos/avaliar';

@@ -9,7 +9,7 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
-import { PAYLOAD_ALLOWLIST } from '@/features/accounting/audit/auditCanonical';
+import { PAYLOAD_ALLOWLIST } from '@/features/accounting/domain/audit/auditCanonical';
 import { ReconciliationService } from '@/features/accounting/services/ReconciliationService';
 import { ValidationError } from '@/lib/errors';
 
