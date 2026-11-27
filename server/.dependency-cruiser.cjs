@@ -13,11 +13,11 @@ const PRISMA = '^src/lib/prisma\\.ts$';
 // própria feature e não importa mais nada (regra M4).
 const PUBLIC_EXEC = '^src/features/[^/]+/public/(?!.*\\.types\\.ts$)';
 // ADR-MODULE-BOUNDARIES §10, F-MB-1 (b) e F-MB-3 (c): pasta de camada de uma feature. A M2 entrou por feature
-// (F-MBE-2 c): M2_FEATURES cresceu a cada PR de renome e, com a `accounting` (26/11/2026), fechou em `[^/]+` — vale
+// (F-MBE-2 c): M2_FEATURES cresceu a cada PR de renome e, com a `accounting` (27/11/2026), fechou em `[^/]+` — vale
 // para toda feature, inclusive as que ainda vão nascer.
 const LAYER_DIR = '/(services|repositories|policies|models|dtos|controllers|domain|ports|adapters|public)/';
 const M2_FEATURES = '[^/]+';
-// ETAPA DECLARADA (dono, questionário, 26/11/2026: "Fica, isenção nomeada"; lacuna L-20261127-122628-dabb):
+// ETAPA DECLARADA (dono, questionário, 27/11/2026: "Fica, isenção nomeada"; lacuna L-20261127-122628-dabb):
 // `accounting/fixtures/` (plano de contas padrão) é dado do Brasil e vai para `accounting/paises/br/domain/`
 // (F-MBE-6 a), mas o núcleo do razão o importa e a porta que tira essa dependência é a do F-PBF1-7 do PAIS-NA-BORDA,
 // que ainda não existe. Até lá o arquivo fica isento POR NOME, como `dynamicTables/rules/`: não é entrada de baseline,
@@ -43,14 +43,14 @@ const LEDGER_CORE =
 // nunca está aqui: entra por porta (`ports/LedgerPorts.ts`) com adaptador em `paises/br/` montado só em `lib/factory.ts`.
 const LEDGER_CORE_ALLOWED =
   '^src/features/accounting/(' +
-  'domain/audit/' + // era `audit/` até o renome da accounting (26/11/2026)
+  'domain/audit/' + // era `audit/` até o renome da accounting (27/11/2026)
   '|dtos/(PostingDto|ReconciliationDto)\\.ts' +
   // Resíduo declarado: o plano de contas padrão (CANONICAL_ACCOUNTS) ainda é dado do Brasil dentro do núcleo — vai para
   // `paises/br/` em fatia própria (lacuna na caixa; ADR-ARCH-BOUNDARIES §1.2). As regras da ECD já saíram.
   '|fixtures/ChartOfAccountsFixture\\.ts' +
   // `AccountantAssignment.model`: contador responsável por escopo (GOV-CONTADOR) é núcleo, não fiscal; `ActiveAccountant` mora aqui desde
   // o PR-1a do MODULE-BOUNDARIES (#1375), de onde o `PeriodService` o importa (antes vinha de `policies/IAccountingPolicy`).
-  // `AccountingScope` (tipo e where-builder do escopo) veio de `scope/` no renome da accounting (26/11/2026): a entrada
+  // `AccountingScope` (tipo e where-builder do escopo) veio de `scope/` no renome da accounting (27/11/2026): a entrada
   // `scope/` desta lista virou este arquivo, o único da pasta que o núcleo importa.
   '|models/(AccountantAssignment\\.model|AccountingScope|Reconciliation\\.model|closing|dates|ledgerStatus|money)\\.ts' +
   '|policies/IAccountingPolicy\\.ts' +
@@ -135,7 +135,7 @@ module.exports = {
         'nomeada: crmController.ts, cujo único uso é o hook Won interno (unitId da oportunidade gravada; L-I6-3, dono, ' +
         '2026-10-16, "Exceção nomeada").',
       from: { path: '^src/controllers/', pathNot: `(${TEST}|^src/controllers/crmController\.ts$)` },
-      // Renome da accounting (26/11/2026): a função foi de `scope/` para `models/` e sai para outras features pela porta
+      // Renome da accounting (27/11/2026): a função foi de `scope/` para `models/` e sai para outras features pela porta
       // `public/resolveAccountingScopeInternal.ts`. A regra cita os dois caminhos: controller não a alcança nem pela porta.
       to: { path: '^src/features/accounting/(models|public)/resolveAccountingScopeInternal\.ts$' },
     },
@@ -221,7 +221,7 @@ module.exports = {
         'Peça de feature mora em pasta de camada (services, repositories, policies, models, dtos, controllers, ' +
         'domain, ports, adapters, public). Sem exceção para `index.ts` (F-MB-1 b); `dynamicTables/rules/` é a pasta ' +
         'do motor, isenta por nome (F-MB-3 c), e `accounting/fixtures/` é etapa declarada (M2_DECLARED_STEP). Vale ' +
-        'para toda feature desde 26/11/2026 (M2_FEATURES fechou em `[^/]+`) e nasce em 0: ' +
+        'para toda feature desde 27/11/2026 (M2_FEATURES fechou em `[^/]+`) e nasce em 0: ' +
         'nunca entra no known-violations. Esta regra casa pelo `to` (arquivo importado por alguém, teste inclusive); ' +
         'a M2b e a M2c cobrem o arquivo que ninguém importa (dono, questionário, 25/11/2026: "Fechar no check:arch").',
       from: { path: '^src/' },

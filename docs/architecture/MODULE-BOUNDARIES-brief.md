@@ -560,6 +560,25 @@ medida, plantios e pontos declarados no `ADR-MODULE-BOUNDARIES.md` §11.9. Commi
 | §5.3, `accountingBinding/{archetypes,interpreter,fixtures}/` | → `domain/`; antes, `computeCompiledFromHash` vira função pura | foi, com a função em `domain/compiledFromHash.ts`. 8 arestas `M1` para a `accounting` pagas por portas em `accounting/public/`, e a lista permitida do teste-guarda `importBoundary.test.ts` passou a citar as portas |
 | §2, baseline | — | 354 → 332 nesta rodada (o 354 é o 347 do §13.3 depois do rebase da pilha sobre a `main`) |
 
+### 13.5 PR-3.x da `accounting` (27/11/2026)
+
+Respostas literais em `docs/plano/decisoes/D-2026-11-27-MODULE-BOUNDARIES-PR3-ACCOUNTING-RESPOSTAS.md`; medida,
+portas, plantios e pontos declarados no `ADR-MODULE-BOUNDARIES.md` §11.10. PR de fase próprio, empilhado sobre o #1422.
+
+| Onde | O BRIEF dizia | O que valeu |
+|---|---|---|
+| §2, PR-3.x | commits da `accounting` na fase do renome | PR de fase próprio sobre o #1422, que saiu do draft em 26/11 e ia à revisão da noite ("PR novo sobre o #1422") |
+| §5.3, `scope/` (3/280) | tipo e where-builder → `models/`; `AccountingScopeResolver` → `services/` | foi; `resolveAccountingScopeInternal.ts`, que a linha não nomeava, foi para `models/` (função pura). 25 arestas `M1` de `dp`, `packages`, `sales`, `legalParameters`, `onboarding` e `teammates` pagas por três portas em `accounting/public/` |
+| §5.3, `sync/` (11/56) | serviço → `services/`; `AccountingSyncPort` → `ports/`; mappers → `domain/` | foi, com os mappers em `domain/mappers/`. `sync/bridges/` (7 arquivos, não nomeados) foi para `services/bridges/`: importam `lib/factory` e repositórios. 3 arestas `M1` de `sales` e `packages` pagas por portas |
+| §5.3, `dfe/` (15/54), `collection/` (2/5) | `*Port` → `ports/`; clientes/provedores → `adapters/` | foi: `adapters/dfe/` (com `sefaz/`, `psc/`, `local/`, seletores e `resolveEmissor`) e `adapters/collection/`; `splitCents.ts` (pura) foi para `domain/` |
+| §5.3, `audit/` (2/3) | → `domain/` | → `domain/audit/` |
+| §5.3, `fixtures/` | → `accounting/paises/br/domain/`; sem a porta do F-PBF1-7 no dia, "fica no baseline da `M2` como etapa declarada" | ficou onde está, **sem** entrada de baseline: o arquivo `fixtures/ChartOfAccountsFixture.ts` é isento por nome no `pathNot` da `M2` (`M2_DECLARED_STEP`), porque a regra nasce em 0 e nunca entra no known-violations ("Fica, isenção nomeada"). Lacuna `L-20261127-122628-dabb` |
+| §5.3, `paises/br/*.ts` soltos (4) | → `paises/br/adapters/` | foi, com o teste |
+| §5.1, `M2_FEATURES` | cresce a cada PR-3.x e termina como `[^/]+` | fechou em `[^/]+` |
+| §6, item 14 | a `I6` e a `LEDGER_CORE_ALLOWED` da `C1` apontam os caminhos novos | a `I6` cita `models/` **e** a porta `public/resolveAccountingScopeInternal.ts`; na `C1`, `scope/` virou `models/AccountingScope.ts` (só o arquivo que o núcleo importa) e `audit/` virou `domain/audit/` |
+| §3.3 item 4, §3.4 | a `accounting` entra depois de #1356, #1358, #1353 e #1345; a integração absorve a `main` antes | a `main` não andou desde a base da pilha (`40b6ab8f4`). Abertos nas pastas em 27/11: #1146, #1412, #1409, #1427, #1438, #1425 e #1428; rebaseiam depois do fechamento. O #1428 colide por regra, não por arquivo (lacuna `L-20261127-122629-0d42`, "Caixa e sigo") |
+| §2, baseline | — | 332 → 304 neste PR, só remoção (28 `M1`) |
+
 ## Gates de envio [OPS-001]
 
 1. **Objetivo:** §1 (medida nova), §2 (fatias com classe), §3 (janela), §4 (prova), §7 (forks).

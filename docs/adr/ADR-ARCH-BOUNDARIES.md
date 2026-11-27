@@ -34,14 +34,14 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
 | X2 | produção não importa teste | 0 |
 | X3 | sem ciclo de import (ciclo que passa por `lib/factory.ts` é isento) | 16 |
 | D1 | núcleo do DP `features/dp/**` não importa submódulo opcional `features/dp<Nome>/**` (F-DP-10). Emenda 2026-11-03 (§1.1) | **0** (em 03/11) |
-| I6 | `src/controllers/` não importa `features/accounting/scope/resolveAccountingScopeInternal.ts` — controller resolve o escopo pelo `AccountingScopeResolver` (F-I6-7; dono, 2026-10-15, [`D-2026-10-15-I6-FORKS`](../plano/decisoes/D-2026-10-15-I6-FORKS.md)) — **exceção nomeada:** `controllers/crmController.ts`, cujo único uso é o hook Won `maybeSyncOpportunityWon` (unitId da oportunidade já gravada → chamador interno, F-I6-1 d; L-I6-3, dono, questionário, 2026-10-16: *"Exceção nomeada"*) | 42 em 16/10 (os controllers ainda não migrados; encolhe nos PR-2…PR-5 do I6 até 0) |
+| I6 | `src/controllers/` não importa `features/accounting/models/resolveAccountingScopeInternal.ts` nem a porta `features/accounting/public/resolveAccountingScopeInternal.ts` (até 27/11/2026 o arquivo morava em `scope/`; §8.6) — controller resolve o escopo pelo `AccountingScopeResolver` (F-I6-7; dono, 2026-10-15, [`D-2026-10-15-I6-FORKS`](../plano/decisoes/D-2026-10-15-I6-FORKS.md)) — **exceção nomeada:** `controllers/crmController.ts`, cujo único uso é o hook Won `maybeSyncOpportunityWon` (unitId da oportunidade já gravada → chamador interno, F-I6-1 d; L-I6-3, dono, questionário, 2026-10-16: *"Exceção nomeada"*) | 42 em 16/10 (os controllers ainda não migrados; encolhe nos PR-2…PR-5 do I6 até 0) |
 | M1a | feature não importa `repositories/` de outra feature, nem a interface, nem por `import type`. Emenda 2026-11-24 (§8) | 36 (em 24/11) |
 | M1 | feature só importa outra por `features/<x>/public/`. Controller, route, job e `lib/factory.ts` ficam fora do `from`. Emenda 2026-11-24 (§8) | 378 (em 24/11); 359 depois da emenda §8.1; 322 depois da §8.2 |
 | M3 | `features/<x>/public/` não importa nem reexporta `repositories/` (F-MBE-3 a). Emenda 2026-11-24 (§8) | **0** |
 | D2 | `domain/` é pura: não importa repository, service, controller, route, `lib/prisma` nem Express (F-MBE-4 a). Emenda 2026-11-24 (§8). Desde 25/11 (§8.3), nem `lib/factory.ts` | **0** |
 | J1 | `src/jobs/` não importa repository nem `lib/prisma`; fora da regra: `jobs/repositories/` e as CLIs `migratePlano4NiveisCli`, `rekeyLegacyUnitCli`, `seedAccountingFixtureCli`. Emenda 2026-11-24 (§8) | 16 (em 24/11) |
 | M4 | `features/<x>/public/<nome>.types.ts` só importa `models/` e `dtos/` da própria feature: carrega tipo, enum e constante, nada executável (dono, questionário, 24/11: "Tudo em user.types.ts"). Emenda 2026-11-24 (§8.1) | **0** |
-| M2 | peça de feature mora em pasta de camada (`services`, `repositories`, `policies`, `models`, `dtos`, `controllers`, `domain`, `ports`, `adapters`, `public`); sem exceção para `index.ts`; `dynamicTables/rules/` isenta por nome. Vale por feature (F-MBE-2 c): `dynamicTables` desde 24/11 (§8.2), `analytics` e `sectorKits` desde 25/11 (§8.4), `interview`, `crm`, `fx` e `accountingBinding` desde 25/11 (§8.5). Desde 25/11 (§8.3) são três regras com o mesmo alvo — `M2` (arquivo importado, teste inclusive), `M2b` (arquivo que importa algo) e `M2c` (órfão) — e todo `.ts` de produção fora de pasta de camada reprova, com ou sem importador | **0** |
+| M2 | peça de feature mora em pasta de camada (`services`, `repositories`, `policies`, `models`, `dtos`, `controllers`, `domain`, `ports`, `adapters`, `public`); sem exceção para `index.ts`; `dynamicTables/rules/` isenta por nome. Entrou por feature (F-MBE-2 c): `dynamicTables` desde 24/11 (§8.2), `analytics` e `sectorKits` desde 25/11 (§8.4), `interview`, `crm`, `fx` e `accountingBinding` desde 25/11 (§8.5); com a `accounting`, desde 27/11 (§8.6), **vale para toda feature** (`[^/]+`), com um arquivo em etapa declarada, isento por nome: `accounting/fixtures/ChartOfAccountsFixture.ts`. Desde 25/11 (§8.3) são três regras com o mesmo alvo — `M2` (arquivo importado, teste inclusive), `M2b` (arquivo que importa algo) e `M2c` (órfão) — e todo `.ts` de produção fora de pasta de camada reprova, com ou sem importador | **0** |
 
 **Imports `type`-only contam.** Interface de repository dentro de policy é exatamente o sinal de policy impura que L5 quer ver.
 
@@ -349,3 +349,41 @@ sem arquivo de sonda).
 - **Duas regras antigas seguraram o movimento:** a `L6` (o model de `interview` importava um arquivo que ia para
   `services/`) e a `L1` (a rota do binding importava um arquivo que ia para `services/`). Nenhuma ganhou entrada de
   baseline: os dois arquivos foram para o lugar que a regra aceita (§11.9).
+
+### 8.6 Emenda 2026-11-27 — `M2` fecha em `[^/]+` com a `accounting`; `I6` e `C1` seguem o renome
+
+- **Decisão:** dono, chat, 24/11/2026: "Executa o BRIEF inteiro"; F-MBE-2 (c). Questionário de 27/11: "PR novo sobre o
+  #1422", "Fica, isenção nomeada", "Destinos propostos" e "Caixa e sigo". Detalhe, as portas, os 14 plantios e os
+  pontos declarados estão no [`ADR-MODULE-BOUNDARIES.md`](ADR-MODULE-BOUNDARIES.md) §11.10.
+- **Regra:** nenhuma regra nova. Três mudanças de texto na config:
+  - `M2_FEATURES` passa a `[^/]+`: `M2`, `M2b` e `M2c` valem para toda feature. Um arquivo fica isento por nome, como
+    etapa declarada: `M2_DECLARED_STEP = '^src/features/accounting/fixtures/ChartOfAccountsFixture\.ts$'` (o plano de
+    contas padrão espera a porta do F-PBF1-7 do `PAIS-NA-BORDA` para ir a `paises/br/domain/`; lacuna
+    `L-20261127-122628-dabb`). Não é entrada de baseline.
+  - `I6`: o `to` passa de `accounting/scope/resolveAccountingScopeInternal.ts` para
+    `accounting/(models|public)/resolveAccountingScopeInternal.ts` (o arquivo movido e a porta que o reexporta).
+  - `C1` (`LEDGER_CORE_ALLOWED`, §1.2): `audit/` → `domain/audit/`; `scope/` → `models/AccountingScope.ts`, dentro do
+    grupo `models/(…)`. A entrada `scope/` cobria a pasta; a nova cobre só o arquivo que o núcleo importa. O texto do
+    §1.2 fica como foi ratificado; a lista vigente é a desta emenda.
+- **Onde vale:** como o §8, na branch `integration/module-boundaries-be`.
+- **Cobertura:** a exceção de 13/10 (§4): o mesmo gate estático.
+- **Baseline antes/depois:** server 332 → **304**, só remoção (`M1` 278 → 250). `M2`, `M2b`, `M2c`, `I6` e `C1` medem
+  0 e não entram no arquivo. my-app sem mudança.
+- **Prova de que mordem (condição que falha, 27/11):**
+  - `M2`: `accounting/sync/__sondaM2.ts` (pasta antiga recriada, órfã) ⇒ exit 1 com
+    `error M2c-feature-code-in-layer-folder-orphan: src/features/accounting/sync/__sondaM2.ts`; `chat/__sondaM2.ts`
+    (feature que nunca esteve na lista) ⇒ exit 1 com a mesma regra; `accounting/fixtures/__sondaM2.ts` ⇒ exit 1 (a
+    isenção é só do arquivo nomeado); a sonda em `accounting/domain/` ⇒ exit 0.
+  - `I6`: `controllers/__sondaI6.ts` importando `accounting/models/resolveAccountingScopeInternal` ⇒ exit 1 com
+    `error I6-controller-not-internal-scope: src/controllers/__sondaI6.ts → src/features/accounting/models/resolveAccountingScopeInternal.ts`;
+    importando a porta `accounting/public/resolveAccountingScopeInternal` ⇒ exit 1 com a mesma regra; importando só o
+    tipo `AccountingScope` ⇒ exit 0.
+  - `C1`: o plantio do §1.2 repetido (seis imports, um por família, com `paises/br/adapters/EcdChartStructureRule`) ⇒
+    **exit 6**, seis linhas `error C1-ledger-core-not-fiscal`; quatro imports do que o renome moveu e não está na lista
+    (`adapters/dfe/selectDfeEmissor`, `ports/DfeEmissorPort`, `services/bridges/saleItems`,
+    `models/resolveAccountingScopeInternal`) ⇒ **exit 4**; imports de `models/AccountingScope` e `domain/audit/` ⇒
+    exit 0 ("no dependency violations found", 304 conhecidas ignoradas). Plantios removidos, `git status` sem sobra.
+- **Nenhuma regra antiga segurou o movimento:** `L1`, `L4`, `L6` e `D2` seguem em 0 depois de cada commit de caminho
+  (medido com `npm run check:arch` logo depois de cada `git mv`).
+- **Encontro com a `P1`/`P2` do `PAIS-NA-BORDA` (#1428, ainda fora desta branch):** `paises/br/legalParameters/` não
+  está na `LAYER_DIR`, e a `LEGADO_BR` cita `accounting/dfe/`. Fork na caixa (`L-20261127-122629-0d42`).
