@@ -19,7 +19,8 @@ export function isSupportedTimeZone(tz: string): boolean {
  */
 export function processTimeZone(): string {
   const tz = process.env.TZ;
-  return tz && isSupportedTimeZone(tz) ? tz : Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // `UTC` não está em `Intl.supportedValuesOf` (que lista só as zonas canônicas), mas é fuso válido do processo.
+  return tz && (tz === 'UTC' || isSupportedTimeZone(tz)) ? tz : Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
 /** O fuso da unidade quando válido; senão o `fallback`. */
