@@ -27,7 +27,9 @@ async function tableOf(internalName: string) {
   if (!t) throw new Error(`tabela ${internalName} ausente`);
   return t;
 }
-const rows = async (internalName: string) => (await repo.findAllDataByTableId((await tableOf(internalName)).id)).map((r) => ({ id: r.id, ...(r.data as Record<string, unknown>) }));
+type Row = Record<string, unknown> & { id: string };
+const rows = async (internalName: string): Promise<Row[]> =>
+  (await repo.findAllDataByTableId((await tableOf(internalName)).id)).map((r) => ({ ...(r.data as Record<string, unknown>), id: r.id }));
 
 /** Instância de antes da escala: Core e agenda no formato antigo (sem as 4 tabelas, sem os campos novos, noOverlap antigo). */
 async function seedLegacyInstance() {
@@ -38,7 +40,7 @@ async function seedLegacyInstance() {
     ...t,
     schema: { ...t.schema, fields: t.schema.fields.filter((f) => !drop.includes(f.name)).map((f) => (f.name === 'workSchedule' ? { ...f, readOnly: undefined } : f)), ...extra },
   });
-  const agenda = composeModuleTables(resolveModuleSelection(['AGE-0']));
+  const agenda = composeModuleTables(resolveModuleSelection(['VEN-SERV', 'AGE-0']));
   const legacy = {
     ...core,
     ...agenda,
@@ -75,7 +77,11 @@ describe('rollout da escala numa instância de antes dela', () => {
   it('instala, aplica o esquema, grava o fuso padrão e migra o workSchedule; a 2ª rodada não muda nada', async () => {
     const s = await seedLegacyInstance();
     const now = new Date('2026-11-27T12:00:00Z');
-    const [first] = await runSchedulingRollout(now);
+    const structureWrites: string[] = [];
+    const effects = { afterDataWrite: () => undefined, afterStructureWrite: async (owner: string) => void structureWrites.push(owner) };
+    const [first] = await runSchedulingRollout(now, effects);
+    // O script orquestra as escritas: chama o efeito pós-escrita (KPI + KnowledgeGraph) do dono.
+    expect(structureWrites).toEqual([A]);
     expect(first.installed).toEqual(['resources', 'schedules', 'scheduleShifts', 'scheduleExceptions']);
     expect(first.patched).toEqual(['employees', 'appointments']);
     expect(first.unitsWithDefaultTimeZone).toBe(1);
@@ -105,7 +111,7 @@ describe('rollout da escala numa instância de antes dela', () => {
     expect(shifts.filter((x) => x.scheduleId === anaSchedule.id).map((x) => [x.dayOfCycle, x.startMinute, x.durationMinutes])).toEqual([[1, 540, 540]]);
     expect(shifts.filter((x) => x.scheduleId !== anaSchedule.id).map((x) => [x.dayOfCycle, x.startMinute, x.durationMinutes])).toEqual([[5, 600, 240]]);
 
-    const [second] = await runSchedulingRollout(now);
+    const [second] = await runSchedulingRollout(now, effects);
     expect(second).toMatchObject({ installed: [], patched: [], unitsWithDefaultTimeZone: 0, migration: { migrated: 0, alreadyMigrated: 2 } });
     expect(await rows('schedules')).toHaveLength(2);
   });

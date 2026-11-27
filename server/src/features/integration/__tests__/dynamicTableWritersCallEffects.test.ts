@@ -20,6 +20,9 @@ const EXEMPT: Record<string, string> = {
   'jobs/rekeyLegacyUnitCli.ts': 'processo separado',
   // Interface de porta (só assinatura, nenhuma chamada real).
   'features/accounting/ports/OriginPorts.ts': 'interface',
+  // Escala (BE-INCR-ESCALA-BASE itens 12/22): só o script de rollout os chama, e ele chama o efeito por dono no fim.
+  'features/scheduling/services/SchedulingRolloutService.ts': 'orquestrado por scripts/scheduling-rollout.ts',
+  'features/scheduling/services/WorkScheduleMigrationService.ts': 'orquestrado por scripts/scheduling-rollout.ts',
 };
 
 function walk(dir: string, out: string[] = []): string[] {

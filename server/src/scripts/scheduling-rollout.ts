@@ -5,7 +5,9 @@
  *  1. `ensureInstalled`: as quatro tabelas da escala e os campos novos de `units` e `appointments` (sync aditivo);
  *  2. `applySchemaChanges`: `employees.workSchedule` readOnly e o `noOverlap` por pessoa/recurso (emenda 1db262968);
  *  3. `fillUnitTimeZones`: o fuso padrão da borda BR nas unidades sem fuso (F-ESC-18);
- *  4. `WorkScheduleMigrationService.migrate`: o `workSchedule` vira `schedules` + `scheduleShifts`.
+ *  4. `WorkScheduleMigrationService.migrate`: o `workSchedule` vira `schedules` + `scheduleShifts`;
+ *  5. o efeito pós-escrita do dono (`afterStructureWrite`: KPI e KnowledgeGraph), porque o script é quem orquestra as
+ *     escritas (IDynamicTableWriteEffects). O grafo é persistido, então vale mesmo fora do processo do servidor.
  *
  * Run: npx ts-node -r tsconfig-paths/register src/scripts/scheduling-rollout.ts
  * (aponta para o banco do `DATABASE_URL`; rode antes sobre uma cópia do banco real).
@@ -25,6 +27,8 @@ import { WorkScheduleMigrationService, type WorkScheduleMigrationResult } from '
 import { isSupportedTimeZone } from '../features/scheduling/models/timeZone';
 import { localDay } from '../features/scheduling/models/availability';
 import { BR_DEFAULT_TIME_ZONE } from '../features/scheduling/paises/br/models/timeZone';
+import type { IDynamicTableWriteEffects } from '../features/integration/services/IDynamicTableWriteEffects';
+import { getFactory } from '../lib/factory';
 
 function ownerContext(user: { id: string; username: string; email: string; createdAt: Date; updatedAt: Date }): UserContext {
   return {
@@ -49,7 +53,8 @@ export interface InstanceRollout {
   migration: WorkScheduleMigrationResult;
 }
 
-export async function runSchedulingRollout(now: Date = new Date()): Promise<InstanceRollout[]> {
+export async function runSchedulingRollout(now: Date = new Date(), effects?: IDynamicTableWriteEffects): Promise<InstanceRollout[]> {
+  const writeEffects = effects ?? getFactory().getDynamicTableWriteEffects();
   const repo = new DynamicTableRepository();
   const policy = new DynamicTablePolicy();
   const tables = new DynamicTableService(repo, policy);
@@ -72,7 +77,9 @@ export async function runSchedulingRollout(now: Date = new Date()): Promise<Inst
     const { installed } = await rollout.ensureInstalled(ctx);
     const patched = await rollout.applySchemaChanges(ctx);
     const unitsWithDefaultTimeZone = await rollout.fillUnitTimeZones(ctx, BR_DEFAULT_TIME_ZONE, isSupportedTimeZone);
-    out.push({ userId, installed, patched, unitsWithDefaultTimeZone, migration: await migration.migrate(ctx, today) });
+    const migrationResult = await migration.migrate(ctx, today);
+    await writeEffects.afterStructureWrite(userId);
+    out.push({ userId, installed, patched, unitsWithDefaultTimeZone, migration: migrationResult });
   }
   return out;
 }
