@@ -125,7 +125,7 @@ describe('EmployeesPlugin — operational readiness validation', () => {
   ];
   const seed = () => seedTbl({ name: 'Employees', internalName: 'employees', category: 'people', fields });
 
-  it('rejects an employee with neither a unit nor a work day', async () => {
+  it('rejects an employee without an email, even with no unit nor work day', async () => {
     const t = await seed();
     await expect(create(t.id, { name: 'E' })).rejects.toBeInstanceOf(ValidationError);
   });
@@ -137,17 +137,13 @@ describe('EmployeesPlugin — operational readiness validation', () => {
     const t = await seed();
     await expect(create(t.id, { name: 'E', unitId: 'u1', email: 'e@x.co' })).resolves.toBeTruthy();
   });
-  it('rejects an incomplete work-day (start without end)', async () => {
+  // BE-INCR-ESCALA-BASE item 23 (F-ESC-12): o plugin não lê mais o workSchedule legado; a disponibilidade vive na escala.
+  // Turno incompleto ou invertido no campo antigo não é mais regra de cadastro (o campo fica readOnly e é migrado).
+  it('no longer validates the legacy workSchedule (item 23)', async () => {
     const t = await seed();
     await expect(
-      create(t.id, { name: 'E', email: 'e@x.co', workSchedule: { monday: { start: '09:00', end: '17:00' }, tuesday: { start: '09:00' } } }),
-    ).rejects.toBeInstanceOf(ValidationError);
-  });
-  it('rejects a work-day whose end is before its start', async () => {
-    const t = await seed();
-    await expect(
-      create(t.id, { name: 'E', email: 'e@x.co', workSchedule: { monday: { start: '17:00', end: '09:00' } } }),
-    ).rejects.toBeInstanceOf(ValidationError);
+      create(t.id, { name: 'E', email: 'e@x.co', workSchedule: { monday: { start: '17:00', end: '09:00' }, tuesday: { start: '09:00' } } }),
+    ).resolves.toBeTruthy();
   });
 });
 
