@@ -5,7 +5,7 @@ import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { mesBounds } from '../models/Lalur.model';
 import { RESALE_REVENUE_ACCOUNT, SERVICE_REVENUE_ACCOUNT, splitRevenueCredit } from '../sync/mappers/revenueSplit';
 import type { SaleRevenueLine } from '../sync/bridges/saleItems';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';

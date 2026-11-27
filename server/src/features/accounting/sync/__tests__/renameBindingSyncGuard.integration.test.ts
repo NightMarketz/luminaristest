@@ -56,7 +56,7 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import type { AccountingEvent } from '../AccountingSyncPort';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import * as path from 'path';
 import * as fs from 'fs';
 

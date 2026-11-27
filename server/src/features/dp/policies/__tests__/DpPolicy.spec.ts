@@ -2,7 +2,7 @@
  * BE-INCR-DP-F0-F1 item 14 (PR-1) — matriz da DpPolicy (FEATURE_TEMPLATE §10 nível 1): mesma régua de hoje do
  * `canManageFiscalProfile` (ator do escopo).
  */
-import type { AccountingScope } from '../../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../../accounting/models/AccountingScope';
 import { AccountingPolicy } from '../../../accounting/policies/AccountingPolicy';
 import { DpPolicy } from '../DpPolicy';
 

@@ -10,7 +10,7 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import { AccountingSyncService } from '@/features/accounting/sync/AccountingSyncService';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import type { BindingScope } from '@/features/accountingBinding/public/bindingScope.types';
 import { SectorKitV1Schema, type SectorKitV1 } from '@/features/sectorKits/dtos/SectorKitDto';
 import { BEAUTY_SALON_KIT_V6 } from '@/features/sectorKits/domain/kits/beautySalon/kit.v6';

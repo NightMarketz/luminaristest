@@ -12,7 +12,7 @@
  *   - rows ordered by account code (not by union/insertion order)
  */
 import type { AccountingReportService } from '../AccountingReportService';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import { PeriodComparisonReportService } from '../PeriodComparisonReportService';
 
 type Row = {

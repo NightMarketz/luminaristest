@@ -1,7 +1,7 @@
 import prisma from '../../../lib/prisma';
 import type { Payable, PayablePayment, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 import { PAYABLE_ORIGIN_WITHHOLDING_TAX, PAYABLE_OUTSTANDING_STATUSES, PAYABLE_SETTLEABLE_STATUSES, type PayableStatus } from '../models/Payable.model';
 import { scopeToday } from '../models/dates';
 import { buildSubledgerFilterWhere } from './subledgerFilters';

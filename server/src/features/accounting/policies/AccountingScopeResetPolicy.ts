@@ -1,4 +1,4 @@
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingScopeResetPolicy } from './IAccountingScopeResetPolicy';
 
 /** BE-INCR-RESET-CONSISTENTE item 11. Pure boolean decision — no throws, no data access. */

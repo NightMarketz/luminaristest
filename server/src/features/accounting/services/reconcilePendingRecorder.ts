@@ -17,7 +17,7 @@
 import logger from '../../../lib/logger';
 import { sendAlertWebhook, type AlertPayload } from '../../../lib/alertWebhook';
 import type { Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IReconcilePendingRepository } from '../repositories/IReconcilePendingRepository';
 import type { ReconcilePendingReasonCodeValue } from '../dtos/ReconcilePendingDto';
 

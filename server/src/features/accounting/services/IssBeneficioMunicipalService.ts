@@ -1,6 +1,6 @@
 import type { IssBeneficioMunicipal, Prisma } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../../lib/errors';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IIssBeneficioMunicipalRepository, IssBeneficioMunicipalData } from '../repositories/IIssBeneficioMunicipalRepository';
 import type { AuditService } from './AuditService';

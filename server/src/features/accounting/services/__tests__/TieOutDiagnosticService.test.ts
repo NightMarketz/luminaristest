@@ -34,7 +34,7 @@ import {
   ESTOQUES_CODE,
   FORNECEDORES_A_PAGAR_CODE,
 } from '../../fixtures/ChartOfAccountsFixture';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 const scope: AccountingScope = {
   ownerUserId: 'u1',

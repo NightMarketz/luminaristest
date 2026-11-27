@@ -12,7 +12,7 @@ import { cfopsImobilizadoDe, defaultByProductRefFrom, resolveDestinations, type 
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { IProductDestinationDefaultRepository } from '../repositories/IProductDestinationDefaultRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { Payable } from 'generated/prisma';
 import { TABELA_USO_CONSUMO, creditoIbsCbsEntrada, type CreditoIbsCbsEntrada } from '../models/ibsCbsCredito';
 

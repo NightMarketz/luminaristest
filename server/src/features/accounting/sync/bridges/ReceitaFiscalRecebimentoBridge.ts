@@ -14,8 +14,8 @@
 
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
-import type { AccountingScope } from '../../scope/AccountingScope';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import type { AccountingScope } from '../../models/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { isAllPackageSale } from './saleItems';
 
 /** Mesmo shape do `ReconcileSummary` do job (a feature não importa de `jobs/`). */

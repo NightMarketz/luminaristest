@@ -19,7 +19,7 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import { resolveReadPath } from '@/lib/attachmentStorage';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import type { SpedEcfRequestDto } from '@/features/accounting/dtos/SpedEcfDto';
 
 const DONO = 'u-ecf-closing';

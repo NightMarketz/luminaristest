@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { NfeImportService } from '../NfeImportService';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import type { CreatePayableInput } from '../../dtos/PayableDto';
 import type { ImportNfePurchaseInput } from '../../dtos/NfeDto';
 import type { Payable } from 'generated/prisma';

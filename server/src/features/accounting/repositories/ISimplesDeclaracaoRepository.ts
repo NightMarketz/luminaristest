@@ -1,5 +1,5 @@
 import type { Prisma, SimplesDeclaracaoAnual } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 export const TIPOS_DECLARACAO_SIMPLES = ['DEFIS', 'DASN_SIMEI'] as const;
 export type TipoDeclaracaoSimples = (typeof TIPOS_DECLARACAO_SIMPLES)[number];

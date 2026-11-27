@@ -11,7 +11,7 @@ import { readDanfeModel } from '../../../../lib/danfe/danfeModel';
 import { DANFE_PDF_MARGIN, renderDanfeHtml } from '../../../../lib/danfe/danfeHtml';
 import { readFileSync } from 'fs';
 import { LEGAIS_SEMENTE } from '@test/helpers/legalParams';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import type { IAccountingPolicy } from '../../policies/IAccountingPolicy';
 import type { FiscalDocumentWithAttempts, IFiscalDocumentRepository } from '../../repositories/IFiscalDocumentRepository';
 import type { IDocumentAttachmentRepository } from '../../repositories/IDocumentAttachmentRepository';

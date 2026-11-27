@@ -6,7 +6,7 @@
  * removidos do model).
  */
 import { buildDeliveryManifest, DELIVERABLE_EXPORT_KINDS } from '../AccountingDelivery.model';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../resolveAccountingScopeInternal';
 
 const scope = resolveAccountingScopeInternal({ userId: 'dono-a' }, 'unit-1');
 const period = { start: new Date('2026-01-01T00:00:00.000Z'), end: new Date('2026-12-31T00:00:00.000Z') };

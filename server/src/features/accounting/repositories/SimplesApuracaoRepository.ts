@@ -1,6 +1,6 @@
 import prisma from '../../../lib/prisma';
 import type { Prisma, SimplesApuracao } from 'generated/prisma';
-import { accountingScopeWhere, type AccountingScope } from '../scope/AccountingScope';
+import { accountingScopeWhere, type AccountingScope } from '../models/AccountingScope';
 import type { CreateSimplesApuracaoData, ISimplesApuracaoRepository } from './ISimplesApuracaoRepository';
 
 /** Repositório Prisma de `simples_apuracoes` (X14 PR-3). Zero regra de negócio (ver o contrato). */

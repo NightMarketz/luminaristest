@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import type { DocumentAttachment } from 'generated/prisma';
 import { ForbiddenError, NotFoundError } from '../../../lib/errors';
 import * as storage from '../../../lib/attachmentStorage';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IDocumentAttachmentRepository } from '../repositories/IDocumentAttachmentRepository';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';

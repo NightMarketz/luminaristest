@@ -24,7 +24,7 @@ jest.mock('../../../../lib/logger', () => ({ __esModule: true, get default() { r
 
 import { FiscalDocumentLifecycleService, PENDING_MAX_ATTEMPTS } from '../FiscalDocumentLifecycleService';
 import { PendingAttachmentResultSchema, PendingAttachmentDrainSummarySchema } from '../../dtos/FiscalDocumentPendingAttachmentDto';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import type { EmissaoResult } from '../../dfe/DfeEmissorPort';
 
 const SCOPE: AccountingScope = {

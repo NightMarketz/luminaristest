@@ -146,7 +146,7 @@ export function syncSkipErrorCode(error: unknown): string | null {
  * which owns the balance invariant, atomicity and idempotency.
  */
 export interface AccountingSyncPort {
-  sync(scope: import('../scope/AccountingScope').AccountingScope, event: AccountingEvent): Promise<SyncResult>;
+  sync(scope: import('../models/AccountingScope').AccountingScope, event: AccountingEvent): Promise<SyncResult>;
 }
 
 /**

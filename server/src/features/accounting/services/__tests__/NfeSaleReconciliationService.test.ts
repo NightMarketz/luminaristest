@@ -13,7 +13,7 @@
 import { ForbiddenError, NotFoundError } from '../../../../lib/errors';
 import { NfeSaleReconciliationService } from '../NfeSaleReconciliationService';
 import type { ParsedNfe } from '../../../../lib/nfe';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 jest.mock('../../../../lib/nfe', () => ({ __esModule: true, parseNfe: jest.fn() }));
 jest.mock('../../../../lib/logger', () => ({

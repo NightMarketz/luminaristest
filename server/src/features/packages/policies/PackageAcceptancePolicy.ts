@@ -1,4 +1,4 @@
-import type { AccountingScope } from '../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../accounting/public/accountingScope.types';
 import type { IPackageAcceptancePolicy } from './IPackageAcceptancePolicy';
 
 /**

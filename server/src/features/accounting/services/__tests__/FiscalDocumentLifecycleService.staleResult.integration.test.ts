@@ -25,7 +25,7 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { FiscalDocumentRepository, attemptRef } from '@/features/accounting/repositories/FiscalDocumentRepository';
 import { FiscalDocumentLifecycleService } from '@/features/accounting/services/FiscalDocumentLifecycleService';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import type { EmissaoResult } from '@/features/accounting/dfe/DfeEmissorPort';
 
 const DONO = 'u-dfe-stale';

@@ -1,8 +1,8 @@
 import prisma from '../../../lib/prisma';
 import type { BankStatement, BankStatementLine, ReconciliationMatch, Prisma } from 'generated/prisma';
 import { NotFoundError } from '../../../lib/errors';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 import { centsFromDb } from '../models/money';
 import type { IReconciliationRepository } from './IReconciliationRepository';
 import type {

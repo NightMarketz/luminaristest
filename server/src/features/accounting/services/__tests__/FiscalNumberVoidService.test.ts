@@ -17,7 +17,7 @@ import { FiscalNumberVoidService } from '../FiscalNumberVoidService';
 import { PAYLOAD_ALLOWLIST } from '../../audit/auditCanonical';
 import { VoidNumberRangeSchema } from '../../dtos/FiscalDocumentDto';
 import { NFCE_PRESUNCAO } from '../../models/inutilizacao';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import { legalParamsSemente } from '@test/helpers/legalParams';
 
 /**

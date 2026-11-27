@@ -1,5 +1,5 @@
 import { ConflictError, ForbiddenError, NotFoundError } from '../../../lib/errors';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IPartnerRepository, PartnerData } from '../repositories/IPartnerRepository';
 import type { IProfitDistributionRepository } from '../repositories/IProfitDistributionRepository';

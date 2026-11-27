@@ -28,7 +28,7 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { FiscalDocumentRepository } from '@/features/accounting/repositories/FiscalDocumentRepository';
 import { FiscalDocumentLifecycleService } from '@/features/accounting/services/FiscalDocumentLifecycleService';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import { DfeTransporteIndisponivelError, type EmissaoResult } from '@/features/accounting/dfe/DfeEmissorPort';
 import { DfePollScheduler } from '../DfePollScheduler';
 

@@ -18,7 +18,7 @@ import type { AccountingScopeSettingsService } from '@/features/accounting/servi
 import type { PostingService } from '@/features/accounting/services/PostingService';
 import type { AuditService } from '@/features/accounting/services/AuditService';
 import type { IAccountingPolicy } from '@/features/accounting/policies/IAccountingPolicy';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 
 const scope = resolveAccountingScopeInternal({ userId: 'dono-a' }, 'unit-1');
 

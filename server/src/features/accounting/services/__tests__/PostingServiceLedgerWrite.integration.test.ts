@@ -27,8 +27,8 @@
 import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { getFactory } from '@/lib/factory';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import { JournalEntryRepository } from '@/features/accounting/repositories/JournalEntryRepository';
 import { NotFoundError } from '@/lib/errors';
 

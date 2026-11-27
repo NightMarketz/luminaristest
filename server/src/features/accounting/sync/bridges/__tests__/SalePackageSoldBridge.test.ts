@@ -1,4 +1,4 @@
-import type { AccountingScope } from '../../../scope/AccountingScope';
+import type { AccountingScope } from '../../../models/AccountingScope';
 import type { AccountingEvent } from '../../AccountingSyncPort';
 
 // Mock the bridge's collaborators (factory + logger). resolveAccountingScope,

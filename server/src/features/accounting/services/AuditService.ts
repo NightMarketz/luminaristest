@@ -5,7 +5,7 @@ import type { IAuditRepository } from '../repositories/IAuditRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import {
   GENESIS_HASH,
   HASH_VERSION,

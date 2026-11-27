@@ -1,5 +1,5 @@
 import type { FiscalNumberVoid, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /** BE-INCR-NFCE (nó X10a, item 24) — estados do pedido de inutilização (contrato §4 do BRIEF). */
 export const FISCAL_NUMBER_VOID_STATUSES = ['REQUESTED', 'HOMOLOGATED', 'REJECTED'] as const;

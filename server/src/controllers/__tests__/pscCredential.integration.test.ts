@@ -18,7 +18,7 @@ import { PscCredentialRepository } from '@/features/accounting/repositories/PscC
 import { PscProviderRepository } from '@/features/accounting/repositories/PscProviderRepository';
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
 import { resolveUnitCnpjFromUnits } from '@/features/accounting/services/unitCnpj';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { makeTestCert } from '@test/helpers/nfeSignature';
 

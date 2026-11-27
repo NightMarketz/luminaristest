@@ -1,5 +1,5 @@
 import type { AccountingPolicyVersion, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { PolicyTarget } from '../models/AccountingPolicyVersion.model';
 import type { PolicyVersionStatus } from '../models/ledgerStatus';
 

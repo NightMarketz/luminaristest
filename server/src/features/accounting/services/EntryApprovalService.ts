@@ -24,8 +24,8 @@ import type { IDimensionRepository } from '../repositories/IDimensionRepository'
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
 import { assertLegDimensions, resolveLineDimensions, type ResolvedDimensionTag } from './dimensionTagging';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 
 interface ResolvedLine {
   accountId: string;

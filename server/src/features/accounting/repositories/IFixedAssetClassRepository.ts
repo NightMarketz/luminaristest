@@ -1,6 +1,6 @@
 import type { FixedAssetClass, Prisma } from 'generated/prisma';
 import type { FixedAssetClassKind } from '../models/FixedAsset.model';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 export interface CreateFixedAssetClassData {
   userId: string;

@@ -48,8 +48,8 @@ import { AssinaturaRemotaError, isSessaoPscVencida } from '../dfe/AssinadorRemot
 import { bloqueioSessaoPsc } from './DfeAssinaturaResolver';
 import { enviarTentativa, type DfeContingenciaHandler } from './dfeEnvio';
 import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
-import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
-import type { AccountingScope } from '../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../models/resolveAccountingScopeInternal';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /**
  * BE-INCR-DFE (nó X10b, BRIEF Fase D, itens 24-30) — o que acontece a um `FiscalDocument` DEPOIS

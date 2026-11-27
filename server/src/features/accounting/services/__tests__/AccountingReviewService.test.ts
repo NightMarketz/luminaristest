@@ -23,7 +23,7 @@ import type { ActiveAccountant } from '@/features/accounting/models/AccountantAs
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
 import type { AuditService } from '@/features/accounting/services/AuditService';
 import type { PostingService } from '@/features/accounting/services/PostingService';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import { REVIEW_ADJUSTMENT_SOURCE_TYPE, staleFindings } from '@/features/accounting/models/AccountingReview.model';
 import { AdjustmentEntrySchema } from '@/features/accounting/dtos/AccountingReviewDto';
 

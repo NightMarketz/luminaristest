@@ -3,7 +3,7 @@ import { AccountingSyncService } from '../AccountingSyncService';
 import { SaleFinalizedMapper } from '../mappers/SaleFinalizedMapper';
 import { SaleSettledMapper } from '../mappers/SaleSettledMapper';
 import { AccountingEventMapperCollisionError, MaxCentsExceededError, NoMapperForUnitError, UnknownEventKeyError, ValidationError } from '../../../../lib/errors';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import type { AccountingEvent } from '../AccountingSyncPort';
 import type { IAccountingEventMapper } from '../mappers/IAccountingEventMapper';
 import type { PostEntryInput } from '../../dtos/PostingDto';

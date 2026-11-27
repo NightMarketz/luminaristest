@@ -1,6 +1,6 @@
 import type { DpAfastamento, DpFeriasImplantacao, DpVinculo, Prisma } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
-import type { AccountingScope } from '../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../accounting/public/accountingScope.types';
 import type { AuditService } from '../../accounting/services/AuditService';
 import { linhaLegalVigente } from '../../legalParameters/models/legalParameter';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';

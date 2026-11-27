@@ -3,7 +3,7 @@ import { ConflictError, ForbiddenError, ValidationError } from '../../../lib/err
 import { anosDoPa, apuracoesDoPa, montarArquivoMit } from '../../../lib/mit';
 import { tabelaApuracaoDe } from '../models/taxAssessmentParams';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IMitExportRepository } from '../repositories/IMitExportRepository';
 import type { ITaxAssessmentRepository } from '../repositories/ITaxAssessmentRepository';

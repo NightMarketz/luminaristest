@@ -1,5 +1,5 @@
 import type { AccountingDeliveryItem, AccountingDeliveryLog, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /** Dados para criar um log de entrega. Escalares apenas; `status` vem de `DELIVERY_STATUSES`. */
 export interface CreateDeliveryLogData {

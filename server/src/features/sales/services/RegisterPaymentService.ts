@@ -5,7 +5,7 @@ import type { DynamicTableService } from '../../dynamicTables/services/DynamicTa
 import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
 import type { IDynamicTableWriteEffects } from '../../integration/services/IDynamicTableWriteEffects';
 import { maybeSyncSaleSettled } from '../../accounting/sync/bridges/SaleSettlementBridge';
-import { resolveAccountingScopeInternal } from '../../accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../accounting/public/resolveAccountingScopeInternal';
 import type { PackageBalanceService } from '../../packages/services/PackageBalanceService';
 import type { RegisterPaymentInput } from '../dtos/RegisterPaymentDto';
 import { describeSale } from './SaleFiscalGuardService';

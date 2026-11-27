@@ -1,5 +1,5 @@
 import type { InventoryItem, StockMovement, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /** Data to create an `InventoryItem` valuation row. Scalars only (no relation objects). */
 export interface CreateInventoryItemData {

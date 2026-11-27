@@ -185,7 +185,7 @@ import type { ProductRefPort, StockRowPort, StockRowWriterPort, UnitRowPort } fr
 import { CounterpartyService } from '../features/accounting/services/CounterpartyService';
 import { AccountingContactService } from '../features/accounting/services/AccountingContactService';
 import { AccountantAssignmentService } from '../features/accounting/services/AccountantAssignmentService';
-import { AccountingScopeResolver, type IAccountingScopeResolver } from '../features/accounting/scope/AccountingScopeResolver';
+import { AccountingScopeResolver, type IAccountingScopeResolver } from '../features/accounting/services/AccountingScopeResolver';
 import { AccountingPolicyVersionService } from '../features/accounting/services/AccountingPolicyVersionService';
 import { PaymentAccountService } from '../features/accounting/services/PaymentAccountService';
 import { FiscalCertificateService } from '../features/accounting/services/FiscalCertificateService';
@@ -377,7 +377,7 @@ import type { ITeammatePolicy } from '../features/teammates/policies/ITeammatePo
 import type { ISystemProvisioningPolicy } from '../features/onboarding/policies/ISystemProvisioningPolicy';
 import type { IAccountingEventMapper } from '../features/accounting/sync/mappers/IAccountingEventMapper';
 import type { PostEntryInput } from '../features/accounting/dtos/PostingDto';
-import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '../features/accounting/models/AccountingScope';
 import type { IAccountingBindingRepository } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
 import type { BindingScope } from '../features/accountingBinding/public/bindingScope.types';
 import { AccountingBindingV1Schema } from '../features/accountingBinding/dtos/AccountingBindingDto';

@@ -20,8 +20,8 @@ import type { FiscalCertificateView } from '../dtos/FiscalCertificateDto';
 import type { IFiscalCertificateRepository } from '../repositories/IFiscalCertificateRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 
 /** CNPJ da unidade (preset `units`, já sem máscara e em maiúsculas), ou null se ausente/inválido. */
 export type UnitCnpjResolver = (scope: AccountingScope) => Promise<string | null>;

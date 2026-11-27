@@ -42,8 +42,8 @@ import type { IReceivableRepository } from '../repositories/IReceivableRepositor
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
+import type { AccountingScope } from '../models/AccountingScope';
+import { resolveAccountingScopeInternal } from '../models/resolveAccountingScopeInternal';
 
 /** Projeção pública. `payer` só no detalhe e só para quem gerencia o título (F9, dono 10/10). Nunca credencial. */
 export interface CollectionChargeView {

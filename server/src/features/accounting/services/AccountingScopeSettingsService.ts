@@ -1,5 +1,5 @@
 import { ForbiddenError, ValidationError } from '../../../lib/errors';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IBankSettlementRepository } from '../repositories/IBankSettlementRepository';

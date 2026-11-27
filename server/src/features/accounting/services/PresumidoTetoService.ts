@@ -1,5 +1,5 @@
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFiscalProfileRepository';
 import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';

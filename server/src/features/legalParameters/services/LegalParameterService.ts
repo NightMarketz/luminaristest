@@ -1,7 +1,7 @@
 import type { LegalParameter } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import type { AuditService } from '../../accounting/services/AuditService';
-import type { AccountingScope } from '../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../accounting/public/accountingScope.types';
 import type { ILegalParameterRepository } from '../repositories/ILegalParameterRepository';
 import type { ILegalParameterRecalcJobRepository } from '../repositories/ILegalParameterRecalcJobRepository';
 import type { ILegalParameterPolicy, LegalParameterActor } from '../policies/ILegalParameterPolicy';

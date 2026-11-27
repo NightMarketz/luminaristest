@@ -1,7 +1,7 @@
 import type { Prisma } from 'generated/prisma';
 import type { AccountNature } from '../fixtures/ChartOfAccountsFixture';
 import type { InTable } from '../../../lib/spreadsheet';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /**
  * Portas do NÚCLEO DO RAZÃO (Onda 1.2, regra `C1-ledger-core-not-fiscal` do `ADR-ARCH-BOUNDARIES`).

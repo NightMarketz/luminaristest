@@ -22,7 +22,7 @@
  */
 import { AuditService } from '../AuditService';
 import { GENESIS_HASH, hashAuditCanonical, buildAuditCanonicalTuple } from '../../audit/auditCanonical';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import type { AuditEvent, AuditChainHead } from 'generated/prisma';
 
 jest.mock('../../../../lib/logger', () => ({

@@ -21,7 +21,7 @@ import { PayableService } from '../PayableService';
 import { ReceivableService } from '../ReceivableService';
 import { AP_PAYMENT_SOURCE_TYPE } from '../../models/Payable.model';
 import { AR_RECEIPT_SOURCE_TYPE } from '../../models/Receivable.model';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 const scope: AccountingScope = {
   ownerUserId: 'owner-1', actorUserId: 'owner-1', unitId: 'unit-1', ledgerCode: 'DEFAULT',

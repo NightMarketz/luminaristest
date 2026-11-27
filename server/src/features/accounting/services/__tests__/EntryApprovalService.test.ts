@@ -7,8 +7,8 @@ import { fiscalYearOf } from '../../models/dates';
 import { EntryApprovalService } from '../EntryApprovalService';
 import { AppError, ForbiddenError, NotFoundError, ValidationError } from '../../../../lib/errors';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
-import type { AccountingScope } from '../../scope/AccountingScope';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import type { AccountingScope } from '../../models/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { computeEntryContentHash } from '../../models/entryContentHash';
 import type { Account, JournalEntry, Posting } from 'generated/prisma';
 

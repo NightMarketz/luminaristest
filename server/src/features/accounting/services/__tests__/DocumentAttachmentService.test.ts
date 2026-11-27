@@ -1,7 +1,7 @@
 import { DocumentAttachmentService } from '../DocumentAttachmentService';
 import { ForbiddenError, NotFoundError } from '../../../../lib/errors';
 import { canonicalizeAuditPayload } from '../../audit/auditCanonical';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import type { IDocumentAttachmentRepository } from '../../repositories/IDocumentAttachmentRepository';
 import type { IJournalEntryRepository } from '../../repositories/IJournalEntryRepository';
 import type { IFiscalDocumentRepository } from '../../repositories/IFiscalDocumentRepository';

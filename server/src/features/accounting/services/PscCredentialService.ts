@@ -31,9 +31,9 @@ import type { IPscCredentialRepository } from '../repositories/IPscCredentialRep
 import type { IPscProviderRepository } from '../repositories/IPscProviderRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
-import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
+import { resolveAccountingScopeInternal } from '../models/resolveAccountingScopeInternal';
 import type { CredencialPscResolvida, TipoDfeAssinado } from '../dfe/AssinadorRemotoPort';
 import type { UnitCnpjResolver } from './FiscalCertificateService';
 

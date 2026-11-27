@@ -1,4 +1,4 @@
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from './AccountingScope';
 import type { ExportKind } from './DataExchange.model';
 
 /**

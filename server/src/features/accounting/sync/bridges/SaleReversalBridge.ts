@@ -21,8 +21,8 @@
 
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
-import type { AccountingScope } from '../../scope/AccountingScope';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import type { AccountingScope } from '../../models/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { saleDayAsWritten, scopeDay, scopeToday } from '../../models/dates';
 import { buildSaleReturnedEvent, syncSkipErrorCode } from '../AccountingSyncPort';
 import { maybeRecordRecebimento, recebimentoSaleFromRow } from './ReceitaFiscalRecebimentoBridge';

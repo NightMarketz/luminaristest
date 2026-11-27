@@ -29,7 +29,7 @@ import prisma from '../lib/prisma';
 import { logger } from '../lib/logger';
 import { ApplicationFactory } from '../lib/factory';
 import { UNIT_TYPE_OPTIONS } from '../features/dynamicTables/domain/presets/modules/core/UnitsModule';
-import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../features/accounting/models/resolveAccountingScopeInternal';
 import type { UserContext } from '../types/UserContext';
 import type { Role } from '../features/users/models/User.model';
 

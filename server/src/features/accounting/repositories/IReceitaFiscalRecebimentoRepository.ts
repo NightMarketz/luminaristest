@@ -1,5 +1,5 @@
 import type { Prisma, ReceitaFiscalRecebimento } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 export type OrigemRecebimento = 'SALE_SETTLED' | 'PACKAGE_BALANCE';
 export type StatusRecebimento = 'ACTIVE' | 'REVERTED';

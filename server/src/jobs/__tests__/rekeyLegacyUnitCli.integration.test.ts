@@ -13,7 +13,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { NoMapperForUnitError } from '@/lib/errors';
 import { SALE_BINDING_V1 } from '@/features/accountingBinding/domain/fixtures/saleBinding';

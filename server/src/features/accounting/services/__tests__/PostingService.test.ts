@@ -26,7 +26,7 @@ import { CANONICAL_ACCOUNTS } from '../../fixtures/ChartOfAccountsFixture';
 import { ecdChartStructureRule } from '../../paises/br/EcdChartStructureRule';
 import { MAX_CENTS } from '../../models/money';
 import logger from '../../../../lib/logger';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 // prisma.$transaction runs the callback with a fake tx handle; repos are mocked so the
 // tx is just threaded through (they ignore it here).

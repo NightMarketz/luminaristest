@@ -1,5 +1,5 @@
 import { DimensionReportService } from '../DimensionReportService';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { CLOSING_SOURCE_TYPE } from '../../models/closing';
 import type { Account, DimensionDefinition, DimensionValue } from 'generated/prisma';
 import type { AccountDimensionTotals } from '../../repositories/IPostingRepository';

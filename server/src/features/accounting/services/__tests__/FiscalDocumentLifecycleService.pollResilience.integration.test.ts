@@ -30,7 +30,7 @@ import {
   FiscalDocumentLifecycleService,
   POLL_MAX_ATTEMPTS,
 } from '@/features/accounting/services/FiscalDocumentLifecycleService';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import { DfeTransporteError, DfeTransporteIndisponivelError, type EmissaoResult } from '@/features/accounting/dfe/DfeEmissorPort';
 import { ForbiddenError, ValidationError } from '@/lib/errors';
 import { enviarTentativa } from '@/features/accounting/services/dfeEnvio';

@@ -10,7 +10,7 @@ import type { IAccountantAssignmentRepository } from '../../repositories/IAccoun
 import type { IAccountingContactRepository } from '../../repositories/IAccountingContactRepository';
 import type { IUserRepository } from '../../../users/repositories/IUserRepository';
 import type { AuditService } from '../AuditService';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { ConflictError } from '../../../../lib/errors';
 
 const T0 = new Date('2026-10-03T12:00:00.000Z');

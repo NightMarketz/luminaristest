@@ -3,7 +3,7 @@ import { PackageBalanceService } from '../PackageBalanceService';
 import type { PackageCreditCommand, PackageMovementCommand } from '../PackageBalanceService';
 import type { IPackageBalanceRepository } from '../../repositories/IPackageBalanceRepository';
 import type { IPackageBalancePolicy } from '../../policies/IPackageBalancePolicy';
-import type { AccountingScope } from '../../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../../accounting/models/AccountingScope';
 import { ValidationError, ForbiddenError, PackageBalanceExpiredError } from '../../../../lib/errors';
 
 import { legalParamsSemente } from '@test/helpers/legalParams';

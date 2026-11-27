@@ -23,8 +23,8 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { CounterpartyRepository } from '@/features/accounting/repositories/CounterpartyRepository';
 import { resolveOrCreateCounterpartyId } from '@/features/accounting/services/counterpartyResolution';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import {
   deletedCounterpartyName,
   deletedCounterpartyNameNormalized,

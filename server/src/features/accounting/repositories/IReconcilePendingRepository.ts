@@ -1,5 +1,5 @@
 import type { Prisma, ReconcilePendingItem } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /** Data captured by a reconcile pass when an item fails or is blocked (Fork 2-b, callback). */
 export interface ReconcilePendingCapture {

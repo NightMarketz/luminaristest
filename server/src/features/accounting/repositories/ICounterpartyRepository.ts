@@ -1,5 +1,5 @@
 import type { Counterparty, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /**
  * Data to create a Counterparty row. Scalars only (no relation objects). `nameNormalized` is NOT

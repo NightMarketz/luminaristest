@@ -14,7 +14,7 @@ import { PaymentAccountRepository } from '@/features/accounting/repositories/Pay
 import { ReconciliationRepository } from '@/features/accounting/repositories/ReconciliationRepository';
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
 import { CollectionProviderError, type CollectionProviderPort } from '@/features/accounting/collection/CollectionProviderPort';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 
 const app = makeApp();
 const UNIT = 'unit-f5-pr3';

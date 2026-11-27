@@ -1,6 +1,6 @@
 import { ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { AssinadorRemotoPort } from '../dfe/AssinadorRemotoPort';
 import type { CscDaUnidade, DfeAmbiente, DfeCallContext, DfeEmissorPort } from '../dfe/DfeEmissorPort';
 import type { PscCredentialService, ResolveForEmissionResult } from './PscCredentialService';

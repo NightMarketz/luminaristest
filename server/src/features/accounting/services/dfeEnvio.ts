@@ -1,6 +1,6 @@
 import type { FiscalDocument } from 'generated/prisma';
 import logger from '../../../lib/logger';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IFiscalDocumentRepository } from '../repositories/IFiscalDocumentRepository';
 import { isFalhaDeComunicacao, type DfeEmissorPort, type EmissaoResult, type EmitirInput } from '../dfe/DfeEmissorPort';
 import { isSessaoPscVencida } from '../dfe/AssinadorRemotoPort';

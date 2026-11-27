@@ -1,6 +1,6 @@
 import { CounterpartyService } from '../CounterpartyService';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../../lib/errors';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import {
   COUNTERPARTY_ARCHIVED,
   COUNTERPARTY_CREATED,

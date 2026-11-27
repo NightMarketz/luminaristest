@@ -16,7 +16,7 @@
  */
 import { ReferentialMappingService } from '../ReferentialMappingService';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../../lib/errors';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 const scope: AccountingScope = {
   ownerUserId: 'u1',

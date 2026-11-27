@@ -4,7 +4,7 @@
  */
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../../lib/errors';
 import { ProductDestinationService, PRODUCT_DESTINATION_CLEARED, PRODUCT_DESTINATION_SET } from '../ProductDestinationService';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 const scope = { ownerUserId: 'owner-1', unitId: 'unit-1', actorUserId: 'actor-1' } as unknown as AccountingScope;
 const TX = { tx: true };

@@ -86,7 +86,7 @@ jest.mock('../../lib/logger', () => ({
 }));
 
 import { retryOneReconcilePendingItem, runAccountingSyncReconcile } from '../accountingSyncReconcile.job';
-import { resolveAccountingScopeInternal } from '../../features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../features/accounting/models/resolveAccountingScopeInternal';
 
 const SALE_DATA = { unitId: 'unit-1', totalAmount: 100, currency: 'BRL', status: 'Returned', returnedAt: '2026-11-10T12:00:00.000Z' };
 

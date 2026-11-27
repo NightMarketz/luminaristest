@@ -1,5 +1,5 @@
 import type { Payable } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /**
  * One CFOP 1551/2551 item of a multi-item NF-e purchase, resolved (class + account + TAXA) at

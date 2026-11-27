@@ -29,7 +29,7 @@ import { DFE_NAO_RECEBIDA, FiscalDocumentLifecycleService, NAO_CONSTA_ESPACO_MS,
 import { FiscalNumberVoidService } from '../FiscalNumberVoidService';
 import { DfeAssinaturaResolver, FALTANTE_SESSAO_PSC } from '../DfeAssinaturaResolver';
 import type { ResolveForEmissionResult } from '../PscCredentialService';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import type { EmissaoResult } from '../../dfe/DfeEmissorPort';
 
 /**

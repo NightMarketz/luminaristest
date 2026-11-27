@@ -26,7 +26,7 @@ import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
 import { resolveReadPath } from '@/lib/attachmentStorage';
 import { parseTable } from '@/lib/spreadsheet';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import type { SpedEcfRequestDto } from '@/features/accounting/dtos/SpedEcfDto';
 import { MEMO_COLUMNS } from '@/features/accounting/models/taxAssessmentMemoExport';
 import { confrontarMemoriaComEcf, oraculoEcfPresumidoT01 } from '@test/helpers/ecfPresumidoOraculo';

@@ -1,7 +1,7 @@
 import { CrmReceivableBridge, crmDocumentNumber, type WonOpportunityFact } from '../CrmReceivableBridge';
 import { AccountingPeriodNotOpenError, ValidationError } from '../../../../../lib/errors';
 import { MAX_CENTS } from '../../../models/money';
-import type { AccountingScope } from '../../../scope/AccountingScope';
+import type { AccountingScope } from '../../../models/AccountingScope';
 
 const scope: AccountingScope = {
   ownerUserId: 'u1',

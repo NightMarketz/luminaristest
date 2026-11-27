@@ -6,7 +6,7 @@
  */
 import { InventoryService } from '../InventoryService';
 import { ValidationError } from '../../../../lib/errors';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import type { IInventoryRepository } from '../../repositories/IInventoryRepository';
 import type { InventoryItem } from 'generated/prisma';
 

@@ -35,7 +35,7 @@ import { AuditRepository } from '@/features/accounting/repositories/AuditReposit
 import { PostingRepository } from '@/features/accounting/repositories/PostingRepository';
 import { CounterpartyRepository } from '@/features/accounting/repositories/CounterpartyRepository';
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 
 const app = makeApp();
 type Who = { id: string; username: string };

@@ -3,7 +3,7 @@ import { ConflictError, ForbiddenError, ValidationError } from '../../../lib/err
 import { getFactory } from '../../../lib/factory';
 import logger from '../../../lib/logger';
 import { isValidCnpj, stripCnpjMask } from '../../../lib/cnpj';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IFiscalDocumentRepository } from '../repositories/IFiscalDocumentRepository';
 import type { IFiscalNumberVoidRepository } from '../repositories/IFiscalNumberVoidRepository';

@@ -1,8 +1,8 @@
 import prisma from '../../../lib/prisma';
 import type { AccountantAssignment, Prisma } from 'generated/prisma';
 import { ConflictError } from '../../../lib/errors';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 import type { ActiveAccountant } from '../models/AccountantAssignment.model';
 import type { AssignmentStatus } from '../models/ledgerStatus';
 import type {

@@ -14,7 +14,7 @@ jest.mock('../../../../lib/factory', () => ({
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { FiscalDocumentEmissionService } from '../FiscalDocumentEmissionService';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import { NfePayloadSchema, type NfePayloadSemNumeracao } from '../../dtos/NfePayloadDto';
 import type { DpsPayload } from '../../dtos/DpsPayloadDto';
 import { isValidNfeChave } from '../../../../lib/cnpj';

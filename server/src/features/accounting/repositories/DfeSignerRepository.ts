@@ -1,7 +1,7 @@
 import prisma from '../../../lib/prisma';
 import type { DfeSignerDevice, DfeSignerDeviceUnit, DfeSignerPairingCode, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 import type { DfeSignerDeviceData, DfeSignerDeviceWithUnits, IDfeSignerRepository } from './IDfeSignerRepository';
 
 const LIVE_UNITS = { units: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' as const } } };

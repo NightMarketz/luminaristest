@@ -1,8 +1,8 @@
 import prisma from '../../../lib/prisma';
 import type { JournalEntry, Prisma } from 'generated/prisma';
 import { ConflictError, NotFoundError } from '../../../lib/errors';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 import type {
   CreateJournalEntryInput,
   IJournalEntryRepository,

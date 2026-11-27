@@ -14,7 +14,7 @@
  */
 import { FiscalDocumentLifecycleService, AVISO_CANCEL_EM_ANDAMENTO } from '../FiscalDocumentLifecycleService';
 import { NullEmissor } from '../../dfe/NullEmissor';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import { signNfseEventoForTest } from '@test/helpers/nfeSignature';
 import type { DfeCapabilities, DfeEmissorPort } from '../../dfe/DfeEmissorPort';
 

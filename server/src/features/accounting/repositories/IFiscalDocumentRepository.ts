@@ -1,5 +1,5 @@
 import type { FiscalDocument, FiscalDocumentAttempt, FiscalDocumentPendingAttachment, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 export const FISCAL_DOCUMENT_KINDS = ['NFSE', 'NFE', 'NFCE'] as const; // NFCE: BE-INCR-NFCE item 3
 export type FiscalDocumentKind = (typeof FISCAL_DOCUMENT_KINDS)[number];

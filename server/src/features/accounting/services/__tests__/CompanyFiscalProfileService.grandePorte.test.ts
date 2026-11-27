@@ -5,7 +5,7 @@
  */
 import { CompanyFiscalProfileService } from '../CompanyFiscalProfileService';
 import type { AccountingReportService } from '../AccountingReportService';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 import { legalParamsSemente } from '@test/helpers/legalParams';
 const scope = { ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1', ledgerCode: 'DEFAULT', baseCurrencyCode: 'BRL', timeZone: 'America/Sao_Paulo' } as AccountingScope;

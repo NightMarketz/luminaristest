@@ -21,7 +21,7 @@ import { execSync } from 'child_process';
 import { PrismaClient } from 'generated/prisma';
 import { PayableRepository } from '../PayableRepository';
 import { ReceivableRepository } from '../ReceivableRepository';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import { normalizeCounterpartyName } from '../../models/Counterparty.model';
 import { payableStatusForBalance } from '../../models/Payable.model';
 

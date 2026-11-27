@@ -18,7 +18,7 @@
 import { CashFlowReportService } from '../CashFlowReportService';
 import { ForbiddenError } from '../../../../lib/errors';
 import { logger } from '../../../../lib/logger';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 const scope: AccountingScope = {
   ownerUserId: 'u1',

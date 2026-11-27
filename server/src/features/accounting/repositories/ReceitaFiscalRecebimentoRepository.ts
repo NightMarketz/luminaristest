@@ -1,6 +1,6 @@
 import prisma from '../../../lib/prisma';
 import type { Prisma, ReceitaFiscalRecebimento } from 'generated/prisma';
-import { accountingScopeWhere, type AccountingScope } from '../scope/AccountingScope';
+import { accountingScopeWhere, type AccountingScope } from '../models/AccountingScope';
 import type { IReceitaFiscalRecebimentoRepository, ReceitaFiscalRecebimentoData } from './IReceitaFiscalRecebimentoRepository';
 
 /** Repositório Prisma dos recebimentos de venda do regime de caixa (X14-CAIXA PR-1). Zero regra de negócio. */

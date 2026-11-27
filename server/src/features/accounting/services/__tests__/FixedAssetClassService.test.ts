@@ -9,7 +9,7 @@ import type { IFixedAssetClassRepository } from '@/features/accounting/repositor
 import type { IFixedAssetRepository } from '@/features/accounting/repositories/IFixedAssetRepository';
 import type { IAccountRepository } from '@/features/accounting/repositories/IAccountRepository';
 import type { IAccountingPolicy } from '@/features/accounting/policies/IAccountingPolicy';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 
 const scope = resolveAccountingScopeInternal({ userId: 'dono-a' }, 'unit-1');
 

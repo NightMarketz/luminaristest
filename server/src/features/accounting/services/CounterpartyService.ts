@@ -19,8 +19,8 @@ import type {
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 
 /**
  * CounterpartyService — supplier/customer catalog (INCR-COUNTERPARTY / A1). FIRST-CLASS PRISMA. Pure

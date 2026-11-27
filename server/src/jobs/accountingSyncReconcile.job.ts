@@ -69,8 +69,8 @@
 import prisma from '../lib/prisma';
 import { logger } from '../lib/logger';
 import { getFactory } from '../lib/factory';
-import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
-import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/models/resolveAccountingScopeInternal';
+import type { AccountingScope } from '../features/accounting/models/AccountingScope';
 import { LEDGER_STATUSES } from '../features/accounting/models/ledgerStatus';
 import { centsFromDb } from '../features/accounting/models/money';
 import {

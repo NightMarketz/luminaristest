@@ -22,8 +22,8 @@ import {
   type RespInf,
 } from '../../../lib/reinf';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
+import type { AccountingScope } from '../models/AccountingScope';
+import { resolveAccountingScopeInternal } from '../models/resolveAccountingScopeInternal';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IReinfBatchRepository } from '../repositories/IReinfBatchRepository';
 import type { ITaxWithholdingReadPort } from '../repositories/ITaxWithholdingRepository';

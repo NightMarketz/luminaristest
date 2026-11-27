@@ -5,8 +5,8 @@
  */
 import type { LegalParameter, LegalParameterRecalcJob, TaxAssessment } from 'generated/prisma';
 import logger from '../../../lib/logger';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
+import type { AccountingScope } from '../models/AccountingScope';
+import { resolveAccountingScopeInternal } from '../models/resolveAccountingScopeInternal';
 import type { ITaxAssessmentRepository } from '../repositories/ITaxAssessmentRepository';
 import type { IConsumptionTaxAssessmentRepository } from '../repositories/IConsumptionTaxAssessmentRepository';
 import type { IMitExportRepository } from '../repositories/IMitExportRepository';

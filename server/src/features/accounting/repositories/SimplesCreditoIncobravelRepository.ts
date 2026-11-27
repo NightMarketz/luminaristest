@@ -1,6 +1,6 @@
 import prisma from '../../../lib/prisma';
 import type { Prisma, SimplesCreditoIncobravel } from 'generated/prisma';
-import { accountingScopeWhere, type AccountingScope } from '../scope/AccountingScope';
+import { accountingScopeWhere, type AccountingScope } from '../models/AccountingScope';
 import type { ISimplesCreditoIncobravelRepository, SimplesCreditoIncobravelData } from './ISimplesCreditoIncobravelRepository';
 
 /** Repositório Prisma dos créditos incobráveis do Simples (X14-CAIXA PR-3). Zero regra de negócio. */

@@ -29,7 +29,7 @@ import {
   RECONCILE_WATERMARK_JOB,
   type ReconcileWatermarkDeps,
 } from '../accountingSyncReconcile.job';
-import type { AccountingScope } from '../../features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../features/accounting/models/AccountingScope';
 import type { AccountingEvent } from '../../features/accounting/sync/AccountingSyncPort';
 import type { WonOpportunityFact } from '../../features/accounting/sync/bridges/CrmReceivableBridge';
 import { AccountingPeriodNotOpenError, MaxCentsExceededError, NoMapperForUnitError, UnknownEventKeyError } from '../../lib/errors';

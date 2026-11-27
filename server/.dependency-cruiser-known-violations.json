@@ -2236,51 +2236,6 @@
   },
   {
     "type": "dependency",
-    "from": "src/features/dp/policies/DpPolicy.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/dp/policies/IDpPolicy.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/dp/services/DpAfastamentoFeriasService.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/features/dp/services/DpAfastamentoFeriasService.ts",
     "to": "src/features/accounting/services/AuditService.ts",
     "unresolvedTo": "../../accounting/services/AuditService",
@@ -2340,21 +2295,6 @@
   {
     "type": "dependency",
     "from": "src/features/dp/services/DpCadastroService.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/dp/services/DpCadastroService.ts",
     "to": "src/features/accounting/services/AuditService.ts",
     "unresolvedTo": "../../accounting/services/AuditService",
     "dependencyTypes": [
@@ -2372,21 +2312,6 @@
     "from": "src/features/dp/services/DpCadastroService.ts",
     "to": "src/features/legalParameters/services/LegalParameterService.ts",
     "unresolvedTo": "../../legalParameters/services/LegalParameterService",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/dp/services/DpDependenteService.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
     "dependencyTypes": [
       "local",
       "type-only",
@@ -2444,21 +2369,6 @@
   {
     "type": "dependency",
     "from": "src/features/dp/services/DpLancamentoService.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/dp/services/DpLancamentoService.ts",
     "to": "src/features/accounting/services/AuditService.ts",
     "unresolvedTo": "../../accounting/services/AuditService",
     "dependencyTypes": [
@@ -2474,38 +2384,8 @@
   {
     "type": "dependency",
     "from": "src/features/dp/services/DpModuleService.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/dp/services/DpModuleService.ts",
     "to": "src/features/accounting/services/AuditService.ts",
     "unresolvedTo": "../../accounting/services/AuditService",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/dp/services/DpRubricaService.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
     "dependencyTypes": [
       "local",
       "type-only",
@@ -2536,21 +2416,6 @@
     "from": "src/features/dp/services/DpVinculoService.ts",
     "to": "src/features/accounting/repositories/IPartnerRepository.ts",
     "unresolvedTo": "../../accounting/repositories/IPartnerRepository",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/dp/services/DpVinculoService.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
     "dependencyTypes": [
       "local",
       "type-only",
@@ -2806,21 +2671,6 @@
   {
     "type": "dependency",
     "from": "src/features/legalParameters/services/LegalParameterService.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/legalParameters/services/LegalParameterService.ts",
     "to": "src/features/accounting/services/AuditService.ts",
     "unresolvedTo": "../../accounting/services/AuditService",
     "dependencyTypes": [
@@ -2942,20 +2792,6 @@
     "dependencyTypes": [
       "local",
       "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "unresolvedTo": "../../accounting/scope/resolveAccountingScopeInternal",
-    "dependencyTypes": [
-      "local",
       "import"
     ],
     "rule": {
@@ -3258,124 +3094,6 @@
   },
   {
     "type": "dependency",
-    "from": "src/features/packages/policies/IPackageAcceptancePolicy.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/packages/policies/IPackageBalancePolicy.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/packages/policies/PackageAcceptancePolicy.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/packages/policies/PackageBalancePolicy.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/packages/repositories/IPackageAcceptanceRepository.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/packages/repositories/IPackageBalanceRepository.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/packages/repositories/PackageAcceptanceRepository.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/packages/repositories/PackageBalanceRepository.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/features/packages/services/PackageAcceptanceService.ts",
     "to": "src/features/accounting/models/dates.ts",
     "unresolvedTo": "../../accounting/models/dates",
@@ -3393,21 +3111,6 @@
     "from": "src/features/packages/services/PackageAcceptanceService.ts",
     "to": "src/features/accounting/repositories/IFiscalProfileRepository.ts",
     "unresolvedTo": "../../accounting/repositories/IFiscalProfileRepository",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/packages/services/PackageAcceptanceService.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
     "dependencyTypes": [
       "local",
       "type-only",
@@ -3523,21 +3226,6 @@
   {
     "type": "dependency",
     "from": "src/features/packages/services/PackageBalanceService.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/packages/services/PackageBalanceService.ts",
     "to": "src/features/legalParameters/services/LegalParameterService.ts",
     "unresolvedTo": "../../legalParameters/services/LegalParameterService",
     "dependencyTypes": [
@@ -3568,40 +3256,11 @@
   {
     "type": "dependency",
     "from": "src/features/packages/services/unitHolidayCalendar.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/packages/services/unitHolidayCalendar.ts",
     "to": "src/features/legalParameters/services/LegalParameterService.ts",
     "unresolvedTo": "../../legalParameters/services/LegalParameterService",
     "dependencyTypes": [
       "local",
       "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/sales/services/RegisterPaymentService.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "unresolvedTo": "../../accounting/scope/resolveAccountingScopeInternal",
-    "dependencyTypes": [
-      "local",
       "import"
     ],
     "rule": {
@@ -3716,21 +3375,6 @@
     "from": "src/features/sales/services/SaleFiscalGuardService.ts",
     "to": "src/features/accounting/repositories/IInventoryRepository.ts",
     "unresolvedTo": "../../accounting/repositories/IInventoryRepository",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/sales/services/SaleFiscalGuardService.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
     "dependencyTypes": [
       "local",
       "type-only",
@@ -4173,21 +3817,6 @@
     "from": "src/features/sectorKits/services/RoleOverrideSource.ts",
     "to": "src/features/accountingBinding/services/BindingCompileService.ts",
     "unresolvedTo": "../../accountingBinding/services/BindingCompileService",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/teammates/models/Teammate.model.ts",
-    "to": "src/features/accounting/scope/AccountingScope.ts",
-    "unresolvedTo": "../../accounting/scope/AccountingScope",
     "dependencyTypes": [
       "local",
       "type-only",

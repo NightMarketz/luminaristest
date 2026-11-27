@@ -11,7 +11,7 @@
  *  - item 17: o job nasce carimbado com o escopo (userId/unitId) — tenancy.
  */
 import { SpedEcfRealGenerationService, SPED_ECF_REAL_JOB_KIND } from '../SpedEcfRealGenerationService';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
 import { logger } from '../../../../lib/logger';
 import { PAYLOAD_ALLOWLIST } from '../../audit/auditCanonical';

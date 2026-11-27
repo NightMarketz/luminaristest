@@ -1,5 +1,5 @@
 import type { ProductRefPort } from '../ports/OriginPorts';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /**
  * Port fino de existência de produto no catálogo operacional (DynamicTable `products`) do tenant.

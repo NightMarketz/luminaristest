@@ -3,7 +3,7 @@ import logger from '../../../../lib/logger';
 import { MAX_CENTS } from '../../models/money';
 import { isValidDateOnly, scopeDay } from '../../models/dates';
 import type { Receivable } from 'generated/prisma';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import type { ReceivableService } from '../../services/ReceivableService';
 import type { PostingService } from '../../services/PostingService';
 import type { IReceivableRepository } from '../../repositories/IReceivableRepository';

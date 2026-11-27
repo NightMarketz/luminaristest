@@ -1,5 +1,5 @@
 import { ForbiddenError } from '../../../../lib/errors';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import type { ReconcilePendingItem } from 'generated/prisma';
 import type { IReconcilePendingRepository } from '../../repositories/IReconcilePendingRepository';
 import type { IAccountingPolicy } from '../../policies/IAccountingPolicy';

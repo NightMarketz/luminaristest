@@ -1,7 +1,7 @@
 import { ValidationError } from '../../../lib/errors';
 import type { Prisma } from 'generated/prisma';
 import type { IDimensionRepository } from '../repositories/IDimensionRepository';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /**
  * Shared dimension-tagging helpers (INCR-DIM / INCR-DIM-COMPLETENESS). Extracted so BOTH writers of

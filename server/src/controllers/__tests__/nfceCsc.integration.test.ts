@@ -10,7 +10,7 @@ import { getFactory } from '@/lib/factory';
 import { loadKeyring, open } from '@/lib/secretBox';
 import { DFE_PSC_KEYRING } from '@/features/accounting/models/PscCredential.model';
 import { NfceCscViewSchema } from '@/features/accounting/dtos/NfceCscDto';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 
 const app = makeApp();

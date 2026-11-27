@@ -5,7 +5,7 @@
 import prisma from '@/lib/prisma';
 import { getFactory } from '@/lib/factory';
 import { pushTestSchema, resetDb } from '@test/helpers';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import { CompetenciaSchema } from '../../models/competencia';
 import { DP_MODULE_REGISTRY, type DpModuleRegistry } from '../../models/moduleRegistry';
 import { DpPolicy } from '../../policies/DpPolicy';

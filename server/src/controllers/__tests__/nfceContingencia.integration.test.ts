@@ -7,7 +7,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { NfceContingenciaViewSchema } from '@/features/accounting/dtos/NfceContingenciaDto';
 import { NfceContingenciaRepository } from '@/features/accounting/repositories/NfceContingenciaRepository';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 
 const app = makeApp();

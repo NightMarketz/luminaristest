@@ -37,7 +37,7 @@ import type { IPartnerRepository } from '../repositories/IPartnerRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
 import type { IReceitaFiscalRepository } from '../repositories/IReceitaFiscalRepository';
 import type { ISimplesEntradasRepository } from '../repositories/ISimplesEntradasRepository';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { AccountingReportService } from './AccountingReportService';
 import { formaEfetiva } from './CompanyFiscalProfileService';
 import type { InterestOnEquityService } from './InterestOnEquityService';

@@ -2,7 +2,7 @@ import { Prisma } from 'generated/prisma';
 import { AccountingEventMapperCollisionError, NoMapperForUnitError, UnknownEventKeyError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import type { PostingService } from '../services/PostingService';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import { EVENT_KEY_PATTERN, type AccountingEvent, type AccountingSyncPort, type SyncResult } from './AccountingSyncPort';
 import type { IAccountingEventMapper } from './mappers/IAccountingEventMapper';
 

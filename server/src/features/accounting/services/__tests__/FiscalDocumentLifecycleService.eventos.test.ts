@@ -22,7 +22,7 @@ import { Prisma } from 'generated/prisma';
 import { FiscalDocumentLifecycleService, cancelInputDoTipo } from '../FiscalDocumentLifecycleService';
 import { janelaEventos } from '../../models/janelaEventos';
 import type { JanelaEventos } from '../../dtos/FiscalDocumentDto';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import type { CancelResult } from '../../dfe/DfeEmissorPort';
 import { signNfseEventoForTest, signNfseForTest } from '@test/helpers/nfeSignature';
 

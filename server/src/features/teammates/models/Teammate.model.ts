@@ -2,7 +2,7 @@
  * Teammate (BE-INCR-TEAMMATES PR-2, itens 10–13). O tipo da linha vem de `generated/prisma`; este arquivo é dono do
  * domínio sem `deletedAt`, dos códigos de erro e da trilha de auditoria do módulo.
  */
-import type { AccountingScope } from '../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../accounting/public/accountingScope.types';
 import type { LlmProviderId } from '../../../lib/llm/LlmProvider';
 
 /** Item 11: `toolOverrides` tentou afrouxar (ou mirar ferramenta que o teammate não usa). */

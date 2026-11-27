@@ -29,8 +29,8 @@ import type { IAccountingPeriodRepository } from '../repositories/IAccountingPer
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
 import type { AccountingReviewService } from './AccountingReviewService';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 
 /** O job da ECD tem um kind só; a ECF tem dois (Presumido e Lucro Real, rotas irmãs). */
 const ECD_JOB_KIND = 'EXPORT_SPED_ECD';

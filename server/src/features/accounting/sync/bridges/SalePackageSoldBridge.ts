@@ -18,7 +18,7 @@
 
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { saleDayAsWritten } from '../../models/dates';
 import { buildSalePackageSoldEvent, syncSkipErrorCode } from '../AccountingSyncPort';
 import { loadPackageValidityDays, loadSalePackageInfo } from './saleItems';

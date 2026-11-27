@@ -26,8 +26,8 @@ import type { IReconciliationRepository } from '../repositories/IReconciliationR
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
 import type { ReconciliationService } from './ReconciliationService';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
+import type { AccountingScope } from '../models/AccountingScope';
+import { resolveAccountingScopeInternal } from '../models/resolveAccountingScopeInternal';
 
 export interface ReleaseReportFetchSummary {
   accounts: number;

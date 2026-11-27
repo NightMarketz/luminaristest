@@ -1,5 +1,5 @@
 import { ForbiddenError } from '../../../lib/errors';
-import type { AccountingScope } from '../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../accounting/public/accountingScope.types';
 import { DP_RUBRICAS_VALIDADAS, RUBRICAS_CONFERIDAS_PELO_CONTADOR, type RubricaDef } from '../models/rubricas/catalogo';
 import type { IDpPolicy } from '../policies/IDpPolicy';
 

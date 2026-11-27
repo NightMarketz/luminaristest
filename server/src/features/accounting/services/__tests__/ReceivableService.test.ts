@@ -1,6 +1,6 @@
 import { ReceivableService } from '../ReceivableService';
 import { ForbiddenError, MaxCentsExceededError, NotFoundError, ValidationError } from '../../../../lib/errors';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { CLIENTES_A_RECEBER_CODE } from '../../fixtures/ChartOfAccountsFixture';
 import { AR_RECEIVABLE_SOURCE_TYPE, AR_RECEIPT_SOURCE_TYPE } from '../../models/Receivable.model';
 import { COUNTERPARTY_NAME_MAX_LENGTH } from '../../models/Counterparty.model';

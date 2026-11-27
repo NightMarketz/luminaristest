@@ -11,7 +11,7 @@ import { ForbiddenError } from '@/lib/errors';
 import { CollectionChargeService } from '@/features/accounting/services/CollectionChargeService';
 import type { ICollectionChargeRepository } from '@/features/accounting/repositories/ICollectionChargeRepository';
 import type { IAccountingPolicy } from '@/features/accounting/policies/IAccountingPolicy';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();

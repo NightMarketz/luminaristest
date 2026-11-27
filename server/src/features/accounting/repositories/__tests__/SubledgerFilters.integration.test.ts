@@ -18,8 +18,8 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { PayableRepository } from '@/features/accounting/repositories/PayableRepository';
 import { ReceivableRepository } from '@/features/accounting/repositories/ReceivableRepository';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import { scopeToday } from '@/features/accounting/models/dates';
 import { normalizeCounterpartyName } from '@/features/accounting/models/Counterparty.model';
 

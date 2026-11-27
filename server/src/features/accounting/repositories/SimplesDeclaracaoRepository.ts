@@ -1,6 +1,6 @@
 import prisma from '../../../lib/prisma';
 import type { Prisma, SimplesDeclaracaoAnual } from 'generated/prisma';
-import { accountingScopeWhere, type AccountingScope } from '../scope/AccountingScope';
+import { accountingScopeWhere, type AccountingScope } from '../models/AccountingScope';
 import type { ISimplesDeclaracaoRepository, TipoDeclaracaoSimples } from './ISimplesDeclaracaoRepository';
 
 /** Repositório Prisma de `simples_declaracoes_anuais` (X14 PR-4). Zero regra de negócio (ver o contrato). */

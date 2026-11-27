@@ -14,8 +14,8 @@ import type { IInventoryService } from './IInventoryService';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 
 /** A receipt of stock (INBOUND). `totalValueCents` is the TOTAL cost of `qty` units (not per-unit)
  *  so the moving average never crosses a float boundary (D5/D6). */

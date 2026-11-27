@@ -1,5 +1,5 @@
 import type { NfceCsc, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /**
  * Contrato do repositório de `nfce_cscs` (X10a PR-8). Tenancy via AccountingScope; leitura só da linha viva; soft-delete

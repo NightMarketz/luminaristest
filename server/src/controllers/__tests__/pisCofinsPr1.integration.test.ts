@@ -11,7 +11,7 @@ import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { RAZAO_CREDITO_SEMENTE } from '@test/helpers/legalParams';
 import { PayableRepository } from '@/features/accounting/repositories/PayableRepository';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 
 const app = makeApp();
 const XML = readFileSync(join(__dirname, '../../lib/__tests__/fixtures/nfe/purchase-pis-cofins.SYNTHETIC.xml'));

@@ -33,7 +33,7 @@ import { NfePayloadSchema } from '../../dtos/NfePayloadDto';
 import { FiscalNumberVoidService } from '../FiscalNumberVoidService';
 import { DfeAssinaturaResolver } from '../DfeAssinaturaResolver';
 import type { ResolveForEmissionResult } from '../PscCredentialService';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 /**
  * X10a PR-9 — contingência off-line da NFC-e (BE-INCR-NFCE-EMENDA-1 E-9, F-NFCE-E1-5 b; D-2026-10-29-X10A-PR7-9-FORKS

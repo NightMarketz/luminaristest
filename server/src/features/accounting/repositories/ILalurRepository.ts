@@ -7,7 +7,7 @@ import type {
   LalurProcess,
   Prisma,
 } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /** Data to create a Parte A / Bloco N line (already validated against the catalog by the service). */
 export interface CreateLalurEntryData {

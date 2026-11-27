@@ -1,7 +1,7 @@
 import prisma from '../../../lib/prisma';
 import type { PackageValidityAcceptance } from 'generated/prisma';
-import type { AccountingScope } from '../../accounting/scope/AccountingScope';
-import { accountingScopeWhere } from '../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../accounting/public/accountingScope.types';
+import { accountingScopeWhere } from '../../accounting/public/accountingScope';
 import type { CreateAcceptanceInput, IPackageAcceptanceRepository } from './IPackageAcceptanceRepository';
 
 /** Prisma-backed append-only acceptance log. Only place with prisma.packageValidityAcceptance.* access. */

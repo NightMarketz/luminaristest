@@ -1,8 +1,8 @@
 import { UnitDeletedError, UnitNotFoundError } from '../../../lib/errors';
 import type { UnitRowPort } from '../ports/OriginPorts';
-import type { AccountantAssignmentService } from '../services/AccountantAssignmentService';
-import type { AccountingScope } from './AccountingScope';
-import { resolveAccountingScopeInternal } from './resolveAccountingScopeInternal';
+import type { AccountantAssignmentService } from './AccountantAssignmentService';
+import type { AccountingScope } from '../models/AccountingScope';
+import { resolveAccountingScopeInternal } from '../models/resolveAccountingScopeInternal';
 
 /** F-I6-8: cada endpoint declara o modo — `'write'` se o handler grava qualquer linha, `'read'` se não grava. */
 export type ScopeAccess = 'read' | 'write';

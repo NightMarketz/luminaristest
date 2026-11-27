@@ -5,7 +5,7 @@ import type { DynamicTableService } from '../../dynamicTables/services/DynamicTa
 import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
 import type { IDynamicTableWriteEffects } from '../../integration/services/IDynamicTableWriteEffects';
 import type { IInventoryRepository } from '../../accounting/repositories/IInventoryRepository';
-import type { AccountingScope } from '../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../accounting/public/accountingScope.types';
 import type { TaxOptimizationService } from '../../accounting/services/TaxOptimizationService';
 import { CRITERIO_CARGA_LEGAL_BASIS, naturezaDoItemDoKit } from '../../accounting/models/taxOptimization';
 import { saleDayAsWritten } from '../../accounting/models/dates';

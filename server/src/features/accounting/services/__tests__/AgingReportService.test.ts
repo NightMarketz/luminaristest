@@ -21,7 +21,7 @@
 import { AgingReportService, AGING_BUCKETS, NO_COUNTERPARTY_LABEL } from '../AgingReportService';
 import type { AgingBucketId } from '../AgingReportService';
 import { ForbiddenError } from '../../../../lib/errors';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import { scopeToday } from '../../models/dates';
 
 const scope: AccountingScope = {

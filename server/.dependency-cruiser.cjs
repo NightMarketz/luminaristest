@@ -42,11 +42,12 @@ const LEDGER_CORE_ALLOWED =
   '|fixtures/ChartOfAccountsFixture\\.ts' +
   // `AccountantAssignment.model`: contador responsável por escopo (GOV-CONTADOR) é núcleo, não fiscal; `ActiveAccountant` mora aqui desde
   // o PR-1a do MODULE-BOUNDARIES (#1375), de onde o `PeriodService` o importa (antes vinha de `policies/IAccountingPolicy`).
-  '|models/(AccountantAssignment\\.model|Reconciliation\\.model|closing|dates|ledgerStatus|money)\\.ts' +
+  // `AccountingScope` (tipo e where-builder do escopo) veio de `scope/` no renome da accounting (26/11/2026): a entrada
+  // `scope/` desta lista virou este arquivo, o único da pasta que o núcleo importa.
+  '|models/(AccountantAssignment\\.model|AccountingScope|Reconciliation\\.model|closing|dates|ledgerStatus|money)\\.ts' +
   '|policies/IAccountingPolicy\\.ts' +
   '|ports/LedgerPorts\\.ts' +
   '|repositories/I?(Account|AccountantAssignment|AccountingPeriod|Audit|Counterparty|Dimension|JournalEntry|Posting|Reconciliation|SourceProvenance)Repository\\.ts' +
-  '|scope/' +
   '|services/(AuditService|PostingService|dimensionTagging)\\.ts' +
   ')' +
   '|^src/lib/(errors|logger|prisma|spreadsheet)\\.ts$';
@@ -126,7 +127,9 @@ module.exports = {
         'nomeada: crmController.ts, cujo único uso é o hook Won interno (unitId da oportunidade gravada; L-I6-3, dono, ' +
         '2026-10-16, "Exceção nomeada").',
       from: { path: '^src/controllers/', pathNot: `(${TEST}|^src/controllers/crmController\.ts$)` },
-      to: { path: '^src/features/accounting/scope/resolveAccountingScopeInternal\.ts$' },
+      // Renome da accounting (26/11/2026): a função foi de `scope/` para `models/` e sai para outras features pela porta
+      // `public/resolveAccountingScopeInternal.ts`. A regra cita os dois caminhos: controller não a alcança nem pela porta.
+      to: { path: '^src/features/accounting/(models|public)/resolveAccountingScopeInternal\.ts$' },
     },
     // ---- PES-4, Departamento Pessoal (BE-INCR-DP-F0-F1 item 6) ----
     {

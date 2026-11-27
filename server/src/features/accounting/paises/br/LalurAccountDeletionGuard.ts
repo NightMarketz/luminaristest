@@ -1,7 +1,7 @@
 import type { Prisma } from 'generated/prisma';
 import { AppError } from '../../../../lib/errors';
 import type { ILalurRepository } from '../../repositories/ILalurRepository';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import type { AccountDeletionGuard } from '../../ports/LedgerPorts';
 
 /**

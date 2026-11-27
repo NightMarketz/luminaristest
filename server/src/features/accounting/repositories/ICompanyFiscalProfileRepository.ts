@@ -1,5 +1,5 @@
 import type { CompanyFiscalProfile, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /**
  * Colunas graváveis do perfil da empresa (X13, BRIEF §4.1) — sem ecfRecibo/regimeTravadoEm (PR-2, F-XP-5 a) e sem

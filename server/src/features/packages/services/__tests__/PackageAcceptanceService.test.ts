@@ -4,7 +4,7 @@ import type { IPackageAcceptanceRepository } from '../../repositories/IPackageAc
 import type { IPackageAcceptancePolicy } from '../../policies/IPackageAcceptancePolicy';
 import type { IDynamicTableRepository } from '../../../dynamicTables/repositories/IDynamicTableRepository';
 import type { IUserRepository } from '../../../users/repositories/IUserRepository';
-import type { AccountingScope } from '../../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../../accounting/models/AccountingScope';
 import { buildValidityNotice } from '../../models/validityNotice';
 import {
   ForbiddenError,

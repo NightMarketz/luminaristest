@@ -18,7 +18,7 @@ jest.mock('../../../../lib/factory', () => ({
 }));
 
 import { FiscalDocumentEmissionService } from '../FiscalDocumentEmissionService';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import { legalParamsSemente } from '@test/helpers/legalParams';
 
 const SCOPE: AccountingScope = { ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1', ledgerCode: 'DEFAULT', baseCurrencyCode: 'BRL', timeZone: 'America/Sao_Paulo' };

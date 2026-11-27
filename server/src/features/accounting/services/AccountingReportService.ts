@@ -5,7 +5,7 @@ import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { centsFromDb } from '../models/money';
 import { CLOSING_SOURCE_TYPE } from '../models/closing';

@@ -5,7 +5,7 @@ import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import type { LalurPeriodo } from '../models/Lalur.model';
 import type { IFixedAssetRepository } from '../repositories/IFixedAssetRepository';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import { DEPRECIATION_SOURCE_TYPE } from './DepreciationService';
 import type { FixedAssetParteBRow, IFixedAssetReader } from './IFixedAssetReader';
 

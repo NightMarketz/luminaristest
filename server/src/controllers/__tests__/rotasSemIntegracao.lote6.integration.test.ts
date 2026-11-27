@@ -20,7 +20,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { htmlToPdf } from '@/lib/pdf';
 import { getFactory } from '@/lib/factory';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 jest.mock('@/lib/pdf', () => ({ htmlToPdf: jest.fn(async (html: string) => Buffer.from(`%PDF-stub ${html}`, 'utf8')) }));

@@ -4,7 +4,7 @@ import { ConflictError, ForbiddenError, NotFoundError, PackageExpiryNfsePendingE
 import { getFactory } from '../../../lib/factory';
 import logger from '../../../lib/logger';
 import { classifyTaxId, isValidCnpj, stripCnpjMask } from '../../../lib/cnpj';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';

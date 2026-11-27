@@ -1,6 +1,6 @@
 import prisma from '../../../lib/prisma';
 import { Prisma, type SalaoParceriaContrato, type SimplesHistoricoMensal, type SimplesSegregacaoManual } from 'generated/prisma';
-import { accountingScopeWhere, type AccountingScope } from '../scope/AccountingScope';
+import { accountingScopeWhere, type AccountingScope } from '../models/AccountingScope';
 import type { HistoricoData, ISimplesEntradasRepository, ParceriaData } from './ISimplesEntradasRepository';
 
 /** Repositório Prisma das entradas do Simples (X14 PR-2). Zero regra de negócio (ver o contrato). */

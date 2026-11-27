@@ -4,8 +4,8 @@
  */
 import { AppError, UnitDeletedError, UnitNotFoundError } from '../../../../lib/errors';
 import { AccountingScopeResolver } from '../AccountingScopeResolver';
-import type { AccountingScope } from '../AccountingScope';
-import { resolveAccountingScopeInternal } from '../resolveAccountingScopeInternal';
+import type { AccountingScope } from '../../models/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 
 type RowState = 'live' | 'deleted' | null;
 

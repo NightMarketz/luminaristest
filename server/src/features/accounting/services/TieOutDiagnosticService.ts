@@ -5,7 +5,7 @@ import type { IReceivableRepository } from '../repositories/IReceivableRepositor
 import type { IPayableRepository } from '../repositories/IPayableRepository';
 import type { IInventoryRepository } from '../repositories/IInventoryRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { centsFromDb } from '../models/money';
 import { PAYABLE_ORIGIN_WITHHOLDING_TAX, PAYABLE_OUTSTANDING_STATUSES } from '../models/Payable.model';

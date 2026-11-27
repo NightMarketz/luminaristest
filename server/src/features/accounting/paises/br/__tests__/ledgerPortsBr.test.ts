@@ -5,7 +5,7 @@ import { ecdChartStructureRule } from '../EcdChartStructureRule';
 import { LalurAccountDeletionGuard } from '../LalurAccountDeletionGuard';
 import { statementParserBr } from '../StatementParserBr';
 import { TaxProvisionClosingGuard } from '../TaxProvisionClosingGuard';
-import type { AccountingScope } from '../../../scope/AccountingScope';
+import type { AccountingScope } from '../../../models/AccountingScope';
 
 /**
  * Onda 1.2: os adaptadores BR das portas do núcleo do razão (`ports/LedgerPorts.ts`). As regras que antes viviam DENTRO de

@@ -15,11 +15,11 @@
 
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { saleDayAsWritten } from '../../models/dates';
 import { buildSaleCogsEvent, buildSaleFinalizedEvent, syncSkipErrorCode } from '../AccountingSyncPort';
 import { loadSaleRevenueLines, loadSalePackageInfo, loadSaleTomadorTipo } from './saleItems';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import type { ProductLine } from './saleItems';
 
 /** The minimal shape this bridge reads from a DynamicTable data row (create/update result). */

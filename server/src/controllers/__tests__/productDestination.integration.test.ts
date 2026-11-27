@@ -10,7 +10,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ProductDestinationDefaultRepository } from '../../features/accounting/repositories/ProductDestinationDefaultRepository';
-import type { AccountingScope } from '../../features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../features/accounting/models/AccountingScope';
 
 const app = makeApp();
 const XML = readFileSync(join(__dirname, '../../lib/__tests__/fixtures/nfe/purchase-pis-cofins.SYNTHETIC.xml'));

@@ -14,8 +14,8 @@
 import prisma from '@/lib/prisma';
 import { pushTestSchema, seedUnit } from '@test/helpers';
 import { getFactory } from '@/lib/factory';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 
 const UNIT = 'unit-subledger-reversal-atomicity';
 const DONO = 'u-subledger-reversal-atomicity';

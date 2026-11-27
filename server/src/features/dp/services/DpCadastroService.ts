@@ -1,6 +1,6 @@
 import type { DpCargo, DpConvencaoColetiva, DpConvencaoParametro, DpJornada, DpLotacao, DpSindicato, Prisma } from 'generated/prisma';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
-import type { AccountingScope } from '../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../accounting/public/accountingScope.types';
 import type { AuditService } from '../../accounting/services/AuditService';
 import type {
   CreateCargoInput,

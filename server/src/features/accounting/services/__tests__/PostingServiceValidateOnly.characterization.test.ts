@@ -33,7 +33,7 @@ import {
 } from '../../../../lib/errors';
 import { ecdChartStructureRule } from '../../paises/br/EcdChartStructureRule';
 import { MAX_CENTS } from '../../models/money';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 const txHandle = { __tx: true };
 const $transaction = jest.fn(async (fn: (tx: unknown) => unknown) => fn(txHandle));

@@ -43,7 +43,7 @@ jest.mock('../../lib/logger', () => ({
 }));
 
 import { retryOneReconcilePendingItem } from '../accountingSyncReconcile.job';
-import { resolveAccountingScopeInternal } from '../../features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../features/accounting/models/resolveAccountingScopeInternal';
 
 describe('reconcile — o estorno vai com data pura no dia civil do escopo (C4 item 3)', () => {
   afterEach(() => {

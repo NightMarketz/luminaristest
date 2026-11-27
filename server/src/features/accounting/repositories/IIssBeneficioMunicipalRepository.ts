@@ -1,5 +1,5 @@
 import type { IssBeneficioMunicipal, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 export interface IssBeneficioMunicipalData {
   codMun: string;

@@ -12,8 +12,8 @@ import { legalParamsSemente } from '@test/helpers/legalParams';
 import { FiscalDocumentRepository } from '@/features/accounting/repositories/FiscalDocumentRepository';
 import { FiscalNumberVoidRepository } from '@/features/accounting/repositories/FiscalNumberVoidRepository';
 import { FiscalNumberVoidService } from '@/features/accounting/services/FiscalNumberVoidService';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import type { CreateSentFiscalDocumentData } from '@/features/accounting/repositories/IFiscalDocumentRepository';
 
 /**

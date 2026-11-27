@@ -19,8 +19,8 @@ import { getFactory } from '@/lib/factory';
 import { CounterpartyRepository } from '@/features/accounting/repositories/CounterpartyRepository';
 import { PostingRepository } from '@/features/accounting/repositories/PostingRepository';
 import { normalizeCounterpartyName } from '@/features/accounting/models/Counterparty.model';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 
 const UNIT = 'unit-freetext-mask';
 const DONO = 'u-freetext-mask';

@@ -12,7 +12,7 @@ import { signNfseForTest } from '@test/helpers/nfeSignature';
 import { FiscalDocumentRepository } from '@/features/accounting/repositories/FiscalDocumentRepository';
 import { FiscalDocumentEmissionService } from '@/features/accounting/services/FiscalDocumentEmissionService';
 import { FiscalDocumentLifecycleService } from '@/features/accounting/services/FiscalDocumentLifecycleService';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 
 import { legalParamsSemente } from '@test/helpers/legalParams';
 const UNIT = 'unit-retorno';

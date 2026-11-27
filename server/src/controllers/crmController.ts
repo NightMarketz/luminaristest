@@ -4,7 +4,7 @@ import { handleApiError } from '../lib/apiUtils';
 import { UnauthorizedError } from '../lib/errors';
 import logger from '../lib/logger';
 import { getFactory } from '../lib/factory';
-import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../features/accounting/models/resolveAccountingScopeInternal';
 import { syncSkipErrorCode } from '../features/accounting/sync/AccountingSyncPort';
 import type { WonOpportunityFact } from '../features/accounting/sync/bridges/CrmReceivableBridge';
 import {

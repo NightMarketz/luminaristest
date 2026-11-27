@@ -1,5 +1,5 @@
 import type { Prisma, TaxWithholding } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { WithholdingLineForReinf } from '../dtos/WithholdingDto';
 import type { TaxWithholdingComOrigem } from '../models/withholdingView';
 

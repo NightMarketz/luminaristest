@@ -1,5 +1,5 @@
 import type { Account, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /** Input for creating an Account (chart-of-accounts node). */
 export interface CreateAccountInput {

@@ -1,7 +1,7 @@
 import { ReceiptService } from '../ReceiptService';
 import { ForbiddenError, NotFoundError } from '../../../../lib/errors';
 import { htmlToPdf } from '../../../../lib/pdf';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import type { IJournalEntryRepository, JournalEntryWithPostings } from '../../repositories/IJournalEntryRepository';
 import type { IAccountRepository } from '../../repositories/IAccountRepository';
 import type { IAccountingPolicy } from '../../policies/IAccountingPolicy';

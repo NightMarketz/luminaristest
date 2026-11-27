@@ -17,7 +17,7 @@ import type { IAccountingPolicy } from '@/features/accounting/policies/IAccounti
 import type { AuditService } from '@/features/accounting/services/AuditService';
 import type { AccountingReviewService } from '@/features/accounting/services/AccountingReviewService';
 import { ConflictError } from '@/lib/errors';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import {
   DELIVERY_PACKAGE_BUILT,
   DELIVERY_SENT,

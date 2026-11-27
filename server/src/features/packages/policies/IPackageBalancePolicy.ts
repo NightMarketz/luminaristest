@@ -1,4 +1,4 @@
-import type { AccountingScope } from '../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../accounting/public/accountingScope.types';
 
 /**
  * Authorization contract for the prepaid-package balance. The actor is identified by

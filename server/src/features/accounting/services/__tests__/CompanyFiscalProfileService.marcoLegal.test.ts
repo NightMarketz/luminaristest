@@ -17,7 +17,7 @@ import { UpsertCompanyFiscalProfileSchema } from '../../dtos/CompanyFiscalProfil
 import { tabelaIbsCbsDe } from '../../models/ibsCbsParams';
 import { dataDoMarco } from '../../models/marcoLegal';
 import { aliquotasIbsCbsVigentes } from '../../models/nfeIbsCbsMontagem';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import { CompanyFiscalProfileService, ibsCbsNoDas } from '../CompanyFiscalProfileService';
 
 const SEMENTE: LinhaLegal[] = legalParamsSeedRows([LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL_V2]);

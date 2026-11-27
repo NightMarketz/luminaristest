@@ -23,7 +23,7 @@ import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import { resolveReadPath } from '@/lib/attachmentStorage';
 import { parseTable } from '@/lib/spreadsheet';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import type { SpedEcfRequestDto } from '@/features/accounting/dtos/SpedEcfDto';
 import { SEED_TENANTS, seedTenant } from '@/jobs/seedAccountingFixtureCli';
 import { MEMO_COLUMNS } from '@/features/accounting/models/taxAssessmentMemoExport';

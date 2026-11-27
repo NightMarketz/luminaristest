@@ -1,7 +1,7 @@
 import prisma from '../../../lib/prisma';
 import type { PaymentAccount, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 import type { CreatePaymentAccountData, IPaymentAccountRepository } from './IPaymentAccountRepository';
 
 /** Repositório Prisma de `payment_accounts`. Zero regra de negócio (ver o contrato). */

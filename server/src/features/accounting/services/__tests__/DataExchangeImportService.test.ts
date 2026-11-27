@@ -2,7 +2,7 @@ import { DataExchangeImportService, type IAccountReader, type IPeriodReader, typ
 import type { IDataExchangeRepository } from '../../repositories/IDataExchangeRepository';
 import type { AuditService } from '../AuditService';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import type { AccountingDataExchangeJob, AccountingDataExchangeRow } from 'generated/prisma';
 import { ValidationError } from '../../../../lib/errors';
 
