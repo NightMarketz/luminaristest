@@ -5,7 +5,7 @@ dominio: "plataforma"
 titulo: "Forks F-ESC-1..16 da escala como módulo base — questionário do dono em 26/11"
 estado: "decided"
 autorizacao: "dono, chat, 2026-11-26: \"faz o questionário dos forks F-ESC comigo\" e, depois de interromper o 4º bloco, \"Segue\"; questionário (AskUserQuestion) em 4 blocos, todos respondidos na opção recomendada. Respostas literais: F-ESC-1 → \"DynamicTable no Core (Recommended)\"; F-ESC-2 → \"Core, tabelas visíveis (Recommended)\"; F-ESC-3 → \"Tabela resources + alvo XOR (Recommended)\"; F-ESC-4 → \"Ciclo de N dias com âncora (Recommended)\"; F-ESC-5 → \"Recusa, com encaixe registrado (Recommended)\"; F-ESC-11 → \"Conflito por pessoa (Recommended)\"; F-ESC-16 → \"Passa pelo gate e encaixa (Recommended)\"; F-ESC-15 → \"Sem escala = sem restrição (Recommended)\"; F-ESC-6 → \"Projeção pela borda BR (Recommended)\"; F-ESC-7 → \"Projeção em 2 etapas (Recommended)\"; F-ESC-8 → \"DpJornada segue a fonte (Recommended)\"; F-ESC-10 → \"Mesma escala + origin (Recommended)\"; F-ESC-12 → \"Migra e aposenta (Recommended)\"; F-ESC-13 → \"units.timeZone IANA (Recommended)\"; F-ESC-14 → \"Aceita fora da transação (Recommended)\"; F-ESC-9 → \"Fora desta fase (Recommended)\". Escopo: ratificar os forks do PRE-ADR e do BRIEF. Não é 'executa' de nenhum PR do BRIEF."
-atualizado: "2026-11-26"
+atualizado: "2026-11-27"
 ---
 # D-2026-11-26-ESCALA-BASE-FORKS — forks da escala como módulo base
 
@@ -75,3 +75,13 @@ As três perguntas foram ao dono por questionário; as três respostas foram a r
 | F-ESC-20 profissional da unidade no free-slots (item 32) | Sem `employeeId`, o BRIEF não define quem é "profissional da unidade" | Entra quem tem a unidade no cadastro (`employees.unitId`) ou tem padrão vivo nela. Quem só tem escala em outra unidade aparece sem horário, coerente com o F-ESC-19, para manter a paridade com o gate. Quem não tem nenhum dos dois fica fora da lista da unidade, embora o gate aceite agendar com ele (F-ESC-15) — *"Cadastro + escala (Recomendado)"* |
 | F-ESC-21 alvo sem padrão vivo na leitura (item 31) | O F-ESC-15 (a) diz "sem restrição" para o gate; o BRIEF não diz o que a leitura devolve | A leitura devolve a janela inteira, com `unrestricted: true`, em paridade com o gate — *"Janela inteira (Recomendado)"* |
 | F-ESC-22 formato do `GET /api/scheduling/availability` (item 31) | O §3.4 não fixa o corpo da resposta | `{ unrestricted: boolean, intervals: [{ startAt, endAt }] }`, em ISO, com `.strict()`: o mínimo para o FE distinguir "livre o dia todo" de "sem horário" — *"Aceito o proposto (Recomendado)"* |
+
+## Emenda 4 (dono, chat, 2026-11-27): feriado da escala (item 39, `L-20261127-124714-2e66`)
+
+A sessão que executa o PR-4 (#1447) mandou as duas perguntas à sessão principal, que não as repassou. A sessão de
+planejamento as levou ao dono por questionário, e ele escolheu a recomendação nas duas. O #1447 já implementa as duas.
+
+| Fork | Achado | Decisão (resposta literal) |
+|---|---|---|
+| F-ESC-23 feriado apagado depois da purga (item 39) | O `PurgeDeletedRecords` (`jobs/PurgeDeletedRecords.ts:135`) apaga de vez a linha soft-deletada há 90 dias, e a versão vai junto por cascade (`schema.prisma:363`). Sem a linha, o sync diário recria o feriado que o usuário apagou | **(B)** Fica como o BRIEF escreveu: a chave idempotente conta só a linha apagada, e o feriado apagado volta depois de 90 dias. O item 15 não muda. A alternativa recusada era (C): uma marca não apagável — *"Aceitar os 90 dias (Recommended)"* |
+| F-ESC-24 sync manual em unidade sem fuso (item 39) | O `POST /api/scheduling/holidays/sync` pode rodar numa unidade sem `timeZone`, e o instante gravado na exceção não se corrige depois | Antes de gravar, o sync preenche a unidade com o fuso padrão da borda (`BR_DEFAULT_TIME_ZONE`), como o job diário faz pelo F-ESC-18. A alternativa recusada era usar o fuso do processo — *"Padrão da borda antes (Recommended)"* |

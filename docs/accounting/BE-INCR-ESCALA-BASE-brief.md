@@ -352,8 +352,10 @@ Os dezesseis forks, com caminhos e recomendação, estão no [PRE-ADR §5](../ad
 | F-ESC-20 Profissional da unidade (emenda 3) | cadastro + escala | 32 |
 | F-ESC-21 Leitura sem padrão vivo (emenda 3) | janela inteira, `unrestricted: true` | 31 |
 | F-ESC-22 Formato do `availability` (emenda 3) | `{ unrestricted, intervals }`, `.strict()` | 31 |
+| F-ESC-23 Feriado apagado depois da purga (emenda 4) | (B) volta após 90 dias; item 15 inalterado | 39 |
+| F-ESC-24 Sync manual sem fuso (emenda 4) | preenche o padrão da borda antes de gravar | 39 |
 
-As emendas 1 a 3 (F-ESC-17..22) estão em `docs/plano/decisoes/D-2026-11-26-ESCALA-BASE-FORKS.md`, com o achado e a
+As emendas 1 a 4 (F-ESC-17..24) estão em `docs/plano/decisoes/D-2026-11-26-ESCALA-BASE-FORKS.md`, com o achado e a
 resposta literal do dono.
 
 ### Decisões de detalhe sem fork (caminho único pelo que já está decidido)
