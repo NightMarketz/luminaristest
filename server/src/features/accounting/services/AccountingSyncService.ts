@@ -1,3 +1,17 @@
+/**
+ * AccountingSyncService — sync de evento de negócio para o razão. FIRST-CLASS PRISMA.
+ *
+ * atomicUntil: postEntry
+ *   commit 1 — razão: postEntry(sourceType=<chave do evento>, sourceId=<id do fato>, automaticWriter);
+ *              gate de período dentro da tx
+ *              teste: (genérico — PostingService) PostingService.test.ts › "postEntry TOCTOU: preflight passes (OPEN) but authoritative tx-gate fails (period closed between checks) — no write"
+ *   commit 2 — nenhum
+ *   reconcile — runAccountingSyncReconcile() (jobs/accountingSyncReconcile.job.ts): re-drive idempotente
+ *              do fato que ficou sem lançamento depois de esgotadas as tentativas
+ *              teste: AccountingSyncService.test.ts › "duplicidade: two executions of the same event do not create duplication (same source keys, idempotency owned by postEntry)"
+ *                     accountingSyncReconcile.test.ts › "books a Finalized sale that has no journal entry yet"
+ *   fora da tx — nada (a origem chama o sync depois do próprio commit)
+ */
 import { Prisma } from 'generated/prisma';
 import { AccountingEventMapperCollisionError, NoMapperForUnitError, UnknownEventKeyError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
