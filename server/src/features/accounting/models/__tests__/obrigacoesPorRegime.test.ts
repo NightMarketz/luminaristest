@@ -4,11 +4,12 @@
  * (`docs/accounting/fontes-oficiais/IN-RFB-2003-2021-ECD.txt` art. 3º; `…2004-2021-ECF.txt` art. 1º) e
  * LC 123/2006 art. 18-A §1º (MEI é optante do Simples).
  */
-import { resolverObrigacoes } from '../obrigacoesPorRegime';
+import { matrizObrigacoesDe, resolverObrigacoes } from '../obrigacoesPorRegime';
+import { linhasEmVigor } from '../../../legalParameters/models/legalParameter';
 import type { CondicoesPerfil } from '../obrigacoesPorRegime';
 import { REGIMES_EMPRESA, regimeUnidadeEsperado } from '../regimeEmpresa';
 
-import { MATRIZ_OBRIGACOES_SEMENTE } from '@test/helpers/legalParams';
+import { MATRIZ_OBRIGACOES_SEMENTE, SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
 
 // BE-INCR-LEGAL-PARAMS PR-2: a matriz mora na tabela OBRIGACAO_REGIME; a guarda roda sobre a semente da migração.
 const OBRIGACOES_POR_REGIME = MATRIZ_OBRIGACOES_SEMENTE;
@@ -146,5 +147,21 @@ describe('resolvedor (item 4) — precedência IN 2.003 art. 3º §§1º–3º e
 
   it('MEI não tem condição de aporte (§2º fala em ME/EPP — sem fonte para o MEI, BRIEF §5 item 2)', () => {
     expect(status('MEI', { aporteInvestidorAnjo: true }).ECD.status).toBe('FACULTATIVA');
+  });
+});
+
+// BE-INCR-SIMPLES-CGSN-196 item 5 (dono, chat, 26/11/2026): Res. CGSN 140 art. 144-F (incl. Res. CGSN 196/2026 art. 1º) — a
+// optante de 2026 entrega a Defis do ano-calendário 2026 até 31/03/2027, no PGDAS-D 2018.
+describe('DEFIS do ano-calendário 2026 (art. 144-F)', () => {
+  const vigentes = linhasEmVigor(legalParamsSeedRows(SIMPLES_SEED_FILES));
+  const defis = (data: string) =>
+    resolverObrigacoes({ regime: 'SIMPLES', inativa: false, condicoes: NENHUMA }, matrizObrigacoesDe(vigentes, data)).find((o) => o.obrigacao === 'DEFIS');
+  it('Simples em 2027-02: DEFIS OBRIGATORIA, com a fonte do art. 144-F', () => {
+    const d = defis('2027-02-15');
+    expect(d?.status).toBe('OBRIGATORIA');
+    expect(d?.fonte).toMatch(/art\. 144-F/);
+  });
+  it('depois de 31/03/2027 a DEFIS sai da matriz (o PGDAS-D do art. 38-B assume)', () => {
+    expect(defis('2027-04-01')).toBeUndefined();
   });
 });

@@ -3,8 +3,9 @@
  * arquivo que a migração carrega). Os valores esperados são aritmética sobre a lei, não oráculo: o oráculo é o DAS do
  * portal (gate humano X14-DAS).
  */
-import { LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
+import { LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, LEGAL_PARAMS_SEED_FILE_V2, SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { AtividadeSemAnexoError } from '../../../../lib/errors';
+import { linhaLegalVigente } from '../../../legalParameters/models/legalParameter';
 import { SEGREGACAO_EXCLUI, apurar, apurarSimei, janelaRbt12, rbt12, type ApuracaoInput, type MesReceita } from '../simplesCalc';
 
 const LINHAS = legalParamsSeedRows([...SIMPLES_SEED_FILES, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL]);
@@ -326,7 +327,9 @@ describe('SIMEI-TAC-12 §9.5 itens 11-12 — Anexo VII da LC 123 (LC 214 arts. 5
 });
 
 describe('F-PR4-8 (a), dono 10/10 — teto do ISS ausente', () => {
-  const semTeto = LINHAS.filter((l) => l.tabela !== 'SIMPLES_TETO_ISS');
+  // O fim do ISS vem da linha ISS_LIMITE (BE-INCR-SIMPLES-CGSN-196 item 3): a fotografia leva a semente dela, como nos chamadores.
+  const COM_ISS_LIMITE = legalParamsSeedRows([...SIMPLES_SEED_FILES, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO]);
+  const semTeto = COM_ISS_LIMITE.filter((l) => l.tabela !== 'SIMPLES_TETO_ISS');
   const enq = (anexo: string) =>
     semTeto.map((l) => (l.id === 'sn1-enq-servico-060101' ? { ...l, valorJson: JSON.stringify({ anexo, fatorR: false, semIss: false }) } : l));
 
@@ -349,7 +352,7 @@ describe('F-PR4-8 (a), dono 10/10 — teto do ISS ausente', () => {
   it('2033 em diante sem a linha: segue', () => {
     expect(() => apurar(base('2033-06', { atividades: [servico(100_000)] }), semTeto)).not.toThrow();
     // A repartição real de 2033 já não tem ISS (o ramo nem chega ao teto). Linha SINTÉTICA com ISS para exercer o
-    // corte de data em si: sem o `data < 2033-01-01`, esta chamada lançaria.
+    // corte de data em si: sem o fim do ISS (`issExtinto`, linha ISS_LIMITE), esta chamada lançaria.
     const comIss2033 = semTeto.map((l) =>
       l.tabela === 'SIMPLES_ANEXO_REPARTICAO' && l.vigenteDesde === '2033-01-01' && l.chave === 'III'
         ? { ...l, valorJson: JSON.stringify({ ...JSON.parse(l.valorJson ?? '{}'), ISS: 100 }) }
@@ -360,5 +363,79 @@ describe('F-PR4-8 (a), dono 10/10 — teto do ISS ausente', () => {
 
   it('com a linha da semente, Anexo III 2026 não muda (guarda de regressão)', () => {
     expect(apurar(base('2026-06', { atividades: [servico(100_000)] }), LINHAS).atividades[0].tributos.ISS).toBe(3_432);
+  });
+});
+
+describe('BE-INCR-SIMPLES-CGSN-196 item 3 — o fim do ISS no teto ausente vem da linha ISS_LIMITE, não de literal', () => {
+  const COM_ISS_LIMITE = legalParamsSeedRows([...SIMPLES_SEED_FILES, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO]);
+  const semTeto = COM_ISS_LIMITE.filter((l) => l.tabela !== 'SIMPLES_TETO_ISS');
+  // Repartição SINTÉTICA do Anexo III de 2033 com ISS, para o ramo chegar ao teto depois da virada.
+  const comIss = (linhas: typeof semTeto) =>
+    linhas.map((l) =>
+      l.tabela === 'SIMPLES_ANEXO_REPARTICAO' && l.vigenteDesde === '2033-01-01' && l.chave === 'III'
+        ? { ...l, valorJson: JSON.stringify({ ...JSON.parse(l.valorJson ?? '{}'), ISS: 100 }) }
+        : l,
+    );
+  const ausente = expect.objectContaining({ name: 'ParametroLegalAusenteError', errorCode: 'PARAMETRO_LEGAL_AUSENTE' });
+
+  it('ISS_LIMITE até 2032-12-31: 2032-12 sem teto ⇒ PARAMETRO_LEGAL_AUSENTE; 2033-01 segue', () => {
+    expect(() => apurar(base('2032-12', { atividades: [servico(100_000)] }), semTeto)).toThrow(ausente);
+    expect(() => apurar(base('2033-01', { atividades: [servico(100_000)] }), comIss(semTeto))).not.toThrow();
+  });
+
+  it('virada da Onda 3.2: mover só a linha ISS_LIMITE (fim em 2033-12-31) faz 2033-06 exigir o teto, sem tocar no código', () => {
+    const movida = comIss(semTeto).map((l) => (l.id === 'lp-iss-max-2025-2032' ? { ...l, vigenteAte: '2033-12-31' } : l));
+    expect(() => apurar(base('2033-06', { atividades: [servico(100_000)] }), comIss(semTeto))).not.toThrow();
+    expect(() => apurar(base('2033-06', { atividades: [servico(100_000)] }), movida)).toThrow(ausente);
+  });
+
+  it('sem a linha ISS_LIMITE na fotografia e sem teto: falha fechada (nunca supõe ISS extinto)', () => {
+    expect(() => apurar(base('2026-06', { atividades: [servico(100_000)] }), LINHAS.filter((l) => l.tabela !== 'SIMPLES_TETO_ISS'))).toThrow(ausente);
+  });
+});
+
+describe('BE-INCR-SIMPLES-CGSN-196 item 1 — teto do ISS na 6ª faixa de 2027 em diante (F-196-1 a; fecha L-20261125-195439-09b7)', () => {
+  // RBT12 R$ 4.500.000,00 (R$ 375 mil/mês), PA de R$ 375 mil, sublimite não excedido. Anexo III 2027: 6ª = 18,50%; ISS pela 5ª
+  // = 6,0997% → teto 5%, excesso 1,0997 p.p. aos federais pela repartição da 6ª; IBS pela 5ª = 0,0310% (peso 0 no excesso).
+  const comAnexo = (linhas: typeof LINHAS, anexo: string) =>
+    linhas.map((l) => (l.id === 'sn1-enq-servico-060101' ? { ...l, valorJson: JSON.stringify({ anexo, fatorR: false, semIss: false }) } : l));
+  const pa = (comp: string) => base(comp, { historico: historico(comp, 37_500_000), atividades: [servico(37_500_000)] });
+
+  it('Anexo III, 2027-01: IBS 0,0310% (não muda), federais com o excesso pela repartição da 6ª', () => {
+    const r = apurar(pa('2027-01'), comAnexo(LINHAS, 'III'));
+    const a = r.atividades[0];
+    expect([a.faixa, a.aliquotaEfetiva]).toEqual([6, '18.5000']);
+    expect(a.tributos).toEqual({ IRPJ: 2_579_073, CSLL: 1_105_422, CBS: 1_417_792, CPP: 2_247_593, ISS: 1_875_000, IBS: 11_608 });
+    expect(r.totalCalculadoCents).toBe(9_236_488);
+  });
+
+  it('Anexo IV, 2027-01: IBS 0,0430% (não muda), federais com o excesso pela repartição da 6ª', () => {
+    const r = apurar(pa('2027-01'), comAnexo(LINHAS, 'IV'));
+    const a = r.atividades[0];
+    expect([a.faixa, a.aliquotaEfetiva]).toEqual([6, '14.5000']);
+    expect(a.tributos).toEqual({ IRPJ: 3_356_822, CSLL: 1_349_353, CBS: 1_543_725, ISS: 1_875_000, IBS: 16_124 });
+    expect(r.totalCalculadoCents).toBe(8_141_024);
+  });
+
+  it('2026-12 (transfereAIbs false, sem IBS): igual ao de hoje', () => {
+    expect(apurar(pa('2026-12'), comAnexo(LINHAS, 'III')).atividades[0].tributos).toEqual({ IRPJ: 2_585_583, CSLL: 1_108_107, COFINS: 1_184_197, PIS: 256_342, CPP: 2_253_151, ISS: 1_875_000 });
+    expect(apurar(pa('2026-12'), comAnexo(LINHAS, 'IV')).atividades[0].tributos).toEqual({ IRPJ: 3_363_759, CSLL: 1_351_791, COFINS: 1_292_061, PIS: 279_789, ISS: 1_875_000 });
+  });
+
+  it('o gatilho é a linha (transfereAIbs), não a janela do RBT12: com IBS na repartição da 6ª, só recebe excesso se a linha manda; o total não muda', () => {
+    // Repartição SINTÉTICA da 6ª do Anexo III de 2027 com 1% de IBS: o peso dele no excesso é o da repartição (F-196-1 a).
+    const comIbs6 = LINHAS.map((l) =>
+      l.id === 'sn1-rep-iii-2027-01-01-f6' ? { ...l, valorJson: JSON.stringify({ IRPJ: 3409, CSLL: 1504, CBS: 1929, CPP: 3058, IBS: 100 }) } : l,
+    );
+    // A linha de teto EM VIGOR em 2027-01 (a sn8 da v7 substitui a sn1), escolhida pela data como o cálculo escolhe.
+    const tetoVigente = linhaLegalVigente(comIbs6, 'SIMPLES_TETO_ISS', 'III', '2027-01-01', null)?.id;
+    expect(tetoVigente).toBe('sn8-teto-iii-2027-01-01');
+    const comTeto = (transfereAIbs: boolean) =>
+      comIbs6.map((l) => (l.id === tetoVigente ? { ...l, valorJson: JSON.stringify({ ...JSON.parse(l.valorJson ?? '{}'), transfereAIbs }) } : l));
+    const nao = apurar(pa('2027-01'), comTeto(false));
+    const sim = apurar(pa('2027-01'), comTeto(true));
+    expect(nao.atividades[0].tributos.IBS).toBe(11_608); // só a parcela pela 5ª
+    expect(sim.atividades[0].tributos.IBS).toBeGreaterThan(11_608); // + excesso × 1/100 da repartição
+    expect(sim.totalCalculadoCents).toBe(nao.totalCalculadoCents);
   });
 });

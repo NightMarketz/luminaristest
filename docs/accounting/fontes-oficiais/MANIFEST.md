@@ -60,6 +60,7 @@ que citava o antigo precisa ser reconferido.
 | lei-12592-2012 | Simples — salao-parceiro: cota do profissional fora da receita bruta (art. 1o-A §§ 4o e 5o) | Lei 12.592/2012, compilada (red. Lei 13.352/2016) | `Lei-12592-2012-salao-parceiro.html` | 21.926 | `b31a63e3a20f` |
 | ricms-sp-313e | Simples — ICMS-ST de perfumaria/higiene em SP (arts. 313-E e 313-F) | RICMS/SP (Decreto 45.490/2000), pagina dos arts. 313-E a 313-F | `RICMS-SP-art313E-313F.html` | 158.517 | `76c6377a3513` |
 | portaria-sre-94-2025 | Simples — perfumaria/higiene SAI da ST em SP a partir de 01/04/2026 (arts. 1o e 4o) | Portaria SRE 94/2025 (SP) | `Portaria-SRE-94-2025-SP.html` | 148.094 | `68c1b46cafca` |
+| res-cgsn-196-2026-anexos | Simples — Anexos I a V da Res. CGSN 140 na redação da Res. CGSN 196/2026 (art. 3º), 2027 em diante; paridade com a semente (BE-INCR-SIMPLES-CGSN-196 item 4) | transcrição dos anexos 87477–87481 do ato 154694 (RFB, visão multivigente, baixados em 25/11/2026 no dossiê `pesquisas-legais/dp-tabelas-irrf-das-sst` D11–D15; gerada por `scripts/gen-simples-anexos.mjs --transcrever-196`) | `TRANSCRICAO-SIMPLES-ANEXOS-RES-CGSN-196-2026-11-25.txt` | 33.948 | `cb3e6b089199` |
 
 ## URLs de origem
 

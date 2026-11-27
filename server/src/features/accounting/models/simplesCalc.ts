@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { AtividadeSemAnexoError, SimplesRegraNaoRegulamentadaError } from '../../../lib/errors';
 import { ParametroLegalAusenteError, linhaLegalVigente, type LinhaLegal } from '../../legalParameters/models/legalParameter';
 import { excecaoPisoIss, reducaoBpDaFaixa } from './issBeneficio';
+import { issExtinto } from './issTransicao';
 import { linhaDoMarco } from './marcoLegal';
 
 export const TRIBUTOS_SIMPLES = [
@@ -371,7 +372,9 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
     const pct = new Map<TributoSimples, Q>();
     for (const [t, v] of Object.entries(rep) as Array<[TributoSimples, number]>) pct.set(t, mul(eff, BP(v)));
 
-    // Res. CGSN 140 art. 21 III "b": RBT12 acima da 5ª faixa sem sublimite excedido — ICMS/ISS (e IBS) pela 5ª faixa.
+    // RBT12 acima da 5ª faixa sem sublimite excedido — ICMS/ISS (e IBS) pela 5ª faixa: até 2026, Res. CGSN 140 art. 21 III
+    // "b"; de 2027 em diante, art. 21 IV (incl. Res. CGSN 190, não revogado pela Res. CGSN 196), porque o III, na redação da
+    // Res. CGSN 196 art. 2º, já não tem alíneas.
     if (faixa === 6 && !input.sublimiteExcedido) {
       const rep5 = exigir(
         linha(linhas, 'SIMPLES_ANEXO_REPARTICAO', anexo, data, 'F5', ReparticaoJsonSchema, usadas),
@@ -389,20 +392,25 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
     // Teto do ISS (art. 18 § 1º-B I): acima do teto, ISS = teto e a diferença vai pela tabela de transferência do anexo.
     const iss = pct.get('ISS');
     const teto = linha(linhas, 'SIMPLES_TETO_ISS', anexo, data, null, TetoIssJsonSchema, usadas);
-    // F-PR4-8 (a), dono 10/10 (D-2026-10-10-QUESTIONARIO-DONO Q1): sem a linha, falha só no Anexo III/IV antes de
-    // 2033 — no Anexo V e de 2033 em diante a falta da linha é a própria lei (PESQUISA-X14-PR4-LACUNAS, F-PR4-8).
-    if (iss && !teto && (anexo === 'III' || anexo === 'IV') && data < '2033-01-01') {
+    // F-PR4-8 (a), dono 10/10 (D-2026-10-10-QUESTIONARIO-DONO Q1): sem a linha, falha só no Anexo III/IV enquanto houver
+    // ISS — no Anexo V e com o ISS extinto a falta da linha é a própria lei (PESQUISA-X14-PR4-LACUNAS, F-PR4-8). O fim do
+    // ISS vem da linha `ISS_LIMITE` (LC 214 art. 543 IV; `issExtinto`), não de literal (BE-INCR-SIMPLES-CGSN-196 item 3,
+    // Onda 3.2). Só é consultado neste ramo: os chamadores carregam `ISS_LIMITE` na fotografia.
+    if (iss && !teto && (anexo === 'III' || anexo === 'IV') && !issExtinto(linhas, data)) {
       throw new ParametroLegalAusenteError('SIMPLES_TETO_ISS', data, anexo);
     }
     if (iss && teto && cmp(iss, BP(teto.percentualBp)) > 0) {
       if (faixa === 6) {
-        // 6ª faixa (ISS pela fórmula da 5ª, Res. CGSN 140 art. 21 III "b"): a nota do anexo só traz a tabela da 5ª, então
-        // vale o art. 21 III "a" literal — a diferença vai "aos tributos federais da mesma faixa", na proporção da
-        // repartição da 6ª (X14 PR-3; a Focus NFe não trata o caso, dono 07/10: decide-se pela lei).
+        // 6ª faixa (ISS pela fórmula da 5ª): a nota do anexo só traz a tabela da 5ª, então vale o artigo. Até 2026, Res.
+        // CGSN 140 art. 21 III "a": a diferença vai "aos tributos federais da mesma faixa". De 2027 em diante, art. 21 III na
+        // redação da Res. CGSN 196 art. 2º e LC 123 art. 18 § 1º-B I (red. LC 214 art. 517, incl. LC 227/2026): "entre os
+        // tributos federais e o IBS". Quem diz se o IBS entra é a linha (`transfereAIbs`), não a forma da janela do RBT12.
+        // Pesos (F-196-1 a, dono, chat, 26/11/2026): a repartição da 6ª faixa, como a lei faz na 5ª; a 6ª não dá percentual
+        // ao IBS, então ele entra com peso 0 (X14 PR-3, dono 07/10: decide-se pela lei).
         const excesso = sub(iss, BP(teto.percentualBp));
         pct.set('ISS', BP(teto.percentualBp));
         const federais = (Object.entries(rep) as Array<[TributoSimples, number]>).filter(
-          ([t]) => !sublimite.includes(t) && t !== 'ISS' && t !== 'ICMS',
+          ([t]) => t !== 'ISS' && t !== 'ICMS' && (t !== 'IBS' || teto.transfereAIbs),
         );
         const base = federais.reduce((s, [, v]) => s + v, 0);
         for (const [t, v] of federais)
