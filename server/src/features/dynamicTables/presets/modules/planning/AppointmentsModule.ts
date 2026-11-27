@@ -49,11 +49,15 @@ export const appointmentsModule = {
         errorMessage: 'Agendamento inválido: fim deve ser após o início.',
       },
     ],
+    // BE-INCR-ESCALA-BASE item 27 (F-ESC-11, F-ESC-17): conflito por pessoa (sem a unidade no escopo, a mesma pessoa
+    // não fica em duas unidades ao mesmo tempo) e por recurso; o agendamento sem profissional ou sem recurso não entra
+    // na regra respectiva.
     noOverlap: [
       {
         startField: 'startAt',
         endField: 'endAt',
-        scopeFields: ['unitId', 'responsibleEmployeeId'],
+        scopeFields: ['responsibleEmployeeId'],
+        skipWhenScopeEmpty: true,
         errorMessage: 'Conflito de agenda: já existe outro compromisso nesse período.',
       },
     ],

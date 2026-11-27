@@ -158,6 +158,11 @@ export interface INoOverlapRule {
    * A scope field absent/empty on the record is ignored.
    */
   scopeFields?: string[];
+  /**
+   * Opt-in (BE-INCR-ESCALA-BASE item 27, F-ESC-17): when true, a record with ANY declared scope field absent/empty is
+   * not checked at all, instead of the field being dropped from the scope (which would match the whole table).
+   */
+  skipWhenScopeEmpty?: boolean;
   /** Optional error message override. */
   errorMessage?: string;
 }

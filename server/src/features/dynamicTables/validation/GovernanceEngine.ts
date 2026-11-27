@@ -127,6 +127,8 @@ export class GovernanceEngine {
           scope.push({ field: f, value: String(v) });
         }
       }
+      // F-ESC-17 (opt-in): an empty scope field means "no conflict to check", not "conflict with every row".
+      if (rule.skipWhenScopeEmpty && scope.length < (rule.scopeFields ?? []).length) continue;
 
       // Normalize to ISO before binding: validated date fields arrive as Date objects (z.coerce.date),
       // and `String(date)` yields a non-ISO form ("Thu Jan 01 2026 ...") that SQLite's datetime()

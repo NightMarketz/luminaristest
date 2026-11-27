@@ -144,6 +144,7 @@ const NoOverlapSchema = z.object({
   startField: z.string(),
   endField: z.string(),
   scopeFields: z.array(z.string()).optional(),
+  skipWhenScopeEmpty: z.boolean().optional(),
   errorMessage: z.string().optional(),
 });
 
