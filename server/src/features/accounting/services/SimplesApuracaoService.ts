@@ -42,6 +42,8 @@ import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFi
 import type { ISimplesApuracaoRepository } from '../repositories/ISimplesApuracaoRepository';
 import type { ISimplesEntradasRepository } from '../repositories/ISimplesEntradasRepository';
 import type { IPartnerRepository } from '../repositories/IPartnerRepository';
+import type { IPostingRepository } from '../repositories/IPostingRepository';
+import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import type { OutraParticipacao } from '../dtos/PartnerDto';
 import { alertasDeInterdependencia, alertasDeParceria, alertasDeProjecao, receitaProjetadaDoAno, type ContratoParceria, type SocioComParticipacoes } from '../models/taxOptimizationAlertas';
 import type { IIssBeneficioMunicipalRepository } from '../repositories/IIssBeneficioMunicipalRepository';
@@ -352,6 +354,8 @@ export class SimplesApuracaoService {
     private readonly productFiscalRepo: Pick<IProductFiscalProfileRepository, 'findManyByProductRefs'>,
     /** EFICIENCIA-FISCAL PR-4 (item 20): sócios e as participações informadas, para o aviso de interdependência. */
     private readonly partnerRepo: Pick<IPartnerRepository, 'list'>,
+    /** L-20261121-200757-976c: outra unidade da PJ com movimento na janela ⇒ 400, como o IRPJ (`TaxAssessmentService`). */
+    private readonly postingRepo: Pick<IPostingRepository, 'unitIdsWithMovement'>,
   ) {}
 
   /** EFICIENCIA-FISCAL PR-2 (item 13): NCM e CSOSN dos produtos das linhas de revenda do PA. */
@@ -521,6 +525,17 @@ export class SimplesApuracaoService {
     // subrazão (decisão do dono 07/10 pelo BRIEF item 10: o histórico é da PRÉ-adoção). Os dois no mesmo mês ⇒ alerta.
     const janela = janelaRbt12(competencia, inicioLc214Competencia(linhas, `${competencia}-01`));
     const todos = meses(`${ano - 1}-01` < janela.de ? `${ano - 1}-01` : janela.de, competencia);
+    // L-20261121-200757-976c (contenção): a receita soma só esta unidade, e a Res. CGSN 140 art. 16 § 2º manda somar
+    // todos os estabelecimentos. Outra unidade da PJ com movimento nos meses lidos ⇒ 400 nomeado, como o IRPJ/CSLL.
+    // A soma dos estabelecimentos é a estrutural (montador único EFICIENCIA-FISCAL, grupo CGSN 196 #1436).
+    const de = mesBounds(Number(todos[0].slice(0, 4)), Number(todos[0].slice(5, 7))).from;
+    const ate = mesBounds(ano, Number(competencia.slice(5, 7))).to;
+    const outras = (await this.postingRepo.unitIdsWithMovement(scope.ownerUserId, LEDGER_STATUSES, de, ate)).filter((u) => u !== scope.unitId);
+    if (outras.length > 0) {
+      throw new ValidationError(`outra unidade da PJ com movimento entre ${todos[0]} e ${competencia}: o Simples soma todos os estabelecimentos (Res. CGSN 140 art. 16 § 2º) e a apuração consolidada ainda não existe.`, {
+        unidadesComMovimento: outras,
+      });
+    }
     const [historico, subrazao] = await Promise.all([this.entradasRepo.findHistorico(scope, todos, tx), this.receitaRepo.somaPorCompetencia(scope, todos, tx)]);
     const hist = new Map(historico.map((h) => [h.competencia, h]));
     const receitas: Receitas = new Map();

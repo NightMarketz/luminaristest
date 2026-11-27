@@ -2279,6 +2279,7 @@ export class ApplicationFactory {
         this.repositories.receitaFiscalRecebimento, // X14-CAIXA PR-2 item 8: recebimentos, base do caixa
         this.repositories.productFiscalProfile, // EFICIENCIA-FISCAL PR-2 item 13: avisos SEM_NCM e ICMS_ST_NAO_CONFERIDA
         this.repositories.partner, // EFICIENCIA-FISCAL PR-4 item 20: aviso de interdependência pelos sócios
+        this.repositories.posting, // L-20261121-200757-976c: recusa da PJ multiunidade, como o IRPJ
       ),
       // BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, itens 27–28): espelhos DASN-SIMEI e DEFIS.
       simplesDeclaracao: new SimplesDeclaracaoService(
