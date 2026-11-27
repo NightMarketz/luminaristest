@@ -6,7 +6,7 @@ import type {
   ReleaseReportFile,
   ResolvedAccount,
   WebhookVerification,
-} from './CollectionProviderPort';
+} from '../../ports/CollectionProviderPort';
 
 /**
  * NullCollectionProvider — adaptador de desenvolvimento/teste (BE-INCR-PAYMENT-PROVIDER PR-2, P2-1; invariante 12).

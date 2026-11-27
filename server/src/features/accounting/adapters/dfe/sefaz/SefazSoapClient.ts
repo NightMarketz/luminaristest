@@ -1,7 +1,7 @@
 import { request } from 'node:https';
-import { logger } from '../../../../lib/logger';
-import { SEFAZ_CALL_TOTAL_MS } from '../../../../lib/outboundHttp';
-import { DfeTransporteError } from '../DfeEmissorPort';
+import { logger } from '../../../../../lib/logger';
+import { SEFAZ_CALL_TOTAL_MS } from '../../../../../lib/outboundHttp';
+import { DfeTransporteError } from '../../../ports/DfeEmissorPort';
 import type { SefazServico } from './sefazConfig';
 import type { SefazTransporte } from './SefazTransporte';
 

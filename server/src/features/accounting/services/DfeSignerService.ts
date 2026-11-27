@@ -28,7 +28,7 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
 import type { AccountingScope } from '../models/AccountingScope';
 import { resolveAccountingScopeInternal } from '../models/resolveAccountingScopeInternal';
-import type { DfeAmbiente } from '../dfe/DfeEmissorPort';
+import type { DfeAmbiente } from '../ports/DfeEmissorPort';
 import type { UnitCnpjResolver } from './FiscalCertificateService';
 
 /** Nome legível da unidade do escopo (régua A3: a recusa nomeia a unidade pelo nome); o id se não houver nome. */

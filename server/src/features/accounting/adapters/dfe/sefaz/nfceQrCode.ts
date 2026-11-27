@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { escapeXml } from '../../../../lib/nfeXml';
-import type { DfeAmbiente } from '../DfeEmissorPort';
+import { escapeXml } from '../../../../../lib/nfeXml';
+import type { DfeAmbiente } from '../../../ports/DfeEmissorPort';
 import { UFS } from './sefazConfig';
 import dados from './nfceQrCode.data.json';
 

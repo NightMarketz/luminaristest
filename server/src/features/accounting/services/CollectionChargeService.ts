@@ -9,7 +9,7 @@ import {
   type CollectionProviderPort,
   type PayerInput,
   type ResolvedAccount,
-} from '../collection/CollectionProviderPort';
+} from '../ports/CollectionProviderPort';
 import {
   CHARGE_ADDRESS_REQUIRED,
   CHARGE_EXPIRY_FIELD_MISMATCH,

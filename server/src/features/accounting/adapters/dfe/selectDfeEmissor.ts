@@ -5,7 +5,7 @@ import { SefazNfeEmissor } from './sefaz/SefazNfeEmissor';
 import { transporteAssinadorLocal } from './local/assinadorLocalRuntime';
 import { selectDfeAssinador, type DfeAssinadorKind } from './selectDfeAssinador';
 import type { SefazTransporte } from './sefaz/SefazTransporte';
-import type { DfeAmbiente, DfeEmissorPort, DfeKind } from './DfeEmissorPort';
+import type { DfeAmbiente, DfeEmissorPort, DfeKind } from '../../ports/DfeEmissorPort';
 
 export interface DfeSelection {
   port: DfeEmissorPort;

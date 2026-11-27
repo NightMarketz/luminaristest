@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { DfeAmbiente } from '../DfeEmissorPort';
+import type { DfeAmbiente } from '../../../ports/DfeEmissorPort';
 import dados from './sefazEndpoints.data.json';
 
 /**

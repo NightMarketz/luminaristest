@@ -9,7 +9,7 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
 import type { AccountingScope } from '../models/AccountingScope';
 import { accountingScopeWhere } from '../models/AccountingScope';
-import type { CscDaUnidade, DfeAmbiente } from '../dfe/DfeEmissorPort';
+import type { CscDaUnidade, DfeAmbiente } from '../ports/DfeEmissorPort';
 
 export const NFCE_CSC_SET = 'nfce_csc.set';
 export const NFCE_CSC_REMOVED = 'nfce_csc.removed';

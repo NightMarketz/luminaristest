@@ -8,7 +8,7 @@ const mockSelection = {
   ambiente: 'producao',
   port: { name: 'manual', capabilities: { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: true, consultar: false, cancelar: false, webhook: false, substituir: true, inutilizar: false, cce: false }, emitir: jest.fn(async () => ({ status: 'PROCESSING', partnerRef: 'x', errors: [] })) },
 };
-jest.mock('../../dfe/selectDfeEmissor', () => ({ __esModule: true, selectDfeEmissor: () => mockSelection }));
+jest.mock('../../adapters/dfe/selectDfeEmissor', () => ({ __esModule: true, selectDfeEmissor: () => mockSelection }));
 jest.mock('../../../../lib/factory', () => ({
   __esModule: true,
   getFactory: () => ({ getDynamicTableRepository: () => ({ findTableByInternalName: async () => null }) }),

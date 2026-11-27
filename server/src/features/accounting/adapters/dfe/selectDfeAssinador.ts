@@ -1,4 +1,4 @@
-import type { DfeKind } from './DfeEmissorPort';
+import type { DfeKind } from '../../ports/DfeEmissorPort';
 
 /** X10a EMENDA-4 (AL-2; F-AL-7 a): quem assina a NF-e/NFC-e do adaptador `sefaz`. */
 export type DfeAssinadorKind = 'local' | 'psc';

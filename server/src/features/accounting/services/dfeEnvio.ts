@@ -2,8 +2,8 @@ import type { FiscalDocument } from 'generated/prisma';
 import logger from '../../../lib/logger';
 import type { AccountingScope } from '../models/AccountingScope';
 import type { IFiscalDocumentRepository } from '../repositories/IFiscalDocumentRepository';
-import { isFalhaDeComunicacao, type DfeEmissorPort, type EmissaoResult, type EmitirInput } from '../dfe/DfeEmissorPort';
-import { isSessaoPscVencida } from '../dfe/AssinadorRemotoPort';
+import { isFalhaDeComunicacao, type DfeEmissorPort, type EmissaoResult, type EmitirInput } from '../ports/DfeEmissorPort';
+import { isSessaoPscVencida } from '../ports/AssinadorRemotoPort';
 
 /** F-ADN-5 a — quem aplica o resultado síncrono do envio (o `applyResult` do ciclo). */
 export type DfeResultApplier = (scope: AccountingScope, doc: FiscalDocument, result: EmissaoResult) => Promise<void>;

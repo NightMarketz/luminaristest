@@ -3,7 +3,7 @@ import { NullEmissor } from '../NullEmissor';
 import { ManualEmissor } from '../ManualEmissor';
 import { resolveEmissorFor } from '../resolveEmissor';
 import { DfeDisabledEmissor } from '../DfeDisabledEmissor';
-import { ambienteFromTpAmb, tpAmbFor } from '../DfeEmissorPort';
+import { ambienteFromTpAmb, tpAmbFor } from '../../../ports/DfeEmissorPort';
 
 describe('tpAmbFor / ambienteFromTpAmb — BE-INCR-DFE-TPAMB item 8 (Anexo I v1.01, LEIAUTE linha 103)', () => {
   it('producao → 1, homologacao → 2', () => {

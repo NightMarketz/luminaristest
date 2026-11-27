@@ -10,9 +10,9 @@ import {
   type ResolvedAccount,
   type WebhookRequest,
   type WebhookVerification,
-} from './CollectionProviderPort';
-import { MP_MAX_DAYS_TO_DUE, PAYMENT_WEBHOOK_MAX_AGE_MS } from '../models/CollectionCharge.model';
-import { OUTBOUND_POLICY, outboundFetch, type OutboundPolicy } from '../../../lib/outboundHttp';
+} from '../../ports/CollectionProviderPort';
+import { MP_MAX_DAYS_TO_DUE, PAYMENT_WEBHOOK_MAX_AGE_MS } from '../../models/CollectionCharge.model';
+import { OUTBOUND_POLICY, outboundFetch, type OutboundPolicy } from '../../../../lib/outboundHttp';
 
 /**
  * MercadoPagoCollectionProvider — 1º adaptador da porta (BE-INCR-PAYMENT-PROVIDER PR-2, P2-1; F-PP-4 a: Orders API).

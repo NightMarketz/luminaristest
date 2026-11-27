@@ -67,7 +67,7 @@ import type { INfceCscRepository } from '../features/accounting/repositories/INf
 import { NfceContingenciaService } from '../features/accounting/services/NfceContingenciaService';
 import { NfceContingenciaRepository } from '../features/accounting/repositories/NfceContingenciaRepository';
 import type { INfceContingenciaRepository } from '../features/accounting/repositories/INfceContingenciaRepository';
-import { PscAssinador } from '../features/accounting/dfe/psc/PscAssinador';
+import { PscAssinador } from '../features/accounting/adapters/dfe/psc/PscAssinador';
 import { PscProviderPolicy } from '../features/accounting/policies/PscProviderPolicy';
 import { CollectionChargeRepository } from '../features/accounting/repositories/CollectionChargeRepository';
 import { TaxAssessmentRepository } from '../features/accounting/repositories/TaxAssessmentRepository';
@@ -193,7 +193,7 @@ import { resolveUnitCnpjFromUnits, resolveUnitNameFromUnits } from '../features/
 import { CollectionChargeService } from '../features/accounting/services/CollectionChargeService';
 import { ReleaseReportService } from '../features/accounting/services/ReleaseReportService';
 import { JobWatermarkRepository } from '../jobs/repositories/JobWatermarkRepository';
-import { MercadoPagoCollectionProvider } from '../features/accounting/collection/MercadoPagoCollectionProvider';
+import { MercadoPagoCollectionProvider } from '../features/accounting/adapters/collection/MercadoPagoCollectionProvider';
 import { TaxAssessmentService } from '../features/accounting/services/TaxAssessmentService';
 import { PresumidoTetoService } from '../features/accounting/services/PresumidoTetoService';
 import { TaxAssessmentPeriodosService } from '../features/accounting/services/TaxAssessmentPeriodosService';

@@ -1,6 +1,6 @@
 import { JanelaEventosSchema, type JanelaEventos } from '../dtos/FiscalDocumentDto';
 import { dateOnlyFromDayNumber, dayNumberFromDateOnly, scopeDay } from './dates';
-import type { DfeKind } from '../dfe/DfeEmissorPort';
+import type { DfeKind } from '../ports/DfeEmissorPort';
 
 /**
  * BE-INCR-DFE-EVENTOS (nó X11, item 3) — janela de cancelamento/substituição de uma NFS-e. Função pura.

@@ -1,11 +1,11 @@
 import { createHash } from 'node:crypto';
 import { XMLParser } from 'fast-xml-parser';
-import { logger } from '../../../../lib/logger';
-import { NFE_NS, escapeXml, partesDaChave, serializeNfe, CUF_POR_SIGLA } from '../../../../lib/nfeXml';
-import { assinarEnveloped, digestValueDe } from '../../../../lib/dfeXmlSign';
-import { assertChaveAcesso, locateInfNFe, readNfeTree, str } from '../../../../lib/nfe';
-import { NfePayloadSchema, type NfePayload } from '../../dtos/NfePayloadDto';
-import { tpAmbFor } from '../DfeEmissorPort';
+import { logger } from '../../../../../lib/logger';
+import { NFE_NS, escapeXml, partesDaChave, serializeNfe, CUF_POR_SIGLA } from '../../../../../lib/nfeXml';
+import { assinarEnveloped, digestValueDe } from '../../../../../lib/dfeXmlSign';
+import { assertChaveAcesso, locateInfNFe, readNfeTree, str } from '../../../../../lib/nfe';
+import { NfePayloadSchema, type NfePayload } from '../../../dtos/NfePayloadDto';
+import { tpAmbFor } from '../../../ports/DfeEmissorPort';
 import type {
   CancelInput,
   CancelResult,
@@ -20,8 +20,8 @@ import type {
   InutilizarInput,
   InutilizarResult,
   NfceSupl,
-} from '../DfeEmissorPort';
-import { AssinaturaRemotaError, type TipoDfeAssinado } from '../AssinadorRemotoPort';
+} from '../../../ports/DfeEmissorPort';
+import { AssinaturaRemotaError, type TipoDfeAssinado } from '../../../ports/AssinadorRemotoPort';
 import { endpointSefaz, type SefazServico } from './sefazConfig';
 import {
   baseAssinavelQrV3Offline,

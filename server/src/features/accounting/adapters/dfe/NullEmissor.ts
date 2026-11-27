@@ -9,7 +9,7 @@ import type {
   EventoNfse,
   InutilizarInput,
   InutilizarResult,
-} from './DfeEmissorPort';
+} from '../../ports/DfeEmissorPort';
 
 /**
  * NullEmissor — BE-INCR-DFE (BRIEF item 11). Adaptador de desenvolvimento/teste: autoriza

@@ -1,8 +1,8 @@
-import { ValidationError } from '../../../lib/errors';
+import { ValidationError } from '../../../../lib/errors';
 import { ManualEmissor } from './ManualEmissor';
 import { NullEmissor } from './NullEmissor';
 import { selectDfeEmissor } from './selectDfeEmissor';
-import type { DfeEmissorPort, DfeKind } from './DfeEmissorPort';
+import type { DfeEmissorPort, DfeKind } from '../../ports/DfeEmissorPort';
 
 /**
  * BE-INCR-DFE-MANUAL (item 9) — o adaptador de um documento é o do DOCUMENTO (`FiscalDocument.partner`), não o do

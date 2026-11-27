@@ -1,5 +1,5 @@
-import { ValidationError } from '../../../lib/errors';
-import type { CancelResult, DfeCapabilities, DfeEmissorPort, EmissaoResult } from './DfeEmissorPort';
+import { ValidationError } from '../../../../lib/errors';
+import type { CancelResult, DfeCapabilities, DfeEmissorPort, EmissaoResult } from '../../ports/DfeEmissorPort';
 
 /**
  * DfeDisabledEmissor — BE-INCR-DFE (BRIEF item 13). Adaptador usado quando `DFE_PARTNER` está ausente

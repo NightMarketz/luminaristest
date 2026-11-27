@@ -7,7 +7,7 @@ import {
   CollectionProviderError,
   type CollectionProviderPort,
   type ResolvedAccount,
-} from '../collection/CollectionProviderPort';
+} from '../ports/CollectionProviderPort';
 import {
   PAYMENT_ACCOUNT_RELEASE_REPORT_BLOCKED,
   PAYMENT_ACCOUNT_RELEASE_REPORT_EMPTY_RANGE,

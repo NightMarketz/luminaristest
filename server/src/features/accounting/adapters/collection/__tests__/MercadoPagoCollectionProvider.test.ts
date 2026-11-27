@@ -7,9 +7,9 @@
 import { createHmac } from 'node:crypto';
 import { MercadoPagoCollectionProvider, formatCents } from '../MercadoPagoCollectionProvider';
 import { NullCollectionProvider } from '../NullCollectionProvider';
-import { CollectionProviderError, type ResolvedAccount } from '../CollectionProviderPort';
-import { mapMercadoPagoStatus } from '../../models/CollectionCharge.model';
-import { calendarDaysToBusinessDay, computeExpiry } from '../../services/CollectionChargeService';
+import { CollectionProviderError, type ResolvedAccount } from '../../../ports/CollectionProviderPort';
+import { mapMercadoPagoStatus } from '../../../models/CollectionCharge.model';
+import { calendarDaysToBusinessDay, computeExpiry } from '../../../services/CollectionChargeService';
 
 const TOKEN = 'APP_USR-FIXTURE-TOKEN-0000000000-abcd';
 const account: ResolvedAccount = { id: 'pa1', credentialSource: 'OWN', credential: { accessToken: TOKEN, webhookSecret: 'x' } };

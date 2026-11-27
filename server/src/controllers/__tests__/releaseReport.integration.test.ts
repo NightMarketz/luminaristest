@@ -13,7 +13,7 @@ import { ReleaseReportService } from '@/features/accounting/services/ReleaseRepo
 import { PaymentAccountRepository } from '@/features/accounting/repositories/PaymentAccountRepository';
 import { ReconciliationRepository } from '@/features/accounting/repositories/ReconciliationRepository';
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
-import { CollectionProviderError, type CollectionProviderPort } from '@/features/accounting/collection/CollectionProviderPort';
+import { CollectionProviderError, type CollectionProviderPort } from '@/features/accounting/ports/CollectionProviderPort';
 import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 
 const app = makeApp();

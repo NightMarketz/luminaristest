@@ -1,5 +1,5 @@
-import { ValidationError } from '../../../lib/errors';
-import type { CancelResult, DfeCapabilities, DfeEmissorPort, EmissaoResult, EmitirInput } from './DfeEmissorPort';
+import { ValidationError } from '../../../../lib/errors';
+import type { CancelResult, DfeCapabilities, DfeEmissorPort, EmissaoResult, EmitirInput } from '../../ports/DfeEmissorPort';
 
 /**
  * ManualEmissor — BE-INCR-DFE-MANUAL (item 7; F-MAN-3 → a, substitui o FileEmissor do X10b). O cliente sem parceiro

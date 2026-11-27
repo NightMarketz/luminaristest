@@ -4,11 +4,11 @@
  * operação, e o mesmo `getCharge` tem política diferente no webhook e no job. Nenhuma chamada real: `fetch` trocado.
  */
 import { MercadoPagoCollectionProvider } from '../MercadoPagoCollectionProvider';
-import type { ResolvedAccount } from '../CollectionProviderPort';
-import * as outbound from '../../../../lib/outboundHttp';
+import type { ResolvedAccount } from '../../../ports/CollectionProviderPort';
+import * as outbound from '../../../../../lib/outboundHttp';
 
-jest.mock('../../../../lib/outboundHttp', () => {
-  const actual = jest.requireActual('../../../../lib/outboundHttp') as typeof import('../../../../lib/outboundHttp');
+jest.mock('../../../../../lib/outboundHttp', () => {
+  const actual = jest.requireActual('../../../../../lib/outboundHttp') as typeof import('../../../../../lib/outboundHttp');
   return { ...actual, outboundFetch: jest.fn(actual.outboundFetch) };
 });
 

@@ -22,7 +22,7 @@ import type {
 import { loadSalePackageInfo, loadSaleProductLines, loadSaleServiceLines } from './bridges/saleItems';
 import type { SaleServiceLine } from './bridges/saleItems';
 import { RESALE_REVENUE_ACCOUNT, SERVICE_REVENUE_ACCOUNT } from '../domain/mappers/revenueSplit';
-import { splitCents } from '../dfe/splitCents';
+import { splitCents } from '../domain/splitCents';
 import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
 import type { DpsManualPayload, DpsPayload } from '../dtos/DpsPayloadDto';
 import { NfePayloadSchema, NfePayloadSemNumeracaoSchema } from '../dtos/NfePayloadDto';
@@ -47,9 +47,9 @@ import {
   type ItemParaMontagem,
 } from '../models/nfeMontagem';
 import type { ProductFiscalProfileService } from './ProductFiscalProfileService';
-import { selectDfeEmissor, type DfeSelection } from '../dfe/selectDfeEmissor';
-import { assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
-import type { CscDaUnidade, DfeAmbiente, DfeCallContext, DfeEmissorPort, DfeKind, EmitirInput, NfceSupl } from '../dfe/DfeEmissorPort';
+import { selectDfeEmissor, type DfeSelection } from '../adapters/dfe/selectDfeEmissor';
+import { assertTpAmb, tpAmbFor } from '../ports/DfeEmissorPort';
+import type { CscDaUnidade, DfeAmbiente, DfeCallContext, DfeEmissorPort, DfeKind, EmitirInput, NfceSupl } from '../ports/DfeEmissorPort';
 import { bloqueioSessaoPsc, type AssinaturaDaUnidade, type DfeAssinaturaResolver } from './DfeAssinaturaResolver';
 import { enviarTentativa, type DfeContingenciaHandler, type DfeResultApplier } from './dfeEnvio';
 import { prazoTransmissao } from '../models/nfceContingencia';

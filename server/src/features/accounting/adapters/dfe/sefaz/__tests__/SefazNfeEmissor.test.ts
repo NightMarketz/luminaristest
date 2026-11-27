@@ -1,18 +1,18 @@
 import { generateKeyPairSync } from 'node:crypto';
-import { FakeSefaz, makeTlsPki } from '../../../../../../test/helpers/fakeSefaz';
-import { makeTestCert } from '../../../../../../test/helpers/nfeSignature';
+import { FakeSefaz, makeTlsPki } from '../../../../../../../test/helpers/fakeSefaz';
+import { makeTestCert } from '../../../../../../../test/helpers/nfeSignature';
 import { FakePscServer } from '../../psc/FakePscServer';
 import { PscAssinador } from '../../psc/PscAssinador';
 import { SefazSoapClient, SefazTransporteError } from '../SefazSoapClient';
 import { AssinaturaRemotaError, SefazNfeEmissor, releituraNfe } from '../SefazNfeEmissor';
 import { hashQrCodeV2 } from '../nfceQrCode';
-import { inputNfce, nfceNumerada } from '../../../models/__tests__/nfeMontagem.fixture';
-import { montarNfe, numerarNfe } from '../../../models/nfeMontagem';
-import type { DfeCallContext } from '../../DfeEmissorPort';
-import { serializeNfe } from '../../../../../lib/nfeXml';
-import { assinarEnveloped } from '../../../../../lib/dfeXmlSign';
-import type { NfePayload } from '../../../dtos/NfePayloadDto';
-import { DEFAULT_TIMEOUT_MS, SEFAZ_CALL_TOTAL_MS } from '../../../../../lib/outboundHttp';
+import { inputNfce, nfceNumerada } from '../../../../models/__tests__/nfeMontagem.fixture';
+import { montarNfe, numerarNfe } from '../../../../models/nfeMontagem';
+import type { DfeCallContext } from '../../../../ports/DfeEmissorPort';
+import { serializeNfe } from '../../../../../../lib/nfeXml';
+import { assinarEnveloped } from '../../../../../../lib/dfeXmlSign';
+import type { NfePayload } from '../../../../dtos/NfePayloadDto';
+import { DEFAULT_TIMEOUT_MS, SEFAZ_CALL_TOTAL_MS } from '../../../../../../lib/outboundHttp';
 
 /**
  * X10a PR-7 — adaptador `sefaz` contra a SEFAZ falsa (HTTPS local com TLS mútuo) e o PSC falso (API v0). EMENDA-1 itens

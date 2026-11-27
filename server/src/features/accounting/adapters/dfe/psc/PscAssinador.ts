@@ -1,11 +1,11 @@
-import { outboundFetch } from '../../../../lib/outboundHttp';
+import { outboundFetch } from '../../../../../lib/outboundHttp';
 import type {
   AlgoritmoHash,
   AssinadorRemotoPort,
   AssinaturaResultado,
   CredencialPscResolvida,
   TipoDfeAssinado,
-} from '../AssinadorRemotoPort';
+} from '../../../ports/AssinadorRemotoPort';
 
 /**
  * PscAssinador — BE-INCR-DFE-ADN-EMENDA-PSC item E-8, contra a API v0 obrigatória e igual para todo PSC

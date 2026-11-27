@@ -34,7 +34,7 @@ import type { AuditService } from './AuditService';
 import type { AccountingScope } from '../models/AccountingScope';
 import { accountingScopeWhere } from '../models/AccountingScope';
 import { resolveAccountingScopeInternal } from '../models/resolveAccountingScopeInternal';
-import type { CredencialPscResolvida, TipoDfeAssinado } from '../dfe/AssinadorRemotoPort';
+import type { CredencialPscResolvida, TipoDfeAssinado } from '../ports/AssinadorRemotoPort';
 import type { UnitCnpjResolver } from './FiscalCertificateService';
 
 /** `policy` = política de rede do ponto (ver `OUTBOUND_POLICY`); sem ela, 1 prazo de `PSC_HTTP_TIMEOUT_MS` por tentativa. */

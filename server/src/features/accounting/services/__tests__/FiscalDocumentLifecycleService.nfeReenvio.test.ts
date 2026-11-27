@@ -6,7 +6,7 @@ const mockPort = {
   cancelar: jest.fn(),
   verifyWebhook: jest.fn(),
 };
-jest.mock('../../dfe/selectDfeEmissor', () => ({
+jest.mock('../../adapters/dfe/selectDfeEmissor', () => ({
   __esModule: true,
   selectDfeEmissor: () => ({ enabled: true, ambiente: 'producao', port: mockPort }),
 }));

@@ -2,9 +2,9 @@ import { generateKeyPairSync } from 'node:crypto';
 import { serializeNfe, IDE_ORDER, partesDaChave } from '../nfeXml';
 import { assinarEnveloped, digestValueDe } from '../dfeXmlSign';
 import { verifyNfeSignature } from '../nfeSignature';
-import { PscAssinador, HASH_OID } from '../../features/accounting/dfe/psc/PscAssinador';
-import { FakePscServer } from '../../features/accounting/dfe/psc/FakePscServer';
-import type { CredencialPscResolvida } from '../../features/accounting/dfe/AssinadorRemotoPort';
+import { PscAssinador, HASH_OID } from '../../features/accounting/adapters/dfe/psc/PscAssinador';
+import { FakePscServer } from '../../features/accounting/adapters/dfe/psc/FakePscServer';
+import type { CredencialPscResolvida } from '../../features/accounting/ports/AssinadorRemotoPort';
 import { nfceNumerada } from '../../features/accounting/models/__tests__/nfeMontagem.fixture';
 import { makeTestCert } from '../../../test/helpers/nfeSignature';
 
