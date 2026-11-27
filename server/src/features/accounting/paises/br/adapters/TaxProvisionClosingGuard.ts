@@ -1,8 +1,8 @@
-import { ValidationError } from '../../../../lib/errors';
-import { provisaoPendente } from '../../models/taxAssessmentProvisao';
-import type { ITaxAssessmentRepository } from '../../repositories/ITaxAssessmentRepository';
-import type { AccountingScope } from '../../models/AccountingScope';
-import type { ClosingGuard } from '../../ports/LedgerPorts';
+import { ValidationError } from '../../../../../lib/errors';
+import { provisaoPendente } from '../../../models/taxAssessmentProvisao';
+import type { ITaxAssessmentRepository } from '../../../repositories/ITaxAssessmentRepository';
+import type { AccountingScope } from '../../../models/AccountingScope';
+import type { ClosingGuard } from '../../../ports/LedgerPorts';
 
 /**
  * X7 Fase A item 18 (F-TA-8 a): sem a provisão de IRPJ/CSLL, a DRE e a ECD do ano saem sem imposto (ADR §7). Decisão do

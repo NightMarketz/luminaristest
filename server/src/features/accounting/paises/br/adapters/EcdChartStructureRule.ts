@@ -1,6 +1,6 @@
-import { ValidationError } from '../../../../lib/errors';
-import type { AccountNature } from '../../fixtures/ChartOfAccountsFixture';
-import type { ChartStructureRule } from '../../ports/LedgerPorts';
+import { ValidationError } from '../../../../../lib/errors';
+import type { AccountNature } from '../../../fixtures/ChartOfAccountsFixture';
+import type { ChartStructureRule } from '../../../ports/LedgerPorts';
 
 /** Natureza que entra na REGRA_VALIDA_NIVEL_CONTAS (Manual ECD L9 p. 120): COD_NAT 01/02/03. */
 export const PATRIMONIAL_NATURES: ReadonlyArray<AccountNature> = ['Asset', 'Liability', 'Equity'];

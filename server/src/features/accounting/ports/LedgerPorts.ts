@@ -15,7 +15,7 @@ import type { AccountingScope } from '../models/AccountingScope';
 
 /**
  * Regra de estrutura do plano de contas de um país (código, nível, conta superior). BR: Manual da ECD
- * (REGRA_VALIDA_NIVEL_CONTAS + I050.COD_CTA_SUP) — `paises/br/EcdChartStructureRule`.
+ * (REGRA_VALIDA_NIVEL_CONTAS + I050.COD_CTA_SUP) — `paises/br/adapters/EcdChartStructureRule`.
  */
 export interface ChartStructureRule {
   /** Lança `ValidationError` quando a conta nova fere a regra. `findByCode` lê o plano do escopo (conta superior). */

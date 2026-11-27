@@ -18,7 +18,7 @@
 import { ReconciliationService, RECONCILE_WINDOW_DAYS, RECONCILE_CHUNK_SIZE } from '../ReconciliationService';
 import { ForbiddenError, NotFoundError, ServiceError, ValidationError } from '../../../../lib/errors';
 import type { AccountingScope } from '../../models/AccountingScope';
-import { statementParserBr } from '../../paises/br/StatementParserBr';
+import { statementParserBr } from '../../paises/br/adapters/StatementParserBr';
 
 const scope: AccountingScope = {
   ownerUserId: 'u1',

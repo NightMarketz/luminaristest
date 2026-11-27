@@ -13,7 +13,7 @@
 import { ReconciliationService } from '../ReconciliationService';
 import { NotFoundError, ServiceError, ValidationError } from '../../../../lib/errors';
 import type { AccountingScope } from '../../models/AccountingScope';
-import { statementParserBr } from '../../paises/br/StatementParserBr';
+import { statementParserBr } from '../../paises/br/adapters/StatementParserBr';
 
 const scope: AccountingScope = {
   ownerUserId: 'u1',

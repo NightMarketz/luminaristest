@@ -1,8 +1,8 @@
 import type { Prisma } from 'generated/prisma';
-import { AppError } from '../../../../lib/errors';
-import type { ILalurRepository } from '../../repositories/ILalurRepository';
-import type { AccountingScope } from '../../models/AccountingScope';
-import type { AccountDeletionGuard } from '../../ports/LedgerPorts';
+import { AppError } from '../../../../../lib/errors';
+import type { ILalurRepository } from '../../../repositories/ILalurRepository';
+import type { AccountingScope } from '../../../models/AccountingScope';
+import type { AccountDeletionGuard } from '../../../ports/LedgerPorts';
 
 /**
  * ECF 3C item 19 (espelho de `LalurService.archiveParteB`): um ajuste vivo da Parte A com a conta sairia no M310/M360

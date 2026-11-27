@@ -1,6 +1,6 @@
-import { parseCnab } from '../../../../lib/cnab';
-import { parseOfx } from '../../../../lib/ofx';
-import type { StatementParser } from '../../ports/LedgerPorts';
+import { parseCnab } from '../../../../../lib/cnab';
+import { parseOfx } from '../../../../../lib/ofx';
+import type { StatementParser } from '../../../ports/LedgerPorts';
 
 /**
  * Formatos de extrato bancário do Brasil (OFX dos bancos, CNAB 240/400 da FEBRABAN) normalizados para a tabela comum do

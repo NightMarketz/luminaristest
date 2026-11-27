@@ -1,11 +1,11 @@
-import { parseCnab } from '../../../../../lib/cnab';
-import { AppError, ValidationError } from '../../../../../lib/errors';
-import { ExerciseClosingService } from '../../../services/ExerciseClosingService';
+import { parseCnab } from '../../../../../../lib/cnab';
+import { AppError, ValidationError } from '../../../../../../lib/errors';
+import { ExerciseClosingService } from '../../../../services/ExerciseClosingService';
 import { ecdChartStructureRule } from '../EcdChartStructureRule';
 import { LalurAccountDeletionGuard } from '../LalurAccountDeletionGuard';
 import { statementParserBr } from '../StatementParserBr';
 import { TaxProvisionClosingGuard } from '../TaxProvisionClosingGuard';
-import type { AccountingScope } from '../../../models/AccountingScope';
+import type { AccountingScope } from '../../../../models/AccountingScope';
 
 /**
  * Onda 1.2: os adaptadores BR das portas do núcleo do razão (`ports/LedgerPorts.ts`). As regras que antes viviam DENTRO de

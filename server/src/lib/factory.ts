@@ -106,10 +106,10 @@ import { FiscalDocumentRepository } from '../features/accounting/repositories/Fi
 import { FiscalNumberVoidRepository } from '../features/accounting/repositories/FiscalNumberVoidRepository';
 import { LalurRepository } from '../features/accounting/repositories/LalurRepository';
 // Onda 1.2: adaptadores BR das portas do núcleo do razão (regra C1) — montados só aqui.
-import { ecdChartStructureRule } from '../features/accounting/paises/br/EcdChartStructureRule';
-import { LalurAccountDeletionGuard } from '../features/accounting/paises/br/LalurAccountDeletionGuard';
-import { TaxProvisionClosingGuard } from '../features/accounting/paises/br/TaxProvisionClosingGuard';
-import { statementParserBr } from '../features/accounting/paises/br/StatementParserBr';
+import { ecdChartStructureRule } from '../features/accounting/paises/br/adapters/EcdChartStructureRule';
+import { LalurAccountDeletionGuard } from '../features/accounting/paises/br/adapters/LalurAccountDeletionGuard';
+import { TaxProvisionClosingGuard } from '../features/accounting/paises/br/adapters/TaxProvisionClosingGuard';
+import { statementParserBr } from '../features/accounting/paises/br/adapters/StatementParserBr';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
 import { PackageAcceptanceRepository } from '../features/packages/repositories/PackageAcceptanceRepository';
 

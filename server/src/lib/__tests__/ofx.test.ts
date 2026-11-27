@@ -13,7 +13,7 @@
 import { parseOfx } from '../ofx';
 import { ReconciliationService } from '../../features/accounting/services/ReconciliationService';
 import { ValidationError } from '../errors';
-import { statementParserBr } from '../../features/accounting/paises/br/StatementParserBr';
+import { statementParserBr } from '../../features/accounting/paises/br/adapters/StatementParserBr';
 import type { AccountingScope } from '../../features/accounting/models/AccountingScope';
 
 /** Wrap one or more <STMTTRN> blocks in a minimal single-account OFX 1.x (SGML) envelope. */
