@@ -1,71 +1,21 @@
 /**
  * EmployeesPlugin
  *
- * Validates employee records for operational readiness:
- * - Requires either an assigned unit or at least one valid work day in schedule
- * - Ensures e-mail presence (format/unique are covered by schema/service)
- * - Checks work schedule coherence per day (start/end pairs and ordering)
+ * Validates employee records for operational readiness: e-mail presence (format/unique are covered by schema/service).
+ *
+ * BE-INCR-ESCALA-BASE item 23 (F-ESC-12): the legacy `workSchedule` is no longer read here. The availability lives in the
+ * scheduling tables (`schedules`/`scheduleShifts`), and the unit stays optional, as the field already is (BRIEF §6 item 4:
+ * the item-21 inventory found no employee with a schedule and without a unit).
  */
 import type { RulePlugin, RuleContext } from '../RuleTypes';
 import { ValidationError } from '../../../../lib/errors';
 import { tableMatches } from '../shared/tableFinder';
 
-/** Returns true when the schedule contains at least one day with start and end. */
-function hasAtLeastOneWorkDay(schedule: unknown): boolean {
-  if (!schedule || typeof schedule !== 'object') return false;
-  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  for (const d of days) {
-    const entry = (schedule as Record<string, unknown>)[d] as Record<string, unknown> | undefined;
-    if (!entry) continue;
-    const start = String(entry.start || '').trim();
-    const end = String(entry.end || '').trim();
-    if (start && end) return true;
-  }
-  return false;
-}
-
-/**
- * Core employee validation combining unit assignment vs. schedule availability,
- * mandatory e-mail, and per-day schedule consistency checks.
- */
-async function validateEmployee(ctx: RuleContext, after: Record<string, unknown>) {
-  const unitId = String(after?.unitId || '').trim();
-  const schedule = after?.workSchedule;
-  const ok = Boolean(unitId) || hasAtLeastOneWorkDay(schedule);
-  if (!ok) {
-    throw new ValidationError('Selecione a unidade ou defina ao menos um dia de trabalho.', {
-      unitId: ['Obrigatório se não houver jornada definida'],
-      workSchedule: ['Defina ao menos um dia com início e fim'],
-    });
-  }
-
+async function validateEmployee(_ctx: RuleContext, after: Record<string, unknown>) {
   // Email obrigatório, formato validado pelo schema, e unicidade já checada no serviço.
   const email = String(after?.email || '').trim();
   if (!email) {
     throw new ValidationError('E-mail é obrigatório.', { email: ['E-mail é obrigatório.'] });
-  }
-
-  // Se workSchedule existir, validar coerência simples por dia
-  if (schedule && typeof schedule === 'object') {
-    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    for (const d of days) {
-      const entry = (schedule as Record<string, unknown>)[d] as Record<string, unknown> | undefined;
-      if (!entry) continue;
-      const start = String(entry.start || '').trim();
-      const end = String(entry.end || '').trim();
-      if ((start && !end) || (!start && end)) {
-        throw new ValidationError('Horário de trabalho incompleto em um dos dias.', { workSchedule: [`Dia ${d}: informe início e fim ou deixe ambos vazios.`] });
-      }
-      if (start && end) {
-        const [sh, sm] = start.split(':').map(Number);
-        const [eh, em] = end.split(':').map(Number);
-        const sMin = (sh || 0) * 60 + (sm || 0);
-        const eMin = (eh || 0) * 60 + (em || 0);
-        if (eMin <= sMin) {
-          throw new ValidationError('Horário inválido: fim deve ser após o início.', { workSchedule: [`Dia ${d}: fim deve ser após início.`] });
-        }
-      }
-    }
   }
 }
 

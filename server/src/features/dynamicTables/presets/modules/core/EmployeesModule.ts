@@ -57,7 +57,9 @@ export const employeesModule = {
         type: 'json',
         required: false,
         searchable: false,
-        description: 'Ex: { "monday": { "start": "09:00", "end": "18:00" } }',
+        // BE-INCR-ESCALA-BASE item 23 (F-ESC-12): legado, migrado para `schedules` (item 22); só leitura até sair.
+        readOnly: true,
+        description: 'Legacy weekly hours, migrated to the schedule tables. Read-only.',
       },
     ],
     // BE-INCR-ESCALA-BASE item 16: pessoa com escala viva não se apaga (as outras referências seguem o RESTRICT padrão).
