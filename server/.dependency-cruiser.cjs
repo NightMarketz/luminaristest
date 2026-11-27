@@ -12,14 +12,22 @@ const PRISMA = '^src/lib/prisma\\.ts$';
 // models/dtos não a importam (L5/L6); o `*.types.ts` passa: carrega tipo, enum e constante de `models/` e `dtos/` da
 // própria feature e não importa mais nada (regra M4).
 const PUBLIC_EXEC = '^src/features/[^/]+/public/(?!.*\\.types\\.ts$)';
-// ADR-MODULE-BOUNDARIES §10, F-MB-1 (b) e F-MB-3 (c): pasta de camada de uma feature. A M2 entra por feature
-// (F-MBE-2 c): M2_FEATURES cresce a cada PR de renome e termina como `[^/]+`.
+// ADR-MODULE-BOUNDARIES §10, F-MB-1 (b) e F-MB-3 (c): pasta de camada de uma feature. A M2 entrou por feature
+// (F-MBE-2 c): M2_FEATURES cresceu a cada PR de renome e, com a `accounting` (26/11/2026), fechou em `[^/]+` — vale
+// para toda feature, inclusive as que ainda vão nascer.
 const LAYER_DIR = '/(services|repositories|policies|models|dtos|controllers|domain|ports|adapters|public)/';
-const M2_FEATURES = '(dynamicTables|analytics|sectorKits|interview|crm|fx|accountingBinding)';
-// O alvo das três regras M2: arquivo `.ts` de produção de uma feature de M2_FEATURES fora de pasta de camada.
+const M2_FEATURES = '[^/]+';
+// ETAPA DECLARADA (dono, questionário, 26/11/2026: "Fica, isenção nomeada"; lacuna L-20261127-122628-dabb):
+// `accounting/fixtures/` (plano de contas padrão) é dado do Brasil e vai para `accounting/paises/br/domain/`
+// (F-MBE-6 a), mas o núcleo do razão o importa e a porta que tira essa dependência é a do F-PBF1-7 do PAIS-NA-BORDA,
+// que ainda não existe. Até lá o arquivo fica isento POR NOME, como `dynamicTables/rules/`: não é entrada de baseline,
+// e é o único `.ts` de produção da pasta (arquivo novo em `fixtures/` reprova). Quem mover o fixture apaga esta
+// constante e a entrada `fixtures/` da LEDGER_CORE_ALLOWED.
+const M2_DECLARED_STEP = '^src/features/accounting/fixtures/ChartOfAccountsFixture\\.ts$';
+// O alvo das três regras M2: arquivo `.ts` de produção de qualquer feature fora de pasta de camada.
 const M2_OUTSIDE_LAYER = {
   path: `^src/features/${M2_FEATURES}/.+\\.ts$`,
-  pathNot: [LAYER_DIR, '^src/features/dynamicTables/rules/', TEST],
+  pathNot: [LAYER_DIR, '^src/features/dynamicTables/rules/', M2_DECLARED_STEP, TEST],
 };
 const FEATURE_LOGIC = '^src/features/[^/]+/(?!models/).+';
 const FISCAL_LIB =
@@ -212,7 +220,8 @@ module.exports = {
       comment:
         'Peça de feature mora em pasta de camada (services, repositories, policies, models, dtos, controllers, ' +
         'domain, ports, adapters, public). Sem exceção para `index.ts` (F-MB-1 b); `dynamicTables/rules/` é a pasta ' +
-        'do motor, isenta por nome (F-MB-3 c). Vale para as features de M2_FEATURES e nasce em 0 para cada uma: ' +
+        'do motor, isenta por nome (F-MB-3 c), e `accounting/fixtures/` é etapa declarada (M2_DECLARED_STEP). Vale ' +
+        'para toda feature desde 26/11/2026 (M2_FEATURES fechou em `[^/]+`) e nasce em 0: ' +
         'nunca entra no known-violations. Esta regra casa pelo `to` (arquivo importado por alguém, teste inclusive); ' +
         'a M2b e a M2c cobrem o arquivo que ninguém importa (dono, questionário, 25/11/2026: "Fechar no check:arch").',
       from: { path: '^src/' },
