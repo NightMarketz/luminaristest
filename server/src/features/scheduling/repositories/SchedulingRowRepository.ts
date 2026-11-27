@@ -7,12 +7,20 @@ import type { IDynamicTableRepository } from '../../dynamicTables/repositories/I
 import { validExceptionRows, validScheduleRows, validShiftRows, type ExceptionRow } from '../models/rows';
 import type { Interval, ScheduleTarget } from '../models/availability';
 import type { ScheduleInZone } from '../models/scheduleOverlap';
-import { resolveTimeZone } from '../models/timeZone';
-import type { ISchedulingRowRepository, SchedulingTableName } from './ISchedulingRowRepository';
+import { isSupportedTimeZone, resolveTimeZone } from '../models/timeZone';
+import type { ExceptionSourceType } from '../dtos/rows';
+import type { ISchedulingRowRepository, ProjectionRow, SchedulingTableName } from './ISchedulingRowRepository';
 
 type Reader = Pick<
   IDynamicTableRepository,
-  'findTableByInternalName' | 'findRowsByFieldValue' | 'findDataById' | 'existsByIdInTable' | 'findUnitRowState'
+  | 'findTableByInternalName'
+  | 'findRowsByFieldValue'
+  | 'findDataById'
+  | 'existsByIdInTable'
+  | 'findUnitRowState'
+  | 'findAllDataByTableId'
+  | 'findRowsByFieldValueIncludingDeleted'
+  | 'findUserIdsWithTable'
 >;
 
 const targetField = (t: ScheduleTarget) =>
@@ -86,5 +94,33 @@ export class SchedulingRowRepository implements ISchedulingRowRepository {
     const row = await this.dt.findDataById(serviceId);
     const d = Number((row?.data as Record<string, unknown> | undefined)?.duration);
     return Number.isInteger(d) && d > 0 ? d : null;
+  }
+
+  async tableId(ownerUserId: string, internalName: SchedulingTableName): Promise<string | null> {
+    return (await this.dt.findTableByInternalName(ownerUserId, internalName))?.id ?? null;
+  }
+
+  async liveUnitIds(ownerUserId: string): Promise<string[]> {
+    const units = await this.tableId(ownerUserId, 'units');
+    return units ? (await this.dt.findAllDataByTableId(units)).map((r) => r.id) : [];
+  }
+
+  async unitTimeZoneSetting(ownerUserId: string, unitId: string): Promise<string | null> {
+    if ((await this.unitState(ownerUserId, unitId)) !== 'live') return null;
+    const tz = ((await this.dt.findDataById(unitId))?.data as Record<string, unknown> | undefined)?.timeZone;
+    return typeof tz === 'string' && isSupportedTimeZone(tz) ? tz : null;
+  }
+
+  async projectionRows(ownerUserId: string, sourceType: ExceptionSourceType): Promise<ProjectionRow[]> {
+    const t = await this.tableId(ownerUserId, 'scheduleExceptions');
+    if (!t) return [];
+    return (await this.dt.findRowsByFieldValueIncludingDeleted(t, 'sourceType', sourceType))
+      .map((r) => ({ id: r.id, deleted: r.deletedAt != null, data: (r.data ?? {}) as Record<string, unknown> }))
+      .filter((r) => typeof r.data.sourceId === 'string' && r.data.sourceId !== '')
+      .map((r) => ({ ...r, sourceId: String(r.data.sourceId) }));
+  }
+
+  ownersWithTable(internalName: SchedulingTableName): Promise<string[]> {
+    return this.dt.findUserIdsWithTable(internalName);
   }
 }

@@ -106,6 +106,16 @@ export interface IDynamicTableRepository {
   findUnitRowState(ownerUserId: string, unitId: string): Promise<'live' | 'deleted' | null>;
 
   /**
+   * BE-INCR-ESCALA-BASE itens 39/45 — como `findRowsByFieldValue`, mas **inclui as soft-deletadas** (`deletedAt`
+   * preenchido). É a leitura da chave idempotente das projeções da escala, que conta a linha que o usuário apagou. A
+   * linha purgada (`PurgeDeletedRecords`, 90 dias) não volta aqui.
+   */
+  findRowsByFieldValueIncludingDeleted(tableId: string, fieldName: string, value: string): Promise<IDynamicTableData[]>;
+
+  /** BE-INCR-ESCALA-BASE itens 41/46 — os donos (`userId`) que têm a tabela `internalName` (os jobs da escala varrem por dono). */
+  findUserIdsWithTable(internalName: string): Promise<string[]>;
+
+  /**
    * Finds the parent table of a given data entry ID.
    * Useful for permission checks where you only have the dataId.
    */

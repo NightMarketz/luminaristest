@@ -1,3 +1,4 @@
+import type { ExceptionSourceType } from '../dtos/rows';
 import type { ExceptionRow } from '../models/rows';
 import type { Interval, ScheduleTarget } from '../models/availability';
 import type { ScheduleInZone } from '../models/scheduleOverlap';
@@ -26,4 +27,27 @@ export interface ISchedulingRowRepository {
   employeesOfUnit(ownerUserId: string, unitId: string): Promise<string[]>;
   /** `services.duration` em minutos, ou `null` sem duração válida. */
   serviceDurationMinutes(ownerUserId: string, serviceId: string): Promise<number | null>;
+
+  // ── Projeções (PR-4 feriado, PR-5 afastamento): só leitura; quem escreve é o serviço, pelo motor ─────────────────
+  /** Id da tabela `internalName` do dono, ou `null` se a instância não a tem. */
+  tableId(ownerUserId: string, internalName: SchedulingTableName): Promise<string | null>;
+  /** Ids das unidades vivas do dono. */
+  liveUnitIds(ownerUserId: string): Promise<string[]>;
+  /** O `units.timeZone` gravado quando é IANA válido; `null` sem fuso (o serviço grava o padrão da borda, F-ESC-18). */
+  unitTimeZoneSetting(ownerUserId: string, unitId: string): Promise<string | null>;
+  /**
+   * As `scheduleExceptions` com `sourceType` = `sourceType`, **inclusive as apagadas** (a chave idempotente das projeções
+   * conta a linha que o usuário apagou, item 39). A linha purgada (90 dias) não volta.
+   */
+  projectionRows(ownerUserId: string, sourceType: ExceptionSourceType): Promise<ProjectionRow[]>;
+  /** Os donos que têm a tabela `internalName` (varredura dos jobs da escala). */
+  ownersWithTable(internalName: SchedulingTableName): Promise<string[]>;
+}
+
+/** Uma linha de projeção da escala, viva ou apagada, com o `data` cru (o serviço compara e reescreve). */
+export interface ProjectionRow {
+  id: string;
+  sourceId: string;
+  deleted: boolean;
+  data: Record<string, unknown>;
 }
