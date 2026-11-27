@@ -423,6 +423,23 @@ export class DynamicTableRepository implements IDynamicTableRepository {
     return row.deletedAt ? 'deleted' : 'live';
   }
 
+  async findRowsByFieldValueIncludingDeleted(tableId: string, fieldName: string, value: string): Promise<IDynamicTableData[]> {
+    const jsonFieldPath = `$.${fieldName}`;
+    return this.client.$queryRaw<IDynamicTableData[]>(
+      Prisma.sql`
+        SELECT * FROM "dynamic_table_data"
+        WHERE "dynamicTableId" = ${tableId}
+          AND json_extract(data, ${jsonFieldPath}) = ${value}
+        ORDER BY "createdAt" DESC
+      `
+    );
+  }
+
+  async findUserIdsWithTable(internalName: string): Promise<string[]> {
+    const rows = await this.client.dynamicTable.findMany({ where: { internalName }, select: { userId: true }, distinct: ['userId'] });
+    return rows.map((r) => r.userId);
+  }
+
   async findTablesReferencingTableId(targetTableId: string, userId: string): Promise<IDynamicTable[]> {
     // Busca as tabelas do usuário e filtra por schemas que contenham relação apontando para targetTableId
     const rows = await this.client.dynamicTable.findMany({ where: { userId } });

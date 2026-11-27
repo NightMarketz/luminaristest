@@ -3,7 +3,8 @@
  *
  * Usa as primitivas da sincronização de preset (`PresetSyncService`): instala as quatro tabelas novas do Core na ordem
  * das relações (`resources` → `schedules` → `scheduleShifts` → `scheduleExceptions`) e roda o sync ADITIVO nas tabelas
- * que ganharam campo (`units.timeZone`; `appointments.resourceId`/`availabilityOverride*`, itens 25 e 26). Cada passo é
+ * que ganharam campo (`units.timeZone`; `appointments.resourceId`/`availabilityOverride*`, itens 25 e 26;
+ * `scheduleExceptions.disabled`, F-ESC-23). Cada passo é
  * idempotente; nenhuma linha existente muda.
  *
  * Itens 23 e 27 (emenda F-ESC-17/18 + rollout de esquema, commit 1db262968 do #1424): o sync de preset só leva campo
@@ -38,7 +39,8 @@ export interface UnitRowsPort {
 
 export const SCHEDULING_NEW_TABLES = ['resources', 'schedules', 'scheduleShifts', 'scheduleExceptions'] as const;
 /** Tabelas que ganharam campo com a escala e que o sync aditivo leva (só se a instância as tem). */
-export const SCHEDULING_SYNCED_TABLES = ['units', 'appointments'] as const;
+// `scheduleExceptions`: a instância que já tem a tabela recebe o `disabled` do F-ESC-23 (emenda 4, 97540313c).
+export const SCHEDULING_SYNCED_TABLES = ['units', 'appointments', 'scheduleExceptions'] as const;
 
 /**
  * Itens 23 e 27 — o esquema instalado com as duas mudanças que o sync aditivo não leva; `null` quando já está igual.

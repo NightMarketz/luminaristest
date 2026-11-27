@@ -14,6 +14,7 @@ import { collectionChargePollScheduler } from './jobs/CollectionChargePollSchedu
 import { mpReleaseReportScheduler } from './jobs/MpReleaseReportScheduler';
 import { legalParamsRecalcScheduler } from './jobs/LegalParamsRecalcScheduler';
 import { ptaxRateScheduler } from './jobs/PtaxRateScheduler';
+import { schedulingHolidaySyncScheduler } from './jobs/SchedulingHolidaySyncScheduler';
 import { DocumentStatus } from './features/documents/models/Document.model';
 
 const PORT = process.env.PORT || 3001;
@@ -63,6 +64,7 @@ async function bootstrap(): Promise<void> {
     ptaxRateScheduler.start(); // BE-INCR-CRM-REPORT-BUILDER PR-1 (item 23): PTAX de fechamento do BCB
     vecOrphanSweepScheduler.start(); // BE-INCR-RAG-DOCUMENTOS RAG-PR-A item 9: vetor sem Chunk, diário
     dataExchangeStaleSweepScheduler.start(); // EFX F-18.2: job de exportação preso em PROCESSING → FAILED
+    schedulingHolidaySyncScheduler.start(); // BE-INCR-ESCALA-BASE item 41: feriados da borda na escala + fuso padrão (F-ESC-18), diário
   });
 }
 
@@ -133,6 +135,7 @@ function gracefulShutdown() {
   mpReleaseReportScheduler.stop();
   legalParamsRecalcScheduler.stop();
   ptaxRateScheduler.stop();
+  schedulingHolidaySyncScheduler.stop();
   clearTimeout(purgeStartTimer);
   clearInterval(purgeInterval);
   clearInterval(processingWatchdog);

@@ -103,6 +103,18 @@ describe('item 12 — instância de antes da escala recebe tabelas e campo pela 
     // Idempotente.
     expect(await rollout.ensureInstalled(admin)).toEqual({ installed: [], synced: [] });
   });
+
+  it('F-ESC-23: scheduleExceptions instalada antes do disabled → ensureInstalled leva o campo', async () => {
+    await prisma.user.create({ data: { id: A, username: A, email: 'a@t.co', password: 'x', role: Role.USER } });
+    const ex = CoreSystemPreset.tables.scheduleExceptions;
+    const oldEx = { ...ex, schema: { ...ex.schema, fields: ex.schema.fields.filter((f) => f.name !== 'disabled') } };
+    await service.installPresetAsSystem(A, { tables: { ...CoreSystemPreset.tables, scheduleExceptions: oldEx } });
+    const rollout = new SchedulingRolloutService(new PresetSyncService(service, repo, new DynamicTablePolicy()), repo);
+    const r = await rollout.ensureInstalled(ctxOf(A, Role.ADMIN));
+    expect(r.synced).toEqual([{ table: 'scheduleExceptions', added: ['disabled'] }]);
+    const schema = (await repo.findTableByInternalName(A, 'scheduleExceptions'))?.schema as ITableSchema;
+    expect(schema.fields.find((f) => f.name === 'disabled')).toMatchObject({ type: 'boolean', required: false });
+  });
 });
 
 describe('item 13 — SchedulesPlugin em schedules', () => {
@@ -169,7 +181,7 @@ describe('item 15 — SchedulesPlugin em scheduleExceptions', () => {
     await expect(create(A, 'scheduleExceptions', hr, true)).resolves.toBeTruthy();
   });
 
-  it('HR: usuário não edita nem apaga; HOLIDAY_CALENDAR: apaga, não edita', async () => {
+  it('HR: usuário não edita nem apaga; HOLIDAY_CALENDAR: desliga, não edita nem apaga (F-ESC-23)', async () => {
     const s = await seedOwner(A);
     const hr = await create(A, 'scheduleExceptions', { unitId: s.unitId, employeeId: s.employeeId, kind: 'ABSENCE', origin: 'HR', sourceType: 'DP_ABSENCE', sourceId: 'af1', ...day }, true);
     expect(await codeOf(update(A, hr.id, { reason: 'x' }))).toBe('EXCEPTION_READ_ONLY');
@@ -178,7 +190,21 @@ describe('item 15 — SchedulesPlugin em scheduleExceptions', () => {
 
     const hol = await create(A, 'scheduleExceptions', { unitId: s.unitId, kind: 'HOLIDAY', origin: 'HOLIDAY_CALENDAR', sourceType: 'HOLIDAY', sourceId: `${s.unitId}:2026-12-25`, ...day }, true);
     expect(await codeOf(update(A, hol.id, { reason: 'x' }))).toBe('EXCEPTION_READ_ONLY');
-    await expect(del(A, hol.id)).resolves.toBeUndefined();
+    expect(await codeOf(update(A, hol.id, { reason: 'x', disabled: true }))).toBe('EXCEPTION_READ_ONLY');
+    expect(await codeOf(del(A, hol.id))).toBe('EXCEPTION_READ_ONLY');
+    // Desligar pelo motor real: o instante gravado volta como Date/ISO, e isso não conta como edição.
+    expect(await codeOf(update(A, hol.id, { disabled: true }))).toBe('OK');
+    const row = await prisma.dynamicTableData.findUnique({ where: { id: hol.id } });
+    expect(row?.deletedAt).toBeNull();
+    const stored = typeof row?.data === 'string' ? JSON.parse(row.data) : row?.data;
+    expect((stored as Record<string, unknown>).disabled).toBe(true);
+    // F-ESC-25 (b): religa; e religar junto com outra mudança segue recusado.
+    expect(await codeOf(update(A, hol.id, { disabled: false, reason: 'x' }))).toBe('EXCEPTION_READ_ONLY');
+    expect(await codeOf(update(A, hol.id, { disabled: false }))).toBe('OK');
+    expect(await codeOf(del(A, hol.id))).toBe('EXCEPTION_READ_ONLY');
+    // Só o feriado do calendário se desliga.
+    const mine = await create(A, 'scheduleExceptions', { unitId: s.unitId, kind: 'BLOCK', ...day });
+    expect(await codeOf(update(A, mine.id, { disabled: true }))).toBe('VALIDATION_ERROR');
   });
 });
 

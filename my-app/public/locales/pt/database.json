@@ -136,6 +136,7 @@
         "reason": "Motivo",
         "sourceType": "Tipo da origem",
         "sourceId": "Id da origem",
+        "disabled": "Desligado",
         "timeZone": "Fuso horário",
         "employeeId": "Colaborador",
         "startAt": "Início",

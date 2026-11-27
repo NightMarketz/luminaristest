@@ -264,6 +264,8 @@ import { FiscalNumberVoidService } from '../features/accounting/services/FiscalN
 import { LalurService } from '../features/accounting/services/LalurService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { AvailabilityService } from '../features/scheduling/services/AvailabilityService';
+import { HolidayExceptionService } from '../features/scheduling/services/HolidayExceptionService';
+import { BrHolidayCalendarAdapter } from '../features/scheduling/paises/br/adapters/BrHolidayCalendarAdapter';
 import { PackageAcceptanceService } from '../features/packages/services/PackageAcceptanceService';
 import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
 import { CrmReceivableBridge } from '../features/accounting/sync/bridges/CrmReceivableBridge';
@@ -1097,6 +1099,7 @@ export class ApplicationFactory {
     nfePreview: NfePreviewService;
     packageBalance: PackageBalanceService;
     availability: AvailabilityService;
+    holidayException: HolidayExceptionService; // BE-INCR-ESCALA-BASE PR-4 (itens 38–41)
     packageAcceptance: PackageAcceptanceService; // FE-INCR-PACOTE-VALIDADE
     legalParameter: LegalParameterService; // BE-INCR-LEGAL-PARAMS PR-1
     presetSync: PresetSyncService;
@@ -2411,6 +2414,15 @@ export class ApplicationFactory {
       accountingReview: accountingReviewService,
       packageBalance: packageBalanceService,
       availability: new AvailabilityService(this.repositories.schedulingRow, this.policies.scheduling), // BE-INCR-ESCALA-BASE PR-3
+      // BE-INCR-ESCALA-BASE PR-4 (itens 38/39; F-ESC-6, F-ESC-18): o centro lê o feriado pela porta; a borda BR a implementa.
+      holidayException: new HolidayExceptionService(
+        this.repositories.schedulingRow,
+        dynamicTableService, // isSystem: só o sistema grava origin ≠ USER (item 15)
+        dynamicTableWriteEffects,
+        new BrHolidayCalendarAdapter(legalParameterService, this.repositories.fiscalProfile),
+        this.policies.scheduling,
+        BR_DEFAULT_TIME_ZONE,
+      ),
       packageAcceptance: new PackageAcceptanceService(
         this.repositories.packageAcceptance,
         this.policies.packageAcceptance,
@@ -2874,6 +2886,7 @@ export class ApplicationFactory {
   public getLalurService = (): LalurService => this.services.lalur;
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;
   public getAvailabilityService = (): AvailabilityService => this.services.availability;
+  public getHolidayExceptionService = (): HolidayExceptionService => this.services.holidayException;
   public getPackageAcceptanceService = (): PackageAcceptanceService => this.services.packageAcceptance;
   public getLegalParameterService = (): LegalParameterService => this.services.legalParameter;
   public getTaxAssessmentRecalcService = (): TaxAssessmentRecalcService => this.services.taxAssessmentRecalc;
@@ -2904,6 +2917,8 @@ export class ApplicationFactory {
   public getChunkRepository = (): ChunkRepository => this.repositories.chunk;
   public getUserEmbedder = (): UserEmbedder => this.embedder;
   public getDynamicTableRepository = (): IDynamicTableRepository => this.repositories.dynamicTable;
+  public getUserRepository = (): IUserRepository => this.repositories.user; // BE-INCR-ESCALA-BASE itens 41/46: contexto do dono nos jobs
+  public getSchedulingRowRepository = (): ISchedulingRowRepository => this.repositories.schedulingRow; // itens 41/46: donos com a escala
   public getKnowledgeGraphRepository = (): IKnowledgeGraphRepository => this.repositories.knowledgeGraph;
 }
 

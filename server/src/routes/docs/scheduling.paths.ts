@@ -45,5 +45,31 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { description: 'unit, person, resource or service not found for this user' }
+ *   /api/scheduling/holidays/sync:
+ *     post:
+ *       summary: Project the holidays of a year as unit-wide schedule exceptions (BE-INCR-ESCALA-BASE items 39 and 40)
+ *       description: >-
+ *         One HOLIDAY exception per holiday of the unit (national, state and municipal, from the BR legal parameter
+ *         tables and the unit municipality), the whole local day in the unit time zone. Idempotent by
+ *         (sourceType, sourceId), counting the rows the user deleted, so a holiday the user removed does not come back.
+ *         Without unitId, every live unit of the user.
+ *       tags: [Scheduling]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               required: [year]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 year: { type: integer, minimum: 2024, maximum: 2100 }
+ *       responses:
+ *         '200': { description: 'data = { created, skipped, deletedByUser }' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { description: 'unit not found for this user' }
  */
 export {};

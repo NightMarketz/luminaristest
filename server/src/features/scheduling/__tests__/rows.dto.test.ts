@@ -1,4 +1,5 @@
 import { resourceSchema, scheduleExceptionSchema, scheduleSchema, scheduleShiftSchema } from '../dtos/rows';
+import { validExceptionRows } from '../models/rows';
 
 /** BE-INCR-ESCALA-BASE item 1 — cada `superRefine` tem um caso que passa e um que falha. */
 describe('scheduling dtos/rows (item 1)', () => {
@@ -66,6 +67,21 @@ describe('scheduling dtos/rows (item 1)', () => {
     expect(scheduleExceptionSchema.safeParse({ ...exception, origin: 'HOLIDAY_CALENDAR', kind: 'HOLIDAY', sourceType: 'HOLIDAY', sourceId: 'u1:2026-12-25' }).success).toBe(true);
     expect(scheduleExceptionSchema.safeParse({ ...exception, origin: 'HR', sourceType: undefined }).success).toBe(false);
     expect(scheduleExceptionSchema.safeParse({ ...exception, sourceType: 'HOLIDAY', sourceId: 'x' }).success).toBe(false);
+  });
+
+  it('F-ESC-23: disabled só no feriado do calendário; a linha desligada sai do gate e da leitura', () => {
+    const holiday = { ...exception, origin: 'HOLIDAY_CALENDAR', kind: 'HOLIDAY', sourceType: 'HOLIDAY', sourceId: 'u1:2026-12-25' };
+    expect(scheduleExceptionSchema.safeParse({ ...holiday, disabled: true }).success).toBe(true);
+    expect(scheduleExceptionSchema.safeParse({ ...exception, disabled: false }).success).toBe(true);
+    const userOff = scheduleExceptionSchema.safeParse({ ...exception, disabled: true });
+    expect(userOff.success).toBe(false);
+    expect(userOff.error?.issues[0].path).toEqual(['disabled']);
+    const rows = [
+      { id: 'on', data: holiday },
+      { id: 'off', data: { ...holiday, sourceId: 'u1:2026-12-31', disabled: true } },
+      { id: 'user', data: { ...exception, disabled: false } },
+    ];
+    expect(validExceptionRows(rows).map((r) => r.id)).toEqual(['on', 'user']);
   });
 
   it('resource: nome e tipo obrigatórios; isActive default true', () => {

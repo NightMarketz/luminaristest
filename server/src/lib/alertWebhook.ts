@@ -64,7 +64,9 @@ export interface AlertPayload {
     // EFX F-18.2: a varredura de job de exportação preso em PROCESSING.
     | 'data_exchange_stale_sweep'
     // CANCELLING PR-0 (0.9): pendência de cancelamento/estorno que não se resolve sozinha (BLOCKED determinístico) — o job de re-drive (PR-2) usa a mesma origem.
-    | 'subledger_redrive';
+    | 'subledger_redrive'
+    // BE-INCR-ESCALA-BASE itens 41 e 46: os dois jobs diários da escala (feriado e afastamento do DP).
+    | 'scheduling_holiday_sync' | 'scheduling_hr_absence_reconcile';
   event: 'reconcile_summary' | 'generation_failed' | 'job_failed' | 'uncaught_exception' | 'blocked_permanent';
   timestamp: string; // ISO
   [key: string]: unknown; // free-form fields per trigger (failed, blocked, jobId, kind…)

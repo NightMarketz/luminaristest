@@ -19,6 +19,7 @@ endAt: string
 reason?: string
 sourceType?: ("HOLIDAY" | "DP_ABSENCE")
 sourceId?: string
+disabled?: boolean
 }
 export interface ScheduleInput {
 employeeId?: string

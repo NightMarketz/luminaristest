@@ -6,4 +6,9 @@ export class SchedulingPolicy implements ISchedulingPolicy {
   canRead(user: UserContext, unitState: 'live' | 'deleted' | null): boolean {
     return !!user.userId && unitState === 'live';
   }
+
+  /** Item 40 — o dono grava a projeção de feriado só na própria unidade viva. */
+  canManage(user: UserContext, unitState: 'live' | 'deleted' | null): boolean {
+    return !!user.userId && unitState === 'live';
+  }
 }

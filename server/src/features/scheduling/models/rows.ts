@@ -106,5 +106,6 @@ export const validScheduleRows = (rows: Array<{ id: string; data: unknown }>) =>
   validRows(rows, (d) => scheduleSchema.safeParse(normalizeScheduleData(d)).success, toScheduleRow);
 export const validShiftRows = (rows: Array<{ id: string; data: unknown }>) =>
   validRows(rows, (d) => scheduleShiftSchema.safeParse(normalizeShiftData(d)).success, toShiftRow);
+/** F-ESC-23: a exceção desligada (feriado que o usuário abriu) não tira disponibilidade no gate nem na leitura. */
 export const validExceptionRows = (rows: Array<{ id: string; data: unknown }>) =>
-  validRows(rows, (d) => scheduleExceptionSchema.safeParse(normalizeExceptionData(d)).success, toExceptionRow);
+  validRows(rows, (d) => scheduleExceptionSchema.safeParse(normalizeExceptionData(d)).success, toExceptionRow).filter((e) => e.disabled !== true);

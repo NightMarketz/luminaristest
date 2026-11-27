@@ -2674,6 +2674,15 @@
                   "required": false,
                   "searchable": false,
                   "type": "string"
+                },
+                {
+                  "defaultValue": false,
+                  "description": "A calendar holiday the user opened: it stays (the sync does not recreate it) and blocks nothing.",
+                  "label": "Disabled",
+                  "name": "disabled",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
                 }
               ]
             }
@@ -6064,6 +6073,15 @@
                   "required": false,
                   "searchable": false,
                   "type": "string"
+                },
+                {
+                  "defaultValue": false,
+                  "description": "A calendar holiday the user opened: it stays (the sync does not recreate it) and blocks nothing.",
+                  "label": "Disabled",
+                  "name": "disabled",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
                 }
               ]
             }
@@ -9305,6 +9323,15 @@
                   "required": false,
                   "searchable": false,
                   "type": "string"
+                },
+                {
+                  "defaultValue": false,
+                  "description": "A calendar holiday the user opened: it stays (the sync does not recreate it) and blocks nothing.",
+                  "label": "Disabled",
+                  "name": "disabled",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
                 }
               ]
             }
@@ -12589,6 +12616,15 @@
                   "required": false,
                   "searchable": false,
                   "type": "string"
+                },
+                {
+                  "defaultValue": false,
+                  "description": "A calendar holiday the user opened: it stays (the sync does not recreate it) and blocks nothing.",
+                  "label": "Disabled",
+                  "name": "disabled",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
                 }
               ]
             }
@@ -15865,6 +15901,15 @@
                   "required": false,
                   "searchable": false,
                   "type": "string"
+                },
+                {
+                  "defaultValue": false,
+                  "description": "A calendar holiday the user opened: it stays (the sync does not recreate it) and blocks nothing.",
+                  "label": "Disabled",
+                  "name": "disabled",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
                 }
               ]
             }
@@ -19388,6 +19433,15 @@
                   "required": false,
                   "searchable": false,
                   "type": "string"
+                },
+                {
+                  "defaultValue": false,
+                  "description": "A calendar holiday the user opened: it stays (the sync does not recreate it) and blocks nothing.",
+                  "label": "Disabled",
+                  "name": "disabled",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
                 }
               ]
             }
@@ -22786,6 +22840,15 @@
                   "required": false,
                   "searchable": false,
                   "type": "string"
+                },
+                {
+                  "defaultValue": false,
+                  "description": "A calendar holiday the user opened: it stays (the sync does not recreate it) and blocks nothing.",
+                  "label": "Disabled",
+                  "name": "disabled",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
                 }
               ]
             }
@@ -26035,6 +26098,15 @@
                   "required": false,
                   "searchable": false,
                   "type": "string"
+                },
+                {
+                  "defaultValue": false,
+                  "description": "A calendar holiday the user opened: it stays (the sync does not recreate it) and blocks nothing.",
+                  "label": "Disabled",
+                  "name": "disabled",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
                 }
               ]
             }
@@ -29327,6 +29399,15 @@
                   "required": false,
                   "searchable": false,
                   "type": "string"
+                },
+                {
+                  "defaultValue": false,
+                  "description": "A calendar holiday the user opened: it stays (the sync does not recreate it) and blocks nothing.",
+                  "label": "Disabled",
+                  "name": "disabled",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
                 }
               ]
             }
@@ -32611,6 +32692,15 @@
                   "required": false,
                   "searchable": false,
                   "type": "string"
+                },
+                {
+                  "defaultValue": false,
+                  "description": "A calendar holiday the user opened: it stays (the sync does not recreate it) and blocks nothing.",
+                  "label": "Disabled",
+                  "name": "disabled",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
                 }
               ]
             }

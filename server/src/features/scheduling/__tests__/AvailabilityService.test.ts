@@ -31,6 +31,11 @@ function fakeRepo(over: Partial<ISchedulingRowRepository> = {}): ISchedulingRowR
     busy: async () => [],
     employeesOfUnit: async () => [],
     serviceDurationMinutes: async () => 60,
+    tableId: async () => null,
+    liveUnitIds: async () => [],
+    unitTimeZoneSetting: async () => null,
+    projectionRows: async () => [],
+    ownersWithTable: async () => [],
     ...over,
   };
 }
