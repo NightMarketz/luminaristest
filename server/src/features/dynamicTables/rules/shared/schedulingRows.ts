@@ -15,7 +15,7 @@ import {
   type ScheduleWithShifts,
 } from '../../../scheduling/models/rows';
 import { resolveTimeZone } from '../../../scheduling/models/timeZone';
-import type { ScheduleTarget } from '../../../scheduling/models/availability';
+import { resolveAvailability, type Interval, type ScheduleTarget } from '../../../scheduling/models/availability';
 import type { ScheduleInZone } from '../../../scheduling/models/scheduleOverlap';
 import { scheduleExceptionSchema, scheduleSchema, scheduleShiftSchema } from '../../../scheduling/dtos/rows';
 import { normalizeExceptionData, normalizeScheduleData, normalizeShiftData } from '../../../scheduling/models/rows';
@@ -83,4 +83,24 @@ export async function loadApplicableExceptions(ctx: RuleContext, target: Schedul
     ? parsed(await ctx.repository.findRowsByFieldValue(t.id, 'unitId', unitId), okException, toExceptionRow).filter((e) => !e.employeeId && !e.resourceId)
     : [];
   return [...mine, ...unitWide];
+}
+
+/**
+ * Item 24 — os padrões do alvo que valem na unidade do agendamento: os daquela unidade e os sem unidade (migração de
+ * funcionário sem unidade, item 22). Ver a lacuna de spec do item 24 sobre o padrão só de outra unidade.
+ */
+export function schedulesForUnit(all: ScheduleInZone[], unitId: string | null): ScheduleInZone[] {
+  return all.filter((s) => !s.schedule.unitId || s.schedule.unitId === unitId);
+}
+
+/**
+ * Itens 24 e 28 — a disponibilidade do alvo na unidade, dentro de `range`, no fuso da unidade (item 11). `null` = o alvo
+ * não tem padrão vivo (F-ESC-15 a: sem restrição).
+ */
+export async function targetAvailability(ctx: RuleContext, target: ScheduleTarget, unitId: string | null, range: Interval): Promise<Interval[] | null> {
+  const all = await loadTargetSchedules(ctx, target, unitId);
+  if (all.length === 0) return null;
+  const exceptions = await loadApplicableExceptions(ctx, target, unitId);
+  const timeZone = await unitTimeZone(ctx, unitId);
+  return resolveAvailability({ schedules: schedulesForUnit(all, unitId), exceptions, timeZone, range });
 }
