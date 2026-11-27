@@ -14,7 +14,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { SIMPLES_SEED_FILE, SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
-import { LEGAL_PARAMETER_TABELAS, TABELAS_MIGRADAS, linhaLegalVigente } from '../../../legalParameters/models/legalParameter';
+import { LEGAL_PARAMETER_TABELAS, TABELAS_MIGRADAS, linhaLegalVigente, linhasEmVigor } from '../../../legalParameters/models/legalParameter';
 import { EnquadramentoJsonSchema, FaixaJsonSchema, ReparticaoJsonSchema, TetoIssJsonSchema } from '../simplesCalc';
 
 const REPO_ROOT = path.resolve(__dirname, '../../../../../..');
@@ -269,5 +269,61 @@ describe('Res. CGSN 190/2026 — fontes das linhas de 2027 (DEFIS e SIMEI)', () 
     expect(linhaLegalVigente(todas, 'SIMEI_VALOR', 'ICMS', '2026-12-31')?.fonte).toBe('Res. CGSN 140/2018 art. 101 II');
     expect(linhaLegalVigente(todas, 'SIMEI_VALOR', 'ISS', '2026-12-31')?.fonte).toBe('Res. CGSN 140/2018 art. 101 III');
     expect(linhaLegalVigente(todas, 'SIMEI_VALOR', 'ICMS', '2029-01-01')?.valorInt).toBe(90);
+  });
+});
+
+// BE-INCR-SIMPLES-CGSN-196 itens 2 e 5 (dono, chat, 26/11/2026: "Ratifico F-196-1 a 4 como recomendado, executa").
+describe('Res. CGSN 196/2026 — semente v7 (teto do ISS 2027–28 com IBS; DEFIS pelo art. 144-F)', () => {
+  const V7 = path.join(REPO_ROOT, 'server/prisma/data/legal_parameters_simples_v7.sql');
+  const vigentes = linhasEmVigor(legalParamsSeedRows(SIMPLES_SEED_FILES));
+  const teto = (anexo: string, d: string) => {
+    const l = linhaLegalVigente(vigentes, 'SIMPLES_TETO_ISS', anexo, d, null);
+    return { id: l?.id, ...json(l?.valorJson ?? null) };
+  };
+
+  it('o migration.sql carrega o texto do arquivo, byte a byte, e só insere', () => {
+    const mig = norm(readFileSync(path.join(REPO_ROOT, 'server/prisma/migrations/20261126180000_seed_simples_res_cgsn_196/migration.sql'), 'utf8'));
+    expect(mig).toContain(norm(readFileSync(V7, 'utf8')).trimEnd());
+    expect(mig.split('\n').filter((l) => l.trim() && !l.startsWith('--')).every((l) => l.startsWith('INSERT OR IGNORE INTO "legal_parameters"'))).toBe(true);
+  });
+
+  it('item 2: as linhas do teto na v7 são as que o gerador produz (`--correcoes`), byte a byte', () => {
+    const geradas = execFileSync('node', [SCRIPT, '--correcoes'], { encoding: 'utf8' }).trimEnd().split('\n');
+    expect(geradas).toHaveLength(2);
+    const v7 = norm(readFileSync(V7, 'utf8')).split('\n');
+    for (const g of geradas) expect(v7).toContain(g);
+  });
+
+  it('item 2: 2027–2028, Anexos III e IV — transfereAIbs true, mesmos percentuais da linha substituída; antes e depois não mudam', () => {
+    for (const d of ['2027-01-01', '2028-12-31']) {
+      expect(teto('III', d)).toEqual({ id: 'sn8-teto-iii-2027-01-01', percentualBp: 500, limiarAliquotaEfetiva: '14.92537', transfereAIbs: true, transferencia: { IRPJ: 602, CSLL: 526, CBS: 2320, CPP: 6526, IBS: 26 } });
+      expect(teto('IV', d)).toEqual({ id: 'sn8-teto-iv-2027-01-01', percentualBp: 500, limiarAliquotaEfetiva: '12.5', transfereAIbs: true, transferencia: { IRPJ: 3133, CSLL: 3200, CBS: 3627, IBS: 40 } });
+    }
+    expect([teto('III', '2026-12-31').transfereAIbs, teto('IV', '2026-12-31').transfereAIbs]).toEqual([false, false]);
+    expect([teto('III', '2029-01-01').id, teto('III', '2029-01-01').transfereAIbs]).toEqual(['sn1-teto-iii-2029-01-01', true]);
+    // De 2027 em diante nenhum teto vigente fica sem IBS (o artigo da LC 214 art. 517 vale para todos os anos).
+    for (const ano of [2027, 2028, 2029, 2030, 2031, 2032]) for (const a of ['III', 'IV']) expect([ano, a, teto(a, `${ano}-06-01`).transfereAIbs]).toEqual([ano, a, true]);
+  });
+
+  it('item 2: regerar a v1 não "conserta" a nota — ela segue `false` (o que a lei transcrita diz) e a v7 a substitui', () => {
+    const v1 = rows.filter((r) => r.id === 'sn1-teto-iii-2027-01-01' || r.id === 'sn1-teto-iv-2027-01-01');
+    expect(v1.map((r) => json(r.valorJson).transfereAIbs)).toEqual([false, false]);
+    const v7 = legalParamsSeedRows(V7).filter((r) => r.tabela === 'SIMPLES_TETO_ISS');
+    expect(v7.map((r) => [r.supersedesId, r.status])).toEqual([['sn1-teto-iii-2027-01-01', 'PUBLISHED'], ['sn1-teto-iv-2027-01-01', 'PUBLISHED']]);
+    for (const r of v7) {
+      expect(r.fonte).toMatch(/LC 123\/2006 art\. 18 § 1º-B I \(red\. LC 214\/2025 art\. 517, incl\. LC 227\/2026\)/);
+      expect(r.fonte).toMatch(/Res\. CGSN 196\/2026 art\. 3º/);
+      expect(r.fonteSha256).toMatch(/^[0-9a-f]{64}$/);
+    }
+  });
+
+  it('item 5: DEFIS do ano-calendário 2026 pelo art. 144-F, mesma vigência (até 31/03/2027) e valor; a ambiguidade A1 sai da fonte', () => {
+    const l = linhaLegalVigente(vigentes, 'OBRIGACAO_REGIME', 'DEFIS', '2027-02-15', 'SIMPLES');
+    const sn7 = legalParamsSeedRows(SIMPLES_SEED_FILES).find((r) => r.id === 'sn7-obr-defis-simples');
+    expect([l?.id, l?.supersedesId, l?.vigenteDesde, l?.vigenteAte]).toEqual(['sn8-obr-defis-simples', 'sn7-obr-defis-simples', '2018-01-01', '2027-03-31']);
+    expect(l?.valorJson).toBe(sn7?.valorJson);
+    expect(l?.fonte).toMatch(/art\. 144-F \(incl\. Res\. CGSN 196\/2026 art\. 1º/);
+    expect(l?.fonte).toMatch(/31\/03\/2027/);
+    expect(l?.fonte).not.toMatch(/ambiguidade A1|em aberto/);
   });
 });
