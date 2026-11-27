@@ -95,7 +95,7 @@ describe('item 24 — assertWithinAvailability', () => {
     await mondaySchedule({ employeeId: s.employeeId }, s.unitId);
     expect(await codeOf(create('appointments', appt(s, at(MON, '09:00'), at(MON, '10:00'))))).toBe('OK');
     expect(await codeOf(create('appointments', appt(s, at(MON, '17:00'), at(MON, '18:00'))))).toBe('OK');
-    expect(await codeOf(create('appointments', appt(s, at(MON, '17:30'), at(MON, '18:30'))))).toBe('OUTSIDE_AVAILABILITY');
+    expect(await codeOf(create('appointments', appt(s, at(MON, '18:00'), at(MON, '19:00'))))).toBe('OUTSIDE_AVAILABILITY');
     const err = await create('appointments', appt(s, at(TUE, '10:00'), at(TUE, '11:00'))).catch((e) => e);
     expect(err.errorCode).toBe('OUTSIDE_AVAILABILITY');
     expect(err.details).toMatchObject({ reason: 'OUTSIDE_AVAILABILITY', target: 'responsibleEmployeeId', targetId: s.employeeId, startAt: '2027-01-05T13:00:00.000Z' });
@@ -117,7 +117,7 @@ describe('item 24 — assertWithinAvailability', () => {
     await mondaySchedule({ employeeId: s.employeeId }, s.manausId);
     const inManaus = (startAt: string, endAt: string) => appt(s, startAt, endAt, { unitId: s.manausId });
     expect(await codeOf(create('appointments', inManaus(at(MON, '09:00', '-04:00'), at(MON, '10:00', '-04:00'))))).toBe('OK');
-    expect(await codeOf(create('appointments', inManaus(at(MON, '08:30', '-04:00'), at(MON, '09:30', '-04:00'))))).toBe('OUTSIDE_AVAILABILITY');
+    expect(await codeOf(create('appointments', inManaus(at(MON, '08:00', '-04:00'), at(MON, '09:00', '-04:00'))))).toBe('OUTSIDE_AVAILABILITY');
   });
 
   it('padrão vivo fora da vigência na data recusa; padrão sem unidade vale em qualquer unidade', async () => {

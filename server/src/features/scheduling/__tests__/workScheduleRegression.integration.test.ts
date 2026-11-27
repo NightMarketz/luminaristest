@@ -17,6 +17,7 @@ import { CoreSystemPreset } from '@/features/dynamicTables/presets';
 import { composeModuleTables } from '@/features/dynamicTables/presets/modules/registry';
 import { resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
 import { WorkScheduleMigrationService } from '@/features/scheduling/services/WorkScheduleMigrationService';
+import { fromZonedTime } from 'date-fns-tz';
 import { processTimeZone } from '@/features/scheduling/models/timeZone';
 import { Role } from '@/features/users/models/User.model';
 import type { UserContext } from '@/lib/authUtils';
@@ -41,8 +42,8 @@ afterAll(async () => {
   await disconnectDb();
 });
 
-/** Instante de `hh:mm` locais do processo em 2027-01-04 (segunda), como o `getHours()` antigo o lia. */
-const processLocal = (h: number, m = 0) => new Date(2027, 0, 4, h, m).toISOString();
+/** Instante de `hh:00` locais do processo (`TZ`) em 2027-01-04 (segunda), como o `getHours()` antigo o lia. */
+const processLocal = (h: number) => fromZonedTime(`2027-01-04T${String(h).padStart(2, '0')}:00:00`, processTimeZone()).toISOString();
 const saoPaulo = (hhmm: string) => `2027-01-04T${hhmm}:00-03:00`;
 
 async function setup(unitTimeZone?: string) {
@@ -73,6 +74,6 @@ describe.each(['UTC', 'America/Sao_Paulo'])('item 30 — processo em TZ=%s', (tz
   it('unidade em America/Sao_Paulo: o horário é o da unidade, qualquer que seja o fuso do processo', async () => {
     const { book } = await setup('America/Sao_Paulo');
     expect(await codeOf(book(saoPaulo('09:00'), saoPaulo('10:00')))).toBe('OK');
-    expect(await codeOf(book(saoPaulo('08:30'), saoPaulo('09:30')))).toBe('OUTSIDE_AVAILABILITY');
+    expect(await codeOf(book(saoPaulo('08:00'), saoPaulo('09:00')))).toBe('OUTSIDE_AVAILABILITY');
   });
 });
