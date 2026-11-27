@@ -30,8 +30,8 @@ import {
   type ReconcileWatermarkDeps,
 } from '../accountingSyncReconcile.job';
 import type { AccountingScope } from '../../features/accounting/models/AccountingScope';
-import type { AccountingEvent } from '../../features/accounting/sync/AccountingSyncPort';
-import type { WonOpportunityFact } from '../../features/accounting/sync/bridges/CrmReceivableBridge';
+import type { AccountingEvent } from '../../features/accounting/ports/AccountingSyncPort';
+import type { WonOpportunityFact } from '../../features/accounting/services/bridges/CrmReceivableBridge';
 import { AccountingPeriodNotOpenError, MaxCentsExceededError, NoMapperForUnitError, UnknownEventKeyError } from '../../lib/errors';
 
 // Mock heavy/IO module-level imports — the CORE function under test uses none of them

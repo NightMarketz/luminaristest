@@ -20,7 +20,7 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import { CLINIC_BINDING_V2 } from '@/features/accountingBinding/domain/fixtures/clinicBinding';
-import type { AccountingEvent } from '@/features/accounting/sync/AccountingSyncPort';
+import type { AccountingEvent } from '@/features/accounting/ports/AccountingSyncPort';
 import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 
 const DONO = 'u-clinic-op';

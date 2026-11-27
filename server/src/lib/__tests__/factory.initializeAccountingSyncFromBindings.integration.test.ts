@@ -22,7 +22,7 @@ import { pushTestSchema } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import { NoActiveAccountingBindingsError, NoMapperForUnitError } from '@/lib/errors';
 import { SALE_BINDING_V1 } from '@/features/accountingBinding/domain/fixtures/saleBinding';
-import type { AccountingEvent } from '@/features/accounting/sync/AccountingSyncPort';
+import type { AccountingEvent } from '@/features/accounting/ports/AccountingSyncPort';
 
 const DONO = 'u-feeder-boot';
 const UNIDADE_COM_BINDING = 'unit-feeder-boot-a';

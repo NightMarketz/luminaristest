@@ -19,9 +19,9 @@ import type {
   FiscalDocumentWithAttempts,
   IFiscalDocumentRepository,
 } from '../repositories/IFiscalDocumentRepository';
-import { loadSalePackageInfo, loadSaleProductLines, loadSaleServiceLines } from '../sync/bridges/saleItems';
-import type { SaleServiceLine } from '../sync/bridges/saleItems';
-import { RESALE_REVENUE_ACCOUNT, SERVICE_REVENUE_ACCOUNT } from '../sync/mappers/revenueSplit';
+import { loadSalePackageInfo, loadSaleProductLines, loadSaleServiceLines } from './bridges/saleItems';
+import type { SaleServiceLine } from './bridges/saleItems';
+import { RESALE_REVENUE_ACCOUNT, SERVICE_REVENUE_ACCOUNT } from '../domain/mappers/revenueSplit';
 import { splitCents } from '../dfe/splitCents';
 import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
 import type { DpsManualPayload, DpsPayload } from '../dtos/DpsPayloadDto';

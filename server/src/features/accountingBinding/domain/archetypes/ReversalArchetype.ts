@@ -3,7 +3,7 @@ import type { LancamentoArchetype } from '../../models/types';
 /**
  * A Prensa (BE-INCR-BINDING-PRESS, Corpo A, item 4 do BRIEF) — arquétipo `reversal`
  * ('estorno-origem' no dossiê, = DEVOLUÇÃO). Extraído 1:1 de
- * `server/src/features/accounting/sync/mappers/SaleReturnedMapper.ts` (`P1-DOSSIER-arquetipos.md` §2.3).
+ * `server/src/features/accounting/domain/mappers/SaleReturnedMapper.ts` (`P1-DOSSIER-arquetipos.md` §2.3).
  *
  * EMENDA 1 do ADR §11 (legenda T5 corrigida): este arquétipo é uma DEVOLUÇÃO — um lançamento novo
  * e separado que debita a conta de contra-receita — e NÃO o mecanismo `reversedById` do núcleo

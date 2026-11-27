@@ -1,11 +1,11 @@
 import type { PostEntryInput } from '../../accounting/dtos/PostingDto';
 import { MAX_CENTS } from '../../accounting/models/money';
-import { SalePackageSoldMapper } from '../../accounting/sync/mappers/SalePackageSoldMapper';
-import { SaleCogsMapper } from '../../accounting/sync/mappers/SaleCogsMapper';
-import { SaleFinalizedMapper } from '../../accounting/sync/mappers/SaleFinalizedMapper';
-import { SaleReturnedMapper } from '../../accounting/sync/mappers/SaleReturnedMapper';
-import { SaleSettledMapper } from '../../accounting/sync/mappers/SaleSettledMapper';
-import type { AccountingEvent } from '../../accounting/sync/AccountingSyncPort';
+import { SalePackageSoldMapper } from '../../accounting/domain/mappers/SalePackageSoldMapper';
+import { SaleCogsMapper } from '../../accounting/domain/mappers/SaleCogsMapper';
+import { SaleFinalizedMapper } from '../../accounting/domain/mappers/SaleFinalizedMapper';
+import { SaleReturnedMapper } from '../../accounting/domain/mappers/SaleReturnedMapper';
+import { SaleSettledMapper } from '../../accounting/domain/mappers/SaleSettledMapper';
+import type { AccountingEvent } from '../../accounting/ports/AccountingSyncPort';
 
 /**
  * Golden test, FASE 0 (BE-INCR-BINDING-PRESS, Corpo D, item 12 do BRIEF — só a Fase 0; a Fase 1
@@ -13,7 +13,7 @@ import type { AccountingEvent } from '../../accounting/sync/AccountingSyncPort';
  * deste corpo). Fonte: `docs/accounting/P1-DOSSIER-golden-test.md` §b/§c.
  *
  * Congela, byte a byte, a saída canônica que os 5 mappers ATUAIS produzem para o corpus real das
- * suítes de `server/src/features/accounting/sync/mappers/__tests__/*.test.ts` — o alvo que a prensa
+ * suítes de `server/src/features/accounting/domain/mappers/__tests__/*.test.ts` — o alvo que a prensa
  * (intérprete + binding compilado do salão) terá que bater depois, ANTES do swap de `lib/factory.ts`.
  * Este teste NÃO chama `interpret()` nem `InterpretedEventMapper` — é regressão pura dos mappers de
  * hoje (dossiê §c, "Fase 0 — hoje, sem dependência do P1").

@@ -2,7 +2,7 @@ import type { LancamentoArchetype } from '../../models/types';
 
 /**
  * A Prensa (BE-INCR-BINDING-PRESS, Corpo A, item 4 do BRIEF) — arquétipo `cogs` ('cmv' no
- * dossiê). Extraído 1:1 de `server/src/features/accounting/sync/mappers/SaleCogsMapper.ts`
+ * dossiê). Extraído 1:1 de `server/src/features/accounting/domain/mappers/SaleCogsMapper.ts`
  * (`P1-DOSSIER-arquetipos.md` §2.5).
  *
  *   Débito  custo-mercadoria-vendida  = costCents   (SaleCogsMapper.ts:29)

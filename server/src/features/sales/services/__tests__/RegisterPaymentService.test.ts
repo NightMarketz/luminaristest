@@ -1,7 +1,7 @@
 // Mock the post-commit settlement bridge so the service test stays at the orchestration layer
 // (the bridge has its own suite). We assert the service fires it AFTER the isSystem write.
 const maybeSyncSaleSettled = jest.fn(async (..._a: unknown[]) => undefined);
-jest.mock('../../../accounting/sync/bridges/SaleSettlementBridge', () => ({
+jest.mock('../../../accounting/services/bridges/SaleSettlementBridge', () => ({
   __esModule: true,
   maybeSyncSaleSettled: (...a: unknown[]) => maybeSyncSaleSettled(...a),
 }));

@@ -28,8 +28,8 @@ import type { AccountingScope } from '@/features/accounting/models/AccountingSco
 import { dateOnlyFromDayNumber, dayNumberFromDateOnly, scopeToday } from '@/features/accounting/models/dates';
 import { centsFromDb } from '@/features/accounting/models/money';
 import { LEDGER_STATUSES } from '@/features/accounting/models/ledgerStatus';
-import { maybeSyncSalePackageSold } from '@/features/accounting/sync/bridges/SalePackageSoldBridge';
-import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
+import { maybeSyncSalePackageSold } from '@/features/accounting/services/bridges/SalePackageSoldBridge';
+import { maybeSyncSaleFinalized } from '@/features/accounting/services/bridges/SaleSalesAccountingBridge';
 
 const app = makeApp();
 const CNPJ = '11222333000181'; // DV válido

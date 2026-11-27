@@ -11,7 +11,7 @@ import { ratearReceita, ReceitaFiscalService, type VendaReconhecida } from '../R
 import { ReceitaFiscalRecebimentoService, MEIO_PACOTE } from '../ReceitaFiscalRecebimentoService';
 import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { MAX_CENTS } from '../../models/money';
-import type { SaleRevenueLine } from '../../sync/bridges/saleItems';
+import type { SaleRevenueLine } from '../bridges/saleItems';
 import type { ReceitaFiscalLinhaData } from '../../repositories/IReceitaFiscalRepository';
 
 const L = (itemRef: string, nature: 'Service' | 'Product', lineReais: number, employeeRef: string | null = null): SaleRevenueLine => ({

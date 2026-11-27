@@ -261,13 +261,13 @@ import { FiscalNumberVoidService } from '../features/accounting/services/FiscalN
 import { LalurService } from '../features/accounting/services/LalurService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { PackageAcceptanceService } from '../features/packages/services/PackageAcceptanceService';
-import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
+import { AccountingSyncService } from '../features/accounting/services/AccountingSyncService';
 import { serializeReload } from '../features/accountingBinding/domain/serializeReload';
-import { CrmReceivableBridge } from '../features/accounting/sync/bridges/CrmReceivableBridge';
+import { CrmReceivableBridge } from '../features/accounting/services/bridges/CrmReceivableBridge';
 // BE-INCR-BINDING-PRESS (F-P1-3a, item 14 do BRIEF) — os 5 mappers-à-mão de salão saíram daqui:
 // o array de IAccountingEventMapper agora é CONSTRUÍDO a partir do binding compilado do salão +
 // o intérprete fixo (`buildSaleAccountingMappers`, abaixo). As classes de mapper continuam
-// existindo em `features/accounting/sync/mappers/*` (são a referência do golden test, Fases 0/1),
+// existindo em `features/accounting/domain/mappers/*` (são a referência do golden test, Fases 0/1),
 // só não são mais instanciadas em produção por este factory.
 import { archetypeCatalog } from '../features/accountingBinding/domain/archetypes/catalog';
 import { SALE_BINDING_V2 } from '../features/accountingBinding/domain/fixtures/saleBinding';
@@ -320,7 +320,7 @@ import { SaleFiscalGuardService } from '../features/sales/services/SaleFiscalGua
 import { TaxOptimizationService } from '../features/accounting/services/TaxOptimizationService'; // EFICIENCIA-FISCAL PR-1
 import { TaxSimulationService } from '../features/accounting/services/TaxSimulationService'; // EFICIENCIA-FISCAL PR-3
 import { TaxOptimizationReportService } from '../features/accounting/services/TaxOptimizationReportService'; // EFICIENCIA-FISCAL PR-4
-import { loadUnconditionalDiscountCents } from '../features/accounting/sync/bridges/saleItems'; // EFICIENCIA-FISCAL PR-4
+import { loadUnconditionalDiscountCents } from '../features/accounting/services/bridges/saleItems'; // EFICIENCIA-FISCAL PR-4
 import { ServicoFiscalAvaliacaoService } from '../features/accounting/services/ServicoFiscalAvaliacaoService';
 import { TaxOptimizationRepository } from '../features/accounting/repositories/TaxOptimizationRepository'; // EFICIENCIA-FISCAL PR-1
 import type { ITaxOptimizationRepository } from '../features/accounting/repositories/ITaxOptimizationRepository';
@@ -375,7 +375,7 @@ import type { ISavedTableViewPolicy } from '../features/savedViews/policies/ISav
 import type { ILlmCredentialPolicy } from '../features/teammates/policies/ILlmCredentialPolicy';
 import type { ITeammatePolicy } from '../features/teammates/policies/ITeammatePolicy';
 import type { ISystemProvisioningPolicy } from '../features/onboarding/policies/ISystemProvisioningPolicy';
-import type { IAccountingEventMapper } from '../features/accounting/sync/mappers/IAccountingEventMapper';
+import type { IAccountingEventMapper } from '../features/accounting/domain/mappers/IAccountingEventMapper';
 import type { PostEntryInput } from '../features/accounting/dtos/PostingDto';
 import type { AccountingScope } from '../features/accounting/models/AccountingScope';
 import type { IAccountingBindingRepository } from '../features/accountingBinding/repositories/IAccountingBindingRepository';

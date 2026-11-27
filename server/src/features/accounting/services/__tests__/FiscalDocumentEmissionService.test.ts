@@ -21,7 +21,7 @@ jest.mock('../../../../lib/factory', () => ({
 
 import { FiscalDocumentEmissionService } from '../FiscalDocumentEmissionService';
 import { NullEmissor } from '../../dfe/NullEmissor';
-import { SERVICE_REVENUE_ACCOUNT } from '../../sync/mappers/revenueSplit';
+import { SERVICE_REVENUE_ACCOUNT } from '../../domain/mappers/revenueSplit';
 import type { AccountingScope } from '../../models/AccountingScope';
 import { PackageExpiryNfsePendingError } from '../../../../lib/errors';
 

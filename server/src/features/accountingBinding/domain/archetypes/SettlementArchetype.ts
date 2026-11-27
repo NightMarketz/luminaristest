@@ -3,7 +3,7 @@ import type { LancamentoArchetype } from '../../models/types';
 /**
  * A Prensa (BE-INCR-BINDING-PRESS, Corpo A, item 4 do BRIEF) — arquétipo `settlement`
  * ('liquidacao' no dossiê). Extraído 1:1 de
- * `server/src/features/accounting/sync/mappers/SaleSettledMapper.ts` (`P1-DOSSIER-arquetipos.md` §2.2).
+ * `server/src/features/accounting/domain/mappers/SaleSettledMapper.ts` (`P1-DOSSIER-arquetipos.md` §2.2).
  *
  *   Débito  caixa-por-metodo    = amount   (SaleSettledMapper.ts:36-42 — resolvido por
  *                                            sub-chave `paymentMethod`; papel→conta MÚLTIPLO,

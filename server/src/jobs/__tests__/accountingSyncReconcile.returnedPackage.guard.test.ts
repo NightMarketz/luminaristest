@@ -68,7 +68,7 @@ jest.mock('../../features/accounting/repositories/ReconcilePendingRepository', (
     resolvePending: jest.fn(async () => undefined),
   })),
 }));
-jest.mock('../../features/accounting/sync/bridges/saleItems', () => ({
+jest.mock('../../features/accounting/services/bridges/saleItems', () => ({
   loadSalePackageInfo: jest.fn(async () => ({
     kind: mockSaleKind.value,
     packageIds: ['pkg-1'],

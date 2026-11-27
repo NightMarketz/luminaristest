@@ -14,11 +14,11 @@ import {
   PackageWithoutValidityError,
   ValidationError,
 } from '../../../../lib/errors';
-import { loadPackageValidityDays, loadSalePackageInfo } from '../../../accounting/sync/bridges/saleItems';
+import { loadPackageValidityDays, loadSalePackageInfo } from '../../../accounting/services/bridges/saleItems';
 import { htmlToPdf } from '../../../../lib/pdf';
 
 import { FERIADOS_SEMENTE, legalParamsSemente } from '@test/helpers/legalParams';
-jest.mock('../../../accounting/sync/bridges/saleItems', () => ({
+jest.mock('../../../accounting/services/bridges/saleItems', () => ({
   loadSalePackageInfo: jest.fn(),
   loadPackageValidityDays: jest.fn(),
 }));

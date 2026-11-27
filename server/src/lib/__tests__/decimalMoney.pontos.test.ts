@@ -13,13 +13,13 @@ const SRC = join(__dirname, '..', '..');
 
 /** [arquivo, nº de chamadas a `roundReaisToCents` que ele tem de ter] */
 const PONTOS: ReadonlyArray<readonly [string, number]> = [
-  ['features/accounting/sync/mappers/SaleFinalizedMapper.ts', 1],
-  ['features/accounting/sync/mappers/SalePackageSoldMapper.ts', 1],
-  ['features/accounting/sync/mappers/SaleReturnedMapper.ts', 1],
-  ['features/accounting/sync/mappers/SaleSettledMapper.ts', 1],
-  ['features/accounting/sync/bridges/SalePackageSoldBridge.ts', 1],
-  ['features/accounting/sync/bridges/CrmReceivableBridge.ts', 1],
-  ['features/accounting/sync/bridges/saleItems.ts', 1],
+  ['features/accounting/domain/mappers/SaleFinalizedMapper.ts', 1],
+  ['features/accounting/domain/mappers/SalePackageSoldMapper.ts', 1],
+  ['features/accounting/domain/mappers/SaleReturnedMapper.ts', 1],
+  ['features/accounting/domain/mappers/SaleSettledMapper.ts', 1],
+  ['features/accounting/services/bridges/SalePackageSoldBridge.ts', 1],
+  ['features/accounting/services/bridges/CrmReceivableBridge.ts', 1],
+  ['features/accounting/services/bridges/saleItems.ts', 1],
   ['features/packages/services/PackageAcceptanceService.ts', 1],
   ['features/sales/services/RegisterPaymentService.ts', 1],
   ['jobs/accountingSyncReconcile.job.ts', 2],

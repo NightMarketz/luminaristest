@@ -9,9 +9,9 @@ import {
   CreateDynamicTableDataDto,
   UpdateDynamicTableDataDto,
 } from '@/features/dynamicTables/dtos/DynamicTable.dto';
-import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
-import { maybeSyncSalePackageSold } from '@/features/accounting/sync/bridges/SalePackageSoldBridge';
-import { maybeSyncSaleSettled } from '@/features/accounting/sync/bridges/SaleSettlementBridge';
+import { maybeSyncSaleFinalized } from '@/features/accounting/services/bridges/SaleSalesAccountingBridge';
+import { maybeSyncSalePackageSold } from '@/features/accounting/services/bridges/SalePackageSoldBridge';
+import { maybeSyncSaleSettled } from '@/features/accounting/services/bridges/SaleSettlementBridge';
 
 const cuidSchema = z.string().cuid();
 

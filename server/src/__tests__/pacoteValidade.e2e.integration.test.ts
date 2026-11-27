@@ -20,9 +20,9 @@ import { dateOnlyFromDayNumber, dayNumberFromDateOnly, scopeToday } from '@/feat
 import { centsFromDb } from '@/features/accounting/models/money';
 import { lastValidDay } from '@/features/packages/models/validity';
 import { LEDGER_STATUSES } from '@/features/accounting/models/ledgerStatus';
-import { maybeSyncSalePackageSold } from '@/features/accounting/sync/bridges/SalePackageSoldBridge';
-import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
-import { maybeSyncSaleSettled } from '@/features/accounting/sync/bridges/SaleSettlementBridge';
+import { maybeSyncSalePackageSold } from '@/features/accounting/services/bridges/SalePackageSoldBridge';
+import { maybeSyncSaleFinalized } from '@/features/accounting/services/bridges/SaleSalesAccountingBridge';
+import { maybeSyncSaleSettled } from '@/features/accounting/services/bridges/SaleSettlementBridge';
 import {
   buildPackageExpiryDeps,
   reconcilePackageBalanceVsLiability,

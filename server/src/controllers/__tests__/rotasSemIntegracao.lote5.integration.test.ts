@@ -19,7 +19,7 @@ import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
 import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
-import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
+import { maybeSyncSaleFinalized } from '@/features/accounting/services/bridges/SaleSalesAccountingBridge';
 
 const app = makeApp();
 const A = '/api/accounting';

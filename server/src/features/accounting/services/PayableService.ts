@@ -77,7 +77,7 @@ import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepos
 import type { ISourceProvenanceRepository } from '../repositories/ISourceProvenanceRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { PostEntryInput } from '../dtos/PostingDto';
-import { syncSkipErrorCode } from '../sync/AccountingSyncPort';
+import { syncSkipErrorCode } from '../ports/AccountingSyncPort';
 import type { ReconcilePendingReasonCodeValue } from '../dtos/ReconcilePendingDto';
 import type { PendingAlertMode, ReconcilePendingRecorder } from './reconcilePendingRecorder';
 import type { AuditService } from './AuditService';

@@ -3,7 +3,7 @@ import type { LancamentoArchetype } from '../../models/types';
 /**
  * A Prensa (BE-INCR-BINDING-PRESS, Corpo A, item 4 do BRIEF) — arquétipo `revenue_recognition`
  * ('reconhecimento-receita' no dossiê). Extraído 1:1 de
- * `server/src/features/accounting/sync/mappers/SaleFinalizedMapper.ts` +
+ * `server/src/features/accounting/domain/mappers/SaleFinalizedMapper.ts` +
  * `revenueSplit.ts` (`P1-DOSSIER-arquetipos.md` §2.1).
  *
  *   Débito  controle-recebível   = amount            (SaleFinalizedMapper.ts:22,60)

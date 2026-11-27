@@ -3,7 +3,7 @@ import type { LancamentoArchetype } from '../../models/types';
 /**
  * A Prensa (BE-INCR-BINDING-PRESS, Corpo A, item 4 do BRIEF) — arquétipo `performance_liability`
  * ('passivo-performance' no dossiê). Extraído 1:1 de
- * `server/src/features/accounting/sync/mappers/SalePackageSoldMapper.ts` (`P1-DOSSIER-arquetipos.md` §2.4).
+ * `server/src/features/accounting/domain/mappers/SalePackageSoldMapper.ts` (`P1-DOSSIER-arquetipos.md` §2.4).
  *
  *   Débito  controle-recebível  = amount   (SalePackageSoldMapper.ts:21)
  *   Crédito passivo-diferido    = amount   (SalePackageSoldMapper.ts:22)

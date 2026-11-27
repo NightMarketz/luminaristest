@@ -1,7 +1,7 @@
 // Mock the post-commit accounting bridge so the service test stays at the orchestration layer
 // (the bridge has its own suite). We assert the service fires it AFTER the isSystem write.
 const maybeReverseSale = jest.fn(async (..._a: unknown[]) => undefined);
-jest.mock('../../../accounting/sync/bridges/SaleReversalBridge', () => ({
+jest.mock('../../../accounting/services/bridges/SaleReversalBridge', () => ({
   __esModule: true,
   maybeReverseSale: (...a: unknown[]) => maybeReverseSale(...a),
 }));

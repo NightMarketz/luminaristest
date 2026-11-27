@@ -15,8 +15,8 @@ import {
   FORNECEDORES_A_PAGAR_CODE,
   A_RECEBER_CODE,
 } from '../fixtures/ChartOfAccountsFixture';
-import type { SaleSourceType } from '../sync/AccountingSyncPort';
-import { CRM_LEGACY_SOURCE_TYPE } from '../sync/AccountingSyncPort';
+import type { SaleSourceType } from '../ports/AccountingSyncPort';
+import { CRM_LEGACY_SOURCE_TYPE } from '../ports/AccountingSyncPort';
 
 // ─── Constantes de domínio ────────────────────────────────────────────────────
 

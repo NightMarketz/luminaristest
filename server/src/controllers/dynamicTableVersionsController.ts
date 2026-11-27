@@ -14,8 +14,8 @@ import {
   SchemaVersionParamsDto,
   VersionDiffQueryDto,
 } from '@/features/dynamicTables/dtos/DynamicTableVersion.dto';
-import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
-import { maybeSyncSalePackageSold } from '@/features/accounting/sync/bridges/SalePackageSoldBridge';
+import { maybeSyncSaleFinalized } from '@/features/accounting/services/bridges/SaleSalesAccountingBridge';
+import { maybeSyncSalePackageSold } from '@/features/accounting/services/bridges/SalePackageSoldBridge';
 
 function noStore(res: Response) {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');

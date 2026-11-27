@@ -9,7 +9,7 @@ import {
   type PackageExpiryReconcileDeps,
   type PackageExpiryPostingReconcileDeps,
 } from '../accountingSyncReconcile.job';
-import type { AccountingEvent } from '../../features/accounting/sync/AccountingSyncPort';
+import type { AccountingEvent } from '../../features/accounting/ports/AccountingSyncPort';
 import { AccountingPeriodNotOpenError, PackageExpiryNfsePendingError } from '../../lib/errors';
 
 const candidate: PackageExpiryCandidate = {

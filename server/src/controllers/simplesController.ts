@@ -3,7 +3,7 @@ import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
 import type { AccountingScope } from '../features/accounting/models/AccountingScope';
-import { backfillRecebimentos } from '../features/accounting/sync/bridges/ReceitaFiscalRecebimentoBridge';
+import { backfillRecebimentos } from '../features/accounting/services/bridges/ReceitaFiscalRecebimentoBridge';
 import {
   CompetenciaParamSchema,
   SalaoParceriaContratoPatchSchema,

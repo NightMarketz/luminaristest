@@ -3,8 +3,8 @@
  * `SaleFinalizedMapper` lança (`splitRevenueCredit`), em qualquer combinação de itens.
  */
 import { ratearReceita } from '../ReceitaFiscalService';
-import { splitRevenueCredit } from '../../sync/mappers/revenueSplit';
-import type { SaleRevenueLine } from '../../sync/bridges/saleItems';
+import { splitRevenueCredit } from '../../domain/mappers/revenueSplit';
+import type { SaleRevenueLine } from '../bridges/saleItems';
 
 const L = (itemRef: string, nature: 'Service' | 'Product', lineReais: number): SaleRevenueLine => ({
   itemRef, nature, serviceRef: nature === 'Service' ? `s-${itemRef}` : null, productRef: nature === 'Product' ? `p-${itemRef}` : null, employeeRef: null, lineReais,

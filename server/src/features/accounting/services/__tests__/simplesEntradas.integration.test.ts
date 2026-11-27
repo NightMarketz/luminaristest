@@ -9,9 +9,9 @@ import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ApplicationFactory, getFactory } from '@/lib/factory';
 import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
-import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
+import { maybeSyncSaleFinalized } from '@/features/accounting/services/bridges/SaleSalesAccountingBridge';
 import { reconcileReceitaFiscal } from '@/jobs/accountingSyncReconcile.job';
-import { loadSaleRevenueLines } from '@/features/accounting/sync/bridges/saleItems';
+import { loadSaleRevenueLines } from '@/features/accounting/services/bridges/saleItems';
 import { ibsCbsNoDas } from '@/features/accounting/services/CompanyFiscalProfileService';
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
 

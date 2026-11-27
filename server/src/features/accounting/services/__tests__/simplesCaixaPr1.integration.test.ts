@@ -9,11 +9,11 @@ import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
 import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
-import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
-import { maybeSyncSaleSettled } from '@/features/accounting/sync/bridges/SaleSettlementBridge';
-import { maybeSyncSalePackageSold } from '@/features/accounting/sync/bridges/SalePackageSoldBridge';
-import { maybeReverseSale } from '@/features/accounting/sync/bridges/SaleReversalBridge';
-import { backfillRecebimentos } from '@/features/accounting/sync/bridges/ReceitaFiscalRecebimentoBridge';
+import { maybeSyncSaleFinalized } from '@/features/accounting/services/bridges/SaleSalesAccountingBridge';
+import { maybeSyncSaleSettled } from '@/features/accounting/services/bridges/SaleSettlementBridge';
+import { maybeSyncSalePackageSold } from '@/features/accounting/services/bridges/SalePackageSoldBridge';
+import { maybeReverseSale } from '@/features/accounting/services/bridges/SaleReversalBridge';
+import { backfillRecebimentos } from '@/features/accounting/services/bridges/ReceitaFiscalRecebimentoBridge';
 import { ReceitaFiscalRecebimentoService } from '@/features/accounting/services/ReceitaFiscalRecebimentoService';
 
 const app = makeApp();
