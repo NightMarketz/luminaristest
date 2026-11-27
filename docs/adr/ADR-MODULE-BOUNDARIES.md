@@ -914,9 +914,9 @@ o #1422, um commit por item.
     grupo `models/(…)`. A entrada antiga cobria a pasta inteira (três arquivos); a nova cobre só o arquivo que o
     núcleo importa (19 arestas). A lista ficou mais estreita.
 - **Etapa declarada, `accounting/fixtures/`** ("Fica, isenção nomeada"): a pasta não foi para
-  `accounting/paises/br/domain/` (F-MBE-6 a). `PostingService` e `ExerciseClosingService` (núcleo da `C1`) e mais 25
+  `accounting/paises/br/domain/` (F-MBE-6 a). `PostingService` e `ExerciseClosingService` (núcleo da `C1`) e mais 23
   módulos do centro importam o `ChartOfAccountsFixture.ts`; mover poria um caminho de `paises/` na lista fechada da
-  `C1` e deixaria 27 arestas centro → `paises/` para a `P1` que o #1428 traz nascendo em 0. A porta que tira a
+  `C1` e deixaria 26 arestas centro → `paises/` (os 25 da `accounting` e o DTO do `sectorKits`) para a `P1` que o #1428 traz nascendo em 0. A porta que tira a
   dependência é a do F-PBF1-7 (`BE-INCR-PAIS-NA-BORDA-F1-brief.md`), e o `PAIS-NA-BORDA` está `planned`. O BRIEF
   mandava a pasta "ficar no baseline da `M2`"; como a `M2` nasce em 0 e nunca entra no known-violations, o arquivo
   ficou isento por nome no `pathNot` (`M2_DECLARED_STEP = '^src/features/accounting/fixtures/ChartOfAccountsFixture\.ts$'`).
