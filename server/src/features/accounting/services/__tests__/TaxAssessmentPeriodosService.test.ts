@@ -5,7 +5,7 @@
 import type { CompanyFiscalProfile, LegalParameter, SimplesApuracao, TaxAssessment } from 'generated/prisma';
 import { ForbiddenError } from '@/lib/errors';
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import { TaxAssessmentPeriodosService } from '@/features/accounting/services/TaxAssessmentPeriodosService';
 import { trimestresEmAtividade } from '@/features/accounting/models/taxAssessmentCalc';
 import { mesesEmAtividade } from '@/features/accounting/models/taxAssessmentCalcAnual';

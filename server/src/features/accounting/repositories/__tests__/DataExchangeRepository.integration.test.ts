@@ -12,7 +12,7 @@ import prisma from '@/lib/prisma';
 import { Prisma } from 'generated/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { DataExchangeRepository } from '@/features/accounting/repositories/DataExchangeRepository';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import { isSupersedesUniqueViolation } from '@/features/accounting/services/spedRectificationGate';
 
 const UNIT = 'unit-dx';

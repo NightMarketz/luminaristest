@@ -10,8 +10,8 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { FiscalDocumentRepository, attemptRef } from '@/features/accounting/repositories/FiscalDocumentRepository';
 import { FiscalDocumentLifecycleService } from '@/features/accounting/services/FiscalDocumentLifecycleService';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import { NullEmissor } from '@/features/accounting/dfe/NullEmissor';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import { NullEmissor } from '@/features/accounting/adapters/dfe/NullEmissor';
 
 const DONO = 'u-dfe-eventos-pr2';
 const UNIT = 'unit-dfe-eventos-pr2';

@@ -7,7 +7,7 @@ import { MODO_PIS_COFINS } from './pisCofinsCalc';
  * Provisão de tributo da apuração (IRPJ/CSLL/PIS/Cofins): o que a linha provisiona, o que consome de crédito e quando a
  * provisão está pendente. Funções PURAS sobre a linha da apuração — moradas aqui (e não no `TaxAssessmentService`) para que o
  * núcleo do razão não importe o serviço fiscal (Onda 1.2, regra C1 do `ADR-ARCH-BOUNDARIES`): o encerramento do exercício
- * consulta a pendência pela porta `ClosingGuard`, e o adaptador BR (`paises/br/TaxProvisionClosingGuard`) é quem lê isto.
+ * consulta a pendência pela porta `ClosingGuard`, e o adaptador BR (`paises/br/adapters/TaxProvisionClosingGuard`) é quem lê isto.
  * `TaxAssessmentService` reexporta tudo, então nenhum importador antigo muda.
  */
 

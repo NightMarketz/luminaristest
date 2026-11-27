@@ -1,7 +1,7 @@
 import prisma from '../../../lib/prisma';
 import type { NfceCsc, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 import type { INfceCscRepository } from './INfceCscRepository';
 
 /** Repositório Prisma de `nfce_cscs` (X10a PR-8). Zero regra de negócio. */

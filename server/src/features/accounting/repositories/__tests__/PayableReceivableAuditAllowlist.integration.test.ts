@@ -35,8 +35,8 @@ import { pushTestSchema } from '@test/helpers/db';
 import { getFactory } from '@/lib/factory';
 import { PayableRepository } from '@/features/accounting/repositories/PayableRepository';
 import { ReceivableRepository } from '@/features/accounting/repositories/ReceivableRepository';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 
 const UNIT = 'unit-ap-ar-allowlist';
 const DONO_A = 'u-ap-ar-allowlist-a';

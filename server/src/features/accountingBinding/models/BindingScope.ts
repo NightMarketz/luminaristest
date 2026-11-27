@@ -1,7 +1,7 @@
 /**
  * A Prensa (BE-INCR-BINDING-PRESS, Fase P1) — escopo de tenancy do módulo IRMÃO
  * `accountingBinding` (F-P1-7). Espelha deliberadamente o SHAPE de
- * `features/accounting/scope/AccountingScope` (ownerUserId/actorUserId/unitId) — MESMO padrão de
+ * `features/accounting/models/AccountingScope` (ownerUserId/actorUserId/unitId) — MESMO padrão de
  * tenancy do resto do domínio contábil — mas é uma definição PRÓPRIA, não um import: o teste de
  * fronteira do item 13 do BRIEF (espelho de `no-accounting-imports.boundary.test.ts`) proíbe
  * `features/accountingBinding/` de importar de `features/accounting` além de DTO/`IAccountingEventMapper`,

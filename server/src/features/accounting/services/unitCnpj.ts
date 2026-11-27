@@ -1,6 +1,6 @@
 import { getFactory } from '../../../lib/factory';
 import { isValidCnpj, stripCnpjMask } from '../../../lib/cnpj';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /**
  * CNPJ da unidade do escopo, lido do preset `units` (F-DFE-17 a), sem máscara e em maiúsculas; null se ausente ou

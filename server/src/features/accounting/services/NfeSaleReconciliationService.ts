@@ -6,7 +6,7 @@ import { centsFromDb } from '../models/money';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { PostingService } from './PostingService';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /**
  * NfeSaleReconciliationService — NF-e de VENDA × venda de salão já lançada (BE-INCR-NFE, A3 / D2b).

@@ -11,7 +11,7 @@
  */
 import { PeriodService } from '../PeriodService';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 jest.mock('../../../../lib/logger', () => ({
   __esModule: true,

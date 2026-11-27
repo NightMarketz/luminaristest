@@ -12,7 +12,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { TaxAssessmentRepository } from '@/features/accounting/repositories/TaxAssessmentRepository';
-import { PAYLOAD_ALLOWLIST } from '@/features/accounting/audit/auditCanonical';
+import { PAYLOAD_ALLOWLIST } from '@/features/accounting/domain/audit/auditCanonical';
 
 const app = makeApp();
 const UNIT = 'unit-x7-pr2';

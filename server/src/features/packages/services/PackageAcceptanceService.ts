@@ -13,9 +13,9 @@ import {
 } from '../../../lib/errors';
 import { htmlToPdf } from '../../../lib/pdf';
 import { packageSaleReceiptHtml } from '../../../lib/packageSaleReceiptHtml';
-import type { AccountingScope } from '../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../accounting/public/accountingScope.types';
 import { calendarDayAsWritten } from '../../accounting/models/dates';
-import { loadPackageValidityDays, loadSalePackageInfo } from '../../accounting/sync/bridges/saleItems';
+import { loadPackageValidityDays, loadSalePackageInfo } from '../../accounting/public/saleItems';
 import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
 import type { IUserRepository } from '../../users/repositories/IUserRepository';
 import type { CreatePackageAcceptanceInput, PackageAcceptanceResponse, ValidityNoticeResponse } from '../dtos/PackageAcceptanceDto';

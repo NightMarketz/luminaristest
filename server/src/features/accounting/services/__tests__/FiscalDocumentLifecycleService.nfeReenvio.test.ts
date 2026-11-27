@@ -6,7 +6,7 @@ const mockPort = {
   cancelar: jest.fn(),
   verifyWebhook: jest.fn(),
 };
-jest.mock('../../dfe/selectDfeEmissor', () => ({
+jest.mock('../../adapters/dfe/selectDfeEmissor', () => ({
   __esModule: true,
   selectDfeEmissor: () => ({ enabled: true, ambiente: 'producao', port: mockPort }),
 }));
@@ -16,7 +16,7 @@ import { NfePayloadSchema } from '../../dtos/NfePayloadDto';
 import { montarNfe } from '../../models/nfeMontagem';
 import { inputNfce } from '../../models/__tests__/nfeMontagem.fixture';
 import { isValidNfeChave } from '../../../../lib/cnpj';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 /**
  * BE-INCR-NFCE (nó X10a, PR-4; EMENDA-3 F-NFCE-E3-2 a) — o reenvio da NF-e/NFC-e rejeitada reusa o número do DOCUMENTO

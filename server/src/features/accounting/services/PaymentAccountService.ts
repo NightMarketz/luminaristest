@@ -21,8 +21,8 @@ import type { IPaymentAccountRepository } from '../repositories/IPaymentAccountR
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 import type { Prisma } from 'generated/prisma';
 
 /** Projeção pública — NUNCA carrega ciphertext nem credencial (PP-D7, P1-6/P1-7). */

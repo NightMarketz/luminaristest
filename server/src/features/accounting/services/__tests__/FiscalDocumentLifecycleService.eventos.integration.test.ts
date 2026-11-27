@@ -13,7 +13,7 @@ const mockPort = {
   cancelar: jest.fn(),
   verifyWebhook: jest.fn(),
 };
-jest.mock('@/features/accounting/dfe/selectDfeEmissor', () => ({
+jest.mock('@/features/accounting/adapters/dfe/selectDfeEmissor', () => ({
   __esModule: true,
   selectDfeEmissor: () => ({ enabled: true, ambiente: 'producao', port: mockPort }),
 }));
@@ -23,7 +23,7 @@ import { Prisma } from 'generated/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { FiscalDocumentRepository, attemptRef } from '@/features/accounting/repositories/FiscalDocumentRepository';
 import { FiscalDocumentLifecycleService } from '@/features/accounting/services/FiscalDocumentLifecycleService';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 
 const DONO = 'u-dfe-subst';
 const UNIT = 'unit-dfe-subst';

@@ -173,7 +173,7 @@ describe('núcleo do razão — não importa fiscal nem localização (Onda 1.2,
     expect(FISCAL_OR_LOCALE.test('/x/src/features/accounting/repositories/ILalurRepository')).toBe(true);
     expect(FISCAL_OR_LOCALE.test('/x/src/features/accounting/repositories/ITaxAssessmentRepository')).toBe(true);
     expect(FISCAL_OR_LOCALE.test('/x/src/features/accounting/models/taxAssessmentProvisao')).toBe(true);
-    expect(FISCAL_OR_LOCALE.test('/x/src/features/accounting/paises/br/EcdChartStructureRule')).toBe(true);
+    expect(FISCAL_OR_LOCALE.test('/x/src/features/accounting/paises/br/adapters/EcdChartStructureRule')).toBe(true);
     expect(FISCAL_OR_LOCALE.test('/x/src/lib/spreadsheet')).toBe(false);
     expect(FISCAL_OR_LOCALE.test('/x/src/features/accounting/services/PostingService')).toBe(false);
     expect(FISCAL_OR_LOCALE.test('/x/src/features/accounting/ports/LedgerPorts')).toBe(false);
@@ -204,7 +204,7 @@ describe('núcleo do razão — não importa fiscal nem localização (Onda 1.2,
       'src/lib/ofx.ts', 'src/lib/cnab.ts', 'src/lib/sped.ts',
       'src/features/accounting/services/TaxAssessmentService.ts',
       'src/features/accounting/repositories/ILalurRepository.ts',
-      'src/features/accounting/paises/br/EcdChartStructureRule.ts',
+      'src/features/accounting/paises/br/adapters/EcdChartStructureRule.ts',
     ]) expect(permitido.test(proibido)).toBe(false);
   });
 

@@ -13,8 +13,8 @@ const mockPort = {
   verifyWebhook: jest.fn(),
 };
 const mockSelection: { enabled: boolean; ambiente: string | null; port: typeof mockPort } = { enabled: true, ambiente: 'producao', port: mockPort };
-jest.mock('../../dfe/selectDfeEmissor', () => ({ __esModule: true, selectDfeEmissor: () => mockSelection }));
-jest.mock('../../dfe/resolveEmissor', () => ({ __esModule: true, resolveEmissorFor: () => mockPort }));
+jest.mock('../../adapters/dfe/selectDfeEmissor', () => ({ __esModule: true, selectDfeEmissor: () => mockSelection }));
+jest.mock('../../adapters/dfe/resolveEmissor', () => ({ __esModule: true, resolveEmissorFor: () => mockPort }));
 
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -22,8 +22,8 @@ import { Prisma } from 'generated/prisma';
 import { FiscalDocumentLifecycleService, cancelInputDoTipo } from '../FiscalDocumentLifecycleService';
 import { janelaEventos } from '../../models/janelaEventos';
 import type { JanelaEventos } from '../../dtos/FiscalDocumentDto';
-import type { AccountingScope } from '../../scope/AccountingScope';
-import type { CancelResult } from '../../dfe/DfeEmissorPort';
+import type { AccountingScope } from '../../models/AccountingScope';
+import type { CancelResult } from '../../ports/DfeEmissorPort';
 import { signNfseEventoForTest, signNfseForTest } from '@test/helpers/nfeSignature';
 
 const SCOPE: AccountingScope = { ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1', ledgerCode: 'DEFAULT', baseCurrencyCode: 'BRL', timeZone: 'America/Sao_Paulo' };

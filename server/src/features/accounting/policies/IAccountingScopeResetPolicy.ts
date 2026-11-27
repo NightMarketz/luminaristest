@@ -1,4 +1,4 @@
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /** BE-INCR-RESET-CONSISTENTE item 11 — quem pode remover a configuração contábil de uma unidade. Só decisão. */
 export interface IAccountingScopeResetPolicy {

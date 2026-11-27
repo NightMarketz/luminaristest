@@ -1,5 +1,5 @@
 import type { Account, JournalEntry, Posting, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /** Input for creating a JournalEntry header. */
 export interface CreateJournalEntryInput {

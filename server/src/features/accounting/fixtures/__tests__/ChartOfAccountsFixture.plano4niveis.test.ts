@@ -6,7 +6,7 @@ import {
   RENOMEACAO_CANONICA_L8,
   codigoPosL8,
 } from '../ChartOfAccountsFixture';
-import { NIVEL_MINIMO_ANALITICA_PATRIMONIAL, PATRIMONIAL_NATURES } from '../../paises/br/EcdChartStructureRule';
+import { NIVEL_MINIMO_ANALITICA_PATRIMONIAL, PATRIMONIAL_NATURES } from '../../paises/br/adapters/EcdChartStructureRule';
 import { CASH_ACCOUNT_CODE_PREFIXES } from '../../services/CashFlowReportService';
 
 /**

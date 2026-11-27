@@ -6,7 +6,7 @@ jest.mock('../../../../lib/logger', () => ({ __esModule: true, default: { info: 
 
 import { SaleFiscalGuardService } from '../SaleFiscalGuardService';
 import { POLITICA_PADRAO } from '../../../accounting/models/taxOptimization';
-import type { AccountingScope } from '../../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../../accounting/models/AccountingScope';
 
 const scope = { ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1', timeZone: 'America/Sao_Paulo' } as unknown as AccountingScope;
 

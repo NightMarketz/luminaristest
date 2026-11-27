@@ -1,7 +1,7 @@
 import type { Prisma } from 'generated/prisma';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import { calendarDayAsWritten } from '../models/dates';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import { NOTA_VALIDA_STATUSES, type IFiscalDocumentRepository } from '../repositories/IFiscalDocumentRepository';
 import type { IReceitaFiscalRepository } from '../repositories/IReceitaFiscalRepository';

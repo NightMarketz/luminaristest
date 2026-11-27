@@ -1,5 +1,5 @@
 import type { NfceContingencia, NfceContingenciaOrfa, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 export type OrigemContingencia = 'AUTO' | 'MANUAL';
 export const ORFA_STATUSES = ['PENDING', 'CANCELLED_SUBST', 'VOID_REQUESTED', 'FAILED'] as const;

@@ -1,8 +1,8 @@
 import prisma from '../../../lib/prisma';
 import type { DocumentAttachment, Prisma } from 'generated/prisma';
 import { NotFoundError } from '../../../lib/errors';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 import type { IDocumentAttachmentRepository } from './IDocumentAttachmentRepository';
 import type {
   CreateDocumentAttachmentInput,

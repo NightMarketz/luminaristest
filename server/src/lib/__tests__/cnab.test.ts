@@ -19,8 +19,8 @@
 import { parseCnab } from '../cnab';
 import { ReconciliationService } from '../../features/accounting/services/ReconciliationService';
 import { ValidationError } from '../errors';
-import { statementParserBr } from '../../features/accounting/paises/br/StatementParserBr';
-import type { AccountingScope } from '../../features/accounting/scope/AccountingScope';
+import { statementParserBr } from '../../features/accounting/paises/br/adapters/StatementParserBr';
+import type { AccountingScope } from '../../features/accounting/models/AccountingScope';
 
 /** Place `value` into a 240-char record at 1-indexed [start..end] (inclusive), left-justified. */
 function put(record: string[], start1: number, end1: number, value: string): void {

@@ -7,9 +7,9 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import { maybeSyncSaleFinalized } from '@/features/accounting/services/bridges/SaleSalesAccountingBridge';
 import { TaxOptimizationReportSchema } from '@/features/accounting/dtos/TaxOptimizationDto';
 
 const app = makeApp();

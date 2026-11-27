@@ -39,17 +39,17 @@ import type { AuditService } from './AuditService';
 import type { DocumentAttachmentService } from './DocumentAttachmentService';
 import type { PostingService } from './PostingService';
 import type { FiscalDocumentEmissionService, FiscalDocumentView } from './FiscalDocumentEmissionService';
-import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
-import { resolveEmissorFor } from '../dfe/resolveEmissor';
+import { selectDfeEmissor } from '../adapters/dfe/selectDfeEmissor';
+import { resolveEmissorFor } from '../adapters/dfe/resolveEmissor';
 import { deveAlertarAdiamento } from '../models/dfePollAdiamento';
-import { ambienteFromTpAmb, assertTpAmb, DfeTransporteError, DfeTransporteIndisponivelError, tpAmbFor } from '../dfe/DfeEmissorPort';
-import type { CancelInput, CancelResult, DfeAmbiente, DfeCallContext, DfeEmissorPort, EmissaoResult, EventoNfse } from '../dfe/DfeEmissorPort';
-import { AssinaturaRemotaError, isSessaoPscVencida } from '../dfe/AssinadorRemotoPort';
+import { ambienteFromTpAmb, assertTpAmb, DfeTransporteError, DfeTransporteIndisponivelError, tpAmbFor } from '../ports/DfeEmissorPort';
+import type { CancelInput, CancelResult, DfeAmbiente, DfeCallContext, DfeEmissorPort, EmissaoResult, EventoNfse } from '../ports/DfeEmissorPort';
+import { AssinaturaRemotaError, isSessaoPscVencida } from '../ports/AssinadorRemotoPort';
 import { bloqueioSessaoPsc } from './DfeAssinaturaResolver';
 import { enviarTentativa, type DfeContingenciaHandler } from './dfeEnvio';
 import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
-import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
-import type { AccountingScope } from '../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../models/resolveAccountingScopeInternal';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /**
  * BE-INCR-DFE (nó X10b, BRIEF Fase D, itens 24-30) — o que acontece a um `FiscalDocument` DEPOIS

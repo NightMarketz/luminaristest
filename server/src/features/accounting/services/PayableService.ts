@@ -77,7 +77,7 @@ import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepos
 import type { ISourceProvenanceRepository } from '../repositories/ISourceProvenanceRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { PostEntryInput } from '../dtos/PostingDto';
-import { syncSkipErrorCode } from '../sync/AccountingSyncPort';
+import { syncSkipErrorCode } from '../ports/AccountingSyncPort';
 import type { ReconcilePendingReasonCodeValue } from '../dtos/ReconcilePendingDto';
 import type { PendingAlertMode, ReconcilePendingRecorder } from './reconcilePendingRecorder';
 import type { AuditService } from './AuditService';
@@ -94,8 +94,8 @@ import {
   type StoredFixedAssetItem,
 } from './IFixedAssetDraftCreator';
 import { FIXED_ASSET_EXPENSE_LIMIT_CENTS, expenseAllowed, unitCostCentsOf } from '../models/fixedAssetLimits';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 import { resolveOrCreateCounterpartyId } from './counterpartyResolution';
 import type { BaixaRetencao, WithholdingService } from './WithholdingService';
 import type { TributoRetencao as TaxWithholdingTributo } from '../models/retencaoParams';

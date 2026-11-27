@@ -1,5 +1,5 @@
 import type { PaymentAccount, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /** Dados para criar uma conta de pagamento — nasce sem credencial (`DRAFT`). */
 export interface CreatePaymentAccountData {

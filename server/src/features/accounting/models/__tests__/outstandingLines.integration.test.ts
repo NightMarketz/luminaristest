@@ -22,7 +22,7 @@ import { PrismaClient } from 'generated/prisma';
 import { PayableRepository } from '../../repositories/PayableRepository';
 import { ReceivableRepository } from '../../repositories/ReceivableRepository';
 import { outstandingLinesFromPayables, outstandingLinesFromReceivables } from '../outstandingLines';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../AccountingScope';
 import { normalizeCounterpartyName } from '../Counterparty.model';
 
 const SERVER_ROOT = path.join(__dirname, '../../../../../');

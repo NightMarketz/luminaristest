@@ -13,8 +13,8 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { FiscalDocumentRepository, attemptRef } from '@/features/accounting/repositories/FiscalDocumentRepository';
 import { ServiceFiscalProfileRepository, deletedServiceRef } from '@/features/accounting/repositories/ServiceFiscalProfileRepository';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import type { CreateSentFiscalDocumentData } from '@/features/accounting/repositories/IFiscalDocumentRepository';
 
 const UNIT = 'unit-dfe';

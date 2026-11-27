@@ -36,7 +36,7 @@ export interface IBindingValidationService {
  *
  * Os 3 eventTypes emitidos por `BindingCompileService.compile()` (`binding.compiled`,
  * `binding.activated`, `binding.validation_failed`) entram na allowlist de
- * `features/accounting/audit/auditCanonical.ts` NA MESMA mudança (item 15 do BRIEF) — disciplina
+ * `features/accounting/domain/audit/auditCanonical.ts` NA MESMA mudança (item 15 do BRIEF) — disciplina
  * de PII: só ids/versão/sectorKey/status, nunca nome/label.
  */
 export interface IBindingAuditPort {

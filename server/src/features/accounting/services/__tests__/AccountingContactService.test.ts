@@ -8,7 +8,7 @@ import { AccountingContactService } from '@/features/accounting/services/Account
 import type { IAccountingContactRepository } from '@/features/accounting/repositories/IAccountingContactRepository';
 import type { IAccountingPolicy } from '@/features/accounting/policies/IAccountingPolicy';
 import type { AuditService } from '@/features/accounting/services/AuditService';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import {
   ACCOUNTING_CONTACT_ARCHIVED,
   ACCOUNTING_CONTACT_REGISTERED,

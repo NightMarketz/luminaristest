@@ -8,7 +8,7 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { getFactory } from '@/lib/factory';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();

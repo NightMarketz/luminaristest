@@ -3,7 +3,7 @@ import type { ZodType } from 'zod';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '../features/accounting/models/AccountingScope';
 import type { DpVinculoService } from '../features/dp/services/DpVinculoService';
 import { DpIdParamSchema, DpScopeQuerySchema } from '../features/dp/dtos/DpModuleDto';
 import { DpListQuerySchema } from '../features/dp/dtos/DpCadastrosDto';

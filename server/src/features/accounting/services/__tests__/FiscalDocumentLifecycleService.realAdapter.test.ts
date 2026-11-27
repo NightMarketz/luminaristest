@@ -3,7 +3,7 @@
 // fallback pra doc.numero em applyResult(), NENHUM documento chegava a AUTHORIZED por este
 // adaptador, porque NullEmissor.consultar() nunca ecoa numero/nNFSe.
 import { FiscalDocumentLifecycleService } from '../FiscalDocumentLifecycleService';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 const SCOPE: AccountingScope = {
   ownerUserId: 'u1',

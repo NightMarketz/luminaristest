@@ -181,7 +181,7 @@ describe('/api/payables/{id}/settlements — contrato HTTP da baixa parcial', ()
     expect(Number(row.paidCents)).toBe(15000);
     expect(row.status).toBe('PAYING');
     const { PayableRepository } = await import('@/features/accounting/repositories/PayableRepository');
-    const { resolveAccountingScopeInternal } = await import('@/features/accounting/scope/resolveAccountingScopeInternal');
+    const { resolveAccountingScopeInternal } = await import('@/features/accounting/models/resolveAccountingScopeInternal');
     expect(await new PayableRepository().finalizeIfPaying(resolveAccountingScopeInternal({ userId: dono.id }, UNIT), payableId, 50000)).toBe(1);
     row = await prisma.payable.findUniqueOrThrow({ where: { id: payableId } });
     expect(row.status).toBe('PARTIALLY_PAID');

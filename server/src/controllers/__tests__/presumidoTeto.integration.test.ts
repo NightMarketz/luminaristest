@@ -10,11 +10,11 @@ import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { PostingRepository } from '@/features/accounting/repositories/PostingRepository';
 import { TaxAssessmentRepository } from '@/features/accounting/repositories/TaxAssessmentRepository';
-import { PAYLOAD_ALLOWLIST } from '@/features/accounting/audit/auditCanonical';
+import { PAYLOAD_ALLOWLIST } from '@/features/accounting/domain/audit/auditCanonical';
 import { LEDGER_STATUSES } from '@/features/accounting/models/ledgerStatus';
 import { CLOSING_SOURCE_TYPE } from '@/features/accounting/models/closing';
 import { getFactory } from '@/lib/factory';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 
 const app = makeApp();
 const PERFIL = '/api/accounting/company-fiscal-profile';

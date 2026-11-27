@@ -1,0 +1,202 @@
+/**
+ * SaleSalesAccountingBridge — Incremento C integration seam (ADR-C01).
+ *
+ * Turns a finalized sale (a DynamicTable `sales` row) into a revenue journal
+ * entry via AccountingSync. It lives in the accounting (Prisma first-class) world and
+ * is invoked POST-COMMIT from the DynamicTable controller (create/update handlers) —
+ * NEVER inside DynamicTableService, RuleContext or a RulePlugin (§2.1 boundary). No
+ * accounting code crosses into features/dynamicTables; the dependency points one way.
+ *
+ * It mirrors crmController.maybeSyncOpportunityWon: best-effort and non-fatal — a sync
+ * failure must NOT undo the finalized sale; the reconciliation job re-drives it
+ * idempotently. Idempotency is delegated entirely to PostingService
+ * (@@unique[userId,unitId,sourceType,sourceId]); this bridge has NO pre-check.
+ */
+
+import { getFactory } from '../../../../lib/factory';
+import logger from '../../../../lib/logger';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
+import { saleDayAsWritten } from '../../models/dates';
+import { buildSaleCogsEvent, buildSaleFinalizedEvent, syncSkipErrorCode } from '../../ports/AccountingSyncPort';
+import { loadSaleRevenueLines, loadSalePackageInfo, loadSaleTomadorTipo } from './saleItems';
+import type { AccountingScope } from '../../models/AccountingScope';
+import type { ProductLine } from './saleItems';
+
+/** The minimal shape this bridge reads from a DynamicTable data row (create/update result). */
+interface SaleRow {
+  id: string;
+  data?: unknown;
+}
+
+/**
+ * If `row` is a finalized sale in the `sales` table, book its revenue.
+ * Returns silently (no throw) for every non-applicable case and swallows sync errors.
+ *
+ * @param actor  authenticated user context (owner === actor today; tenancy unchanged)
+ * @param tableId the DynamicTable id the row was written to (from the route param)
+ * @param row    the created/updated data row (id = saleId, data = the sale fields)
+ */
+export async function maybeSyncSaleFinalized(
+  actor: { userId: string },
+  tableId: string,
+  row: SaleRow,
+): Promise<void> {
+  try {
+    const data = (row.data ?? {}) as Record<string, unknown>;
+
+    // Trigger gate (ADR-C01): recognize revenue ONLY on Finalized. paymentStatus is
+    // ignored. Cancelled/Returned are out of scope (Incremento D).
+    if (data.status !== 'Finalized') return;
+
+    // Boundary gate: confirm this tableId is THIS tenant's `sales` table, without
+    // touching the DynamicTable engine — one indexed lookup by internalName, then id
+    // match (so we never act on an unrelated table the user happens to own).
+    const repo = getFactory().getDynamicTableRepository();
+    const salesTable = await repo.findTableByInternalName(actor.userId, 'sales');
+    if (!salesTable || salesTable.id !== tableId || salesTable.category !== 'finance') return;
+
+    // Load + classify the sale's items ONCE: the anti-revenue gate needs the kind, the revenue
+    // split needs the per-nature subtotals (ADR-INCR-REVENUE-SPLIT).
+    const saleInfo = await loadSalePackageInfo(actor.userId, row.id);
+
+    // Anti-revenue gate (Incremento G P4): an all-Package sale is PREPAID — selling it does
+    // NOT recognize revenue. It books the obligation (C 2.1.1) via the package-sold bridge
+    // instead. Proven from saleItems, never inferred from the header. Product/Service and mixed
+    // sales fall through and book revenue normally.
+    if (saleInfo.kind === 'Package') return;
+
+    // Never default/infer the unit — only post within the sale's own unit (§2 tenancy).
+    const unitId = typeof data.unitId === 'string' ? data.unitId : '';
+    if (!unitId) {
+      logger.warn('Sale Finalized without unitId — accounting sync skipped', {
+        saleId: row.id,
+      });
+      return;
+    }
+
+    // totalAmount must be a finite positive number. The mapper re-validates and converts
+    // to integer cents; guarding here keeps obviously-bad rows out of the error path.
+    const totalAmount = data.totalAmount;
+    if (typeof totalAmount !== 'number' || !Number.isFinite(totalAmount) || totalAmount <= 0) {
+      logger.warn('Sale Finalized with invalid totalAmount — accounting sync skipped', {
+        saleId: row.id,
+      });
+      return;
+    }
+
+    const currency = typeof data.currency === 'string' ? data.currency : 'BRL';
+    // Scope resolvido ANTES da data: o fallback "agora" precisa do fuso (sem ele postaria em D+1 à noite). `data.date` é
+    // um DIA (o motor o grava como ISO à meia-noite UTC): lê-se como escrito — `scopeDay` o recuaria para o dia anterior.
+    const scope = resolveAccountingScopeInternal(actor, unitId);
+    const occurredAt = saleDayAsWritten(scope, typeof data.date === 'string' ? data.date : undefined);
+    const event = buildSaleFinalizedEvent({
+      saleId: row.id,
+      unitId,
+      amount: totalAmount,
+      currency,
+      occurredAt,
+      label: `Venda ${row.id}`,
+      revenueByNature: saleInfo.revenueByNature,
+    });
+    await getFactory().getAccountingSyncService().sync(scope, event);
+
+    // SECOND emission (Body 2 / O-2): book the cost-of-goods for the sale's product lines. Runs
+    // AFTER revenue succeeds, in its OWN try/catch — a CMV failure must NOT undo or re-drive the
+    // already-posted revenue (the reconcile job re-drives CMV independently, idempotent by
+    // read-first + @@unique). Only product lines carry COGS; a pure-service sale has none.
+    await maybeSyncSaleCogs(scope, row.id, unitId, currency, occurredAt, saleInfo.productLines);
+
+    // THIRD (BE-INCR-SIMPLES-NACIONAL PR-2, item 15): the fiscal revenue subledger — commit 2 after the revenue entry,
+    // own try/catch, never unwinds it; the reconcile pass re-drives a missing subledger (idempotent by @@unique).
+    await maybeRecordReceitaFiscal(scope, row.id, totalAmount, occurredAt);
+  } catch (syncError) {
+    // Skip ONLY on the shared specific-code list (period-closed / MAX_CENTS poison) — never on a
+    // base error class. syncSkipErrorCode reads AppError.errorCode; the old inline check read a
+    // non-existent `.code`, so the skip branch was dead and every skip-listed error logged as error.
+    const skipCode = syncSkipErrorCode(syncError);
+    if (skipCode) {
+      logger.warn('AccountingSync skipped — erro determinístico não-retriável', {
+        saleId: row.id,
+        code: skipCode,
+        error: syncError instanceof Error ? syncError.message : String(syncError),
+      });
+      return;
+    }
+    logger.error('AccountingSync (sale finalized) failed — left for reconciliation', {
+      saleId: row.id,
+      error: syncError instanceof Error ? syncError.message : String(syncError),
+    });
+  }
+}
+
+/**
+ * Item 15 (X14 PR-2) — writes the sale's fiscal revenue lines (`ReceitaFiscalService.registrarVenda`). SELF-CONTAINED
+ * and non-fatal like the CMV seam: a failure is logged for the reconcile job and never touches the posted revenue.
+ */
+async function maybeRecordReceitaFiscal(scope: AccountingScope, saleId: string, amount: number, dia: string): Promise<void> {
+  try {
+    const lines = await loadSaleRevenueLines(scope.ownerUserId, saleId);
+    const tomadorTipo = await loadSaleTomadorTipo(scope.ownerUserId, saleId);
+    await getFactory().getReceitaFiscalService().registrarVenda(scope, { saleId, amount, dia, lines, tomadorTipo });
+  } catch (error) {
+    logger.error('Subrazão fiscal de receita (sale finalized) failed — left for reconciliation', {
+      saleId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+/**
+ * Book the cost-of-goods (CMV) for a finalized sale's product lines (Body 2 / O-2). Runs the
+ * subledger baixa (tx1, `InventoryService.recordSaleCogs` — moving-average, atomic CAS) and, if it
+ * yields cost, emits `sale.cogs` so `SaleCogsMapper` posts the razão (tx2, D 4.2 / C
+ * 1.1.6). SELF-CONTAINED try/catch and non-fatal: a CMV failure (insufficient stock, period closed,
+ * posting down) is logged for the reconcile job and NEVER propagates to unwind the revenue entry
+ * that already committed.
+ *
+ * No emission when there are no product lines (a pure-service sale) or the computed cost is 0.
+ */
+async function maybeSyncSaleCogs(
+  scope: AccountingScope,
+  saleId: string,
+  unitId: string,
+  currency: string,
+  occurredAt: string,
+  productLines: ProductLine[],
+): Promise<void> {
+  if (productLines.length === 0) return;
+  try {
+    const { totalCogsCents } = await getFactory()
+      .getInventoryService()
+      .recordSaleCogs(scope, {
+        saleId,
+        unitId,
+        occurredAt: new Date(occurredAt),
+        lines: productLines,
+      });
+    if (totalCogsCents <= 0) return; // replay/zero cost → nothing to post.
+
+    const cogsEvent = buildSaleCogsEvent({
+      saleId,
+      unitId,
+      costCents: totalCogsCents,
+      currency,
+      occurredAt,
+      label: `CMV Venda ${saleId}`,
+    });
+    await getFactory().getAccountingSyncService().sync(scope, cogsEvent);
+  } catch (cogsError) {
+    const code = (cogsError as { code?: string }).code;
+    if (code === 'ACCOUNTING_PERIOD_NOT_OPEN') {
+      logger.warn('AccountingSync (CMV) skipped — período não está aberto', {
+        saleId,
+        error: cogsError instanceof Error ? cogsError.message : String(cogsError),
+      });
+      return;
+    }
+    logger.error('AccountingSync (sale CMV) failed — left for reconciliation', {
+      saleId,
+      error: cogsError instanceof Error ? cogsError.message : String(cogsError),
+    });
+  }
+}

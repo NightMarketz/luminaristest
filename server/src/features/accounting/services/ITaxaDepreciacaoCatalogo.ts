@@ -1,4 +1,4 @@
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { TaxaDepreciacaoView, TaxaEscolhida } from '../models/FixedAsset.model';
 
 /**

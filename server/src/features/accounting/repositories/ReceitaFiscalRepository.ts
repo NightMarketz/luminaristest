@@ -1,6 +1,6 @@
 import prisma from '../../../lib/prisma';
 import type { Prisma, ReceitaFiscalLinha } from 'generated/prisma';
-import { accountingScopeWhere, type AccountingScope } from '../scope/AccountingScope';
+import { accountingScopeWhere, type AccountingScope } from '../models/AccountingScope';
 import type { IReceitaFiscalRepository, ReceitaFiscalLinhaData, TipoLinhaReceita } from './IReceitaFiscalRepository';
 
 /** Repositório Prisma do subrazão fiscal de receita (X14 PR-2). Zero regra de negócio (ver o contrato). */

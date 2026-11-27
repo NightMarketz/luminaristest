@@ -1,8 +1,8 @@
 import { ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
-import type { AccountingScope } from '../scope/AccountingScope';
-import type { AssinadorRemotoPort } from '../dfe/AssinadorRemotoPort';
-import type { CscDaUnidade, DfeAmbiente, DfeCallContext, DfeEmissorPort } from '../dfe/DfeEmissorPort';
+import type { AccountingScope } from '../models/AccountingScope';
+import type { AssinadorRemotoPort } from '../ports/AssinadorRemotoPort';
+import type { CscDaUnidade, DfeAmbiente, DfeCallContext, DfeEmissorPort } from '../ports/DfeEmissorPort';
 import type { PscCredentialService, ResolveForEmissionResult } from './PscCredentialService';
 import type { NfceCscService } from './NfceCscService';
 

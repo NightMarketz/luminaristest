@@ -41,7 +41,7 @@ import prisma from '../lib/prisma';
 import { MAX_CENTS } from '../features/accounting/models/money';
 import { scopeToday } from '../features/accounting/models/dates';
 import { CLOSING_SOURCE_TYPE, closingSourceId } from '../features/accounting/models/closing';
-import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '../features/accounting/models/AccountingScope';
 import type { PostEntryInput } from '../features/accounting/dtos/PostingDto';
 import { UpsertFiscalProfileSchema } from '../features/accounting/dtos/FiscalProfileDto';
 import { buildQuickPreset } from '../features/onboarding/services/buildQuickPreset';

@@ -9,7 +9,7 @@ import { Role } from '@/features/users/models/User.model';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, resetDb, authHeader, seedUnit } from '@test/helpers';
 import { AccountingPeriodRepository } from '@/features/accounting/repositories/AccountingPeriodRepository';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import { getFactory } from '@/lib/factory';
 
 const app = makeApp();

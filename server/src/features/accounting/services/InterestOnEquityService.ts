@@ -25,7 +25,7 @@ import type { PostingService } from './PostingService';
 import { deletedLalurCodigo } from './LalurService';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import { exigirLinhaVigente, parametrosUsados, type LinhaLegal, type ParametrosUsados } from '../../legalParameters/models/legalParameter';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IInterestOnEquityRepository, MovimentoDiario } from '../repositories/IInterestOnEquityRepository';
 import type { IPartnerRepository } from '../repositories/IPartnerRepository';

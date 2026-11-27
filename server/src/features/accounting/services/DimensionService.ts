@@ -16,8 +16,8 @@ import type {
 import type { IDimensionRepository } from '../repositories/IDimensionRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 
 /** A definition with its values (flat list carrying parentId — the tree is in the data). */
 export interface DimensionCatalogEntry {

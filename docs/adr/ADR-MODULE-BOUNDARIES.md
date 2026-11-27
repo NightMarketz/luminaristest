@@ -343,7 +343,7 @@ comentada no código, onboarding na tx do install) e jobs/`server.ts` (`PurgeDel
 - Limite da medida: regex, não AST. A regra de lint é a medida definitiva; se ela achar mais que o baseline acima,
   o achado vai à caixa antes de qualquer supressão.
 
-## 11. Emenda de 24/11/2026 — ligação das regras (PR-2 do BRIEF de execução; §11.5 = `users/public/` e `M4`; §11.6 = renome de `dynamicTables` e `M2`; §11.7 = `M2` sem ponto cego, `D2` e CLI do P2; §11.8 = renome de `analytics` e `sectorKits`; §11.9 = renome de `crm`, `fx`, `interview` e `accountingBinding`)
+## 11. Emenda de 24/11/2026 — ligação das regras (PR-2 do BRIEF de execução; §11.5 = `users/public/` e `M4`; §11.6 = renome de `dynamicTables` e `M2`; §11.7 = `M2` sem ponto cego, `D2` e CLI do P2; §11.8 = renome de `analytics` e `sectorKits`; §11.9 = renome de `crm`, `fx`, `interview` e `accountingBinding`; §11.10 = renome da `accounting` e `M2` em `[^/]+`)
 
 Autorização: dono, chat, 24/11/2026: "Executa o BRIEF inteiro". Esta emenda registra o que o §8 item 4 pede: o baseline
 antes/depois de cada regra ligada e a prova de que cada uma morde. As regras valem na branch
@@ -873,4 +873,151 @@ e o caminho antigo direto (`accounting/models/money`). Sem a sonda, 2 de 2 passa
   moveram), então seguem no baseline.
 - **`accounting/public/` ganhou cinco portas antes do PR-3.x da `accounting`.** Quando `sync/` e `fixtures/` da
   `accounting` se moverem, só o caminho de dentro das portas muda.
+- **Ambiente da prova:** Windows, com o `node_modules` pela junção do depósito. O resultado do CI (Linux) é o que vale.
+
+### 11.10 Emenda de 27/11/2026 — renome da `accounting` e `M2` em `[^/]+` (última feature da tabela §5.3)
+
+Autorização: dono, chat, 24/11/2026: "Executa o BRIEF inteiro"; questionário de 27/11 (sessão de feature do renome da
+`accounting`), quatro respostas: "PR novo sobre o #1422 (Recommended)", "Fica, isenção nomeada (Recommended)",
+"Destinos propostos (Recommended)" e "Caixa e sigo (Recommended)"; segundo questionário no mesmo dia: "Cabeçalho neste
+PR (Recommended)" (`docs/plano/decisoes/D-2026-11-27-MODULE-BOUNDARIES-PR3-ACCOUNTING-RESPOSTAS.md`). PR de fase próprio, empilhado sobre
+o #1422, um commit por item.
+
+**O que entrou**
+
+- **Renome (tabela §5.3 do BRIEF):**
+  - `accounting/scope/AccountingScope.ts` e `resolveAccountingScopeInternal.ts` → `accounting/models/`;
+    `AccountingScopeResolver.ts` → `accounting/services/`.
+  - `accounting/sync/AccountingSyncService.ts` → `services/`; `AccountingSyncPort.ts` → `ports/`; `sync/mappers/` →
+    `domain/mappers/`; `sync/bridges/` → `services/bridges/`.
+  - `accounting/dfe/{DfeEmissorPort,AssinadorRemotoPort}.ts` e `collection/CollectionProviderPort.ts` → `ports/`; o
+    resto de `dfe/` → `adapters/dfe/` (com `sefaz/`, `psc/` e `local/`); o resto de `collection/` →
+    `adapters/collection/`; `dfe/splitCents.ts` → `domain/`.
+  - `accounting/audit/` → `accounting/domain/audit/`.
+  - `accounting/paises/br/{EcdChartStructureRule,LalurAccountDeletionGuard,StatementParserBr,TaxProvisionClosingGuard}.ts`
+    → `accounting/paises/br/adapters/` (F-MBE-5 a).
+- **`M2_FEATURES` fechou em `[^/]+`:** as três regras (`M2`, `M2b`, `M2c`) valem para toda feature e medem 0 sem
+  entrada de baseline. Nenhuma outra feature tinha arquivo de produção fora de pasta de camada (medido no grafo e por
+  `git ls-files` antes de ligar).
+- **28 entradas `M1` pagas por porta em `accounting/public/`** (o commit de caminho de `sync/` não troca chave; o de
+  `scope/` cria as portas e move no mesmo commit, porque a `M4` não deixa um `*.types.ts` apontar para fora de
+  `models/` e `dtos/`):
+  - `scope/` (25, de `dp`, `packages`, `sales`, `legalParameters`, `onboarding` e `teammates`):
+    `accountingScope.types.ts` (o tipo `AccountingScope`), `accountingScope.ts` (`accountingScopeWhere`, para os
+    repositórios de `packages`) e `resolveAccountingScopeInternal.ts`.
+  - `sync/bridges/` (3, de `sales` e `packages`): `saleItems.ts`, `saleSettlementBridge.ts` e `saleReversalBridge.ts`.
+- **Regras que citam caminho (item 14 do BRIEF):**
+  - `I6`: o `to` passa a `^src/features/accounting/(models|public)/resolveAccountingScopeInternal\.ts$`. A porta é
+    arquivo próprio de propósito: se o reexport morasse numa porta maior, controller alcançaria a função sem casar a
+    regra.
+  - `C1` (`LEDGER_CORE_ALLOWED`): `audit/` → `domain/audit/`; `scope/` → `models/AccountingScope.ts`, que entrou no
+    grupo `models/(…)`. A entrada antiga cobria a pasta inteira (três arquivos); a nova cobre só o arquivo que o
+    núcleo importa (19 arestas). A lista ficou mais estreita.
+- **Etapa declarada, `accounting/fixtures/`** ("Fica, isenção nomeada"): a pasta não foi para
+  `accounting/paises/br/domain/` (F-MBE-6 a). `PostingService` e `ExerciseClosingService` (núcleo da `C1`) e mais 23
+  módulos do centro importam o `ChartOfAccountsFixture.ts`; mover poria um caminho de `paises/` na lista fechada da
+  `C1` e deixaria 26 arestas centro → `paises/` (os 25 da `accounting` e o DTO do `sectorKits`) para a `P1` que o #1428 traz nascendo em 0. A porta que tira a
+  dependência é a do F-PBF1-7 (`BE-INCR-PAIS-NA-BORDA-F1-brief.md`), e o `PAIS-NA-BORDA` está `planned`. O BRIEF
+  mandava a pasta "ficar no baseline da `M2`"; como a `M2` nasce em 0 e nunca entra no known-violations, o arquivo
+  ficou isento por nome no `pathNot` (`M2_DECLARED_STEP = '^src/features/accounting/fixtures/ChartOfAccountsFixture\.ts$'`).
+  Lacuna `L-20261127-122628-dabb`.
+- **Um gate de contrato que o movimento acionou e o BRIEF não listava** ("Cabeçalho neste PR"): o teste
+  `accounting/__tests__/atomicUntil.boundary.test.ts` calcula a população "todo `.ts` de `features/<x>/services` que
+  chama `.postEntry(`" (Contrato §2.3, `[AC-2.3-2]`). O `AccountingSyncService` sempre chamou `postEntry`, mas morava
+  em `sync/` e ficava fora da conta; em `services/` o teste reprovou por falta do cabeçalho. O serviço ganhou o
+  cabeçalho `atomicUntil` no primeiro JSDoc do arquivo, como serviço de commit único (commit 2 — nenhum; reconcile —
+  `runAccountingSyncReconcile()`), citando testes que já existiam. Nenhum comportamento muda. As pontes de
+  `services/bridges/` não chamam `.postEntry(` (postam pelo sync ou pelo `ReceivableService`) e ficam fora do predicado.
+- **Testes que apontam caminho por string** (o `tsc` não vê), todos ajustados no commit do movimento:
+  `jobs/__tests__/purgeVendaLancada.test.ts` (`path.resolve(__dirname, '…/accounting/sync/bridges')`),
+  `lib/__tests__/decimalMoney.pontos.test.ts` (lista de 7 caminhos), `__tests__/tsconfigTestCoverage.test.ts`
+  (caminho do `auditCanonical.test.ts`), `accounting/__tests__/core-boundary.test.ts` (caminho de `paises/br`) e
+  `accounting/domain/audit/__tests__/auditAllowlistCoverage.test.ts`, que monta a raiz da feature por
+  `join(__dirname, '..', '..')` e passou a precisar de três níveis. Este último **não** passa no vazio: com a raiz
+  errada ele reprova na guarda `expect(emitted.size).toBeGreaterThan(20)` (conferido: 1 falha em 2; restaurado, 2 de 2).
+- **Caminhos em texto fora de `server/src`:** nenhum. Skills, `GENERATION_CONTRACTS.md`, `scripts/classe-risco.mjs` e o
+  ledger de `docs/architecture/lint-layer-gate.md` não citam as pastas movidas (as skills citam `auditCanonical.ts`
+  pelo nome); os três scripts de fixture citam `accounting/fixtures/`, que ficou. O `jobs/proveP2ZeroDiffCli.ts` não
+  foi tocado (congelado, §11.7).
+
+**Baseline antes/depois (server, `.dependency-cruiser-known-violations.json`)**
+
+| Regra | Antes (ponta do §11.9) | Depois |
+|---|---|---|
+| `M1` | 278 | **250** (−25 `scope/`, −3 `sync/bridges/`) |
+| `M1a` | 36 | 36 |
+| `J1` | 15 | 15 |
+| `X3` | 3 | 3 |
+| `M2`, `M2b`, `M2c`, `I6`, `C1` | 0 | **0** (não entram no arquivo) |
+| Total | 332 | **304** |
+
+Diff do baseline: 28 entradas removidas, 0 acrescentadas (conferido por conjunto de `regra + from → to` a cada commit).
+Módulos cruzados sem sonda: 2244 → 2250 (as seis portas novas).
+
+**Prova de que `M2`, `I6` e `C1` mordem depois do renome** (saída literal de `npm run check:arch`, 27/11; 304
+conhecidas ignoradas)
+
+| Caso | Sonda | Saída | Exit |
+|---|---|---|---|
+| `M2c`: pasta antiga `sync/` recriada, órfã | `accounting/sync/__sondaM2.ts` | `error M2c-feature-code-in-layer-folder-orphan: src/features/accounting/sync/__sondaM2.ts` | 1 |
+| `M2`: raiz da feature, importada por um service | `accounting/__sondaM2.ts` ← `accounting/services/__sondaImp.ts` | `error M2-feature-code-in-layer-folder: src/features/accounting/services/__sondaImp.ts → src/features/accounting/__sondaM2.ts` | 1 |
+| `M2b`: pasta antiga `scope/` recriada, importando um model | `accounting/scope/__sondaM2b.ts` | `error M2b-feature-code-in-layer-folder-importing: src/features/accounting/scope/__sondaM2b.ts → src/features/accounting/models/AccountingScope.ts` | 1 |
+| `M2c`: arquivo novo em `fixtures/` (a etapa declarada isenta só o `ChartOfAccountsFixture.ts`) | `accounting/fixtures/__sondaM2.ts` | `error M2c-feature-code-in-layer-folder-orphan: src/features/accounting/fixtures/__sondaM2.ts` | 1 |
+| `M2c` em `[^/]+`: feature que nunca esteve na lista | `chat/__sondaM2.ts` | `error M2c-feature-code-in-layer-folder-orphan: src/features/chat/__sondaM2.ts` | 1 |
+| `M2c` em `[^/]+`: feature que ainda não existe | `featureNova/__sondaM2.ts` | `error M2c-feature-code-in-layer-folder-orphan: src/features/featureNova/__sondaM2.ts` | 1 |
+| contraprova `M2`: a mesma sonda em `domain/` | `accounting/domain/__sondaM2.ts` ← o mesmo service | `✔ no dependency violations found (2252 modules, 10363 dependencies cruised)` | 0 |
+| contraprova `M2`: pasta de camada dentro de `paises/<cc>/` | `accounting/paises/br/domain/__sondaM2.ts` | `✔ no dependency violations found (2251 modules, 10362 dependencies cruised)` | 0 |
+| `I6`: controller importa pelo caminho novo | `controllers/__sondaI6.ts` → `accounting/models/resolveAccountingScopeInternal` | `error I6-controller-not-internal-scope: src/controllers/__sondaI6.ts → src/features/accounting/models/resolveAccountingScopeInternal.ts` | 1 |
+| `I6`: controller importa pela porta | `controllers/__sondaI6.ts` → `accounting/public/resolveAccountingScopeInternal` | `error I6-controller-not-internal-scope: src/controllers/__sondaI6.ts → src/features/accounting/public/resolveAccountingScopeInternal.ts` | 1 |
+| contraprova `I6`: controller importa só o tipo | `controllers/__sondaI6.ts` → `accounting/models/AccountingScope` (`import type`) | `✔ no dependency violations found (2251 modules, 10363 dependencies cruised)` | 0 |
+| `C1`: o plantio original do `ADR-ARCH-BOUNDARIES` §1.2 (seis imports, um por família), com o caminho novo de `paises/br` | `PostingService → ITaxAssessmentRepository`, `PeriodService → paises/br/adapters/EcdChartStructureRule`, `AuditService → lib/ofx`, `ReconciliationService → lib/cnab`, `ExerciseClosingService → LalurService`, `IPostingRepository → models/taxAssessmentProvisao` | seis linhas `error C1-ledger-core-not-fiscal: <from> → <to>`, uma por import | 6 |
+| `C1`: núcleo importa o que o renome moveu e não está na lista | `PostingService → adapters/dfe/selectDfeEmissor`, `PeriodService → ports/DfeEmissorPort`, `AuditService → services/bridges/saleItems`, `ReconciliationService → models/resolveAccountingScopeInternal` | quatro linhas `error C1-ledger-core-not-fiscal: <from> → <to>` | 4 |
+| contraprova `C1`: núcleo importa os dois caminhos novos da lista | `ReconciliationService → models/AccountingScope`, `PeriodService → domain/audit/auditFreeTextMask` | `✔ no dependency violations found (2250 modules, 10363 dependencies cruised)` | 0 |
+
+Saída literal dos dois casos de `C1` que falham:
+
+```
+  error C1-ledger-core-not-fiscal: src/features/accounting/services/ReconciliationService.ts → src/lib/cnab.ts
+  error C1-ledger-core-not-fiscal: src/features/accounting/services/PostingService.ts → src/features/accounting/repositories/ITaxAssessmentRepository.ts
+  error C1-ledger-core-not-fiscal: src/features/accounting/services/PeriodService.ts → src/features/accounting/paises/br/adapters/EcdChartStructureRule.ts
+  error C1-ledger-core-not-fiscal: src/features/accounting/services/ExerciseClosingService.ts → src/features/accounting/services/LalurService.ts
+  error C1-ledger-core-not-fiscal: src/features/accounting/services/AuditService.ts → src/lib/ofx.ts
+  error C1-ledger-core-not-fiscal: src/features/accounting/repositories/IPostingRepository.ts → src/features/accounting/models/taxAssessmentProvisao.ts
+‼ 304 known violations ignored. Run with --no-ignore-known to see them.
+exit 6
+
+  error C1-ledger-core-not-fiscal: src/features/accounting/services/ReconciliationService.ts → src/features/accounting/models/resolveAccountingScopeInternal.ts
+  error C1-ledger-core-not-fiscal: src/features/accounting/services/PostingService.ts → src/features/accounting/adapters/dfe/selectDfeEmissor.ts
+  error C1-ledger-core-not-fiscal: src/features/accounting/services/PeriodService.ts → src/features/accounting/ports/DfeEmissorPort.ts
+  error C1-ledger-core-not-fiscal: src/features/accounting/services/AuditService.ts → src/features/accounting/services/bridges/saleItems.ts
+‼ 304 known violations ignored. Run with --no-ignore-known to see them.
+exit 4
+```
+
+Sondas e pastas criadas removidas depois de cada caso; nos casos da `C1` as linhas plantadas em arquivo existente
+saíram por `git checkout --`. `git status` sem sobra em `server/` depois de cada um dos 14 casos.
+
+**Declarado**
+
+- **Sem mudança de comportamento:** o renome é de caminho. O único conteúdo novo são seis arquivos de porta que
+  reexportam por nome, a constante `M2_DECLARED_STEP`, os caminhos da `I6` e da `C1` e o cabeçalho `atomicUntil` do
+  `AccountingSyncService` (comentário).
+- **Entre o commit do movimento de `sync/` e o do cabeçalho, o `atomicUntil.boundary.test.ts` fica vermelho.** O
+  jest com escopo só rodou no fim; o cabeçalho entrou em commit próprio, depois da resposta do dono.
+- **A lista da `C1` estreitou em um ponto** (`scope/` inteira → `models/AccountingScope.ts`). Não foi pergunta ao dono:
+  ele pode reverter no lote.
+- **A etapa declarada deixa um arquivo de produção fora de pasta de camada.** Sai com a porta do F-PBF1-7. O resíduo
+  `fixtures/ChartOfAccountsFixture.ts` da `LEDGER_CORE_ALLOWED` (`ADR-ARCH-BOUNDARIES` §1.2) é o mesmo arquivo.
+- **Encontro com o `PAIS-NA-BORDA`** ("Caixa e sigo", lacuna `L-20261127-122629-0d42`): o #1428 cria
+  `accounting/paises/br/legalParameters/*.ts`, pasta fora da `LAYER_DIR`, que a `M2` em `[^/]+` reprova quando as duas
+  integrações se encontrarem; a `LEGADO_BR` da `P1` dele cita `accounting/dfe/`, que virou `accounting/adapters/dfe/`
+  (e `ports/`). Quem chegar depois ajusta.
+- **`services/bridges/` importa `lib/factory.ts`** (as pontes chamam `getFactory()`). Nenhuma regra barra service →
+  factory; a `D2` barraria em `domain/`, e por isso as pontes não foram para lá.
+- **Janela (BRIEF §3.4):** a `main` não andou desde a base da pilha (`40b6ab8f4`), então não houve o que absorver.
+  Abertos nas pastas movidas em 27/11: #1146, #1412, #1409, #1427, #1438, #1425 e #1428; rebaseiam depois do
+  fechamento da integração.
+- **Integração não rodou aqui:** os testes `*.integration.test.ts` das pastas movidas
+  (`services/bridges/__tests__/SaleReversalBridge.integration.test.ts`, os dois `rename*Guard.integration.test.ts`) valem
+  pelo CI.
 - **Ambiente da prova:** Windows, com o `node_modules` pela junção do depósito. O resultado do CI (Linux) é o que vale.

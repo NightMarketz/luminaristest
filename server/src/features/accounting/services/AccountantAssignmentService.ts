@@ -18,8 +18,8 @@ import {
   ASSIGNMENT_SUPERSEDED_REASON,
 } from '../models/AccountantAssignment.model';
 import type { AuditService } from './AuditService';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
+import type { AccountingScope } from '../models/AccountingScope';
+import { resolveAccountingScopeInternal } from '../models/resolveAccountingScopeInternal';
 
 /** Linha → resposta da API (§4.1): sem slots, ids de autoria nem `deletedAt`. */
 export function toAccountantAssignmentView(a: AccountantAssignment): AccountantAssignmentView {

@@ -7,7 +7,7 @@
  * (REGRA_MESMO_TRIBUTO, system sem PATCH de valor) e o diagnóstico materializado × recomputado (item 11).
  */
 import { LalurService } from '../LalurService';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { NotFoundError, ValidationError } from '../../../../lib/errors';
 import { LALUR_PARTE_B_CLOSED, LALUR_PARTE_B_REOPENED, LALUR_QUARTERS } from '../../models/Lalur.model';
 import type { LalurEntry, LalurParteBAccount, LalurParteBMovement } from 'generated/prisma';

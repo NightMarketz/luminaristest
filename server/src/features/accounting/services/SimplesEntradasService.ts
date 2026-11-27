@@ -1,7 +1,7 @@
 import type { SalaoParceriaContrato, SimplesHistoricoMensal } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import { janelaRbt12 } from '../models/simplesCalc';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { ISimplesEntradasRepository, ParceriaData } from '../repositories/ISimplesEntradasRepository';
 import {

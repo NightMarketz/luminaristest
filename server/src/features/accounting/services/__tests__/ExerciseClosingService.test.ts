@@ -1,6 +1,6 @@
 import { ExerciseClosingService } from '../ExerciseClosingService';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { MAX_CENTS } from '../../models/money';
 import type { Account } from 'generated/prisma';
 import type { PostEntryInput } from '../../dtos/PostingDto';

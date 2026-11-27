@@ -1,7 +1,7 @@
 import { Prisma } from 'generated/prisma';
 import type { CompanyFiscalProfile } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { ICompanyFiscalProfileRepository, CompanyFiscalProfileData } from '../repositories/ICompanyFiscalProfileRepository';
 import type { ICompanySignerRepository } from '../repositories/ICompanySignerRepository';

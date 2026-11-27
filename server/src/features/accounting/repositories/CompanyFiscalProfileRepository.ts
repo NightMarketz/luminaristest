@@ -1,6 +1,6 @@
 import prisma from '../../../lib/prisma';
 import type { CompanyFiscalProfile, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { CompanyFiscalProfileData, ICompanyFiscalProfileRepository } from './ICompanyFiscalProfileRepository';
 
 /** Prisma-backed `company_fiscal_profiles` (X13). Soft-delete; o upsert REVIVE a linha apagada (mesma @@unique). */

@@ -2,7 +2,7 @@ import { Prisma } from 'generated/prisma';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { CustomerPackageBalance } from 'generated/prisma';
 import { ForbiddenError, PackageBalanceExpiredError, ValidationError } from '../../../lib/errors';
-import type { AccountingScope } from '../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../accounting/public/accountingScope.types';
 import { centsFromDb } from '../../accounting/models/money';
 import { scopeToday } from '../../accounting/models/dates';
 import type { IPackageBalanceRepository } from '../repositories/IPackageBalanceRepository';

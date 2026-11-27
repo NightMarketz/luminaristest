@@ -69,8 +69,8 @@
 import prisma from '../lib/prisma';
 import { logger } from '../lib/logger';
 import { getFactory } from '../lib/factory';
-import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
-import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/models/resolveAccountingScopeInternal';
+import type { AccountingScope } from '../features/accounting/models/AccountingScope';
 import { LEDGER_STATUSES } from '../features/accounting/models/ledgerStatus';
 import { centsFromDb } from '../features/accounting/models/money';
 import {
@@ -80,7 +80,7 @@ import {
   buildSaleSettledEvent,
   buildSalePackageSoldEvent,
   buildSalePackageExpiredEvent,
-} from '../features/accounting/sync/AccountingSyncPort';
+} from '../features/accounting/ports/AccountingSyncPort';
 import { AppError, AccountingPeriodNotOpenError, NoMapperForUnitError, PackageConsumptionPendingError, PackageOriginReversedError } from '../lib/errors';
 import { AccountingPeriodRepository } from '../features/accounting/repositories/AccountingPeriodRepository';
 import { scopeToday } from '../features/accounting/models/dates';
@@ -95,16 +95,16 @@ import {
 import type {
   CrmBridgeOutcome,
   WonOpportunityFact,
-} from '../features/accounting/sync/bridges/CrmReceivableBridge';
-import type { AccountingEvent, SyncResult } from '../features/accounting/sync/AccountingSyncPort';
-import { syncSkipErrorCode } from '../features/accounting/sync/AccountingSyncPort';
+} from '../features/accounting/services/bridges/CrmReceivableBridge';
+import type { AccountingEvent, SyncResult } from '../features/accounting/ports/AccountingSyncPort';
+import { syncSkipErrorCode } from '../features/accounting/ports/AccountingSyncPort';
 import { JournalEntryRepository } from '../features/accounting/repositories/JournalEntryRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
-import { loadPackageValidityDays, loadSaleRevenueLines, loadSalePackageInfo, loadSaleTomadorTipo } from '../features/accounting/sync/bridges/saleItems';
-import { ledgerDays, reconcileReceitaFiscalRecebimentos, recebimentoSaleFromRow } from '../features/accounting/sync/bridges/ReceitaFiscalRecebimentoBridge';
+import { loadPackageValidityDays, loadSaleRevenueLines, loadSalePackageInfo, loadSaleTomadorTipo } from '../features/accounting/services/bridges/saleItems';
+import { ledgerDays, reconcileReceitaFiscalRecebimentos, recebimentoSaleFromRow } from '../features/accounting/services/bridges/ReceitaFiscalRecebimentoBridge';
 import type { PackageCreditCommand } from '../features/packages/services/PackageBalanceService';
 import { saleDayAsWritten } from '../features/accounting/models/dates';
-import type { ProductLine } from '../features/accounting/sync/bridges/saleItems';
+import type { ProductLine } from '../features/accounting/services/bridges/saleItems';
 import { ReconcilePendingRepository } from '../features/accounting/repositories/ReconcilePendingRepository';
 import type { ReconcilePendingReasonCodeValue } from '../features/accounting/dtos/ReconcilePendingDto';
 import { PACOTES_PRE_PAGOS_CODE } from '../features/accounting/fixtures/ChartOfAccountsFixture';

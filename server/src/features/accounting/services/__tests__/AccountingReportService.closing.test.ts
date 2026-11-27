@@ -1,5 +1,5 @@
 import { AccountingReportService } from '../AccountingReportService';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import type { Account } from 'generated/prisma';
 
 /**

@@ -1,6 +1,6 @@
 import { CANONICAL_ACCOUNTS, RECEITA_NAO_USO_CODE } from '../../fixtures/ChartOfAccountsFixture';
 import { SpedEcfGenerationService } from '../SpedEcfGenerationService';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
 import { logger } from '../../../../lib/logger';
 import type { SpedEcfRequestDto } from '../../dtos/SpedEcfDto';

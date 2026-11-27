@@ -1,5 +1,5 @@
 import type { Payable, PayablePayment, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { PayableStatus } from '../models/Payable.model';
 import type { CreditoPisCofinsNota, RazaoCreditoPisCofins } from '../models/pisCofinsParams';
 import type { IbsCbsCreditoNota } from '../models/ibsCbsCredito';

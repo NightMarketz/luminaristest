@@ -1,5 +1,5 @@
 import type { CollectionCharge, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /**
  * Linha da lista da unidade com o nº do título (EMENDA-1 16b; D-2026-10-29-F5-16B-E-P-RET-4 item 2) e o `deletedAt` dele

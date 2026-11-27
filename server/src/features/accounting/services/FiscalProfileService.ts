@@ -1,7 +1,7 @@
 import { ESTOQUES_CODE, PERFIL_FISCAL_PLANO_PADRAO, isContaDoPlanoPadrao } from '../fixtures/ChartOfAccountsFixture';
 import { ForbiddenError, PolicyApprovalRequiredError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';

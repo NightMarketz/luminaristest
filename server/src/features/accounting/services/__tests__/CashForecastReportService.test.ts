@@ -26,7 +26,7 @@
  */
 import { CashForecastReportService, CASH_FORECAST_HORIZON_DAYS } from '../CashForecastReportService';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import { scopeToday, dayNumberFromDateOnly, dateOnlyFromDayNumber } from '../../models/dates';
 
 const scope: AccountingScope = {

@@ -4,7 +4,7 @@ import type { ParsedNfe } from '../../../lib/nfe';
 import type { NfePreview, PreviewNfeInput } from '../dtos/NfeDto';
 import type { IPayableRepository } from '../repositories/IPayableRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { FiscalProfileService } from './FiscalProfileService';
 import { TABELAS_LEGAIS_NFE, acquisitionCost, type AcquisitionCost } from '../../../lib/nfeCost';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';

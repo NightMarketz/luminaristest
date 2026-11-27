@@ -8,7 +8,7 @@ import * as storage from '../../../lib/attachmentStorage';
 import { logger } from '../../../lib/logger';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
 import { metrics } from '../../../lib/monitoring';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';

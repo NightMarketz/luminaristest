@@ -34,13 +34,13 @@ import { AccountingPeriodRepository } from '@/features/accounting/repositories/A
 import { SourceProvenanceRepository } from '@/features/accounting/repositories/SourceProvenanceRepository';
 import { DimensionRepository } from '@/features/accounting/repositories/DimensionRepository';
 import { LalurRepository } from '@/features/accounting/repositories/LalurRepository';
-import { ecdChartStructureRule } from '@/features/accounting/paises/br/EcdChartStructureRule';
-import { LalurAccountDeletionGuard } from '@/features/accounting/paises/br/LalurAccountDeletionGuard';
+import { ecdChartStructureRule } from '@/features/accounting/paises/br/adapters/EcdChartStructureRule';
+import { LalurAccountDeletionGuard } from '@/features/accounting/paises/br/adapters/LalurAccountDeletionGuard';
 import { AuditRepository } from '@/features/accounting/repositories/AuditRepository';
 import { CounterpartyRepository } from '@/features/accounting/repositories/CounterpartyRepository';
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 
 const OWNER = 'u-prov-idem';
 const UNIT = 'unit-prov-idem';

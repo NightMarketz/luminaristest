@@ -14,15 +14,15 @@ const mockSelection: { enabled: boolean; ambiente: string | null; reason?: strin
   ambiente: 'homologacao',
   port: mockPort,
 };
-jest.mock('../../dfe/selectDfeEmissor', () => ({
+jest.mock('../../adapters/dfe/selectDfeEmissor', () => ({
   __esModule: true,
   selectDfeEmissor: () => mockSelection,
 }));
 
 import { ConflictError, ValidationError } from '../../../../lib/errors';
 import { FiscalDocumentLifecycleService, isValidResultTransition } from '../FiscalDocumentLifecycleService';
-import type { AccountingScope } from '../../scope/AccountingScope';
-import type { CancelResult, EmissaoResult } from '../../dfe/DfeEmissorPort';
+import type { AccountingScope } from '../../models/AccountingScope';
+import type { CancelResult, EmissaoResult } from '../../ports/DfeEmissorPort';
 
 // BE-INCR-DFE-EVENTOS (item 5): o `cancelar` lê a janela da view — sem prazo configurado, nunca há aviso.
 const JANELA_DESCONHECIDA = { cancelarAte: null, substituirAte: null, substituirTeto: null, fonte: 'desconhecida' };

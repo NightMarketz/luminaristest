@@ -1,7 +1,7 @@
 import prisma from '../../../lib/prisma';
 import type { AccountingScopeSettings, BankSettlementItem, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 import { centsFromDb } from '../models/money';
 import { PAYABLE_SETTLEABLE_STATUSES } from '../models/Payable.model';
 import { RECEIVABLE_SETTLEABLE_STATUSES } from '../models/Receivable.model';

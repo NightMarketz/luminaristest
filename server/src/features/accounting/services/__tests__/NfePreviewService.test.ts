@@ -22,7 +22,7 @@ import { NfePreviewService } from '../NfePreviewService';
 import { NfeImportService } from '../NfeImportService';
 import type { IPayableRepository } from '../../repositories/IPayableRepository';
 import type { IAccountingPolicy } from '../../policies/IAccountingPolicy';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import type { Payable } from 'generated/prisma';
 import { signNfeForTest } from '@test/helpers/nfeSignature';
 

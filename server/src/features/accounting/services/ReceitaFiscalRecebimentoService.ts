@@ -1,7 +1,7 @@
 import { ValidationError } from '../../../lib/errors';
 import { reaisToCents } from '../../../lib/saleLine';
 import { dateOnlyFromDayNumber, dayNumberFromDateOnly } from '../models/dates';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFiscalProfileRepository';
 import type { IReceitaFiscalRecebimentoRepository, OrigemRecebimento } from '../repositories/IReceitaFiscalRecebimentoRepository';
 

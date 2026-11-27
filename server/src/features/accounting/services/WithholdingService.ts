@@ -2,7 +2,7 @@ import type { Account, FiscalProfile, LegalParameter, Payable, Prisma, TaxWithho
 import { ConflictError, ForbiddenError, ValidationError } from '../../../lib/errors';
 import { ultimoDiaUtilAteDia20 } from '../../../lib/vencimentoRetencao';
 import { linhaLegalVigente, type LegalParameterTabela } from '../../legalParameters/models/legalParameter';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFiscalProfileRepository';

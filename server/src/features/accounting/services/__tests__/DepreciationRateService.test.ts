@@ -10,10 +10,10 @@ import type {
   CreateDepreciationRateData,
   IDepreciationRateRepository,
 } from '@/features/accounting/repositories/IDepreciationRateRepository';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import type { IAccountingPolicy } from '@/features/accounting/policies/IAccountingPolicy';
 import type { AuditService } from '@/features/accounting/services/AuditService';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import { DEPRECIATION_RATE_CREATED, DEPRECIATION_RATE_HIDDEN } from '@/features/accounting/models/FixedAsset.model';
 
 const scope = resolveAccountingScopeInternal({ userId: 'dono-a' }, 'unit-1');

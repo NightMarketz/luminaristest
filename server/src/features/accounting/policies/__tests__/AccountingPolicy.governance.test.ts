@@ -5,8 +5,8 @@
  */
 import { AccountingPolicy } from '../AccountingPolicy';
 import type { ActiveAccountant } from '../../models/AccountantAssignment.model';
-import type { AccountingScope } from '../../scope/AccountingScope';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import type { AccountingScope } from '../../models/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 
 const policy = new AccountingPolicy();
 const owner = resolveAccountingScopeInternal({ userId: 'dono' }, 'unit-1');

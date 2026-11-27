@@ -1,7 +1,7 @@
 import prisma from '../../../lib/prisma';
 import type { Receivable, ReceivableReceipt, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 import { RECEIVABLE_OUTSTANDING_STATUSES, RECEIVABLE_SETTLEABLE_STATUSES, type ReceivableStatus } from '../models/Receivable.model';
 import { scopeToday } from '../models/dates';
 import { buildSubledgerFilterWhere } from './subledgerFilters';

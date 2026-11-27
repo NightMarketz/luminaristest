@@ -1,7 +1,7 @@
 import { Prisma } from 'generated/prisma';
 import type { AccountingDataExchangeJob } from 'generated/prisma';
 import { ConflictError, NotFoundError, ValidationError } from '../../../lib/errors';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IDataExchangeRepository } from '../repositories/IDataExchangeRepository';
 import { describeExportJob } from '../models/AccountingDelivery.model';
 

@@ -6,7 +6,7 @@ import type { StatementParser } from '../ports/LedgerPorts';
 import type { IReconciliationRepository } from '../repositories/IReconciliationRepository';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { AuditService } from './AuditService';
 import { MAX_CENTS, centsFromDb } from '../models/money';
 import { isValidDateOnly } from '../models/dates';

@@ -7,7 +7,7 @@ import type {
   MovementSourceQuery,
 } from '../../repositories/IInventoryRepository';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { INVENTORY_COGS_SOURCE_TYPE, INVENTORY_INBOUND_SOURCE_TYPE } from '../../models/Inventory.model';
 import type { InventoryItem, StockMovement, Prisma } from 'generated/prisma';
 

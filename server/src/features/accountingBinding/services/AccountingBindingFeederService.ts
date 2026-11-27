@@ -7,7 +7,7 @@ import type { IAccountingBindingRepository } from '../repositories/IAccountingBi
 
 /**
  * Uma entrada de registro unit-scoped, forma equivalente a `ScopedAccountingMapperEntry`
- * (`features/accounting/sync/AccountingSyncService.ts`) — DUPLICADA de propósito, não importada:
+ * (`features/accounting/services/AccountingSyncService.ts`) — DUPLICADA de propósito, não importada:
  * o teste de fronteira `accountingBinding/__tests__/importBoundary.test.ts` (item 13 do BRIEF do
  * P1) só permite importar `IAccountingEventMapper`/`PostEntryInput`/`revenueSplit`/`MAX_CENTS` de
  * `features/accounting` — um tipo do módulo `sync` não está na lista. Mesmo precedente já

@@ -4,7 +4,7 @@ import type { IJournalEntryRepository } from '../../repositories/IJournalEntryRe
 import type { CreateJobInput, UpdateJobInput } from '../../models/DataExchange.model';
 import type { AuditService } from '../AuditService';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { parseTable } from '../../../../lib/spreadsheet';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../../lib/errors';
 import { logger } from '../../../../lib/logger';

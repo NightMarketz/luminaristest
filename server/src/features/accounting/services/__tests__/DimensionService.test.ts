@@ -1,6 +1,6 @@
 import { DimensionService } from '../DimensionService';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../../lib/errors';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import {
   DIMENSION_DEFINITION_ARCHIVED,
   DIMENSION_DEFINITION_CREATED,

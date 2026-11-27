@@ -14,7 +14,7 @@ import * as os from 'os';
 import { execSync } from 'child_process';
 import { PrismaClient, type Prisma } from 'generated/prisma';
 import { ReconciliationRepository } from '../ReconciliationRepository';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 const SERVER_ROOT = path.join(__dirname, '../../../../../');
 

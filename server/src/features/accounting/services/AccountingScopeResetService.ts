@@ -1,5 +1,5 @@
 import { ConflictError, ForbiddenError, SystemResetBlockedByAccountingError } from '../../../lib/errors';
-import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../models/resolveAccountingScopeInternal';
 import { SystemResetBlockedDetailsSchema } from '../dtos/AccountingResetDto';
 import type { AccountingResetOutcome } from '../models/accountingResetClassification';
 import type { IAccountingScopeResetRepository, SetupCounts } from '../repositories/IAccountingScopeResetRepository';

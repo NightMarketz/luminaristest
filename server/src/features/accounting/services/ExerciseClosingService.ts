@@ -14,7 +14,7 @@ import { MAX_CENTS } from '../models/money';
 import { CLOSING_SOURCE_TYPE, closingSourceId } from '../models/closing';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { RETAINED_EARNINGS_CODE } from '../fixtures/ChartOfAccountsFixture';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';

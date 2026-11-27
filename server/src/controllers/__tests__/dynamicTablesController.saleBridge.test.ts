@@ -29,7 +29,7 @@ jest.mock('@/lib/factory', () => ({
     getDynamicTableWriteEffects: () => ({ afterDataWrite }),
   }),
 }));
-jest.mock('@/features/accounting/sync/bridges/SaleSalesAccountingBridge', () => ({
+jest.mock('@/features/accounting/services/bridges/SaleSalesAccountingBridge', () => ({
   __esModule: true,
   maybeSyncSaleFinalized: (...a: unknown[]) => maybeSyncSaleFinalized(...a),
 }));

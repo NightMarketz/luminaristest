@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { SpedGenerationService } from '../SpedGenerationService';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { ForbiddenError, ValidationError, ConflictError, NotFoundError } from '../../../../lib/errors';
 import { Prisma } from 'generated/prisma';
 import { logger } from '../../../../lib/logger';

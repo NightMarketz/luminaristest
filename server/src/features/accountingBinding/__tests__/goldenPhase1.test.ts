@@ -1,12 +1,12 @@
 import type { PostEntryInput } from '../../accounting/dtos/PostingDto';
 import { MAX_CENTS } from '../../accounting/models/money';
-import type { AccountingEvent } from '../../accounting/sync/AccountingSyncPort';
-import type { IAccountingEventMapper } from '../../accounting/sync/mappers/IAccountingEventMapper';
-import { SalePackageSoldMapper } from '../../accounting/sync/mappers/SalePackageSoldMapper';
-import { SaleCogsMapper } from '../../accounting/sync/mappers/SaleCogsMapper';
-import { SaleFinalizedMapper } from '../../accounting/sync/mappers/SaleFinalizedMapper';
-import { SaleReturnedMapper } from '../../accounting/sync/mappers/SaleReturnedMapper';
-import { SaleSettledMapper } from '../../accounting/sync/mappers/SaleSettledMapper';
+import type { AccountingEvent } from '../../accounting/ports/AccountingSyncPort';
+import type { IAccountingEventMapper } from '../../accounting/domain/mappers/IAccountingEventMapper';
+import { SalePackageSoldMapper } from '../../accounting/domain/mappers/SalePackageSoldMapper';
+import { SaleCogsMapper } from '../../accounting/domain/mappers/SaleCogsMapper';
+import { SaleFinalizedMapper } from '../../accounting/domain/mappers/SaleFinalizedMapper';
+import { SaleReturnedMapper } from '../../accounting/domain/mappers/SaleReturnedMapper';
+import { SaleSettledMapper } from '../../accounting/domain/mappers/SaleSettledMapper';
 import { archetypeCatalog } from '../domain/archetypes/catalog';
 import { SALE_BINDING_V2 } from '../domain/fixtures/saleBinding';
 import { InterpretedEventMapper } from '../domain/interpreter/InterpretedEventMapper';
@@ -20,7 +20,7 @@ import { InterpretedEventMapper } from '../domain/interpreter/InterpretedEventMa
  * Para CADA um dos casos do corpus (os mesmos 17 literais de `goldenPhase0.test.ts` — mesmos
  * eventos, mesmos valores; o dossiê fala em prosa "15 casos", o arquivo irmão real tem 17 — ver
  * nota na asserção de contagem abaixo), gera o `PostEntryInput` de DUAS formas:
- *   1. mapper-à-mão de produção (`server/src/features/accounting/sync/mappers/*`) — a REFERÊNCIA;
+ *   1. mapper-à-mão de produção (`server/src/features/accounting/domain/mappers/*`) — a REFERÊNCIA;
  *   2. `InterpretedEventMapper` sobre o binding do salão compilado (`domain/fixtures/saleBinding.ts`,
  *      Corpo C) + o catálogo de arquétipos em código (`domain/archetypes/catalog.ts`, Corpo A).
  *

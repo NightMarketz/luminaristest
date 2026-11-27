@@ -6,7 +6,7 @@ import type { CreatePscProviderInput, PscProviderView, UpdatePscProviderInput } 
 import type { IPscProviderRepository, PscProviderData } from '../repositories/IPscProviderRepository';
 import type { PscProviderActor, PscProviderPolicy } from '../policies/PscProviderPolicy';
 import type { AuditService } from './AuditService';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /**
  * Corrente de auditoria da PLATAFORMA para o cadastro de PSCs (mesmo desenho do `PLATFORM_AUDIT_SCOPE` dos parâmetros

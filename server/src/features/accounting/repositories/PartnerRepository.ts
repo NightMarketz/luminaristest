@@ -1,6 +1,6 @@
 import prisma from '../../../lib/prisma';
 import { Prisma, type Partner } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IPartnerRepository, PartnerData } from './IPartnerRepository';
 
 /** Prisma-backed `partners` (IRRF-DISTRIBUICAO PR-1). Soft-delete; linha viva = `deletedAt: null`. */

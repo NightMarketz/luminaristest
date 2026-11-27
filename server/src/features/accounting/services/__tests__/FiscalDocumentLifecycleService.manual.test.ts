@@ -6,7 +6,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { FiscalDocumentLifecycleService, isValidResultTransition } from '../FiscalDocumentLifecycleService';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import { signNfseEventoForTest, signNfseForTest } from '@test/helpers/nfeSignature';
 
 const SCOPE: AccountingScope = {

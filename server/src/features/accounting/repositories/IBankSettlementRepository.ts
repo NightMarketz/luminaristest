@@ -1,5 +1,5 @@
 import type { AccountingScopeSettings, BankSettlementItem, BankStatementLine, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { BankSettlementStatus, BankSettlementStep, BankSettlementTitleType, CandidateTitle } from '../models/BankSettlement.model';
 
 export interface CreateBankSettlementItemData {

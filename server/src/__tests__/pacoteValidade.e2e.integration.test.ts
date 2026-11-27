@@ -14,15 +14,15 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import { dateOnlyFromDayNumber, dayNumberFromDateOnly, scopeToday } from '@/features/accounting/models/dates';
 import { centsFromDb } from '@/features/accounting/models/money';
 import { lastValidDay } from '@/features/packages/models/validity';
 import { LEDGER_STATUSES } from '@/features/accounting/models/ledgerStatus';
-import { maybeSyncSalePackageSold } from '@/features/accounting/sync/bridges/SalePackageSoldBridge';
-import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
-import { maybeSyncSaleSettled } from '@/features/accounting/sync/bridges/SaleSettlementBridge';
+import { maybeSyncSalePackageSold } from '@/features/accounting/services/bridges/SalePackageSoldBridge';
+import { maybeSyncSaleFinalized } from '@/features/accounting/services/bridges/SaleSalesAccountingBridge';
+import { maybeSyncSaleSettled } from '@/features/accounting/services/bridges/SaleSettlementBridge';
 import {
   buildPackageExpiryDeps,
   reconcilePackageBalanceVsLiability,

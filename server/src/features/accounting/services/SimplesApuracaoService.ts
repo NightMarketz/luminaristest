@@ -29,7 +29,7 @@ import { normalizeNcm } from '../models/pisCofinsMonofasicoNcm';
 import type { IProductFiscalProfileRepository } from '../repositories/IProductFiscalProfileRepository';
 import { espelhoPgdas, type EspelhoAtividade } from '../models/simplesEspelho';
 import { mesBounds } from '../models/Lalur.model';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFiscalProfileRepository';

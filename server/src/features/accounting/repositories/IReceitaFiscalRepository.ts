@@ -1,5 +1,5 @@
 import type { Prisma, ReceitaFiscalLinha } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /** BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, item 15) — uma linha do subrazão fiscal de receita. */
 export interface ReceitaFiscalLinhaData {

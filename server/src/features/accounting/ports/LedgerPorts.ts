@@ -1,7 +1,7 @@
 import type { Prisma } from 'generated/prisma';
 import type { AccountNature } from '../fixtures/ChartOfAccountsFixture';
 import type { InTable } from '../../../lib/spreadsheet';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /**
  * Portas do NÚCLEO DO RAZÃO (Onda 1.2, regra `C1-ledger-core-not-fiscal` do `ADR-ARCH-BOUNDARIES`).
@@ -15,7 +15,7 @@ import type { AccountingScope } from '../scope/AccountingScope';
 
 /**
  * Regra de estrutura do plano de contas de um país (código, nível, conta superior). BR: Manual da ECD
- * (REGRA_VALIDA_NIVEL_CONTAS + I050.COD_CTA_SUP) — `paises/br/EcdChartStructureRule`.
+ * (REGRA_VALIDA_NIVEL_CONTAS + I050.COD_CTA_SUP) — `paises/br/adapters/EcdChartStructureRule`.
  */
 export interface ChartStructureRule {
   /** Lança `ValidationError` quando a conta nova fere a regra. `findByCode` lê o plano do escopo (conta superior). */

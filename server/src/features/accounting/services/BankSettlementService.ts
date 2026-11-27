@@ -15,7 +15,7 @@
 import type { Prisma } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import { logger } from '../../../lib/logger';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IBankSettlementRepository, BankSettlementItemWithLine } from '../repositories/IBankSettlementRepository';
 import type { IReconciliationRepository } from '../repositories/IReconciliationRepository';

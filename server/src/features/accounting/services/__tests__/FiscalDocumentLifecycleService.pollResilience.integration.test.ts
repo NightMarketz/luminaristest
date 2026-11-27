@@ -17,7 +17,7 @@ const mockPort = {
   cancelar: jest.fn(),
   verifyWebhook: jest.fn(),
 };
-jest.mock('@/features/accounting/dfe/selectDfeEmissor', () => ({
+jest.mock('@/features/accounting/adapters/dfe/selectDfeEmissor', () => ({
   __esModule: true,
   selectDfeEmissor: () => ({ enabled: true, ambiente: 'homologacao', port: mockPort }),
 }));
@@ -30,8 +30,8 @@ import {
   FiscalDocumentLifecycleService,
   POLL_MAX_ATTEMPTS,
 } from '@/features/accounting/services/FiscalDocumentLifecycleService';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import { DfeTransporteError, DfeTransporteIndisponivelError, type EmissaoResult } from '@/features/accounting/dfe/DfeEmissorPort';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import { DfeTransporteError, DfeTransporteIndisponivelError, type EmissaoResult } from '@/features/accounting/ports/DfeEmissorPort';
 import { ForbiddenError, ValidationError } from '@/lib/errors';
 import { enviarTentativa } from '@/features/accounting/services/dfeEnvio';
 

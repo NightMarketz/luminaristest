@@ -1,5 +1,5 @@
 import type { IFiscalProfileRepository } from '../../accounting/repositories/IFiscalProfileRepository';
-import type { AccountingScope } from '../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../accounting/public/accountingScope.types';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { Feriados } from '../models/validity';
 

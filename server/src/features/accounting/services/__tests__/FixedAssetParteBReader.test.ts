@@ -5,7 +5,7 @@
  */
 import type { FixedAsset, FixedAssetClass } from 'generated/prisma';
 import { FixedAssetParteBReader, parteBWindow } from '../FixedAssetParteBReader';
-import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../models/resolveAccountingScopeInternal';
 import { ValidationError } from '../../../../lib/errors';
 
 const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');

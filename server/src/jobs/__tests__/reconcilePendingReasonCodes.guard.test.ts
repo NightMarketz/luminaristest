@@ -19,7 +19,7 @@
  * distinção, não a grafia.
  */
 import { ReconcilePendingReasonCode } from '../../features/accounting/dtos/ReconcilePendingDto';
-import { SYNC_SKIP_ERROR_CODES } from '../../features/accounting/sync/AccountingSyncPort';
+import { SYNC_SKIP_ERROR_CODES } from '../../features/accounting/ports/AccountingSyncPort';
 import {
   reconcileSaleSettlements,
   reconcileSalePackageConsumption,

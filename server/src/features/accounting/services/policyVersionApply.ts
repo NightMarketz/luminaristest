@@ -1,6 +1,6 @@
 import type { Prisma } from 'generated/prisma';
 import { PolicyApprovalRequiredError } from '../../../lib/errors';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { PolicyTarget } from '../models/AccountingPolicyVersion.model';
 import type { IAccountantAssignmentRepository } from '../repositories/IAccountantAssignmentRepository';
 import type { IAccountingPolicyVersionRepository } from '../repositories/IAccountingPolicyVersionRepository';

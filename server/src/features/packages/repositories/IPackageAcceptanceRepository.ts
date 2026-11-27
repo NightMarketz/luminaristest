@@ -1,5 +1,5 @@
 import type { PackageValidityAcceptance } from 'generated/prisma';
-import type { AccountingScope } from '../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../accounting/public/accountingScope.types';
 
 /** Everything the acceptance row stores besides id/acceptedAt (the DB fills those). Scope axes come from `scope`. */
 export interface CreateAcceptanceInput {

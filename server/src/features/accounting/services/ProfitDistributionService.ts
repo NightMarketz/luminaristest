@@ -18,7 +18,7 @@ import { ConflictError, ForbiddenError, NotFoundError, RetencaoExcedePagamentoEr
 import logger from '../../../lib/logger';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import { exigirLinhaVigente, parametrosUsados, type LinhaLegal } from '../../legalParameters/models/legalParameter';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IProfitDistributionRepository, TotalPorConta } from '../repositories/IProfitDistributionRepository';
 import type { IPartnerRepository } from '../repositories/IPartnerRepository';

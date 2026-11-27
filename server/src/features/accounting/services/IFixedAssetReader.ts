@@ -1,6 +1,6 @@
 import type { Prisma } from 'generated/prisma';
 import type { LalurPeriodo } from '../models/Lalur.model';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /**
  * Um ativo do Bloco F num período da Parte B (C8 emenda 3.2, E15; BRIEF §3.4). Valores em centavos; a diferença do

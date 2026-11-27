@@ -1,5 +1,5 @@
 import type { DfeSignerDevice, DfeSignerDeviceUnit, DfeSignerPairingCode, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 export interface DfeSignerDeviceData {
   userId: string;

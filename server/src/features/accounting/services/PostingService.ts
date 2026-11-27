@@ -25,8 +25,8 @@ import type { IDimensionRepository } from '../repositories/IDimensionRepository'
 import type { AccountDeletionGuard, ChartStructureRule } from '../ports/LedgerPorts';
 import type { AuditService } from './AuditService';
 import { assertLegDimensions, resolveLineDimensions } from './dimensionTagging';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 
 /** FIX-MENSAGENS-ID-INTERNO lote 4 (F-MSG-2 a1; rótulo do dono, chat, 05/11): o lançamento é nº + data + descrição, nunca o cuid. */
 const describeLancamento = (j: { entryNumber: number | null; date: Date; description: string }) => {

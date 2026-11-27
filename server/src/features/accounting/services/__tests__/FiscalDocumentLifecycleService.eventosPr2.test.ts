@@ -8,9 +8,9 @@
  * A4: o registro de cenários do piloto (PILOTO-DFE) não foi executado — o emitente vem da fixture própria abaixo.
  */
 import { FiscalDocumentLifecycleService, AVISO_CANCEL_EM_ANDAMENTO } from '../FiscalDocumentLifecycleService';
-import { NullEmissor } from '../../dfe/NullEmissor';
-import type { EventoNfse } from '../../dfe/DfeEmissorPort';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import { NullEmissor } from '../../adapters/dfe/NullEmissor';
+import type { EventoNfse } from '../../ports/DfeEmissorPort';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 const SCOPE: AccountingScope = { ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1', ledgerCode: 'DEFAULT', baseCurrencyCode: 'BRL', timeZone: 'America/Sao_Paulo' };
 const CHAVE = '35503082211222333000181000000000004126091234567890';

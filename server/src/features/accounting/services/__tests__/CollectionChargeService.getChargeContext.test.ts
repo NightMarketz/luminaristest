@@ -5,7 +5,7 @@
  * porta falsa que registra os argumentos de `getCharge`.
  */
 import { CollectionChargeService } from '../CollectionChargeService';
-import { CollectionProviderError, type CollectionProviderPort } from '../../collection/CollectionProviderPort';
+import { CollectionProviderError, type CollectionProviderPort } from '../../ports/CollectionProviderPort';
 
 jest.mock('../../../../lib/secretBox', () => ({ ...jest.requireActual('../../../../lib/secretBox'), loadKeyring: jest.fn(() => ({})) }));
 

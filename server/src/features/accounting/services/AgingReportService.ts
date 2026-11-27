@@ -3,7 +3,7 @@ import type { IPayableRepository } from '../repositories/IPayableRepository';
 import type { IReceivableRepository } from '../repositories/IReceivableRepository';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import { isValidDateOnly, scopeToday, toUtcDayNumber, dayNumberFromDateOnly } from '../models/dates';
 import { outstandingLinesFromPayables, outstandingLinesFromReceivables, type OutstandingLine } from '../models/outstandingLines';
 import type { AccountingReportService } from './AccountingReportService';

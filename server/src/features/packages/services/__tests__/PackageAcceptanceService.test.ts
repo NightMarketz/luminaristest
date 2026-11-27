@@ -4,7 +4,7 @@ import type { IPackageAcceptanceRepository } from '../../repositories/IPackageAc
 import type { IPackageAcceptancePolicy } from '../../policies/IPackageAcceptancePolicy';
 import type { IDynamicTableRepository } from '../../../dynamicTables/repositories/IDynamicTableRepository';
 import type { IUserRepository } from '../../../users/repositories/IUserRepository';
-import type { AccountingScope } from '../../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../../accounting/models/AccountingScope';
 import { buildValidityNotice } from '../../models/validityNotice';
 import {
   ForbiddenError,
@@ -14,11 +14,11 @@ import {
   PackageWithoutValidityError,
   ValidationError,
 } from '../../../../lib/errors';
-import { loadPackageValidityDays, loadSalePackageInfo } from '../../../accounting/sync/bridges/saleItems';
+import { loadPackageValidityDays, loadSalePackageInfo } from '../../../accounting/services/bridges/saleItems';
 import { htmlToPdf } from '../../../../lib/pdf';
 
 import { FERIADOS_SEMENTE, legalParamsSemente } from '@test/helpers/legalParams';
-jest.mock('../../../accounting/sync/bridges/saleItems', () => ({
+jest.mock('../../../accounting/services/bridges/saleItems', () => ({
   loadSalePackageInfo: jest.fn(),
   loadPackageValidityDays: jest.fn(),
 }));

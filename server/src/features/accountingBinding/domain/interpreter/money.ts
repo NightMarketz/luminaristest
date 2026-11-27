@@ -6,7 +6,7 @@ import { MAX_CENTS } from '../../../accounting/public/money.types';
  * A Prensa (BE-INCR-BINDING-PRESS, Fase P1, Corpo D) — os DOIS pontos de conversão de dinheiro do
  * intérprete fixo de runtime (F-P1-4a: fronteira de dinheiro é do intérprete, código, não do
  * binding). Fonte: `docs/accounting/P1-DOSSIER-interprete.md` §c — migração VERBATIM das duas
- * variantes de guard hoje duplicadas/divergentes nos 5 mappers de `features/accounting/sync/mappers`.
+ * variantes de guard hoje duplicadas/divergentes nos 5 mappers de `features/accounting/domain/mappers`.
  *
  * `centsFromReais` — Variante 1, verbatim de `SaleFinalizedMapper.ts:31-47` (idêntica, comentário
  * a comentário, em `SaleSettledMapper.ts:51-67`, `SaleReturnedMapper.ts:31-47` e

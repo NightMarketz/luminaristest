@@ -18,8 +18,8 @@ import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
 import { resolveReadPath } from '@/lib/attachmentStorage';
-import { PAYLOAD_ALLOWLIST } from '@/features/accounting/audit/auditCanonical';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { PAYLOAD_ALLOWLIST } from '@/features/accounting/domain/audit/auditCanonical';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import type { SpedEcfRequestDto } from '@/features/accounting/dtos/SpedEcfDto';
 
 const app = makeApp();

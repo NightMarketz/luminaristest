@@ -1,5 +1,5 @@
 import type { Partner, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { OutraParticipacao } from '../dtos/PartnerDto';
 
 export interface PartnerData {

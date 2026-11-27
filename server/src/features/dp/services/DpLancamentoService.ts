@@ -1,7 +1,7 @@
 import type { DpLancamento, DpOutraRemuneracao, Prisma } from 'generated/prisma';
 import type { Keyring } from '../../../lib/secretBox';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../../lib/errors';
-import type { AccountingScope } from '../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../accounting/public/accountingScope.types';
 import type { AuditService } from '../../accounting/services/AuditService';
 import type {
   CreateLancamentoInput,

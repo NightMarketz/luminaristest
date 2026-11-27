@@ -1,7 +1,7 @@
 import prisma from '../../../lib/prisma';
 import type { NfceContingencia, NfceContingenciaOrfa, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 import type { CreateOrfaData, INfceContingenciaRepository, OrfaPatch, OrigemContingencia } from './INfceContingenciaRepository';
 
 /** Repositório Prisma de `nfce_contingencias` e `nfce_contingencia_orfas` (X10a PR-9). Zero regra de negócio. */

@@ -10,7 +10,7 @@
  * (`12ABC34501DE35`) não passa no `PayerSchema` numérico ⇒ 400 na cobrança. Esperado, enquanto o MP não confirmar o
  * alfanumérico (lacuna 437a, gate externo): o pré-preenchimento omite `identification`.
  */
-import { CollectionProviderError } from '../../collection/CollectionProviderPort';
+import { CollectionProviderError } from '../../ports/CollectionProviderPort';
 import { CollectionChargeService } from '../CollectionChargeService';
 
 const nulo = null as never;

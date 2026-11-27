@@ -7,7 +7,7 @@ import type { ActiveAccountant } from '../models/AccountantAssignment.model';
 import type { IAccountantAssignmentRepository } from '../repositories/IAccountantAssignmentRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
 import type { AuditService } from './AuditService';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /**
  * PeriodService — accounting period state machine.

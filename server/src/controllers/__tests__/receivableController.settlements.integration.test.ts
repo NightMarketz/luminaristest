@@ -83,7 +83,7 @@ describe('/api/receivables/{id}/settlements — contrato HTTP da baixa parcial (
     expect(row.status).toBe('RECEIVING'); // status é do finalize em curso, não do cancel
     // O finalize do recibo em trânsito (simulado pelo repo real) resolve pelo saldo já decrementado.
     const { ReceivableRepository } = await import('@/features/accounting/repositories/ReceivableRepository');
-    const { resolveAccountingScopeInternal } = await import('@/features/accounting/scope/resolveAccountingScopeInternal');
+    const { resolveAccountingScopeInternal } = await import('@/features/accounting/models/resolveAccountingScopeInternal');
     const scope = resolveAccountingScopeInternal({ userId: dono.id }, UNIT);
     expect(await new ReceivableRepository().finalizeIfReceiving(scope, receivableId, 50000)).toBe(1);
     row = await prisma.receivable.findUniqueOrThrow({ where: { id: receivableId } });

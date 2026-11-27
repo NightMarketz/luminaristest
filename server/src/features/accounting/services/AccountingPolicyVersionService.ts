@@ -1,6 +1,6 @@
 import type { AccountingPolicyVersion, Prisma } from 'generated/prisma';
 import { AccountantRequiredError, ForbiddenError, NotFoundError, PolicyNoAccountantError } from '../../../lib/errors';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { ILalurRepository } from '../repositories/ILalurRepository';

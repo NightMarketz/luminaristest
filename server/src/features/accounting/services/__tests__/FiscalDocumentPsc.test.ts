@@ -11,26 +11,26 @@ jest.mock('../../../../lib/factory', () => ({
   }),
 }));
 // O adaptador `sefaz` de verdade, apontado para a SEFAZ falsa (a seleção real exige o pfx do transmissor em disco).
-jest.mock('../../dfe/selectDfeEmissor', () => ({ __esModule: true, selectDfeEmissor: jest.fn() }));
-jest.mock('../../dfe/resolveEmissor', () => ({ __esModule: true, resolveEmissorFor: jest.fn() }));
+jest.mock('../../adapters/dfe/selectDfeEmissor', () => ({ __esModule: true, selectDfeEmissor: jest.fn() }));
+jest.mock('../../adapters/dfe/resolveEmissor', () => ({ __esModule: true, resolveEmissorFor: jest.fn() }));
 
 import { generateKeyPairSync } from 'node:crypto';
 import { FakeSefaz, makeTlsPki } from '../../../../../test/helpers/fakeSefaz';
 import { makeTestCert } from '../../../../../test/helpers/nfeSignature';
 import { legalParamsSemente } from '@test/helpers/legalParams';
-import { FakePscServer } from '../../dfe/psc/FakePscServer';
-import { PscAssinador } from '../../dfe/psc/PscAssinador';
-import { SefazSoapClient } from '../../dfe/sefaz/SefazSoapClient';
-import { SefazNfeEmissor } from '../../dfe/sefaz/SefazNfeEmissor';
-import { selectDfeEmissor } from '../../dfe/selectDfeEmissor';
-import { resolveEmissorFor } from '../../dfe/resolveEmissor';
+import { FakePscServer } from '../../adapters/dfe/psc/FakePscServer';
+import { PscAssinador } from '../../adapters/dfe/psc/PscAssinador';
+import { SefazSoapClient } from '../../adapters/dfe/sefaz/SefazSoapClient';
+import { SefazNfeEmissor } from '../../adapters/dfe/sefaz/SefazNfeEmissor';
+import { selectDfeEmissor } from '../../adapters/dfe/selectDfeEmissor';
+import { resolveEmissorFor } from '../../adapters/dfe/resolveEmissor';
 import { FiscalDocumentEmissionService } from '../FiscalDocumentEmissionService';
 import { DFE_NAO_RECEBIDA, FiscalDocumentLifecycleService, NAO_CONSTA_ESPACO_MS, NAO_CONSTA_MAX_CONSULTAS, naoRecebida } from '../FiscalDocumentLifecycleService';
 import { FiscalNumberVoidService } from '../FiscalNumberVoidService';
 import { DfeAssinaturaResolver, FALTANTE_SESSAO_PSC } from '../DfeAssinaturaResolver';
 import type { ResolveForEmissionResult } from '../PscCredentialService';
-import type { AccountingScope } from '../../scope/AccountingScope';
-import type { EmissaoResult } from '../../dfe/DfeEmissorPort';
+import type { AccountingScope } from '../../models/AccountingScope';
+import type { EmissaoResult } from '../../ports/DfeEmissorPort';
 
 /**
  * X10a PR-7 — a credencial do PSC ligada aos serviços (EMENDA-PSC E-6, E-12, E-13; F-PSC-5 a, F-PSC-6 a) e as decisões

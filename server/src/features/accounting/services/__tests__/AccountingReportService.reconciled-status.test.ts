@@ -12,7 +12,7 @@
  * Mocked: the three repositories + policy (same convention as the sibling suite).
  */
 import { AccountingReportService } from '../AccountingReportService';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 const scope: AccountingScope = {
   ownerUserId: 'u1',

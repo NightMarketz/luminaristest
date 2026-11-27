@@ -47,7 +47,7 @@ describe('tsconfig.test.json — o gate de tipos dos testes precisa VER os teste
     // teste introduzido junto com ela (nem de nenhuma frente em revisão), senão fica verde ou
     // vermelha por motivo alheio ao que ela guarda.
     const deveEstar = [
-      'src/features/accounting/audit/__tests__/auditCanonical.test.ts',
+      'src/features/accounting/domain/audit/__tests__/auditCanonical.test.ts',
       'src/features/accounting/services/__tests__/AuditService.test.ts',
       'src/__tests__/openapi-paths.test.ts',
     ];

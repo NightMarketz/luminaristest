@@ -13,15 +13,15 @@
  * executado); A5 (o XML real do portal é EXT; aqui, fixture).
  */
 import { FiscalDocumentLifecycleService, AVISO_CANCEL_EM_ANDAMENTO } from '../FiscalDocumentLifecycleService';
-import { NullEmissor } from '../../dfe/NullEmissor';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import { NullEmissor } from '../../adapters/dfe/NullEmissor';
+import type { AccountingScope } from '../../models/AccountingScope';
 import { signNfseEventoForTest } from '@test/helpers/nfeSignature';
-import type { DfeCapabilities, DfeEmissorPort } from '../../dfe/DfeEmissorPort';
+import type { DfeCapabilities, DfeEmissorPort } from '../../ports/DfeEmissorPort';
 
 /** Troca o adaptador resolvido por documento num caso (o módulo real nos demais). */
 let mockPortOverride: DfeEmissorPort | null = null;
-jest.mock('../../dfe/resolveEmissor', () => {
-  const actual = jest.requireActual('../../dfe/resolveEmissor');
+jest.mock('../../adapters/dfe/resolveEmissor', () => {
+  const actual = jest.requireActual('../../adapters/dfe/resolveEmissor');
   return { ...actual, resolveEmissorFor: (...a: unknown[]) => mockPortOverride ?? actual.resolveEmissorFor(...a) };
 });
 

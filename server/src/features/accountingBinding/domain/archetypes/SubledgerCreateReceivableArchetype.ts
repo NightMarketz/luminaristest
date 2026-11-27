@@ -3,7 +3,7 @@ import type { SubledgerCommandArchetype } from '../../models/types';
 /**
  * A Prensa (BE-INCR-BINDING-PRESS, Corpo A, item 5 do BRIEF) — arquétipo classe 2
  * `subledger_command` ('criacao-titulo-receber' no dossiê). Extraído de
- * `server/src/features/accounting/sync/bridges/CrmReceivableBridge.ts` (`P1-DOSSIER-arquetipos.md`
+ * `server/src/features/accounting/services/bridges/CrmReceivableBridge.ts` (`P1-DOSSIER-arquetipos.md`
  * §3) — F-P1-1(b) RATIFICADA: esta classe entra no catálogo v1.
  *
  * Efeito de runtime DIFERENTE da classe 1: não produz `PostEntryInput` — cria um `Receivable` no

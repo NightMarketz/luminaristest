@@ -9,8 +9,8 @@ import type { RegisterContactInput, UpdateContactInput } from '../dtos/Accountin
 import type { IAccountingContactRepository } from '../repositories/IAccountingContactRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 
 /**
  * AccountingContactService — cadastro do contador destinatário (BE-INCR-CONTADOR-DELIVERY, itens

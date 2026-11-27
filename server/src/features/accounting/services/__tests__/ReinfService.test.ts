@@ -13,7 +13,7 @@ import { WithholdingLineForReinfSchema, type WithholdingLineForReinf } from '../
 import { ReinfBatchCreatedSchema, ReinfBatchViewSchema } from '../../dtos/ReinfDto';
 import { codigoReceitaDerivado } from '../../models/reinfLote';
 import { conteudoSha256R1000, type ContribuinteR1000 } from '../../../../lib/reinf';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import { fotografiaSemente } from '../../../../../test/helpers/legalParams';
 
 const scope: AccountingScope = { ownerUserId: 'pj', actorUserId: 'pj', unitId: 'u1', ledgerCode: 'DEFAULT', baseCurrencyCode: 'BRL', timeZone: 'America/Sao_Paulo' };

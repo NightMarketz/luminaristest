@@ -3,7 +3,7 @@ import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/err
 import type { Keyring } from '../../../lib/secretBox';
 import type { ICompanyFiscalProfileRepository } from '../../accounting/repositories/ICompanyFiscalProfileRepository';
 import type { IPartnerRepository } from '../../accounting/repositories/IPartnerRepository';
-import type { AccountingScope } from '../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../accounting/public/accountingScope.types';
 import type { AuditService } from '../../accounting/services/AuditService';
 import { linhaLegalVigente } from '../../legalParameters/models/legalParameter';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';

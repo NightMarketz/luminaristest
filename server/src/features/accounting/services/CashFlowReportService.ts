@@ -4,7 +4,7 @@ import { REPORT_WARN_THRESHOLDS_MS } from '../../../lib/reportThresholds';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { CLOSING_SOURCE_TYPE } from '../models/closing';
 import { scopeToday } from '../models/dates';

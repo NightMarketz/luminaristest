@@ -1,5 +1,5 @@
 import type { ReferentialMapping, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /** Input for setting (upserting) a referential mapping of one account in one version. */
 export interface SetReferentialMappingInput {

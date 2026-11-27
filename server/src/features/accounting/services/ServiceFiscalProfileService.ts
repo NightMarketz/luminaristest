@@ -1,6 +1,6 @@
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import type { ServiceFiscalProfile } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFiscalProfileRepository';
 import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';

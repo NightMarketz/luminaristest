@@ -7,7 +7,7 @@
  *  - id inexistente → false; tenant sem tabela `products` → false (nunca explode).
  */
 import { DynamicTableProductRefLookup } from '../ProductRefLookup';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 const scope: AccountingScope = {
   ownerUserId: 'u1',

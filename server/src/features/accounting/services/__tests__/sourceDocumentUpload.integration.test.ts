@@ -11,7 +11,7 @@ import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import * as storage from '@/lib/attachmentStorage';
 import { AuditService } from '@/features/accounting/services/AuditService';
-import { canonicalizeAuditPayload } from '@/features/accounting/audit/auditCanonical';
+import { canonicalizeAuditPayload } from '@/features/accounting/domain/audit/auditCanonical';
 
 const app = makeApp();
 let user: { id: string; username: string };

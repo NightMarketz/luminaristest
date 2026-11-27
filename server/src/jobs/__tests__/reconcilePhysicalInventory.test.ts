@@ -17,7 +17,7 @@
  *    entra no merge que congela o watermark (F-W2F-4).
  */
 import { reconcilePhysicalInventory, type PhysicalInventoryDeps } from '../accountingSyncReconcile.job';
-import type { AccountingScope } from '../../features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../features/accounting/models/AccountingScope';
 
 const SCOPE_A = { ownerUserId: 'u1', unitId: 'unit-1' };
 

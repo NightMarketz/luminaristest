@@ -5,7 +5,7 @@ import * as storage from '../../../lib/attachmentStorage';
 import { readDanfeModel } from '../../../lib/danfe/danfeModel';
 import { DANFE_PDF_MARGIN, renderDanfeHtml } from '../../../lib/danfe/danfeHtml';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IFiscalDocumentRepository } from '../repositories/IFiscalDocumentRepository';
 import type { IDocumentAttachmentRepository } from '../repositories/IDocumentAttachmentRepository';

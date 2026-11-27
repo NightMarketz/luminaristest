@@ -13,8 +13,8 @@ const mockPort = {
 };
 const mockManualPort = { ...mockPort, name: 'manual', capabilities: { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: true, consultar: false, cancelar: false, webhook: false } };
 const mockSelection = { enabled: true, ambiente: 'producao' as string | null, port: mockPort };
-jest.mock('../../dfe/selectDfeEmissor', () => ({ __esModule: true, selectDfeEmissor: () => mockSelection }));
-jest.mock('../../dfe/resolveEmissor', () => ({
+jest.mock('../../adapters/dfe/selectDfeEmissor', () => ({ __esModule: true, selectDfeEmissor: () => mockSelection }));
+jest.mock('../../adapters/dfe/resolveEmissor', () => ({
   __esModule: true,
   resolveEmissorFor: (partner: string) => (partner === 'manual' ? mockManualPort : mockPort),
 }));
@@ -24,8 +24,8 @@ jest.mock('../../../../lib/logger', () => ({ __esModule: true, get default() { r
 
 import { FiscalDocumentLifecycleService, PENDING_MAX_ATTEMPTS } from '../FiscalDocumentLifecycleService';
 import { PendingAttachmentResultSchema, PendingAttachmentDrainSummarySchema } from '../../dtos/FiscalDocumentPendingAttachmentDto';
-import type { AccountingScope } from '../../scope/AccountingScope';
-import type { EmissaoResult } from '../../dfe/DfeEmissorPort';
+import type { AccountingScope } from '../../models/AccountingScope';
+import type { EmissaoResult } from '../../ports/DfeEmissorPort';
 
 const SCOPE: AccountingScope = {
   ownerUserId: 'u1',

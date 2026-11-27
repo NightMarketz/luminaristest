@@ -1,7 +1,7 @@
 import type { CustomerPackageBalance, PackageBalanceMovement, Prisma } from 'generated/prisma';
 // Increment G reuses the accounting tenancy scope (ADR-G01 §7.1): same (userId, unitId)
 // security axes, no need for a near-duplicate PackageScope.
-import type { AccountingScope } from '../../accounting/scope/AccountingScope';
+import type { AccountingScope } from '../../accounting/public/accountingScope.types';
 
 /**
  * A balance movement is one credit (package-sale origin), one debit (consumption) or one expiry

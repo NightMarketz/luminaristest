@@ -1,6 +1,6 @@
 import { ForbiddenError } from '../../../lib/errors';
 import { logger } from '../../../lib/logger';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IReconcilePendingRepository } from '../repositories/IReconcilePendingRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';

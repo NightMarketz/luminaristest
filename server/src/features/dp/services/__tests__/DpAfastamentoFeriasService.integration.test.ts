@@ -6,7 +6,7 @@
 import prisma from '@/lib/prisma';
 import { getFactory } from '@/lib/factory';
 import { pushTestSchema, resetDb } from '@test/helpers';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import { CompanyFiscalProfileRepository } from '@/features/accounting/repositories/CompanyFiscalProfileRepository';
 import { PartnerRepository } from '@/features/accounting/repositories/PartnerRepository';
 import type { AppError } from '@/lib/errors';

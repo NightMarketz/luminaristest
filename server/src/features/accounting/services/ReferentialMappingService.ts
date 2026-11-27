@@ -4,7 +4,7 @@ import type { IReferentialMappingRepository } from '../repositories/IReferential
 import type { IReferentialAccountRepository } from '../repositories/IReferentialAccountRepository';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { AuditService } from './AuditService';
 import { logger } from '../../../lib/logger';
 import { REFERENCIAL_PLANO_PADRAO, isContaDoPlanoPadrao } from '../fixtures/ChartOfAccountsFixture';

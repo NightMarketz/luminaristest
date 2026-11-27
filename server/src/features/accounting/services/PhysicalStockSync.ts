@@ -1,6 +1,6 @@
 import type { UserContext } from '../../../types/UserContext';
 import type { StockRowPort, StockRowWriterPort } from '../ports/OriginPorts';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import logger from '../../../lib/logger';
 import type { IDynamicTableWriteEffects } from '../../integration/services/IDynamicTableWriteEffects';
 

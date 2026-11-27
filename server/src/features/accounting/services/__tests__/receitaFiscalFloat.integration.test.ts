@@ -8,11 +8,11 @@ import prisma from '@/lib/prisma';
 import request from 'supertest';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
-import { maybeSyncSaleSettled } from '@/features/accounting/sync/bridges/SaleSettlementBridge';
-import { maybeReverseSale } from '@/features/accounting/sync/bridges/SaleReversalBridge';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import { maybeSyncSaleFinalized } from '@/features/accounting/services/bridges/SaleSalesAccountingBridge';
+import { maybeSyncSaleSettled } from '@/features/accounting/services/bridges/SaleSettlementBridge';
+import { maybeReverseSale } from '@/features/accounting/services/bridges/SaleReversalBridge';
 import { scopeToday } from '@/features/accounting/models/dates';
 
 const app = makeApp();

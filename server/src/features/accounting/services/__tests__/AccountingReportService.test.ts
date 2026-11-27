@@ -16,7 +16,7 @@ import { AccountingReportService } from '../AccountingReportService';
 import { ForbiddenError, NotFoundError } from '../../../../lib/errors';
 import { logger } from '../../../../lib/logger';
 import { REPORT_WARN_THRESHOLDS_MS } from '../../../../lib/reportThresholds';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 const scope: AccountingScope = {
   ownerUserId: 'u1',

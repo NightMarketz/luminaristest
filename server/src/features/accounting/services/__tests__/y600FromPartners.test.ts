@@ -5,7 +5,7 @@
  */
 import type { Partner } from 'generated/prisma';
 import { ForbiddenError } from '../../../../lib/errors';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import { selecionarVigenciasDoAno } from '../y600FromPartners';
 import { SpedEcfGenerationService } from '../SpedEcfGenerationService';
 

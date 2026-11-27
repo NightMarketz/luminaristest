@@ -23,10 +23,10 @@ import { Prisma } from 'generated/prisma';
 import { PostingService } from '../PostingService';
 import { AccountingPeriodNotOpenError, ForbiddenError, MaxCentsExceededError, NotFoundError, ValidationError } from '../../../../lib/errors';
 import { CANONICAL_ACCOUNTS } from '../../fixtures/ChartOfAccountsFixture';
-import { ecdChartStructureRule } from '../../paises/br/EcdChartStructureRule';
+import { ecdChartStructureRule } from '../../paises/br/adapters/EcdChartStructureRule';
 import { MAX_CENTS } from '../../models/money';
 import logger from '../../../../lib/logger';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 // prisma.$transaction runs the callback with a fake tx handle; repos are mocked so the
 // tx is just threaded through (they ignore it here).

@@ -29,12 +29,12 @@ import type { AssinaturaDaUnidade } from './DfeAssinaturaResolver';
 import type { FiscalNumberVoidService } from './FiscalNumberVoidService';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { DfeResultApplier } from './dfeEnvio';
-import { isFalhaDeComunicacao, type DfeAmbiente, type DfeCallContext, type DfeEmissorPort, type EmitirInput, type NfceSupl } from '../dfe/DfeEmissorPort';
-import { resolveEmissorFor } from '../dfe/resolveEmissor';
-import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
-import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import { isFalhaDeComunicacao, type DfeAmbiente, type DfeCallContext, type DfeEmissorPort, type EmitirInput, type NfceSupl } from '../ports/DfeEmissorPort';
+import { resolveEmissorFor } from '../adapters/dfe/resolveEmissor';
+import { selectDfeEmissor } from '../adapters/dfe/selectDfeEmissor';
+import { resolveAccountingScopeInternal } from '../models/resolveAccountingScopeInternal';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 
 export const DFE_CONTINGENCY_ENTERED = 'dfe.contingency_entered';
 export const DFE_CONTINGENCY_LEFT = 'dfe.contingency_left';

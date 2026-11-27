@@ -16,7 +16,7 @@ const mockPort = {
   cancelar: jest.fn(),
   verifyWebhook: jest.fn(),
 };
-jest.mock('@/features/accounting/dfe/selectDfeEmissor', () => ({
+jest.mock('@/features/accounting/adapters/dfe/selectDfeEmissor', () => ({
   __esModule: true,
   selectDfeEmissor: () => ({ enabled: true, ambiente: 'homologacao', port: mockPort }),
 }));
@@ -25,8 +25,8 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { FiscalDocumentRepository, attemptRef } from '@/features/accounting/repositories/FiscalDocumentRepository';
 import { FiscalDocumentLifecycleService } from '@/features/accounting/services/FiscalDocumentLifecycleService';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import type { EmissaoResult } from '@/features/accounting/dfe/DfeEmissorPort';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import type { EmissaoResult } from '@/features/accounting/ports/DfeEmissorPort';
 
 const DONO = 'u-dfe-stale';
 const UNIT = 'unit-dfe-stale';

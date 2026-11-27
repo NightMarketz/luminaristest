@@ -14,7 +14,7 @@
  *  - tenant sem tabela stockMovements → 'skipped' sem explodir.
  */
 import { DynamicTablePhysicalStockSync } from '../PhysicalStockSync';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 const scope: AccountingScope = {
   ownerUserId: 'owner-1',

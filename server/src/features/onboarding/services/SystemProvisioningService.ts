@@ -13,7 +13,7 @@ import type { FiscalProfileService } from '../../accounting/services/FiscalProfi
 import { deriveUnitFiscalProfile } from './deriveUnitFiscalProfile';
 import type { ObrigacaoResolvida } from '../../accounting/models/obrigacoesPorRegime';
 import { scopeToday } from '../../accounting/models/dates';
-import { resolveAccountingScopeInternal } from '../../accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '../../accounting/public/resolveAccountingScopeInternal';
 import type { IActionProposalRepository } from '../../chat/repositories/IActionProposalRepository';
 import type { IKnowledgeGraphRepository } from '../../chat/repositories/IKnowledgeGraphRepository';
 import type { IDashboardLayoutRepository } from '../../dashboardLayout/repositories/IDashboardLayoutRepository';

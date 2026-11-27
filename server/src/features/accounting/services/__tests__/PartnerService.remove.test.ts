@@ -4,7 +4,7 @@
  */
 import { ConflictError, NotFoundError } from '../../../../lib/errors';
 import { PartnerService, PARTNER_DELETED } from '../PartnerService';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 
 const scope = { ownerUserId: 'owner-1', unitId: 'unit-1', actorUserId: 'actor-1' } as unknown as AccountingScope;
 const TX = { tx: true };

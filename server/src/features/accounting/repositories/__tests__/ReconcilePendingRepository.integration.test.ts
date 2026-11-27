@@ -13,8 +13,8 @@
 import prisma from '@/lib/prisma';
 import { pushTestSchema, resetDb, disconnectDb } from '@test/helpers/db';
 import { ReconcilePendingRepository } from '@/features/accounting/repositories/ReconcilePendingRepository';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 
 const UNIT = 'unit-rp';
 const DONO_A = 'u-rp-a';

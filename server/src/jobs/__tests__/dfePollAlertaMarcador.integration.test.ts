@@ -18,7 +18,7 @@ const mockPort = {
   cancelar: jest.fn(),
   verifyWebhook: jest.fn(),
 };
-jest.mock('@/features/accounting/dfe/selectDfeEmissor', () => ({
+jest.mock('@/features/accounting/adapters/dfe/selectDfeEmissor', () => ({
   __esModule: true,
   selectDfeEmissor: () => ({ enabled: true, ambiente: 'homologacao', port: mockPort }),
 }));
@@ -28,8 +28,8 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { FiscalDocumentRepository } from '@/features/accounting/repositories/FiscalDocumentRepository';
 import { FiscalDocumentLifecycleService } from '@/features/accounting/services/FiscalDocumentLifecycleService';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import { DfeTransporteIndisponivelError, type EmissaoResult } from '@/features/accounting/dfe/DfeEmissorPort';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import { DfeTransporteIndisponivelError, type EmissaoResult } from '@/features/accounting/ports/DfeEmissorPort';
 import { DfePollScheduler } from '../DfePollScheduler';
 
 const DONO = 'u-dfe-alerta-marcador';

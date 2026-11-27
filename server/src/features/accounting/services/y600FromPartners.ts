@@ -1,7 +1,7 @@
 import type { Partner } from 'generated/prisma';
 import { ValidationError } from '../../../lib/errors';
 import { ordenarY600, type Y600Candidate, type Y600Row } from '../../../lib/ecf';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { IPartnerRepository } from '../repositories/IPartnerRepository';
 import type { DirigenteEcfDto, SocioEcfDto } from '../dtos/SpedEcfDto';
 

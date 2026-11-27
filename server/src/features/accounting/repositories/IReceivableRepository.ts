@@ -1,5 +1,5 @@
 import type { Receivable, ReceivableReceipt, Prisma } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 import type { ReceivableStatus } from '../models/Receivable.model';
 
 /** A Receivable with its receipt children eagerly loaded (used by the cancel/remaining guards). */

@@ -51,12 +51,12 @@ import { RECEIVABLE_HAS_LIVE_CHARGE, describeCharge } from '../models/Collection
 import { SPLIT_ACCOUNT_NOT_CONFIGURED, SPLIT_IBS_CBS_KIND } from '../models/BankSettlement.model';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { PostEntryInput } from '../dtos/PostingDto';
-import { syncSkipErrorCode } from '../sync/AccountingSyncPort';
+import { syncSkipErrorCode } from '../ports/AccountingSyncPort';
 import type { ReconcilePendingRecorder } from './reconcilePendingRecorder';
 import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 import { resolveOrCreateCounterpartyId } from './counterpartyResolution';
 
 /**

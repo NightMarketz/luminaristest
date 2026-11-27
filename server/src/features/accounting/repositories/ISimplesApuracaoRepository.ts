@@ -1,5 +1,5 @@
 import type { Prisma, SimplesApuracao } from 'generated/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
 
 /** BE-INCR-SIMPLES-NACIONAL PR-3 (nó X14, item 19) — campos gravados no registro do DAS oficial. */
 export interface CreateSimplesApuracaoData {

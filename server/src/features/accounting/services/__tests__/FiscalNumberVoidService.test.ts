@@ -3,8 +3,8 @@ const findDataById = jest.fn(async (id: string) => (id === 'unit-1' ? { id, data
 
 // Seleção real, com override para o caso "emite o tipo mas não inutiliza" (nenhum adaptador real é assim hoje).
 let mockSelectOverride: unknown = null;
-jest.mock('../../dfe/selectDfeEmissor', () => {
-  const actual = jest.requireActual('../../dfe/selectDfeEmissor');
+jest.mock('../../adapters/dfe/selectDfeEmissor', () => {
+  const actual = jest.requireActual('../../adapters/dfe/selectDfeEmissor');
   return { ...actual, selectDfeEmissor: (env: NodeJS.ProcessEnv, kind: string) => mockSelectOverride ?? actual.selectDfeEmissor(env, kind) };
 });
 
@@ -14,10 +14,10 @@ jest.mock('../../../../lib/factory', () => ({
 }));
 
 import { FiscalNumberVoidService } from '../FiscalNumberVoidService';
-import { PAYLOAD_ALLOWLIST } from '../../audit/auditCanonical';
+import { PAYLOAD_ALLOWLIST } from '../../domain/audit/auditCanonical';
 import { VoidNumberRangeSchema } from '../../dtos/FiscalDocumentDto';
 import { NFCE_PRESUNCAO } from '../../models/inutilizacao';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import { legalParamsSemente } from '@test/helpers/legalParams';
 
 /**
@@ -112,7 +112,7 @@ describe('BE-INCR-NFCE PR-4 — inutilização (item 24)', () => {
   });
 
   it('adaptador que emite o tipo mas não declara inutilização ⇒ 409 DFE_INUT_NAO_SUPORTADA, nada gravado', async () => {
-    const { NullEmissor } = await import('../../dfe/NullEmissor');
+    const { NullEmissor } = await import('../../adapters/dfe/NullEmissor');
     const port = new NullEmissor();
     Object.assign(port, { capabilities: { ...port.capabilities, inutilizar: false, cce: false } });
     mockSelectOverride = { port, ambiente: 'homologacao', enabled: true };
@@ -134,7 +134,7 @@ describe('BE-INCR-NFCE PR-4 — inutilização (item 24)', () => {
 
   it('resultado REJECTED da porta ⇒ REJECTED com os erros, sem audit; falha de rede ⇒ fica REQUESTED com dfe_inutilizar_failed', async () => {
     const { service, auditService } = montar();
-    const { NullEmissor } = await import('../../dfe/NullEmissor');
+    const { NullEmissor } = await import('../../adapters/dfe/NullEmissor');
     const spy = jest.spyOn(NullEmissor.prototype, 'inutilizar').mockResolvedValueOnce({ status: 'REJECTED', errors: [{ code: '241', message: 'Um número da faixa já foi utilizado' }] });
     expect(await service.inutilizar(SCOPE, INPUT)).toMatchObject({ status: 'REJECTED', errors: [{ code: '241' }] });
     expect(auditService.append).not.toHaveBeenCalled();

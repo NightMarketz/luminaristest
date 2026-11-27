@@ -8,9 +8,9 @@ import type { ICompanyFiscalProfileRepository } from '../../repositories/ICompan
 import { ServiceFiscalProfileService } from '../ServiceFiscalProfileService';
 import { UpsertFiscalProfileSchema } from '../../dtos/FiscalProfileDto';
 import { UpsertServiceFiscalProfileSchema } from '../../dtos/ServiceFiscalProfileDto';
-import { canonicalizeAuditPayload } from '../../audit/auditCanonical';
+import { canonicalizeAuditPayload } from '../../domain/audit/auditCanonical';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../../lib/errors';
-import type { AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../models/AccountingScope';
 import type { IFiscalProfileRepository, FiscalProfileData } from '../../repositories/IFiscalProfileRepository';
 import type { IServiceFiscalProfileRepository, ServiceFiscalProfileData } from '../../repositories/IServiceFiscalProfileRepository';
 import type { IAccountRepository } from '../../repositories/IAccountRepository';

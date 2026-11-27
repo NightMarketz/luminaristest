@@ -11,8 +11,8 @@
 import prisma from '@/lib/prisma';
 import { pushTestSchema, seedUnit } from '@test/helpers';
 import { getFactory } from '@/lib/factory';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
+import type { AccountingScope } from '@/features/accounting/models/AccountingScope';
 import { PayableRepository } from '@/features/accounting/repositories/PayableRepository';
 import { BankSettlementRepository } from '@/features/accounting/repositories/BankSettlementRepository';
 import { ReconcilePendingRepository } from '@/features/accounting/repositories/ReconcilePendingRepository';

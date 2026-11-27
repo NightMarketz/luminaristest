@@ -16,10 +16,10 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import { reconcileSaleSales } from '@/jobs/accountingSyncReconcile.job';
-import { maybeSyncSaleSettled } from '@/features/accounting/sync/bridges/SaleSettlementBridge';
-import { maybeReverseSale } from '@/features/accounting/sync/bridges/SaleReversalBridge';
+import { maybeSyncSaleSettled } from '@/features/accounting/services/bridges/SaleSettlementBridge';
+import { maybeReverseSale } from '@/features/accounting/services/bridges/SaleReversalBridge';
 
 const app = makeApp();
 const CNPJ = '11222333000181';

@@ -67,7 +67,7 @@ import type { INfceCscRepository } from '../features/accounting/repositories/INf
 import { NfceContingenciaService } from '../features/accounting/services/NfceContingenciaService';
 import { NfceContingenciaRepository } from '../features/accounting/repositories/NfceContingenciaRepository';
 import type { INfceContingenciaRepository } from '../features/accounting/repositories/INfceContingenciaRepository';
-import { PscAssinador } from '../features/accounting/dfe/psc/PscAssinador';
+import { PscAssinador } from '../features/accounting/adapters/dfe/psc/PscAssinador';
 import { PscProviderPolicy } from '../features/accounting/policies/PscProviderPolicy';
 import { CollectionChargeRepository } from '../features/accounting/repositories/CollectionChargeRepository';
 import { TaxAssessmentRepository } from '../features/accounting/repositories/TaxAssessmentRepository';
@@ -106,10 +106,10 @@ import { FiscalDocumentRepository } from '../features/accounting/repositories/Fi
 import { FiscalNumberVoidRepository } from '../features/accounting/repositories/FiscalNumberVoidRepository';
 import { LalurRepository } from '../features/accounting/repositories/LalurRepository';
 // Onda 1.2: adaptadores BR das portas do núcleo do razão (regra C1) — montados só aqui.
-import { ecdChartStructureRule } from '../features/accounting/paises/br/EcdChartStructureRule';
-import { LalurAccountDeletionGuard } from '../features/accounting/paises/br/LalurAccountDeletionGuard';
-import { TaxProvisionClosingGuard } from '../features/accounting/paises/br/TaxProvisionClosingGuard';
-import { statementParserBr } from '../features/accounting/paises/br/StatementParserBr';
+import { ecdChartStructureRule } from '../features/accounting/paises/br/adapters/EcdChartStructureRule';
+import { LalurAccountDeletionGuard } from '../features/accounting/paises/br/adapters/LalurAccountDeletionGuard';
+import { TaxProvisionClosingGuard } from '../features/accounting/paises/br/adapters/TaxProvisionClosingGuard';
+import { statementParserBr } from '../features/accounting/paises/br/adapters/StatementParserBr';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
 import { PackageAcceptanceRepository } from '../features/packages/repositories/PackageAcceptanceRepository';
 
@@ -185,7 +185,7 @@ import type { ProductRefPort, StockRowPort, StockRowWriterPort, UnitRowPort } fr
 import { CounterpartyService } from '../features/accounting/services/CounterpartyService';
 import { AccountingContactService } from '../features/accounting/services/AccountingContactService';
 import { AccountantAssignmentService } from '../features/accounting/services/AccountantAssignmentService';
-import { AccountingScopeResolver, type IAccountingScopeResolver } from '../features/accounting/scope/AccountingScopeResolver';
+import { AccountingScopeResolver, type IAccountingScopeResolver } from '../features/accounting/services/AccountingScopeResolver';
 import { AccountingPolicyVersionService } from '../features/accounting/services/AccountingPolicyVersionService';
 import { PaymentAccountService } from '../features/accounting/services/PaymentAccountService';
 import { FiscalCertificateService } from '../features/accounting/services/FiscalCertificateService';
@@ -193,7 +193,7 @@ import { resolveUnitCnpjFromUnits, resolveUnitNameFromUnits } from '../features/
 import { CollectionChargeService } from '../features/accounting/services/CollectionChargeService';
 import { ReleaseReportService } from '../features/accounting/services/ReleaseReportService';
 import { JobWatermarkRepository } from '../jobs/repositories/JobWatermarkRepository';
-import { MercadoPagoCollectionProvider } from '../features/accounting/collection/MercadoPagoCollectionProvider';
+import { MercadoPagoCollectionProvider } from '../features/accounting/adapters/collection/MercadoPagoCollectionProvider';
 import { TaxAssessmentService } from '../features/accounting/services/TaxAssessmentService';
 import { PresumidoTetoService } from '../features/accounting/services/PresumidoTetoService';
 import { TaxAssessmentPeriodosService } from '../features/accounting/services/TaxAssessmentPeriodosService';
@@ -261,13 +261,13 @@ import { FiscalNumberVoidService } from '../features/accounting/services/FiscalN
 import { LalurService } from '../features/accounting/services/LalurService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { PackageAcceptanceService } from '../features/packages/services/PackageAcceptanceService';
-import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
+import { AccountingSyncService } from '../features/accounting/services/AccountingSyncService';
 import { serializeReload } from '../features/accountingBinding/domain/serializeReload';
-import { CrmReceivableBridge } from '../features/accounting/sync/bridges/CrmReceivableBridge';
+import { CrmReceivableBridge } from '../features/accounting/services/bridges/CrmReceivableBridge';
 // BE-INCR-BINDING-PRESS (F-P1-3a, item 14 do BRIEF) — os 5 mappers-à-mão de salão saíram daqui:
 // o array de IAccountingEventMapper agora é CONSTRUÍDO a partir do binding compilado do salão +
 // o intérprete fixo (`buildSaleAccountingMappers`, abaixo). As classes de mapper continuam
-// existindo em `features/accounting/sync/mappers/*` (são a referência do golden test, Fases 0/1),
+// existindo em `features/accounting/domain/mappers/*` (são a referência do golden test, Fases 0/1),
 // só não são mais instanciadas em produção por este factory.
 import { archetypeCatalog } from '../features/accountingBinding/domain/archetypes/catalog';
 import { SALE_BINDING_V2 } from '../features/accountingBinding/domain/fixtures/saleBinding';
@@ -320,7 +320,7 @@ import { SaleFiscalGuardService } from '../features/sales/services/SaleFiscalGua
 import { TaxOptimizationService } from '../features/accounting/services/TaxOptimizationService'; // EFICIENCIA-FISCAL PR-1
 import { TaxSimulationService } from '../features/accounting/services/TaxSimulationService'; // EFICIENCIA-FISCAL PR-3
 import { TaxOptimizationReportService } from '../features/accounting/services/TaxOptimizationReportService'; // EFICIENCIA-FISCAL PR-4
-import { loadUnconditionalDiscountCents } from '../features/accounting/sync/bridges/saleItems'; // EFICIENCIA-FISCAL PR-4
+import { loadUnconditionalDiscountCents } from '../features/accounting/services/bridges/saleItems'; // EFICIENCIA-FISCAL PR-4
 import { ServicoFiscalAvaliacaoService } from '../features/accounting/services/ServicoFiscalAvaliacaoService';
 import { TaxOptimizationRepository } from '../features/accounting/repositories/TaxOptimizationRepository'; // EFICIENCIA-FISCAL PR-1
 import type { ITaxOptimizationRepository } from '../features/accounting/repositories/ITaxOptimizationRepository';
@@ -375,9 +375,9 @@ import type { ISavedTableViewPolicy } from '../features/savedViews/policies/ISav
 import type { ILlmCredentialPolicy } from '../features/teammates/policies/ILlmCredentialPolicy';
 import type { ITeammatePolicy } from '../features/teammates/policies/ITeammatePolicy';
 import type { ISystemProvisioningPolicy } from '../features/onboarding/policies/ISystemProvisioningPolicy';
-import type { IAccountingEventMapper } from '../features/accounting/sync/mappers/IAccountingEventMapper';
+import type { IAccountingEventMapper } from '../features/accounting/domain/mappers/IAccountingEventMapper';
 import type { PostEntryInput } from '../features/accounting/dtos/PostingDto';
-import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '../features/accounting/models/AccountingScope';
 import type { IAccountingBindingRepository } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
 import type { BindingScope } from '../features/accountingBinding/public/bindingScope.types';
 import { AccountingBindingV1Schema } from '../features/accountingBinding/dtos/AccountingBindingDto';

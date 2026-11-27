@@ -1,6 +1,6 @@
 import prisma from '../../../lib/prisma';
-import type { AccountingScope } from '../scope/AccountingScope';
-import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { AccountingScope } from '../models/AccountingScope';
+import { accountingScopeWhere } from '../models/AccountingScope';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { scopeDay } from '../models/dates';
 import type { MovimentoPacote, PagamentoPacote, SaldoPacote } from '../models/ibsCbsAntecipacao';

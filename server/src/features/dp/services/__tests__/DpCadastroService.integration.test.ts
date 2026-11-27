@@ -5,7 +5,7 @@
 import prisma from '@/lib/prisma';
 import { getFactory } from '@/lib/factory';
 import { pushTestSchema, resetDb } from '@test/helpers';
-import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { resolveAccountingScopeInternal } from '@/features/accounting/models/resolveAccountingScopeInternal';
 import { DpPolicy } from '../../policies/DpPolicy';
 import { DpCadastroRepository } from '../../repositories/DpCadastroRepository';
 import { DpCadastroService } from '../DpCadastroService';
