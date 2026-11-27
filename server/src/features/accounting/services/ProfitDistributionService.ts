@@ -35,7 +35,7 @@ import type {
   ProfitDistributionPreview,
 } from '../dtos/ProfitDistributionDto';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
-import { LUCROS_ACUMULADOS_GRUPO_CODE, RESERVAS_LUCROS_GRUPO_CODE } from '../fixtures/ChartOfAccountsFixture';
+import { LUCROS_ACUMULADOS_GRUPO_CODE, RESERVAS_LUCROS_GRUPO_CODE, isCodeUnder } from '../fixtures/ChartOfAccountsFixture';
 import {
   CODIGO_RECEITA_DIVIDENDOS,
   STATUS_QUE_SOMAM,
@@ -392,7 +392,7 @@ export class ProfitDistributionService {
       (await this.repo.listNoIntervalo(owner, `${ano}-01-01`, dataEvento, STATUS_QUE_SOMAM, tx)).reduce((s, e) => s + e.brutoCents, 0n) + bruto;
     const ate = new Date(dataEvento);
     const filtro = { ate, status: LEDGER_STATUSES, excluirFonte: PROFIT_DISTRIBUTION_SOURCE_TYPE };
-    const pl = somaCredora(await this.repo.totaisPorConta(owner, filtro, tx), (t) => PREFIXOS_SALDO_LUCRO.some((p) => t.code === p || t.code.startsWith(`${p}.`)));
+    const pl = somaCredora(await this.repo.totaisPorConta(owner, filtro, tx), (t) => PREFIXOS_SALDO_LUCRO.some((p) => isCodeUnder(t.code, p)));
     const resultado = somaCredora(
       await this.repo.totaisPorConta(owner, { ...filtro, de: new Date(`${ano}-01-01`) }, tx),
       (t) => t.nature === 'Revenue' || t.nature === 'Expense',
