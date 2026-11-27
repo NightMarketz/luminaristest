@@ -5,6 +5,7 @@
  */
 import { LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, LEGAL_PARAMS_SEED_FILE_V2, SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { AtividadeSemAnexoError } from '../../../../lib/errors';
+import { linhaLegalVigente } from '../../../legalParameters/models/legalParameter';
 import { SEGREGACAO_EXCLUI, apurar, apurarSimei, janelaRbt12, rbt12, type ApuracaoInput, type MesReceita } from '../simplesCalc';
 
 const LINHAS = legalParamsSeedRows([...SIMPLES_SEED_FILES, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL]);
@@ -426,8 +427,11 @@ describe('BE-INCR-SIMPLES-CGSN-196 item 1 — teto do ISS na 6ª faixa de 2027 e
     const comIbs6 = LINHAS.map((l) =>
       l.id === 'sn1-rep-iii-2027-01-01-f6' ? { ...l, valorJson: JSON.stringify({ IRPJ: 3409, CSLL: 1504, CBS: 1929, CPP: 3058, IBS: 100 }) } : l,
     );
+    // A linha de teto EM VIGOR em 2027-01 (a sn8 da v7 substitui a sn1), escolhida pela data como o cálculo escolhe.
+    const tetoVigente = linhaLegalVigente(comIbs6, 'SIMPLES_TETO_ISS', 'III', '2027-01-01', null)?.id;
+    expect(tetoVigente).toBe('sn8-teto-iii-2027-01-01');
     const comTeto = (transfereAIbs: boolean) =>
-      comIbs6.map((l) => (l.id === 'sn1-teto-iii-2027-01-01' ? { ...l, valorJson: JSON.stringify({ ...JSON.parse(l.valorJson ?? '{}'), transfereAIbs }) } : l));
+      comIbs6.map((l) => (l.id === tetoVigente ? { ...l, valorJson: JSON.stringify({ ...JSON.parse(l.valorJson ?? '{}'), transfereAIbs }) } : l));
     const nao = apurar(pa('2027-01'), comTeto(false));
     const sim = apurar(pa('2027-01'), comTeto(true));
     expect(nao.atividades[0].tributos.IBS).toBe(11_608); // só a parcela pela 5ª
