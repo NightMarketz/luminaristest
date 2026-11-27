@@ -1,6 +1,42 @@
 import type { RuleContext } from '../../RuleTypes';
 import { ValidationError } from '../../../../../lib/errors';
 import { resolveTable } from '../../shared/tableFinder';
+import { targetAvailability, unitTimeZone } from '../../shared/schedulingRows';
+import { freeSlots, isCovered, localDay, localMinuteToInstant, type Interval } from '../../../../scheduling/models/availability';
+import { addDays } from '../../../../scheduling/models/cycle';
+
+/** BE-INCR-ESCALA-BASE item 28 (F-ESC-16): motivo gravado no encaixe automático da venda. */
+export const AUTO_FROM_SALE = 'AUTO_FROM_SALE';
+const AUTO_SLOT_STEP_MINUTES = 15;
+
+const overlaps = (a: Interval, b: Interval) => a.start < b.end && b.start < a.end;
+
+/**
+ * Item 28 (F-ESC-16) — onde gravar o agendamento automático. O horário proposto vale se cabe na escala do profissional
+ * (a mesma função pura do gate, item 24) e não colide com outro agendamento `Scheduled` dele. Senão, o primeiro horário
+ * livre do mesmo dia local da unidade, a partir do proposto. Sem nenhum, grava o proposto como encaixe `AUTO_FROM_SALE`:
+ * a venda não falha por causa da escala.
+ */
+export async function placeAutoAppointment(
+  ctx: RuleContext,
+  apptTableId: string,
+  i: { unitId: string; employeeId?: string; proposed: Interval },
+): Promise<{ slot: Interval; override: boolean }> {
+  if (!i.employeeId) return { slot: i.proposed, override: false };
+  const tz = await unitTimeZone(ctx, i.unitId);
+  const dayEnd = localMinuteToInstant(addDays(localDay(i.proposed.start, tz), 1), 0, tz);
+  const searchRange = { start: i.proposed.start, end: Math.max(dayEnd, i.proposed.end) };
+  const available = (await targetAvailability(ctx, { employeeId: i.employeeId }, i.unitId, searchRange)) ?? [searchRange];
+  const busy = (await ctx.repository.findRowsByFieldValue(apptTableId, 'responsibleEmployeeId', i.employeeId))
+    .map((r) => (r.data ?? {}) as Record<string, unknown>)
+    .filter((d) => String(d.status ?? '') === 'Scheduled')
+    .map((d) => ({ start: new Date(d.startAt as string).getTime(), end: new Date(d.endAt as string).getTime() }))
+    .filter((b) => isFinite(b.start) && isFinite(b.end));
+  if (isCovered(available, i.proposed) && !busy.some((b) => overlaps(b, i.proposed))) return { slot: i.proposed, override: false };
+  const durationMinutes = Math.round((i.proposed.end - i.proposed.start) / 60000);
+  const first = freeSlots(available, busy, durationMinutes, AUTO_SLOT_STEP_MINUTES)[0];
+  return first ? { slot: first, override: false } : { slot: i.proposed, override: true };
+}
 
 /** Resolve Appointments table id if present (indexed-first). */
 async function findAppointmentsTable(ctx: RuleContext): Promise<string | null> {
@@ -118,6 +154,12 @@ export async function autoCreateAppointmentForServiceItem(
   const start = new Date(now.getTime() + 60 * 60 * 1000);
   const end = new Date(start.getTime() + 60 * 60 * 1000);
 
+  const placed = await placeAutoAppointment(ctx, apptTableId, {
+    unitId,
+    employeeId: responsibleEmployeeId,
+    proposed: { start: start.getTime(), end: end.getTime() },
+  });
+
   const payload: Record<string, unknown> = {
     unitId,
     serviceId,
@@ -125,9 +167,10 @@ export async function autoCreateAppointmentForServiceItem(
     customerId,
     simpleCustomer,
     simpleCustomerName,
-    startAt: start.toISOString(),
-    endAt: end.toISOString(),
+    startAt: new Date(placed.slot.start).toISOString(),
+    endAt: new Date(placed.slot.end).toISOString(),
     status: 'Scheduled',
+    ...(placed.override ? { availabilityOverride: true, availabilityOverrideReason: AUTO_FROM_SALE } : {}),
   };
 
   const created = await ctx.repository.createData(apptTableId, payload);
