@@ -346,6 +346,15 @@ Os dezesseis forks, com caminhos e recomendação, estão no [PRE-ADR §5](../ad
 | F-ESC-14 Gate fora da tx | (a) aceita | 24 (sem item novo) |
 | F-ESC-15 Sem escala | (a) sem restrição | 24 |
 | F-ESC-16 Agendamento automático da venda | (a) gate + encaixe `AUTO_FROM_SALE` | 28 |
+| F-ESC-17 Escopo vazio no `noOverlap` (emenda 1) | (a) `skipWhenScopeEmpty` opt-in no motor | 27 |
+| F-ESC-18 Fuso padrão (emenda 1) | (a) grava como dado + job | 11, 41 |
+| F-ESC-19 Escala em outra unidade (emenda 2) | (R2) recusa na unidade sem padrão | 24 |
+| F-ESC-20 Profissional da unidade (emenda 3) | cadastro + escala | 32 |
+| F-ESC-21 Leitura sem padrão vivo (emenda 3) | janela inteira, `unrestricted: true` | 31 |
+| F-ESC-22 Formato do `availability` (emenda 3) | `{ unrestricted, intervals }`, `.strict()` | 31 |
+
+As emendas 1 a 3 (F-ESC-17..22) estão em `docs/plano/decisoes/D-2026-11-26-ESCALA-BASE-FORKS.md`, com o achado e a
+resposta literal do dono.
 
 ### Decisões de detalhe sem fork (caminho único pelo que já está decidido)
 

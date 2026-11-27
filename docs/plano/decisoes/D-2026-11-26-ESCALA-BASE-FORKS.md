@@ -66,10 +66,12 @@ O `GovernanceEngine` entra no write-set do PR-2 (`server/src/features/dynamicTab
 |---|---|---|
 | F-ESC-19 alcance do F-ESC-15 (item 24) | O profissional tem padrão vivo só na unidade A, e o agendamento é na unidade B. O F-ESC-15 diz "recurso sem escala", mas este recurso tem escala, só que em outra unidade | **(R2)** O F-ESC-15 vale só para o alvo sem nenhum padrão vivo. O alvo que tem padrão vivo é conferido contra os padrões da unidade do agendamento e os sem unidade. Se nenhum desses cobre o horário, a resposta é 400 `OUTSIDE_AVAILABILITY`, salvo encaixe com motivo. "Vivo" = não apagado. Padrão vivo fora da vigência na data não cobre — *"Recusa em B (Recommended)"* |
 
-## Emenda 3 (27/11): leitura de disponibilidade (itens 31 e 32, `L-20261127-020426-4039`)
+## Emenda 3 (dono, chat, 2026-11-27): leitura de disponibilidade (itens 31 e 32, `L-20261127-020426-4039`)
 
-| Fork | Achado | Decisão |
+As três perguntas foram ao dono por questionário; as três respostas foram a recomendação.
+
+| Fork | Achado | Decisão (resposta literal) |
 |---|---|---|
-| F-ESC-20 profissional da unidade no free-slots (item 32) | Sem `employeeId`, o BRIEF não define quem é "profissional da unidade" | Dono, chat, 2026-11-27, questionário: entra quem tem a unidade no cadastro (`employees.unitId`) ou tem padrão vivo nela. Quem não tem nenhum dos dois fica fora da lista da unidade, embora o gate aceite agendar com ele (F-ESC-15) — *"Cadastro ou escala (Recommended)"* |
-| Alvo sem padrão vivo na leitura (item 31) | Sem fork, caminho único pela paridade com o gate (F-ESC-15 a): a leitura devolve a janela inteira com `unrestricted: true` | Decidido pela sessão de planejamento |
-| Formato do `GET /api/scheduling/availability` (item 31) | Sem fork, caminho único: `{ unrestricted, intervals }`, o mínimo para o FE distinguir "livre o dia todo" de "sem horário" | Decidido pela sessão de planejamento |
+| F-ESC-20 profissional da unidade no free-slots (item 32) | Sem `employeeId`, o BRIEF não define quem é "profissional da unidade" | Entra quem tem a unidade no cadastro (`employees.unitId`) ou tem padrão vivo nela. Quem só tem escala em outra unidade aparece sem horário, coerente com o F-ESC-19, para manter a paridade com o gate. Quem não tem nenhum dos dois fica fora da lista da unidade, embora o gate aceite agendar com ele (F-ESC-15) — *"Cadastro + escala (Recomendado)"* |
+| F-ESC-21 alvo sem padrão vivo na leitura (item 31) | O F-ESC-15 (a) diz "sem restrição" para o gate; o BRIEF não diz o que a leitura devolve | A leitura devolve a janela inteira, com `unrestricted: true`, em paridade com o gate — *"Janela inteira (Recomendado)"* |
+| F-ESC-22 formato do `GET /api/scheduling/availability` (item 31) | O §3.4 não fixa o corpo da resposta | `{ unrestricted: boolean, intervals: [{ startAt, endAt }] }`, em ISO, com `.strict()`: o mínimo para o FE distinguir "livre o dia todo" de "sem horário" — *"Aceito o proposto (Recomendado)"* |
