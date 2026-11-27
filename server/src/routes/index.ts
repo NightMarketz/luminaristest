@@ -30,6 +30,7 @@ import salesRoutes from './sales';
 import savedViewsRoutes from './saved-views';
 import teammatesRoutes from './teammates';
 import packageBalanceRoutes from './packageBalances';
+import schedulingRoutes from './scheduling';
 import packageAcceptanceRoutes from './packageAcceptances';
 import reconcilePendingRoutes from './reconcilePending';
 import bankSettlementRoutes from './bankSettlements';
@@ -97,6 +98,7 @@ router.use('/sales', salesRoutes);
 router.use('/saved-views', savedViewsRoutes);
 router.use('/teammates', teammatesRoutes); // BE-INCR-TEAMMATES PR-1 — credenciais de IA (item 7)
 router.use('/package-balances', packageBalanceRoutes);
+router.use('/scheduling', schedulingRoutes);
 router.use('/package-acceptances', packageAcceptanceRoutes);
 router.use('/reconcile-pending', reconcilePendingRoutes);
 router.use('/bank-settlements', bankSettlementRoutes); // BE-INCR-BANK-SETTLEMENT (nó F7)
