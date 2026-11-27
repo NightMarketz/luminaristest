@@ -1,6 +1,6 @@
 import type { ITableSchema } from '../../../models/DynamicTable.model';
 import { endAtDateTime, notes, simpleCustomerFlag, startAtDateTime } from '../../fields';
-import { customerId, responsibleEmployeeId, serviceId, unitId } from '../../fields/relation/RelationPresets';
+import { customerId, resourceId, responsibleEmployeeId, serviceId, unitId } from '../../fields/relation/RelationPresets';
 import { appointmentStatus } from '../../fields/select/SelectPresets';
 
 export const appointmentsModule = {
@@ -19,10 +19,15 @@ export const appointmentsModule = {
       { name: 'simpleCustomerName', label: 'Customer Name', type: 'string', required: false },
       serviceId,
       { ...responsibleEmployeeId, required: false, label: 'Professional' },
+      // BE-INCR-ESCALA-BASE item 26 (F-ESC-3): sala, posto ou equipamento reservado pelo agendamento.
+      { ...resourceId, label: 'Resource' },
       { ...startAtDateTime, label: 'Start Date/Time' },
       { ...endAtDateTime, label: 'End Date/Time' },
       { ...appointmentStatus, label: 'Appointment Status', defaultValue: 'Scheduled' },
       notes,
+      // BE-INCR-ESCALA-BASE item 25 (F-ESC-5): encaixe fora da disponibilidade, com motivo obrigatório (AppointmentsPlugin).
+      { name: 'availabilityOverride', label: 'Override availability', type: 'boolean', required: false, defaultValue: false, searchable: false },
+      { name: 'availabilityOverrideReason', label: 'Override reason', type: 'string', required: false, searchable: false },
     ],
     immutableAfter: [
       {
@@ -59,6 +64,13 @@ export const appointmentsModule = {
         scopeFields: ['responsibleEmployeeId'],
         skipWhenScopeEmpty: true,
         errorMessage: 'Conflito de agenda: já existe outro compromisso nesse período.',
+      },
+      {
+        startField: 'startAt',
+        endField: 'endAt',
+        scopeFields: ['resourceId'],
+        skipWhenScopeEmpty: true,
+        errorMessage: 'Conflito de agenda: o recurso já está reservado nesse período.',
       },
     ],
   } as ITableSchema,

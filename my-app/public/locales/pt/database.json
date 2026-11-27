@@ -139,7 +139,9 @@
         "timeZone": "Fuso horário",
         "employeeId": "Colaborador",
         "startAt": "Início",
-        "endAt": "Fim"
+        "endAt": "Fim",
+        "availabilityOverride": "Encaixe fora da disponibilidade",
+        "availabilityOverrideReason": "Motivo do encaixe"
     },
     "options": {
         "Low": "Baixo",
