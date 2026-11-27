@@ -15,6 +15,7 @@ import { DfePollScheduler } from '../DfePollScheduler';
 import { LegalParamsRecalcScheduler } from '../LegalParamsRecalcScheduler';
 import { MpReleaseReportScheduler } from '../MpReleaseReportScheduler';
 import { PtaxRateScheduler } from '../PtaxRateScheduler';
+import { SchedulingHolidaySyncScheduler } from '../SchedulingHolidaySyncScheduler';
 import { VecOrphanSweepScheduler } from '../VecOrphanSweepScheduler';
 
 const boom = () => Promise.reject(new Error('upstream down'));
@@ -28,6 +29,7 @@ const cases: { file: string; source: string; build: (alert: jest.Mock) => { runO
   { file: 'LegalParamsRecalcScheduler.ts', source: 'legal_params_recalc', build: (alert) => new LegalParamsRecalcScheduler({ run: boom, log: silentLog(), alert }) },
   { file: 'MpReleaseReportScheduler.ts', source: 'mp_release_report', build: (alert) => new MpReleaseReportScheduler({ fetch: boom, log: silentLog(), alert }) },
   { file: 'PtaxRateScheduler.ts', source: 'ptax_rate', build: (alert) => new PtaxRateScheduler({ sync: boom, log: silentLog(), alert }) },
+  { file: 'SchedulingHolidaySyncScheduler.ts', source: 'scheduling_holiday_sync', build: (alert) => new SchedulingHolidaySyncScheduler({ run: boom, log: silentLog(), alert }) },
   { file: 'VecOrphanSweepScheduler.ts', source: 'vec_orphan_sweep', build: (alert) => new VecOrphanSweepScheduler({ sweep: boom, log: silentLog(), alert }) },
 ];
 

@@ -2917,6 +2917,8 @@ export class ApplicationFactory {
   public getChunkRepository = (): ChunkRepository => this.repositories.chunk;
   public getUserEmbedder = (): UserEmbedder => this.embedder;
   public getDynamicTableRepository = (): IDynamicTableRepository => this.repositories.dynamicTable;
+  public getUserRepository = (): IUserRepository => this.repositories.user; // BE-INCR-ESCALA-BASE itens 41/46: contexto do dono nos jobs
+  public getSchedulingRowRepository = (): ISchedulingRowRepository => this.repositories.schedulingRow; // itens 41/46: donos com a escala
   public getKnowledgeGraphRepository = (): IKnowledgeGraphRepository => this.repositories.knowledgeGraph;
 }
 
