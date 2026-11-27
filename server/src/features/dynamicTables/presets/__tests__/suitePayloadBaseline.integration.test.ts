@@ -51,6 +51,12 @@
  *    `deleteConstraints` (RESTRICT de `schedules`). `locks` ganha as quatro tabelas, e a lista `by` da trava de `units`
  *    ganha `scheduleExceptions` (relação obrigatória `unitId`). Conferido por script: fora dessas chaves, a fixture é
  *    idêntica à anterior (`response`, demais tabelas e travas).
+ *  - BE-INCR-ESCALA-BASE PR-2 (itens 23, 25, 26, 27): em cada cenário, `appointments` ganha `resourceId` (depois de
+ *    `responsibleEmployeeId`), `availabilityOverride` e `availabilityOverrideReason` (no fim), e o `noOverlap` sai do
+ *    escopo de unidade (`['responsibleEmployeeId']` + `['resourceId']`, os dois com `skipWhenScopeEmpty`);
+ *    `employees.workSchedule` fica `readOnly`, com a descrição nova. Aplicado por script sobre a fixture anterior (a máquina
+ *    não tinha memória para o jest com UPDATE_BASELINE): são exatamente as 4 diferenças do diff do CI do #1432
+ *    (+37/−2 por cenário × 10 cenários = +370/−20). Fora delas, a fixture é idêntica.
  *
  * Regenerar (somente num PR que mude comportamento de propósito): `UPDATE_BASELINE=1 npx jest --selectProjects
  * integration --runInBand src/features/dynamicTables/presets/__tests__/suitePayloadBaseline.integration.test.ts`.

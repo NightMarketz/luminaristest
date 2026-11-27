@@ -145,6 +145,7 @@ noOverlap?: {
 startField: string
 endField: string
 scopeFields?: string[]
+skipWhenScopeEmpty?: boolean
 errorMessage?: string
 }[]
 ui?: {
@@ -266,6 +267,7 @@ noOverlap?: {
 startField: string
 endField: string
 scopeFields?: string[]
+skipWhenScopeEmpty?: boolean
 errorMessage?: string
 }[]
 ui?: {

@@ -1168,6 +1168,9 @@
                       "type": "string"
                     }
                   },
+                  "skipWhenScopeEmpty": {
+                    "type": "boolean"
+                  },
                   "errorMessage": {
                     "type": "string"
                   }
@@ -1605,6 +1608,9 @@
                     "items": {
                       "type": "string"
                     }
+                  },
+                  "skipWhenScopeEmpty": {
+                    "type": "boolean"
                   },
                   "errorMessage": {
                     "type": "string"

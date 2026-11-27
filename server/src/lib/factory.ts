@@ -109,6 +109,7 @@ import { LalurRepository } from '../features/accounting/repositories/LalurReposi
 import { ecdChartStructureRule } from '../features/accounting/paises/br/EcdChartStructureRule';
 import { LalurAccountDeletionGuard } from '../features/accounting/paises/br/LalurAccountDeletionGuard';
 import { TaxProvisionClosingGuard } from '../features/accounting/paises/br/TaxProvisionClosingGuard';
+import { BR_DEFAULT_TIME_ZONE } from '../features/scheduling/paises/br/models/timeZone';
 import { statementParserBr } from '../features/accounting/paises/br/StatementParserBr';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
 import { PackageAcceptanceRepository } from '../features/packages/repositories/PackageAcceptanceRepository';
@@ -2449,6 +2450,7 @@ export class ApplicationFactory {
           kpiCache: kpiCacheService,
         },
         dynamicTableWriteEffects,
+        BR_DEFAULT_TIME_ZONE, // BE-INCR-ESCALA-BASE F-ESC-18: a 1ª unidade nasce com o fuso da borda BR
       ),
       ptaxSync: new PtaxSyncService(this.repositories.ptaxRate, this.ptaxClient),
       crmReport: new CrmReportService(

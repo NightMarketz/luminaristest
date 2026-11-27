@@ -117,6 +117,8 @@ export class SystemProvisioningService implements ISystemProvisioningService {
     private readonly resetOwners: SystemResetOwners,
     /** Efeitos pós-commit de escrita no motor (KPI) — BE-INCR-DT-NO-CONSUMER-CALLS. */
     private readonly writeEffects: Pick<IDynamicTableWriteEffects, 'afterDataWrite'>,
+    /** BE-INCR-ESCALA-BASE F-ESC-18: fuso padrão da borda do país, gravado na 1ª unidade (a factory liga o da borda BR). */
+    private readonly defaultUnitTimeZone?: string,
   ) {}
 
   async assertCanProvision(ctx: UserContext): Promise<void> {
@@ -194,6 +196,7 @@ export class SystemProvisioningService implements ISystemProvisioningService {
       const data: Record<string, unknown> = { name: unit.name };
       if (unit.cnpj) data.cnpj = unit.cnpj;
       if (unit.type) data.type = unit.type;
+      if (this.defaultUnitTimeZone) data.timeZone = this.defaultUnitTimeZone;
       const row = await this.tables.createTableData(ctx, unitsTable.id, { data });
       return row.id;
     } catch (error) {

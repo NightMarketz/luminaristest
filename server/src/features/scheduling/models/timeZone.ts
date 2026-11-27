@@ -12,9 +12,15 @@ export function isSupportedTimeZone(tz: string): boolean {
   return supported.has(tz);
 }
 
-/** Fuso do processo Node (o comportamento da agenda antes da escala). */
+/**
+ * Fuso do processo Node (o comportamento da agenda antes da escala). O `TZ` do ambiente, quando é IANA válido, vem antes
+ * do `Intl`: no Node os dois coincidem (o `TZ` define o fuso do processo), e lendo o `TZ` o fuso segue o `process.env`
+ * que o jest isola por arquivo (item 30: regressão em `TZ=UTC` e `TZ=America/Sao_Paulo` no mesmo processo).
+ */
 export function processTimeZone(): string {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const tz = process.env.TZ;
+  // `UTC` não está em `Intl.supportedValuesOf` (que lista só as zonas canônicas), mas é fuso válido do processo.
+  return tz && (tz === 'UTC' || isSupportedTimeZone(tz)) ? tz : Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
 /** O fuso da unidade quando válido; senão o `fallback`. */

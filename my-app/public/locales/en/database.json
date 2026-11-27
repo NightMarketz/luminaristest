@@ -139,7 +139,9 @@
         "timeZone": "Time zone",
         "employeeId": "Employee",
         "startAt": "Start",
-        "endAt": "End"
+        "endAt": "End",
+        "availabilityOverride": "Override availability",
+        "availabilityOverrideReason": "Override reason"
     },
     "options": {
         "Low": "Low",

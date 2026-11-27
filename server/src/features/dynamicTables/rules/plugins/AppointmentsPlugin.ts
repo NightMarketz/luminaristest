@@ -5,7 +5,8 @@
  * - Blocks past or overly distant bookings (compared against `now`)
  * - Ensures basic customer data (relational or simple) is present
  * - Optionally validates service duration tolerance when available
- * - Verifies appointments fit within employee work schedule when defined
+ * - Verifies appointments fit within the availability of the professional and the resource (BE-INCR-ESCALA-BASE item 24),
+ *   unless the booking is an explicit override with a reason (item 25)
  * - Enforces the real-time completion rule (cannot complete before end time)
  *
  * Note: status transitions (lifecycle), end-after-start (compare) and scheduling
@@ -14,6 +15,9 @@
 import type { RulePlugin, RuleContext } from '../RuleTypes';
 import { ValidationError } from '../../../../lib/errors';
 import { resolveTable, tableMatches } from '../shared/tableFinder';
+import { targetAvailability } from '../shared/schedulingRows';
+import { isCovered, type ScheduleTarget } from '../../../scheduling/models/availability';
+import { schedulingError } from '../../../scheduling/models/errors';
 
 export const AppointmentsPlugin: RulePlugin = {
   name: 'AppointmentsPlugin',
@@ -49,7 +53,6 @@ async function validateAppointment(ctx: RuleContext, after: Record<string, unkno
 
   // Optional: enforce unit/service linkage consistency
   const serviceId = String(after?.serviceId || '');
-  const employeeId = String(after?.responsibleEmployeeId || '');
   const simpleCustomer = Boolean(after?.simpleCustomer);
   const simpleCustomerName = String(after?.simpleCustomerName || '').trim();
   const hasCustomerRelation = typeof after?.customerId === 'string' && String(after.customerId).trim().length > 0;
@@ -71,9 +74,65 @@ async function validateAppointment(ctx: RuleContext, after: Record<string, unkno
 
   // Note: scheduling overlap is enforced declaratively via schema.noOverlap.
 
-  // Basic work-hours check from employee.workSchedule json when present
-  if (employeeId) {
-    await assertWithinEmployeeHours(ctx, employeeId, startAt, endAt);
+  await assertOverrideReason(after);
+  // Item 29: remarcar (início, fim, profissional, recurso ou unidade) passa pelo gate; mudar só o status não passa.
+  // A unidade entra porque o gate lê os padrões e o fuso dela (item 24, F-ESC-19); tirar o encaixe (item 25) também,
+  // porque com ele o gate não recusava.
+  if (!before || bookingChanged(after, before)) {
+    await assertWithinAvailability(ctx, after, startAt, endAt);
+  }
+}
+
+const BOOKING_FIELDS = ['startAt', 'endAt', 'responsibleEmployeeId', 'resourceId', 'unitId'] as const;
+
+/** Valor comparável: instante vira ISO (o motor guarda Date ou string ISO), o resto vira texto. */
+function comparable(v: unknown): string {
+  if (v instanceof Date) return isFinite(v.getTime()) ? v.toISOString() : '';
+  const text = String(v ?? '').trim();
+  if (/^\d{4}-\d{2}-\d{2}T/.test(text)) {
+    const t = Date.parse(text);
+    if (isFinite(t)) return new Date(t).toISOString();
+  }
+  return text;
+}
+
+function bookingChanged(after: Record<string, unknown>, before: Record<string, unknown>): boolean {
+  // O encaixe compara como booleano: linha antiga sem o campo (`undefined`) e `false` são o mesmo "sem encaixe".
+  const overrideRemoved = before.availabilityOverride === true && after.availabilityOverride !== true;
+  return overrideRemoved || BOOKING_FIELDS.some((f) => comparable(after[f]) !== comparable(before[f]));
+}
+
+/** Item 25 (F-ESC-5): o encaixe exige motivo. */
+async function assertOverrideReason(after: Record<string, unknown>) {
+  if (after.availabilityOverride !== true) return;
+  if (String(after.availabilityOverrideReason ?? '').trim() === '') {
+    throw schedulingError('OVERRIDE_REASON_REQUIRED', 'Encaixe fora da disponibilidade exige o motivo.', { field: 'availabilityOverrideReason' });
+  }
+}
+
+/**
+ * Item 24 (F-ESC-5, F-ESC-13, F-ESC-15) — o agendamento cabe na disponibilidade do profissional e do recurso na unidade,
+ * no fuso da unidade. Alvo sem padrão vivo não restringe. Escrita de sistema e encaixe (item 25) ficam fora do gate.
+ */
+async function assertWithinAvailability(ctx: RuleContext, after: Record<string, unknown>, startAt: Date, endAt: Date) {
+  if (ctx.isSystem || after.availabilityOverride === true) return;
+  const unitId = String(after.unitId ?? '').trim() || null;
+  const interval = { start: startAt.getTime(), end: endAt.getTime() };
+  const targets: Array<{ target: ScheduleTarget; field: string; id: string }> = [];
+  const employeeId = String(after.responsibleEmployeeId ?? '').trim();
+  const resourceId = String(after.resourceId ?? '').trim();
+  if (employeeId) targets.push({ target: { employeeId }, field: 'responsibleEmployeeId', id: employeeId });
+  if (resourceId) targets.push({ target: { resourceId }, field: 'resourceId', id: resourceId });
+  for (const t of targets) {
+    const available = await targetAvailability(ctx, t.target, unitId, interval);
+    if (available !== null && !isCovered(available, interval)) {
+      throw schedulingError('OUTSIDE_AVAILABILITY', 'Fora da disponibilidade do profissional ou do recurso.', {
+        target: t.field,
+        targetId: t.id,
+        startAt: startAt.toISOString(),
+        endAt: endAt.toISOString(),
+      });
+    }
   }
 }
 
@@ -88,31 +147,6 @@ async function validateServiceDuration(ctx: RuleContext, serviceId: string, star
   if (!durationMin) return true;
   const diffMin = Math.round((endAt.getTime() - startAt.getTime()) / 60000);
   return Math.abs(diffMin - durationMin) <= 5; // allow 5 min tolerance
-}
-
-/**
- * Check if the appointment fits inside the employee's configured work schedule for that weekday.
- */
-async function assertWithinEmployeeHours(ctx: RuleContext, employeeId: string, startAt: Date, endAt: Date) {
-  const employeesTable = await findTableByName(ctx, 'people', 'employees', 'Employees', 'employees');
-  if (!employeesTable) return;
-  const emp = await ctx.repository.findDataById(String(employeeId));
-  const schedule = (emp?.data as Record<string, unknown>)?.workSchedule;
-  if (!schedule) return;
-  const weekday = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][startAt.getDay()];
-  const scheduleMap = schedule as Record<string, unknown>;
-  const day = scheduleMap[weekday] as Record<string, unknown> | undefined;
-  if (!day) return;
-  const [startH, startM] = String(day.start || '').split(':').map((n: string) => Number(n));
-  const [endH, endM] = String(day.end || '').split(':').map((n: string) => Number(n));
-  if (isNaN(startH) || isNaN(endH)) return;
-  const startMinutes = startH * 60 + (startM || 0);
-  const endMinutes = endH * 60 + (endM || 0);
-  const apptStartMinutes = startAt.getHours() * 60 + startAt.getMinutes();
-  const apptEndMinutes = endAt.getHours() * 60 + endAt.getMinutes();
-  if (apptStartMinutes < startMinutes || apptEndMinutes > endMinutes) {
-    throw new ValidationError('Fora do horário de trabalho do profissional.');
-  }
 }
 
 /**

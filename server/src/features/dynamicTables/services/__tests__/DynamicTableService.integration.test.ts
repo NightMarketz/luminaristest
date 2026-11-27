@@ -436,6 +436,36 @@ describe('Governance: noOverlap (anti-overlap intervals)', () => {
       create(ctxFor('userA'), t.id, { room: 'B', startAt: '2026-01-01T10:30:00Z', endAt: '2026-01-01T11:30:00Z' })
     ).resolves.toBeTruthy();
   });
+
+  // BE-INCR-ESCALA-BASE item 27 (F-ESC-17): skipWhenScopeEmpty é opt-in.
+  const OPTIONAL_ROOM = (skip?: boolean) => ({
+    fields: [
+      { name: 'room', label: 'Room', type: 'string', required: false },
+      { name: 'startAt', label: 'Start', type: 'datetime', required: true },
+      { name: 'endAt', label: 'End', type: 'datetime', required: true },
+    ],
+    noOverlap: [{ startField: 'startAt', endField: 'endAt', scopeFields: ['room'], ...(skip === undefined ? {} : { skipWhenScopeEmpty: skip }) }],
+  });
+  it('without the flag, an empty scope field still matches the whole table (unchanged default)', async () => {
+    await seedUser('userA');
+    const t = await seedTable('userA', 'noov_opt', OPTIONAL_ROOM());
+    await create(ctxFor('userA'), t.id, { room: 'A', startAt: '2026-01-01T10:00:00Z', endAt: '2026-01-01T11:00:00Z' });
+    await expect(
+      create(ctxFor('userA'), t.id, { startAt: '2026-01-01T10:30:00Z', endAt: '2026-01-01T11:30:00Z' })
+    ).rejects.toBeInstanceOf(ValidationError);
+  });
+  it('with skipWhenScopeEmpty, a record with the scope field empty conflicts with nothing; filled scope still conflicts', async () => {
+    await seedUser('userA');
+    const t = await seedTable('userA', 'noov_opt', OPTIONAL_ROOM(true));
+    await create(ctxFor('userA'), t.id, { room: 'A', startAt: '2026-01-01T10:00:00Z', endAt: '2026-01-01T11:00:00Z' });
+    await create(ctxFor('userA'), t.id, { startAt: '2026-01-01T10:15:00Z', endAt: '2026-01-01T11:15:00Z' });
+    await expect(
+      create(ctxFor('userA'), t.id, { startAt: '2026-01-01T10:30:00Z', endAt: '2026-01-01T11:30:00Z' })
+    ).resolves.toBeTruthy();
+    await expect(
+      create(ctxFor('userA'), t.id, { room: 'A', startAt: '2026-01-01T10:30:00Z', endAt: '2026-01-01T11:30:00Z' })
+    ).rejects.toBeInstanceOf(ValidationError);
+  });
 });
 
 // --- Relations + cascade delete -----------------------------------------------------------
