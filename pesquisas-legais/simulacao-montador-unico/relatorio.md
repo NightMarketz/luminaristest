@@ -39,6 +39,34 @@ Nenhuma de lei. As escolhas de modelagem (exclusão no meio do ano, vedação se
 ## 5. Lacunas
 - A receita de exportação tem limite próprio (Res. 140 art. 2º § 1º e art. 15 I); o razão não a separa (BRIEF §7 insumo 3).
 - As vedações não deriváveis (filial de estrangeira, cooperativa, S.A., cisão, débito, cadastro, atividades) não têm dado no sistema.
+### Releitura Res. CGSN 196 (27/11/2026)
+
+Item 6 do BRIEF `BE-INCR-SIMPLES-CGSN-196` (lacuna `L-20261125-195503-a785`). Este adendo só acrescenta; o texto acima
+fica como estava.
+- **Base.** A cópia deste dossiê, [D03], é a mesma das outras sete (SHA-256 do texto `b5a02304…`, anterior à Res. 196).
+  Conferi contra a Res. CGSN 140 multivigente de 25/11/2026,
+  `pesquisas-legais/dp-tabelas-irrf-das-sst/docs/D24_rfb-92278-multivigente.txt` (`6683e711…`). Também usei a Res. CGSN 196,
+  `…/D10_rfb-154694-multivigente.txt` (`37ff4316…`), e a Res. CGSN 190 já com as revogações da 196,
+  `…/D09_rfb-152832-multivigente.txt` (`a5692faa…`). Um diff das duas cópias da 140 mostra só quatro trocas de texto
+  vigente: art. 21 II "c", art. 121 § 4º e os novos arts. 144-C e 144-F. Os arts. 144-D e 144-E, da 190, também aparecem
+  agora como vigentes. O resto são marcas `[AGENDADO]` que passaram da 190 para a 196.
+- **Como conferi.** Rodei `python ~/.claude/tools/pesquisa-legal/legal.py trecho dp-tabelas-irrf-das-sst D24 "<termo>"` por
+  dispositivo (D10 e D09 no lugar de D24 para a redação de 2027). Para o vigente, o critério é o texto da linha na D24.
+  Para 2027, o critério é constar ou não dos arts. 1º, 2º, 5º e 7º da 196. A marca na linha não serve de critério, porque o
+  `[AGENDADO]` fica na linha vizinha.
+- **Estados.** **igual**: o texto vigente não mudou. **2027 trocada**: a redação de 2027 que o dossiê citou foi revogada ou
+  reeditada pela 196. **novo**: dispositivo novo que confirma ou contraria uma leitura do dossiê.
+
+| Dispositivo | Como o dossiê citou | Estado | Conclusão |
+|---|---|---|---|
+| art. 15 I | vedação por receita acima de R$ 4,8 mi no ano anterior ou no ano em curso | igual (D24 L294) | não muda |
+| art. 15 II | PJ no capital | igual (D24 L295) | não muda |
+| art. 15 XIII | sócio no exterior | igual (D24 L308). O trecho da tabela acima é a redação da LC 123 art. 17 II. A Res. 140 diz "que possua titular ou sócio domiciliado no exterior" (red. Res. 183/2025), e as duas cópias da 140 trazem o mesmo texto | não muda |
+| art. 15 XXIII | locação de imóvel próprio | igual (D24 L329) | não muda |
+| art. 16 § 2º | soma de todos os estabelecimentos | igual (D24 L362) | não muda |
+| art. 2º § 1º | limite próprio da exportação | igual (D24 L34); a 196 mexe no art. 2º (incisos V a VII do caput e §§ 4º, 8º, 9º e 9º-A), não no § 1º | não muda |
+
+A 196 não toca os arts. 15 e 16. Nenhuma lacuna nova.
 <!-- /ANALISE -->
 
 ## Fontes consultadas

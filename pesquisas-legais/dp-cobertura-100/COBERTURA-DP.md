@@ -113,3 +113,34 @@ Itens 1-3 conferidos por mim nos textos oficiais baixados hoje (D32, D33, D34, D
 ## 8. Próximo passo sugerido
 
 **Feito em 14/11:** G1..G8 estão encaixados em F3, F4, F5, SST e DP-APP, pela lei e sem questionário (dono, chat), em `docs/plano/decisoes/D-2026-11-14-DP-ESCOPO-LACUNAS-2.md`, e o nó PES-4 foi atualizado. Falta commitar (nada foi commitado). Em seguida vêm os BRIEFs de F3, F4, F5 e SST, cada um com a verificação legal dos itens "a ler no BRIEF". O `executa` do F2 (PR-3..PR-6) segue valendo e é o maior bloco de "automação real" que falta.
+
+### Releitura Res. CGSN 196 (27/11/2026)
+
+Este dossiê não tem `relatorio.md`. O adendo vai neste arquivo, que é o relatório dele, e as citações vêm de
+`coleta/dp-obrigacoes-r4a.txt` §6, que não foi alterado. Item 6 do BRIEF `BE-INCR-SIMPLES-CGSN-196` (lacuna `L-20261125-195503-a785`). Este adendo só acrescenta; o texto acima
+fica como estava.
+- **Base.** A cópia deste dossiê, [D30], é a mesma das outras sete (SHA-256 do texto `b5a02304…`, anterior à Res. 196).
+  Conferi contra a Res. CGSN 140 multivigente de 25/11/2026,
+  `pesquisas-legais/dp-tabelas-irrf-das-sst/docs/D24_rfb-92278-multivigente.txt` (`6683e711…`). Também usei a Res. CGSN 196,
+  `…/D10_rfb-154694-multivigente.txt` (`37ff4316…`), e a Res. CGSN 190 já com as revogações da 196,
+  `…/D09_rfb-152832-multivigente.txt` (`a5692faa…`). Um diff das duas cópias da 140 mostra só quatro trocas de texto
+  vigente: art. 21 II "c", art. 121 § 4º e os novos arts. 144-C e 144-F. Os arts. 144-D e 144-E, da 190, também aparecem
+  agora como vigentes. O resto são marcas `[AGENDADO]` que passaram da 190 para a 196.
+- **Como conferi.** Rodei `python ~/.claude/tools/pesquisa-legal/legal.py trecho dp-tabelas-irrf-das-sst D24 "<termo>"` por
+  dispositivo (D10 e D09 no lugar de D24 para a redação de 2027). Para o vigente, o critério é o texto da linha na D24.
+  Para 2027, o critério é constar ou não dos arts. 1º, 2º, 5º e 7º da 196. A marca na linha não serve de critério, porque o
+  `[AGENDADO]` fica na linha vizinha.
+- **Estados.** **igual**: o texto vigente não mudou. **2027 trocada**: a redação de 2027 que o dossiê citou foi revogada ou
+  reeditada pela 196. **novo**: dispositivo novo que confirma ou contraria uma leitura do dossiê.
+
+| Dispositivo | Como o dossiê citou | Estado | Conclusão |
+|---|---|---|---|
+| art. 21 II "a" (2026) | RBT12 dos 12 meses anteriores | igual (D24 L395) | não muda |
+| art. 26 I, II e § 1º (2026) | fator r: folha com CPP e FGTS em 12 meses | igual (D24 L591) | não muda |
+| art. 154 | vigência da 140 | igual | não muda |
+| art. 21 II "a" e § 1º; art. 26 I, II e § 1º (red. 190, 2027) | janela "antecedentes ao mês anterior" | igual: a 196 não revoga nem reedita esses dispositivos (D09 L92 e L144, sem risco) | não muda |
+| art. 2º IV (red. 190) | início de atividade até o fim do ano da inscrição | igual: fora da lista do art. 5º da 196 (D09 L11) | não muda |
+| art. 2º V (red. 190) | "data de início de atividade a data de inscrição no CNPJ" | 2027 trocada no papel: a 196 art. 5º I revogou a redação da 190 (D09 L12, riscada) e o art. 2º a reeditou com o mesmo texto (D10 L26) | não muda |
+| Res. 190 art. 9º; Anexos I–V da 190 | efeitos em 01/01/2027; tabelas não lidas | já tratados no §6 item 6 e no §7 deste arquivo (atualização de 25/11) | não muda além do que já está escrito |
+
+Nenhuma lacuna nova.
