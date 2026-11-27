@@ -132,3 +132,51 @@ describe('PR-P0 item 6 — sem teto: a patronal é 20% de qualquer base', () => 
     );
   });
 });
+
+describe('PR-P0 revisão M1/M2 — arredondamento de cada parcela e terceiros por entidade', () => {
+  const MODOS = ['MEIO_PARA_CIMA_CENTAVO', 'TRUNCA_CENTAVO'] as const;
+  const comModo = (modo: (typeof MODOS)[number]) => REAL.map((l) => (l.tabela === 'FOLHA_REGRA' && l.chave === 'ARREDONDAMENTO' ? { ...l, valorTexto: modo } : l));
+
+  it('M1: o modo da FOLHA_REGRA/ARREDONDAMENTO decide a patronal, o RAT e os terceiros', () => {
+    // empregados R$ 10.002,75 e CI R$ 0,03: patronal 20% = 200055,6; RAT 2% = 20005,5; terceiros 5,8% = 58015,95 (centavos)
+    const bases = { baseEmpregadosCents: 1_000_275n, baseContribuinteIndividualCents: 3n };
+    const meio = cppPatronal(entrada(bases, comModo('MEIO_PARA_CIMA_CENTAVO'))).valor;
+    const trunca = cppPatronal(entrada(bases, comModo('TRUNCA_CENTAVO'))).valor;
+    expect([meio.patronalCents, meio.ratCents, meio.terceirosCents]).toEqual([200_056n, 20_006n, 58_016n]);
+    expect([trunca.patronalCents, trunca.ratCents, trunca.terceirosCents]).toEqual([200_055n, 20_005n, 58_015n]);
+  });
+
+  it('M2: três entidades de 1 bp sobre R$ 150,00 (1,5 centavo cada) fecham com o total em cada modo', () => {
+    const tres = linhaTerceiros({ entidades: { '0001': 1, '0002': 1, '0003': 1 }, totalBp: 3 });
+    const bases = { baseEmpregadosCents: 15_000n, baseContribuinteIndividualCents: 0n };
+    const meio = cppPatronal(entrada(bases, comModo('MEIO_PARA_CIMA_CENTAVO'), [tres]));
+    expect(meio.valor.terceirosCents).toBe(5n);
+    expect(meio.valor.terceirosPorEntidade.map((t) => t.valorCents)).toEqual([2n, 2n, 1n]);
+    expect(provaIncoerente(meio.prova)).toEqual([]);
+    const trunca = cppPatronal(entrada(bases, comModo('TRUNCA_CENTAVO'), [tres]));
+    expect(trunca.valor.terceirosCents).toBe(4n);
+    expect(trunca.valor.terceirosPorEntidade.map((t) => t.valorCents)).toEqual([2n, 1n, 1n]);
+    expect(provaIncoerente(trunca.prova)).toEqual([]);
+  });
+
+  it('propriedade: em cada modo, cada parcela é a fração exata arredondada; as entidades somam o total e ficam a menos de 1 centavo da sua fração', () => {
+    fc.assert(
+      fc.property(fc.constantFrom(...MODOS), fc.bigInt({ min: 0n, max: 10n ** 12n }), fc.bigInt({ min: 0n, max: 10n ** 12n }), (modo, emp, ci) => {
+        const { valor, prova } = cppPatronal(entrada({ baseEmpregadosCents: emp, baseContribuinteIndividualCents: ci }, comModo(modo)));
+        const somaEntidades = valor.terceirosPorEntidade.reduce((s, t) => s + t.valorCents, 0n);
+        const pertoDaFracao = valor.terceirosPorEntidade.every((t) => {
+          const dif = t.valorCents * 10_000n - emp * BigInt(t.bp);
+          return dif > -10_000n && dif < 10_000n;
+        });
+        return (
+          valor.patronalCents === arredondarCentavos(fracao((emp + ci) * 2_000n, 10_000n), modo) &&
+          valor.ratCents === arredondarCentavos(fracao(emp * 200n, 10_000n), modo) &&
+          valor.terceirosCents === arredondarCentavos(fracao(emp * 580n, 10_000n), modo) &&
+          somaEntidades === valor.terceirosCents &&
+          pertoDaFracao &&
+          provaIncoerente(prova).length === 0
+        );
+      }),
+    );
+  });
+});

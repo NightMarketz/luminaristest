@@ -20,7 +20,8 @@ import { TerceirosFpasJson } from './terceiros';
  *
  * Sem teto (item 6): o teto do RGPS limita só o segurado. Arredondamento só no total de cada parcela, pelo modo da linha
  * `FOLHA_REGRA/ARREDONDAMENTO`; o FAP chega truncado na 4ª casa (`fapX10000` inteiro, art. 202-A § 1º) e o produto
- * ratBp × FAP fica em fração exata.
+ * ratBp × FAP fica em fração exata. O detalhe dos terceiros por entidade não arredonda cada uma por conta própria: reparte
+ * o total já arredondado pelo maior resto, e a soma das entidades fecha com `terceirosCents`.
  */
 
 export type RegimeCpp = 'NO_DAS' | 'ANEXO_IV' | 'GERAL';
@@ -80,6 +81,35 @@ function valorIntExigido(linhas: readonly LinhaLegal[], tabela: string, chave: s
 
 const bpDaBase = (baseCents: Cents, bp: Fracao): Fracao => multiplicar(fracao(baseCents), multiplicar(bp, fracao(1n, UNIDADE)));
 
+const comparar = (a: Fracao, b: Fracao): number => {
+  const d = a.num * b.den - b.num * a.den;
+  return d > 0n ? 1 : d < 0n ? -1 : 0;
+};
+
+/**
+ * Reparte `totalCents` (já arredondado) entre as entidades pelo maior resto: cada uma leva o piso da sua fração exata, e
+ * os centavos que faltam vão às de maior resto (empate: menor código). Como `totalBp` = soma das entidades
+ * (`TerceirosFpasJson`) e o total arredonda entre o piso e o teto da soma exata, faltam de 0 a n centavos.
+ */
+function repartirTerceiros(baseCents: Cents, entidades: Record<string, number>, totalCents: Cents): CppResultado['terceirosPorEntidade'] {
+  const partes = Object.entries(entidades)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([codigo, bp]) => {
+      const exato = bpDaBase(baseCents, fracao(inteiro(bp)));
+      const piso = exato.num / exato.den;
+      return { codigo, bp, piso, resto: fracao(exato.num - piso * exato.den, exato.den) };
+    });
+  const falta = totalCents - partes.reduce((s, p) => s + p.piso, 0n);
+  if (falta < 0n || falta > BigInt(partes.length)) throw new Error(`cppPatronal: terceiros por entidade não fecham com o total (${falta} centavos).`);
+  const comExtra = new Set(
+    [...partes]
+      .sort((a, b) => comparar(b.resto, a.resto) || a.codigo.localeCompare(b.codigo))
+      .slice(0, Number(falta))
+      .map((p) => p.codigo),
+  );
+  return partes.map((p) => ({ codigo: p.codigo, bp: p.bp, valorCents: p.piso + (comExtra.has(p.codigo) ? 1n : 0n) }));
+}
+
 /** Item 4 — a CPP patronal (patronal, RAT × FAP e terceiros) com a prova. */
 export function cppPatronal(e: EntradaCpp): Calculo<CppResultado> {
   if (e.baseEmpregadosCents < 0n || e.baseContribuinteIndividualCents < 0n) throw new Error('cppPatronal: base negativa.');
@@ -134,15 +164,13 @@ export function cppPatronal(e: EntradaCpp): Calculo<CppResultado> {
     const lido = TerceirosFpasJson.safeParse(JSON.parse(linha.valorJson ?? 'null'));
     if (!lido.success) throw new ParametroLegalAusenteError('TERCEIROS_FPAS', data, e.fpas);
     terceirosCents = arredondarCentavos(bpDaBase(e.baseEmpregadosCents, fracao(inteiro(lido.data.totalBp))), modo);
-    terceirosPorEntidade = Object.entries(lido.data.entidades)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([codigo, bp]) => ({ codigo, bp, valorCents: arredondarCentavos(bpDaBase(e.baseEmpregadosCents, fracao(inteiro(bp))), modo) }));
+    terceirosPorEntidade = repartirTerceiros(e.baseEmpregadosCents, lido.data.entidades, terceirosCents);
     noTerceiros = no(`Terceiros do FPAS ${e.fpas} (IN RFB 2.110 art. 81 § 6º I)`, terceirosCents, {
       fonte: fonteLp({ linhaId: linha.id }),
       soma: true,
       filhos: [
         no(`base (empregados), total ${lido.data.totalBp} bp`, e.baseEmpregadosCents),
-        ...terceirosPorEntidade.map((t) => no(`terceiro ${t.codigo}: ${t.bp} bp`, t.valorCents)),
+        ...terceirosPorEntidade.map((t) => no(`terceiro ${t.codigo}: ${t.bp} bp`, t.valorCents, { soma: true })),
       ],
     });
   }
