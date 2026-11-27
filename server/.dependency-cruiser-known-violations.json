@@ -3124,20 +3124,6 @@
   {
     "type": "dependency",
     "from": "src/features/packages/services/PackageAcceptanceService.ts",
-    "to": "src/features/accounting/sync/bridges/saleItems.ts",
-    "unresolvedTo": "../../accounting/sync/bridges/saleItems",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/packages/services/PackageAcceptanceService.ts",
     "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
     "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
     "dependencyTypes": [
@@ -3261,20 +3247,6 @@
     "dependencyTypes": [
       "local",
       "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/sales/services/RegisterPaymentService.ts",
-    "to": "src/features/accounting/sync/bridges/SaleSettlementBridge.ts",
-    "unresolvedTo": "../../accounting/sync/bridges/SaleSettlementBridge",
-    "dependencyTypes": [
-      "local",
       "import"
     ],
     "rule": {
@@ -3438,20 +3410,6 @@
     "dependencyTypes": [
       "local",
       "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/sales/services/SalesCancellationService.ts",
-    "to": "src/features/accounting/sync/bridges/SaleReversalBridge.ts",
-    "unresolvedTo": "../../accounting/sync/bridges/SaleReversalBridge",
-    "dependencyTypes": [
-      "local",
       "import"
     ],
     "rule": {

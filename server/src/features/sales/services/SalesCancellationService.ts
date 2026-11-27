@@ -4,7 +4,7 @@ import logger from '../../../lib/logger';
 import type { DynamicTableService } from '../../dynamicTables/services/DynamicTableService';
 import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
 import type { IDynamicTableWriteEffects } from '../../integration/services/IDynamicTableWriteEffects';
-import { maybeReverseSale } from '../../accounting/sync/bridges/SaleReversalBridge';
+import { maybeReverseSale } from '../../accounting/public/saleReversalBridge';
 import type { CancelSaleInput, ReturnSaleInput } from '../dtos/SalesCancellationDto';
 
 /**

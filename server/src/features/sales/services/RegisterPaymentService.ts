@@ -4,7 +4,7 @@ import logger from '../../../lib/logger';
 import type { DynamicTableService } from '../../dynamicTables/services/DynamicTableService';
 import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
 import type { IDynamicTableWriteEffects } from '../../integration/services/IDynamicTableWriteEffects';
-import { maybeSyncSaleSettled } from '../../accounting/sync/bridges/SaleSettlementBridge';
+import { maybeSyncSaleSettled } from '../../accounting/public/saleSettlementBridge';
 import { resolveAccountingScopeInternal } from '../../accounting/public/resolveAccountingScopeInternal';
 import type { PackageBalanceService } from '../../packages/services/PackageBalanceService';
 import type { RegisterPaymentInput } from '../dtos/RegisterPaymentDto';
