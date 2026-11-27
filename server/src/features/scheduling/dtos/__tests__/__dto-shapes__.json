@@ -160,6 +160,54 @@
       "additionalProperties": false
     }
   },
+  "holidays.ts": {
+    "HolidaySyncBodySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2024,
+          "maximum": 2100
+        }
+      },
+      "required": [
+        "year"
+      ],
+      "additionalProperties": false
+    },
+    "HolidaySyncResponseSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "skipped": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "deletedByUser": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "created",
+        "skipped",
+        "deletedByUser"
+      ],
+      "additionalProperties": false
+    }
+  },
   "rows.ts": {
     "dateOnly": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
