@@ -47,7 +47,7 @@ const saoPaulo = (hhmm: string) => `2027-01-04T${hhmm}:00-03:00`;
 
 async function setup(unitTimeZone?: string) {
   await prisma.user.create({ data: { id: A, username: A, email: 'a@t.co', password: 'x', role: Role.USER } });
-  await service.installPresetAsSystem(A, { tables: { ...CoreSystemPreset.tables, ...composeModuleTables(resolveModuleSelection(['AGE-0'])) } });
+  await service.installPresetAsSystem(A, { tables: { ...CoreSystemPreset.tables, ...composeModuleTables(resolveModuleSelection(['VEN-SERV', 'AGE-0'])) } });
   const unit = await mk('units', { name: 'Loja', ...(unitTimeZone ? { timeZone: unitTimeZone } : {}) });
   const emp = await mk('employees', { name: 'Ana', role: 'x', email: 'ana@a.co', unitId: unit.id, workSchedule: { monday: { start: '09:00', end: '18:00' } } });
   const svc = await mk('services', { name: 'Corte', category: 'Hair', price: 50, duration: 60 });

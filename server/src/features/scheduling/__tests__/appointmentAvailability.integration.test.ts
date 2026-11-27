@@ -46,7 +46,7 @@ const at = (day: string, hhmm: string, offset = '-03:00') => `${day}T${hhmm}:00$
 
 async function seed() {
   await prisma.user.create({ data: { id: A, username: A, email: `${A}@t.co`, password: 'x', role: Role.USER } });
-  await service.installPresetAsSystem(A, { tables: { ...CoreSystemPreset.tables, ...composeModuleTables(resolveModuleSelection(['AGE-0'])) } });
+  await service.installPresetAsSystem(A, { tables: { ...CoreSystemPreset.tables, ...composeModuleTables(resolveModuleSelection(['VEN-SERV', 'AGE-0'])) } });
   const unit = await create('units', { name: 'Loja', timeZone: 'America/Sao_Paulo' });
   const unit2 = await create('units', { name: 'Filial', timeZone: 'America/Sao_Paulo' });
   const manaus = await create('units', { name: 'Manaus', timeZone: 'America/Manaus' });
