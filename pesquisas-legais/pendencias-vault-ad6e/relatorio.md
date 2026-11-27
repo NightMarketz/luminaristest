@@ -11,16 +11,19 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
 As 24 linhas "não conferido nesta passada" de `docs/RELATORIO-PENDENCIAS-VAULT-2026-11-24.md` têm estado novo, linha a
 linha, na coluna "Estado" daquele relatório (26/11). Resumo:
 
-- **Nenhuma norma de 2027 lida aqui diverge do cálculo do DAS.** RBT12, fim do caixa, partilha 2029–2032 e o limiar do
-  teto do ISS conferem com o código (graus abaixo). O P0 da lacuna ad6e ("vigência assumida, DAS errado em 01/2027") não
-  se confirma para essas regras.
+- **Nenhuma divergência nova entre as normas de 2027 lidas e o cálculo do DAS.** RBT12, fim do caixa, partilha 2029–2032
+  e o limiar do teto do ISS conferem com o código (graus abaixo). O P0 da lacuna ad6e ("vigência assumida, DAS errado em
+  01/2027") não se confirma para essas regras.
+  - As divergências já conhecidas seguem na caixa. A 09b7 trata da nota (*) do Anexo XX/XXI de 2027–28, que diz
+    "federais" quando o art. 18 § 1º-B I diz "federais e IBS" (teto do ISS na 6ª faixa; itens 1–2 do BRIEF #1436). A
+    976c trata da soma multiunidade no RBT12.
 - **Quatro "inferidos" da nota de 29/09 viram verificados:** RBT12 de 2027; "o caixa acaba"; "a DEFIS acaba"; não há
   tabela oficial CNAE × anexo.
 - **Duas divergências foram à caixa:**
   - `L-20261127-005504-79dc`: o bloco socioeconômico do art. 38-B no PGDAS-D, a partir do AC 2027, não existe no produto.
     A mensagem do código diz "aguarda regulamentação", o que é falso desde a Res. 190.
   - `L-20261127-005539-e917`: o corpus local da Res. CGSN 140 parou na Res. 183.
-- **Cinco achados ficam só descritos**, porque a caixa recusa filha fora da meta (D-2026-11-25 §8b). Estão no §5.
+- **Seis achados ficam só descritos**, porque a caixa recusa filha fora da meta (D-2026-11-25 §8b). Estão no §5.
 - **Não sobra ambiguidade para o contador.** A A1 da DEFIS de 2026 foi respondida por lei (art. 144-F). A A1 do combo foi
   respondida em 21/10.
 
@@ -55,11 +58,14 @@ Siglas das fontes de outros dossiês (não rebaixadas; lidas de novo nos trechos
 | CNAE só impeditivo/ambíguo | Res. 140 art. 8º §§ 1º–2º | [DT-D24] l. 228-229 | "O Anexo VI relaciona códigos da CNAE correspondentes a atividades impeditivas"; "O Anexo VII relaciona códigos ambíguos" |
 | Arbitramento por valor de mercado | LC 214 art. 13 I "b" e p.ú. I | [EG-D04] (art. 13) | "valor notoriamente inferior ao valor de mercado da operação" |
 | Fim da Lei 10.147 | LC 214 art. 542 XI | [EG-D04] (art. 542) | "Ficam revogados a partir de 1º de janeiro de 2027: … XI - a Lei nº 10.147" |
-| Retenção na CPRB | SC Cosit 153/2026 (ementa e inteiro teor) | [D02], [D03] | "é de 3,5% … quando a empresa contratada for optante pela … CPRB"; "A partir de 1º de janeiro de 2028, será de 11 %" |
+| Retenção na CPRB | SC Cosit 153/2026 (ementa e Conclusão, itens 14.1–14.3) | [D02], [D03] l. 320-333 | "é de 3,5% … quando a empresa contratada for optante pela … CPRB"; "A partir de 1º de janeiro de 2028, será de 11 %" |
 
 **Código lido (26/11, `origin/main` `40b6ab8f4`):**
 - **Janela do RBT12.** `simplesCalc.ts:198-201` usa M−13…M−2 a partir da linha `MARCO_LEGAL/INICIO_LC214_RBT12`
-  (2027-01). O fator r usa a mesma janela (`:260`).
+  (2027-01). O fator r soma folha e receita dos mesmos meses da base (`fatorR`, `:264-288`).
+- **Fim do caixa.** A linha `MARCO_LEGAL/FIM_REGIME_CAIXA_SIMPLES` (`server/prisma/data/legal_parameters_marco_legal_v2.sql`)
+  já cita a Res. 190 art. 9º II, red. Res. 196.
+- **Anexos.** Da Res. 196 só o Anexo III foi aberto ([DT-D13]); os outros ficam para o item 4 do BRIEF #1436.
 - **Teto do ISS.** `simplesCalc.ts:397` dispara o teto quando o percentual do ISS passa de `percentualBp` (5%). Isso
   equivale a 5/33,5 = 14,92537…%, e o campo `limiarAliquotaEfetiva` não entra na comparação. O gerador também toma o
   limiar da frase (`gen-simples-anexos.mjs:18-19`).
@@ -133,7 +139,12 @@ Nenhuma nova.
    - `docs/accounting/PEDIDO-CONTADOR-2026-10-17-AMBIGUIDADES.md:23`.
    - O art. 144-F responde. O item 5 do BRIEF #1436 só troca a `fonte` da semente. Sem a correção, a pergunta pode voltar
      ao pacote do contador.
-5. **`docs/accounting/BE-INCR-EFICIENCIA-FISCAL-brief.md:302`** (G5, estilo): o item 28 ainda diz "valor 2026 não
+5. **`my-app/features/accounting/components/LalurPanel.tsx:107-108`** (débito·engenharia·G4·inferido, P3).
+   - **Defeito possível:** a nota de 30/09 relatou um latente no "loader do padrão" sem `cancelled`, que deixa uma
+     resposta em voo depois do teardown do jsdom.
+   - **Estado em 26/11:** só o loader do catálogo tem `cancelled` (`:124-138`). `fetchEntries` e `fetchParteB` não têm. A
+     nota não diz qual loader era, então ele não foi identificado.
+6. **`docs/accounting/BE-INCR-EFICIENCIA-FISCAL-brief.md:302`** (G5, estilo): o item 28 ainda diz "valor 2026 não
    conferido". O §6 do mesmo BRIEF (P-EF-8) registra o valor conferido em 27/10.
 
 **Não achado:** SC Cosit ou acórdão CARF sobre rateio de desconto em kit/combo. A busca foi feita em 20–21/10
