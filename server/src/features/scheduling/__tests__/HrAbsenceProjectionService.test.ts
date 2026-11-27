@@ -116,6 +116,23 @@ describe('HrAbsenceProjectionService.reconcile (item 45)', () => {
     expect(store[0].deleted).toBe(false);
   });
 
+  it('job diário: o afastamento que acabou ontem sai da porta hoje, e a exceção dele fica (não é apagada)', async () => {
+    const { service, store, deleter, setAbsences } = setup([abs('ontem', '2027-02-25', '2027-02-28')]);
+    await service.reconcile(user, '2027-02-28');
+    setAbsences([]); // a porta filtra fim < hoje
+    await expect(service.reconcile(user, TODAY)).resolves.toMatchObject({ deleted: 0 });
+    expect(deleter.deleteAsSystem).not.toHaveBeenCalled();
+    expect(store[0].deleted).toBe(false);
+  });
+
+  it('o afastamento apagado no DP que ainda alcança hoje (fim = hoje) sai da agenda', async () => {
+    const { service, deleter, setAbsences } = setup([abs('hoje', '2027-02-25', TODAY)]);
+    await service.reconcile(user, TODAY);
+    setAbsences([]);
+    await expect(service.reconcile(user, TODAY)).resolves.toMatchObject({ deleted: 1 });
+    expect(deleter.deleteAsSystem).toHaveBeenCalledTimes(1);
+  });
+
   it('instância sem a tabela scheduleExceptions: nada a fazer', async () => {
     const { service } = setup([abs('a1', '2027-03-10', '2027-03-12')], { noTable: true });
     await expect(service.reconcile(user, TODAY)).resolves.toMatchObject({ created: 0 });

@@ -12,8 +12,9 @@
  *   corrige na rodada seguinte.
  * - Vínculo sem `employeeRef` (ou com a pessoa removida) é pulado e contado (`skippedNoEmployeeRef`). O vínculo cuja
  *   unidade não está viva também é pulado e contado (`skippedUnitNotLive`): a exceção não teria unidade válida.
- * - Projeção viva sem afastamento correspondente é apagada (o afastamento saiu do DP). A que terminou antes da janela fica
- *   como está: o passado não é reconciliado.
+ * - Projeção viva sem afastamento correspondente é apagada (o afastamento saiu do DP). A que terminou antes de hoje, no
+ *   fuso da unidade, fica como está: o passado não é reconciliado (inclusive o afastamento que acabou ontem, que a porta
+ *   já não devolve).
  * - O delete vai pelo repositório (`deleteAsSystem`): o delete do motor não leva `isSystem`, e o `SchedulesPlugin` recusa
  *   apagar `origin: HR` pela rota do usuário (item 15). Depois de qualquer escrita, o efeito pós-escrita do dono.
  */
@@ -119,11 +120,14 @@ export class HrAbsenceProjectionService {
           result.unchanged += 1;
         }
       }
-      const windowStart = localMinuteToInstant(today, 0, 'UTC');
       for (const [sourceId, row] of existing) {
         if (seen.has(sourceId)) continue;
+        // Terminou antes de hoje (no fuso da unidade da exceção): o passado fica. O afastamento que acabou ontem sai da
+        // porta hoje, e a exceção dele termina à meia-noite local de hoje, então ela não é apagada.
         const end = Date.parse(instantOrText(row.data.endAt));
-        if (isFinite(end) && end <= windowStart) continue; // terminou antes da janela: o passado fica
+        const unitId = typeof row.data.unitId === 'string' ? row.data.unitId : null;
+        const todayStart = localMinuteToInstant(today, 0, unitId ? await zoneOf(unitId) : 'UTC');
+        if (isFinite(end) && end <= todayStart) continue;
         await this.deleter.deleteAsSystem(row.id);
         wrote = true;
         result.deleted += 1;
