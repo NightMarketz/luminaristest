@@ -126,6 +126,11 @@ describe('POST /api/scheduling/holidays/sync (itens 39 e 40)', () => {
     const r = await sync(a.actor, { unitId: a.unitId, year: 2027 });
     expect(r.body.data).toMatchObject({ created: 0, deletedByUser: 1 });
     expect((await a.holidays()).filter((h) => h.data.sourceId === `${a.unitId}:2027-01-01`)).toHaveLength(1);
+
+    // F-ESC-25 (b): religado, o feriado volta a fechar a agenda, e o sync segue sem duplicar.
+    await service.updateTableData(ctxOf(a.id), newYear.id, { data: { disabled: false } } as never);
+    expect(await codeOf(a.book('2027-01-01T14:00:00-03:00', '2027-01-01T15:00:00-03:00'))).toBe('OUTSIDE_AVAILABILITY');
+    expect((await sync(a.actor, { unitId: a.unitId, year: 2027 })).body.data).toMatchObject({ created: 0, deletedByUser: 0 });
   });
 
   it('F-ESC-18: unidade sem fuso recebe o padrão da borda antes do feriado', async () => {

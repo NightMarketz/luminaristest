@@ -5,8 +5,8 @@
  *   sobreposição contra os padrões vivos dele (item 7).
  * - `scheduleShifts`: `dayOfCycle ≤ cycleLengthDays` do padrão-pai e a escala do alvo sem sobreposição (item 7).
  * - `scheduleExceptions`: contrato da linha; só o sistema grava `origin ≠ USER`; `HR` não se edita nem se apaga;
- *   `HOLIDAY_CALENDAR` se desliga (`disabled: true`, abrir no feriado), não se edita nem se apaga (F-ESC-23, emenda 4
- *   corrigida em 97540313c: a linha fica, fora do alcance da purga, e o sync não a recria).
+ *   `HOLIDAY_CALENDAR` se desliga e religa (`disabled`, abrir no feriado), não se edita nem se apaga (F-ESC-23 e
+ *   F-ESC-25, emenda 4 em 97540313c e a87ac28cb: a linha fica, fora do alcance da purga, e o sync não a recria).
  * - `units`: `timeZone` IANA validado por `Intl.supportedValuesOf('timeZone')`.
  *
  * Lê só DynamicTable pelo `ctx.repository` (AC-2.1-B1); a regra é a função pura de `features/scheduling/models`.
@@ -90,14 +90,12 @@ function changedExceptionKeys(before: Record<string, unknown>, after: Record<str
 }
 
 /**
- * F-ESC-23: na linha `HOLIDAY_CALENDAR` o usuário só desliga o feriado (`disabled` de não-`true` para `true`). Qualquer
- * outra mudança, e religar (pergunta de spec aberta à sessão de planejamento), é `EXCEPTION_READ_ONLY`.
+ * F-ESC-23 + F-ESC-25 (b) (emenda 4, 97540313c e a87ac28cb): na linha `HOLIDAY_CALENDAR` o usuário só desliga e
+ * religa o feriado (`disabled` true/false). Qualquer outra chave que mude é `EXCEPTION_READ_ONLY`.
  */
-function assertHolidayOnlyDisabled(before: Record<string, unknown>, after: Record<string, unknown>): void {
-  const changed = changedExceptionKeys(before, after);
-  const turningOff = changed.length === 1 && changed[0] === 'disabled' && after.disabled === true;
-  if (changed.length > 0 && !turningOff) {
-    throw schedulingError('EXCEPTION_READ_ONLY', 'Feriado do calendário não se edita: só se desliga (disabled: true).', { origin: 'HOLIDAY_CALENDAR' });
+function assertHolidayOnlyToggled(before: Record<string, unknown>, after: Record<string, unknown>): void {
+  if (changedExceptionKeys(before, after).some((k) => k !== 'disabled')) {
+    throw schedulingError('EXCEPTION_READ_ONLY', 'Feriado do calendário não se edita: só se desliga ou religa (disabled).', { origin: 'HOLIDAY_CALENDAR' });
   }
 }
 
@@ -108,7 +106,7 @@ async function validateExceptionWrite(ctx: RuleContext): Promise<void> {
     if (origin === 'HR') {
       throw schedulingError('EXCEPTION_READ_ONLY', 'Exceção projetada pelo sistema não se edita.', { origin });
     }
-    if (origin === 'HOLIDAY_CALENDAR') assertHolidayOnlyDisabled(before, ctx.after ?? {});
+    if (origin === 'HOLIDAY_CALENDAR') assertHolidayOnlyToggled(before, ctx.after ?? {});
   }
   const e = parseOrThrow(scheduleExceptionSchema, normalizeExceptionData(ctx.after ?? {}), 'Exceção');
   // Desligar o feriado (acima) não troca a origem: a regra pega quem cria ou muda uma linha para `origin ≠ USER`.

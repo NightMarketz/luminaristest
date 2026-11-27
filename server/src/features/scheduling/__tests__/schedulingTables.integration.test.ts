@@ -198,8 +198,10 @@ describe('item 15 — SchedulesPlugin em scheduleExceptions', () => {
     expect(row?.deletedAt).toBeNull();
     const stored = typeof row?.data === 'string' ? JSON.parse(row.data) : row?.data;
     expect((stored as Record<string, unknown>).disabled).toBe(true);
-    // Religar está em aberto (pergunta de spec): por ora, recusado.
-    expect(await codeOf(update(A, hol.id, { disabled: false }))).toBe('EXCEPTION_READ_ONLY');
+    // F-ESC-25 (b): religa; e religar junto com outra mudança segue recusado.
+    expect(await codeOf(update(A, hol.id, { disabled: false, reason: 'x' }))).toBe('EXCEPTION_READ_ONLY');
+    expect(await codeOf(update(A, hol.id, { disabled: false }))).toBe('OK');
+    expect(await codeOf(del(A, hol.id))).toBe('EXCEPTION_READ_ONLY');
     // Só o feriado do calendário se desliga.
     const mine = await create(A, 'scheduleExceptions', { unitId: s.unitId, kind: 'BLOCK', ...day });
     expect(await codeOf(update(A, mine.id, { disabled: true }))).toBe('VALIDATION_ERROR');
