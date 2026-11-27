@@ -57,6 +57,10 @@
  *    `employees.workSchedule` fica `readOnly`, com a descrição nova. Aplicado por script sobre a fixture anterior (a máquina
  *    não tinha memória para o jest com UPDATE_BASELINE): são exatamente as 4 diferenças do diff do CI do #1432
  *    (+37/−2 por cenário × 10 cenários = +370/−20). Fora delas, a fixture é idêntica.
+ *  - BE-INCR-ESCALA-BASE PR-4 (itens 15 e 39, F-ESC-23 (C), emenda 4 em 97540313c do #1424): em cada cenário,
+ *    `scheduleExceptions.schema.fields` ganha `disabled` (boolean, default false) depois de `sourceId`: o feriado do
+ *    calendário se desliga, não se apaga. Aplicado por script sobre a fixture anterior; são exatamente as diferenças do
+ *    diff do CI do #1447 (+9 por cenário × 10 = +90/−0). Fora delas, a fixture é idêntica.
  *
  * Regenerar (somente num PR que mude comportamento de propósito): `UPDATE_BASELINE=1 npx jest --selectProjects
  * integration --runInBand src/features/dynamicTables/presets/__tests__/suitePayloadBaseline.integration.test.ts`.
