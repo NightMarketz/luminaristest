@@ -59,3 +59,9 @@ terceira tem caminho único e foi decidida pela sessão de planejamento.
 | Rollout de esquema em instância existente (itens 23 e 27) | O `PresetSyncService` só leva campo novo, opção de select e `immutableAfter`; não leva mudança de `noOverlap` nem o `readOnly` do `workSchedule` | **Sem fork (caminho único):** o script de rollout da escala (itens 12 e 22, idempotente) aplica as duas mudanças por `updateTableSchemaAsSystem`. Decidido pela sessão de planejamento |
 
 O `GovernanceEngine` entra no write-set do PR-2 (`server/src/features/dynamicTables/validation/GovernanceEngine.ts`).
+
+## Emenda 2 (dono, chat, 2026-11-26): escala em outra unidade (item 24)
+
+| Fork | Achado | Decisão (resposta literal) |
+|---|---|---|
+| F-ESC-19 alcance do F-ESC-15 (item 24) | O profissional tem padrão vivo só na unidade A, e o agendamento é na unidade B. O F-ESC-15 diz "recurso sem escala", mas este recurso tem escala, só que em outra unidade | **(R2)** O F-ESC-15 vale só para o alvo sem nenhum padrão vivo. O alvo que tem padrão vivo é conferido contra os padrões da unidade do agendamento e os sem unidade. Se nenhum desses cobre o horário, a resposta é 400 `OUTSIDE_AVAILABILITY`, salvo encaixe com motivo. "Vivo" = não apagado. Padrão vivo fora da vigência na data não cobre — *"Recusa em B (Recommended)"* |
