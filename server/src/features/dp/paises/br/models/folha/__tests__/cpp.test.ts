@@ -159,6 +159,16 @@ describe('PR-P0 revisão M1/M2 — arredondamento de cada parcela e terceiros po
     expect(provaIncoerente(trunca.prova)).toEqual([]);
   });
 
+  it('M2: o centavo que falta vai ao maior resto, não ao menor — 1 e 2 bp sobre R$ 30,00 (0,3 e 0,6 centavo)', () => {
+    const doisRestos = linhaTerceiros({ entidades: { '0001': 1, '0002': 2 }, totalBp: 3 });
+    const bases = { baseEmpregadosCents: 3_000n, baseContribuinteIndividualCents: 0n };
+    const meio = cppPatronal(entrada(bases, comModo('MEIO_PARA_CIMA_CENTAVO'), [doisRestos])).valor;
+    expect(meio.terceirosCents).toBe(1n);
+    expect(meio.terceirosPorEntidade.map((t) => [t.codigo, t.valorCents])).toEqual([['0001', 0n], ['0002', 1n]]);
+    const trunca = cppPatronal(entrada(bases, comModo('TRUNCA_CENTAVO'), [doisRestos])).valor;
+    expect(trunca.terceirosPorEntidade.map((t) => t.valorCents)).toEqual([0n, 0n]);
+  });
+
   it('propriedade: em cada modo, cada parcela é a fração exata arredondada; as entidades somam o total e ficam a menos de 1 centavo da sua fração', () => {
     fc.assert(
       fc.property(fc.constantFrom(...MODOS), fc.bigInt({ min: 0n, max: 10n ** 12n }), fc.bigInt({ min: 0n, max: 10n ** 12n }), (modo, emp, ci) => {
