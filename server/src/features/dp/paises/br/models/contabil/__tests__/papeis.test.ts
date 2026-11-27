@@ -31,6 +31,16 @@ describe('item 18 — papel contábil de cada rubrica', () => {
     }
   });
 
+  it('encargos sobre a provisão divididos (dono, 26/11): férias no centro, 13º na borda, sem o papel único antigo', () => {
+    expect(PAYROLL_ACCOUNT_ROLES).toEqual(expect.arrayContaining(['VACATION_PROVISION_CHARGES', 'VACATION_CHARGES_EXPENSE']));
+    expect(PAPEIS_CONTABEIS_BR).toEqual(expect.arrayContaining(['ENCARGOS_PROVISAO_13', 'DESPESA_ENCARGOS_13']));
+    const todos: readonly string[] = [...PAYROLL_ACCOUNT_ROLES, ...PAPEIS_CONTABEIS_BR];
+    expect(todos.filter((p) => p === 'PROVISION_CHARGES' || p === 'PROVISION_CHARGES_EXPENSE')).toEqual([]);
+    // Papel de provisão não é papel de rubrica: nenhuma rubrica do catálogo cai nos encargos.
+    const encargos = new Set(['VACATION_PROVISION_CHARGES', 'VACATION_CHARGES_EXPENSE', 'ENCARGOS_PROVISAO_13', 'DESPESA_ENCARGOS_13']);
+    expect(Object.values(PAPEL_CONTABIL_POR_RUBRICA).filter((p) => encargos.has(p))).toEqual([]);
+  });
+
   it('descontos nunca caem num papel de despesa do centro', () => {
     for (const r of DP_RUBRICAS_VALIDADAS.filter((x) => x.tipo === 'DESCONTO')) {
       expect(papel(r.codigo)).not.toMatch(/_EXPENSE$/);

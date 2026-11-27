@@ -30,6 +30,9 @@ export const PAPEIS_CONTABEIS_BR = [
   // provisão (PR-P4)
   'PROVISAO_13',
   'DESPESA_13',
+  // encargos sobre a provisão de 13º (dono, 26/11: "encargos divididos em férias e 13º"); os de férias são do centro
+  'ENCARGOS_PROVISAO_13',
+  'DESPESA_ENCARGOS_13',
   // papel de rubrica, sem conta própria
   'SALARIO_FAMILIA',
   'INSS_SEGURADO',

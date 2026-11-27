@@ -45,6 +45,13 @@ export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   // perpetual inventory subledger. An INBOUND (seed or AP purchase) debits this Asset leaf; a sale's
   // CMV credits it. Σ InventoryItem.totalValueCents == saldo(leaf) is the tie-out (mirrors AR).
   { code: '1.1.3.01', name: 'Mercadorias para Revenda', nature: 'Asset', acceptsEntries: true },
+  // BE-INCR-DP-PONTE-RAZAO item 28 (F-PNT-4 a, dono 21/11; referencial: dono 26/11, "Pesquisar referencial e incluir"):
+  // contas de pessoal do plano padrão. PROVISÓRIAS até o P-FOL-5 do contador. Grupos fora dos códigos dos kits (1.1.4–1.1.6
+  // legados, 2.1.3–2.1.6, 4.5) e das folhas reservadas às retenções (1.1.8/2.1.9, P-RET-4). `1.1.10`, não `1.1.7`: o 1.1.7 é o
+  // "próximo livre" que os testes de papel do kit usam como conta do usuário (RoleAccountOverrideService.integration). Referencial em
+  // `REFERENCIAL_PLANO_PADRAO`. Folha sem referencial não entra.
+  { code: '1.1.10', name: 'Adiantamentos', nature: 'Asset', acceptsEntries: false },
+  { code: '1.1.10.01', name: 'Adiantamentos Salariais', nature: 'Asset', acceptsEntries: true },
   // IBS-CBS-2027 PR-3 (item 14; dono 22/10: "Folhas + 1.01.02.03.40 provisório"): o crédito de IBS/CBS da NF-e de entrada
   // (D na entrada, C na compensação da apuração mensal). 1.1.9 fica fora do 1.1.4–1.1.6 legados dos kits.
   { code: '1.1.9', name: 'Tributos sobre o Consumo a Recuperar', nature: 'Asset', acceptsEntries: false },
@@ -71,6 +78,18 @@ export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   { code: '2.1.8', name: 'Tributos sobre o Consumo a Recolher', nature: 'Liability', acceptsEntries: false },
   { code: '2.1.8.01', name: 'IBS a Recolher', nature: 'Liability', acceptsEntries: true },
   { code: '2.1.8.02', name: 'CBS a Recolher', nature: 'Liability', acceptsEntries: true },
+  // Item 28 da ponte (PROVISÓRIO até o P-FOL-5): `2.1.10` porque 2.1.1–2.1.8 estão ocupados e o 2.1.9 é das retenções. Todo
+  // casamento de prefixo de código no server tem fronteira de ponto (DFC, distribuição) ou é por natureza (BP), então
+  // `2.1.10` não cai sob o `2.1.1`. O INSS a Recolher recebe também RAT e terceiros (item 20 do BRIEF: recolhidos juntos).
+  { code: '2.1.10', name: 'Obrigações Trabalhistas e Previdenciárias', nature: 'Liability', acceptsEntries: false },
+  { code: '2.1.10.01', name: 'Salários a Pagar', nature: 'Liability', acceptsEntries: true },
+  { code: '2.1.10.02', name: 'Pró-labore a Pagar', nature: 'Liability', acceptsEntries: true },
+  { code: '2.1.10.03', name: 'INSS a Recolher', nature: 'Liability', acceptsEntries: true },
+  { code: '2.1.10.04', name: 'FGTS a Recolher', nature: 'Liability', acceptsEntries: true },
+  { code: '2.1.10.05', name: 'Provisão de Férias', nature: 'Liability', acceptsEntries: true },
+  { code: '2.1.10.06', name: 'Provisão de 13º Salário', nature: 'Liability', acceptsEntries: true },
+  { code: '2.1.10.07', name: 'Encargos sobre Provisão de Férias', nature: 'Liability', acceptsEntries: true },
+  { code: '2.1.10.08', name: 'Encargos sobre Provisão de 13º Salário', nature: 'Liability', acceptsEntries: true },
   // Patrimônio Líquido (BE-INCR-SPED-APURACAO / D4): the closing entry (encerramento do
   // resultado) posts the exercise's net result here. `2.3` is the synthetic PL branch under the
   // `2` Passivo group (COD_NAT is per-account in I050, so a PL leaf under Passivo is conforme).
@@ -129,6 +148,25 @@ export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   // dos serviços prestados, acima do lucro bruto (NBC TG 1002 item 5.1 (d)). DRE → `costOfGoodsSold` (dre.cogs_services);
   // referencial 3.01.01.03.01.03 (`REFERENCIAL_PLANO_PADRAO`); padrão do `insumoExpenseAccountId` só se vazio.
   { code: '4.7', name: 'Custo dos Serviços Prestados', nature: 'Expense', acceptsEntries: true },
+  // Item 28 da ponte (PROVISÓRIO até o P-FOL-5): despesas de pessoal → DRE `expenses` pela regra só por natureza. Se o pessoal
+  // da prestação do serviço vai a custo (4.7) é pergunta do P-FOL-5, não deste plano. `4.10`, não `4.8`/`4.9`: esses são os
+  // "próximos livres" que os testes de kit e de lançamento usam como conta do usuário, e o `ensureChartOfAccounts` criaria
+  // folha canônica debaixo de uma analítica do usuário. A regra de prefixo da DRE (`StatementMappingFixture`) não tem
+  // fronteira de ponto, mas nenhuma usa `4.1`. Folhas com 2 dígitos porque o grupo passa de 9. Bolsa de estágio e encargos
+  // sobre a provisão (férias e 13º, separados): dono, chat, 2026-11-26 ("bolsa de estágio na .03, encargos divididos em
+  // férias e 13º").
+  { code: '4.10', name: 'Despesas com Pessoal', nature: 'Expense', acceptsEntries: false },
+  { code: '4.10.01', name: 'Salários e Ordenados', nature: 'Expense', acceptsEntries: true },
+  { code: '4.10.02', name: 'Pró-labore', nature: 'Expense', acceptsEntries: true },
+  { code: '4.10.03', name: 'INSS Patronal', nature: 'Expense', acceptsEntries: true },
+  { code: '4.10.04', name: 'RAT', nature: 'Expense', acceptsEntries: true },
+  { code: '4.10.05', name: 'Contribuições a Terceiros', nature: 'Expense', acceptsEntries: true },
+  { code: '4.10.06', name: 'FGTS', nature: 'Expense', acceptsEntries: true },
+  { code: '4.10.07', name: 'Férias', nature: 'Expense', acceptsEntries: true },
+  { code: '4.10.08', name: '13º Salário', nature: 'Expense', acceptsEntries: true },
+  { code: '4.10.09', name: 'Bolsa de Estágio', nature: 'Expense', acceptsEntries: true },
+  { code: '4.10.10', name: 'Encargos sobre Férias', nature: 'Expense', acceptsEntries: true },
+  { code: '4.10.11', name: 'Encargos sobre 13º Salário', nature: 'Expense', acceptsEntries: true },
 ];
 
 /**
@@ -325,6 +363,41 @@ export const REFERENCIAL_PLANO_PADRAO: ReadonlyArray<{ accountCode: string; refe
   // Lacuna 35d3 (dono 21/11): mesmo código em L300A e P150A; rótulo do catálogo 2025 (`referential_accounts`). A PROPOSTA-REFERENCIAL
   // de 10/10 já indicava esta linha para o insumo do serviço (ORIENTAÇÃO: "gastos que compõem o custo total da prestação de serviço").
   { accountCode: CUSTO_SERVICOS_CODE, referentialCode: '3.01.01.03.01.03', label: '(-) Custo dos Serviços Prestados' },
+  // BE-INCR-DP-PONTE-RAZAO item 28 (dono 26/11: "Pesquisar referencial e incluir"). Mesmo código em L100A/P100A e L300A/P150A
+  // na tabela dinâmica da ECF, Leiaute 12 (atualização 28/05/2026, AC 2025) — a mais recente em sped.rfb.gov.br/pasta/show/1644
+  // em 26/11/2026; linhas citadas em pesquisas-legais/dp-ponte-item28-referencial/docs/D01_linhas-citadas.txt. Todas
+  // analíticas, sem DT_FIM. PROVISÓRIO até o P-FOL-5 do contador.
+  { accountCode: '1.1.10.01', referentialCode: '1.01.02.01.03', label: 'Adiantamentos a Funcionários – Circulante' },
+  // 2.01.01.01.01: a ORIENTAÇÃO cita "salários, ordenados, pro labore" — salários e pró-labore a pagar.
+  { accountCode: '2.1.10.01', referentialCode: '2.01.01.01.01', label: 'Salários e Remunerações a Pagar' },
+  { accountCode: '2.1.10.02', referentialCode: '2.01.01.01.01', label: 'Salários e Remunerações a Pagar' },
+  { accountCode: '2.1.10.03', referentialCode: '2.01.01.01.03', label: 'INSS a Recolher' },
+  { accountCode: '2.1.10.04', referentialCode: '2.01.01.01.04', label: 'FGTS a Recolher' },
+  // Grupo 2.01.01.15 PROVISÕES – CIRCULANTE: "Férias a Pagar" e "13º Salário a Pagar" (de administradores e empregados).
+  { accountCode: '2.1.10.05', referentialCode: '2.01.01.15.03', label: 'Férias a Pagar' },
+  { accountCode: '2.1.10.06', referentialCode: '2.01.01.15.04', label: '13º Salário a Pagar' },
+  // Encargos sobre a provisão (VACATION_PROVISION_CHARGES e ENCARGOS_PROVISAO_13): nenhuma linha do grupo PROVISÕES cita
+  // encargo; dono, chat, 2026-11-26: "2.01.01.15.05" (Provisões de Natureza Trabalhista). Duas folhas, um código, como IBS/CBS.
+  { accountCode: '2.1.10.07', referentialCode: '2.01.01.15.05', label: 'Provisões de Natureza Trabalhista – Circulante' },
+  { accountCode: '2.1.10.08', referentialCode: '2.01.01.15.05', label: 'Provisões de Natureza Trabalhista – Circulante' },
+  { accountCode: '4.10.01', referentialCode: '3.01.01.07.01.02', label: '(-) Ordenados, Salários, Gratificações e Outras Remunerações a Empregados' },
+  // 3.01.01.07.01.01: "remuneração mensal e fixa atribuída ao titular de firma individual, aos sócios, diretores e administradores".
+  { accountCode: '4.10.02', referentialCode: '3.01.01.07.01.01', label: '(-) Remuneração a Dirigentes e a Conselho de Administração' },
+  // RAT: contribuição da empresa à Seguridade Social para os benefícios por risco ambiental do trabalho (Lei 8.212 art. 22 II,
+  // dossiê [D02]) → a mesma linha de Previdência Social do patronal (art. 22 I).
+  { accountCode: '4.10.03', referentialCode: '3.01.01.07.01.05', label: '(-) Encargos Sociais - Previdência Social' },
+  { accountCode: '4.10.04', referentialCode: '3.01.01.07.01.05', label: '(-) Encargos Sociais - Previdência Social' },
+  // Terceiros (salário-educação, Sistema S, Incra): nem Previdência Social nem FGTS → "demais encargos sociais" (inferido da ORIENTAÇÃO).
+  { accountCode: '4.10.05', referentialCode: '3.01.01.07.01.07', label: '(-) Encargos Sociais – Outros' },
+  { accountCode: '4.10.06', referentialCode: '3.01.01.07.01.06', label: '(-) Encargos Sociais - FGTS' },
+  // .26/.27 são a despesa de constituição da provisão; a .27 diz "no caso de apuração trimestral" — anotado para o P-FOL-5.
+  { accountCode: '4.10.07', referentialCode: '3.01.01.07.01.26', label: '(-) Provisões para Férias' },
+  { accountCode: '4.10.08', referentialCode: '3.01.01.07.01.27', label: '(-) Provisões para 13º Salário de Empregados' },
+  // Dono, chat, 2026-11-26: "bolsa de estágio na .03" ("demais gastos com pessoal não especificados em contas anteriores").
+  { accountCode: '4.10.09', referentialCode: '3.01.01.07.01.03', label: '(-) Outros Gastos com Pessoal' },
+  // Dono, 26/11: "encargos divididos em férias e 13º". A .26 e a .27 incluem "inclusive encargos sociais" da provisão.
+  { accountCode: '4.10.10', referentialCode: '3.01.01.07.01.26', label: '(-) Provisões para Férias' },
+  { accountCode: '4.10.11', referentialCode: '3.01.01.07.01.27', label: '(-) Provisões para 13º Salário de Empregados' },
 ];
 
 /**

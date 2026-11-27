@@ -1,0 +1,58 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_",
+      "url": "http://sped.rfb.gov.br/arquivo/download/8002",
+      "url_final": "http://sped.rfb.gov.br/estatico/E1/20FDEEE25CAA9F998AC2AD3045DE0E9C631D3C/Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_2026.xlsx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-26T16:21:30-03:00",
+      "sha256": "366b8d9030a04e9f6203b6ae29ace49d3ffa3fa0c1f5a7a18b0c967b9a5a3cac",
+      "arquivo": "docs/D01_Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_.html",
+      "texto": "docs/D01_Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_.txt",
+      "bytes": 1724077,
+      "sha256_texto": "81b337d376c59a6adc4df7c9ee6b133a431e503e46b39946f4ee7303796a9a6e",
+      "captura": {
+        "anterior": {
+          "slug": "ibs-cbs-referencial-sped",
+          "id": "D01",
+          "baixado_em": "2026-10-21T18:24:14-03:00",
+          "sha256_texto": "81b337d376c59a6adc4df7c9ee6b133a431e503e46b39946f4ee7303796a9a6e"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei nº 8.212 de 24/07/1991",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1991/lei-8212-1991-07-24.md",
+      "url_final": "https://github.com/ctresb/leis/blob/9b29f44078e25755cfaf358456dd815043075924/federal/leis-ordinarias/1991/lei-8212-1991-07-24.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1991-07-24;8212",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "9b29f44078e25755cfaf358456dd815043075924",
+      "alertas": [],
+      "baixado_em": "2026-11-26T16:21:57-03:00",
+      "sha256": "6ace89674b04578f1f2ff4e16d4ab89e4a251e1da7b44b288870cc63ec2bb0b7",
+      "arquivo": "docs/D02_lei-8212-1991-07-24.md",
+      "texto": "docs/D02_lei-8212-1991-07-24.txt",
+      "bytes": 161522,
+      "sha256_texto": "d2d2d71eeab276e294c083cacb84fddb1fe87653c06cf93b4f4cb5ccdf0f8582",
+      "captura": {
+        "anterior": {
+          "slug": "regime-fora-simples-salao",
+          "id": "D01",
+          "baixado_em": "2026-11-21T08:39:24-03:00",
+          "sha256_texto": "d2d2d71eeab276e294c083cacb84fddb1fe87653c06cf93b4f4cb5ccdf0f8582"
+        },
+        "tipo": "IGUAL"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "dp-ponte-item28-referencial",
+  "pergunta": "Códigos do plano referencial RFB (ECF L100A/L300A, P100A/P150A) das folhas de pessoal do plano padrão (item 28 da ponte folha→razão)",
+  "criado": "2026-11-26T16:21:23-03:00"
+}
