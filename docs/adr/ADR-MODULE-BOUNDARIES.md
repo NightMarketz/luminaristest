@@ -879,8 +879,8 @@ e o caminho antigo direto (`accounting/models/money`). Sem a sonda, 2 de 2 passa
 
 Autorização: dono, chat, 24/11/2026: "Executa o BRIEF inteiro"; questionário de 27/11 (sessão de feature do renome da
 `accounting`), quatro respostas: "PR novo sobre o #1422 (Recommended)", "Fica, isenção nomeada (Recommended)",
-"Destinos propostos (Recommended)" e "Caixa e sigo (Recommended)"
-(`docs/plano/decisoes/D-2026-11-27-MODULE-BOUNDARIES-PR3-ACCOUNTING-RESPOSTAS.md`). PR de fase próprio, empilhado sobre
+"Destinos propostos (Recommended)" e "Caixa e sigo (Recommended)"; segundo questionário no mesmo dia: "Cabeçalho neste
+PR (Recommended)" (`docs/plano/decisoes/D-2026-11-27-MODULE-BOUNDARIES-PR3-ACCOUNTING-RESPOSTAS.md`). PR de fase próprio, empilhado sobre
 o #1422, um commit por item.
 
 **O que entrou**
@@ -921,6 +921,13 @@ o #1422, um commit por item.
   mandava a pasta "ficar no baseline da `M2`"; como a `M2` nasce em 0 e nunca entra no known-violations, o arquivo
   ficou isento por nome no `pathNot` (`M2_DECLARED_STEP = '^src/features/accounting/fixtures/ChartOfAccountsFixture\.ts$'`).
   Lacuna `L-20261127-122628-dabb`.
+- **Um gate de contrato que o movimento acionou e o BRIEF não listava** ("Cabeçalho neste PR"): o teste
+  `accounting/__tests__/atomicUntil.boundary.test.ts` calcula a população "todo `.ts` de `features/<x>/services` que
+  chama `.postEntry(`" (Contrato §2.3, `[AC-2.3-2]`). O `AccountingSyncService` sempre chamou `postEntry`, mas morava
+  em `sync/` e ficava fora da conta; em `services/` o teste reprovou por falta do cabeçalho. O serviço ganhou o
+  cabeçalho `atomicUntil` no primeiro JSDoc do arquivo, como serviço de commit único (commit 2 — nenhum; reconcile —
+  `runAccountingSyncReconcile()`), citando testes que já existiam. Nenhum comportamento muda. As pontes de
+  `services/bridges/` não chamam `.postEntry(` (postam pelo sync ou pelo `ReceivableService`) e ficam fora do predicado.
 - **Testes que apontam caminho por string** (o `tsc` não vê), todos ajustados no commit do movimento:
   `jobs/__tests__/purgeVendaLancada.test.ts` (`path.resolve(__dirname, '…/accounting/sync/bridges')`),
   `lib/__tests__/decimalMoney.pontos.test.ts` (lista de 7 caminhos), `__tests__/tsconfigTestCoverage.test.ts`
@@ -993,7 +1000,10 @@ saíram por `git checkout --`. `git status` sem sobra em `server/` depois de cad
 **Declarado**
 
 - **Sem mudança de comportamento:** o renome é de caminho. O único conteúdo novo são seis arquivos de porta que
-  reexportam por nome, a constante `M2_DECLARED_STEP` e os caminhos da `I6` e da `C1`.
+  reexportam por nome, a constante `M2_DECLARED_STEP`, os caminhos da `I6` e da `C1` e o cabeçalho `atomicUntil` do
+  `AccountingSyncService` (comentário).
+- **Entre o commit do movimento de `sync/` e o do cabeçalho, o `atomicUntil.boundary.test.ts` fica vermelho.** O
+  jest com escopo só rodou no fim; o cabeçalho entrou em commit próprio, depois da resposta do dono.
 - **A lista da `C1` estreitou em um ponto** (`scope/` inteira → `models/AccountingScope.ts`). Não foi pergunta ao dono:
   ele pode reverter no lote.
 - **A etapa declarada deixa um arquivo de produção fora de pasta de camada.** Sai com a porta do F-PBF1-7. O resíduo

@@ -577,6 +577,7 @@ portas, plantios e pontos declarados no `ADR-MODULE-BOUNDARIES.md` §11.10. PR d
 | §5.1, `M2_FEATURES` | cresce a cada PR-3.x e termina como `[^/]+` | fechou em `[^/]+` |
 | §6, item 14 | a `I6` e a `LEDGER_CORE_ALLOWED` da `C1` apontam os caminhos novos | a `I6` cita `models/` **e** a porta `public/resolveAccountingScopeInternal.ts`; na `C1`, `scope/` virou `models/AccountingScope.ts` (só o arquivo que o núcleo importa) e `audit/` virou `domain/audit/` |
 | §3.3 item 4, §3.4 | a `accounting` entra depois de #1356, #1358, #1353 e #1345; a integração absorve a `main` antes | a `main` não andou desde a base da pilha (`40b6ab8f4`). Abertos nas pastas em 27/11: #1146, #1412, #1409, #1427, #1438, #1425 e #1428; rebaseiam depois do fechamento. O #1428 colide por regra, não por arquivo (lacuna `L-20261127-122629-0d42`, "Caixa e sigo") |
+| §6, item 12, e gates do diff | jest da feature; snapshot de DTO | o movimento de `AccountingSyncService` para `services/` acionou o gate `[AC-2.3-2]` do Contrato §2.3 (`atomicUntil.boundary.test.ts`), que o BRIEF não listava: o serviço ganhou o cabeçalho `atomicUntil` de commit único ("Cabeçalho neste PR") |
 | §2, baseline | — | 332 → 304 neste PR, só remoção (28 `M1`) |
 
 ## Gates de envio [OPS-001]
