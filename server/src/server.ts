@@ -15,6 +15,7 @@ import { mpReleaseReportScheduler } from './jobs/MpReleaseReportScheduler';
 import { legalParamsRecalcScheduler } from './jobs/LegalParamsRecalcScheduler';
 import { ptaxRateScheduler } from './jobs/PtaxRateScheduler';
 import { schedulingHolidaySyncScheduler } from './jobs/SchedulingHolidaySyncScheduler';
+import { schedulingHrAbsenceReconcileScheduler } from './jobs/SchedulingHrAbsenceReconcileScheduler';
 import { DocumentStatus } from './features/documents/models/Document.model';
 
 const PORT = process.env.PORT || 3001;
@@ -65,6 +66,7 @@ async function bootstrap(): Promise<void> {
     vecOrphanSweepScheduler.start(); // BE-INCR-RAG-DOCUMENTOS RAG-PR-A item 9: vetor sem Chunk, diário
     dataExchangeStaleSweepScheduler.start(); // EFX F-18.2: job de exportação preso em PROCESSING → FAILED
     schedulingHolidaySyncScheduler.start(); // BE-INCR-ESCALA-BASE item 41: feriados da borda na escala + fuso padrão (F-ESC-18), diário
+    schedulingHrAbsenceReconcileScheduler.start(); // BE-INCR-ESCALA-BASE item 46: afastamento do DP na escala (F-ESC-7 a1), diário
   });
 }
 
@@ -136,6 +138,7 @@ function gracefulShutdown() {
   legalParamsRecalcScheduler.stop();
   ptaxRateScheduler.stop();
   schedulingHolidaySyncScheduler.stop();
+  schedulingHrAbsenceReconcileScheduler.stop();
   clearTimeout(purgeStartTimer);
   clearInterval(purgeInterval);
   clearInterval(processingWatchdog);

@@ -68,7 +68,8 @@ export async function syncHolidaysForAllOwners(deps: HolidaySyncPassDeps): Promi
   return summary;
 }
 
-async function ownerContext(userId: string): Promise<UserContext | null> {
+/** O contexto do dono para os jobs da escala (itens 41 e 46): o próprio dono, com o papel dele. */
+export async function ownerContext(userId: string): Promise<UserContext | null> {
   const u = await getFactory().getUserRepository().getUserById(userId);
   if (!u) return null;
   const name = u.name ?? u.username;
