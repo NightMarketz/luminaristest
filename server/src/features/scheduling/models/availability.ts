@@ -162,3 +162,26 @@ export function freeSlots(available: Interval[], busy: Interval[], durationMinut
   }
   return out;
 }
+
+/**
+ * Item 24 (F-ESC-19) — os padrões do alvo que valem na unidade: os daquela unidade e os sem unidade (migração de
+ * funcionário sem unidade, item 22). Padrão só de outra unidade não vale aqui.
+ */
+export function schedulesForUnit<S extends { schedule: ScheduleRow }>(all: S[], unitId: string | null): S[] {
+  return all.filter((s) => !s.schedule.unitId || s.schedule.unitId === unitId);
+}
+
+/**
+ * Itens 24, 28 e 31 — a disponibilidade do alvo na unidade, dentro de `range`, no fuso da unidade (item 11). `null` = o
+ * alvo não tem padrão vivo (F-ESC-15 a: sem restrição). O gate da agenda e a leitura chamam esta mesma função.
+ */
+export function targetAvailabilityOf(i: {
+  schedules: ScheduleWithShifts[];
+  exceptions: ExceptionRow[];
+  unitId: string | null;
+  timeZone: string;
+  range: Interval;
+}): Interval[] | null {
+  if (i.schedules.length === 0) return null;
+  return resolveAvailability({ schedules: schedulesForUnit(i.schedules, i.unitId), exceptions: i.exceptions, timeZone: i.timeZone, range: i.range });
+}

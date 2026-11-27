@@ -7,18 +7,15 @@ import type { RuleContext } from '../RuleTypes';
 import type { IDynamicTable } from '../../models/DynamicTable.model';
 import { resolveTable } from './tableFinder';
 import {
-  toExceptionRow,
-  toScheduleRow,
-  toShiftRow,
+  validExceptionRows,
+  validScheduleRows,
+  validShiftRows,
   type ExceptionRow,
-  type RawRow,
   type ScheduleWithShifts,
 } from '../../../scheduling/models/rows';
 import { resolveTimeZone } from '../../../scheduling/models/timeZone';
-import { resolveAvailability, type Interval, type ScheduleTarget } from '../../../scheduling/models/availability';
+import { targetAvailabilityOf, type Interval, type ScheduleTarget } from '../../../scheduling/models/availability';
 import type { ScheduleInZone } from '../../../scheduling/models/scheduleOverlap';
-import { scheduleExceptionSchema, scheduleSchema, scheduleShiftSchema } from '../../../scheduling/dtos/rows';
-import { normalizeExceptionData, normalizeScheduleData, normalizeShiftData } from '../../../scheduling/models/rows';
 
 export const SCHEDULING_TABLES = {
   schedules: 'schedules',
@@ -31,16 +28,6 @@ export const SCHEDULING_TABLES = {
 export async function findSchedulingTable(ctx: RuleContext, internalName: string): Promise<IDynamicTable | null> {
   return resolveTable(ctx, { internalName });
 }
-
-const asRaw = (r: { id: string; data: unknown }): RawRow => ({ id: r.id, data: (r.data ?? {}) as Record<string, unknown> });
-
-/** Linhas que não passam no contrato ficam de fora: o SchedulesPlugin recusa na escrita, então só sobra dado antigo. */
-function parsed<T>(rows: Array<{ id: string; data: unknown }>, ok: (d: Record<string, unknown>) => boolean, map: (r: RawRow) => T): T[] {
-  return rows.map(asRaw).filter((r) => ok(r.data)).map(map);
-}
-const okSchedule = (d: Record<string, unknown>) => scheduleSchema.safeParse(normalizeScheduleData(d)).success;
-const okShift = (d: Record<string, unknown>) => scheduleShiftSchema.safeParse(normalizeShiftData(d)).success;
-const okException = (d: Record<string, unknown>) => scheduleExceptionSchema.safeParse(normalizeExceptionData(d)).success;
 
 /** Fuso da unidade (`units.timeZone`), com o fuso do processo quando ausente. */
 export async function unitTimeZone(ctx: RuleContext, unitId: string | null | undefined): Promise<string> {
@@ -57,7 +44,7 @@ export function targetField(target: ScheduleTarget): { field: 'employeeId' | 're
 export async function loadShifts(ctx: RuleContext, scheduleId: string): Promise<ScheduleWithShifts['shifts']> {
   const t = await findSchedulingTable(ctx, SCHEDULING_TABLES.scheduleShifts);
   if (!t) return [];
-  return parsed(await ctx.repository.findRowsByFieldValue(t.id, 'scheduleId', scheduleId), okShift, toShiftRow);
+  return validShiftRows(await ctx.repository.findRowsByFieldValue(t.id, 'scheduleId', scheduleId));
 }
 
 /** Os padrões vivos do alvo, com os turnos e o fuso de cada um (a unidade do padrão; sem unidade, `fallbackUnitId`). */
@@ -65,7 +52,7 @@ export async function loadTargetSchedules(ctx: RuleContext, target: ScheduleTarg
   const t = await findSchedulingTable(ctx, SCHEDULING_TABLES.schedules);
   if (!t) return [];
   const { field, value } = targetField(target);
-  const schedules = parsed(await ctx.repository.findRowsByFieldValue(t.id, field, value), okSchedule, toScheduleRow);
+  const schedules = validScheduleRows(await ctx.repository.findRowsByFieldValue(t.id, field, value));
   const out: ScheduleInZone[] = [];
   for (const schedule of schedules) {
     out.push({ schedule, shifts: await loadShifts(ctx, schedule.id), timeZone: await unitTimeZone(ctx, schedule.unitId ?? fallbackUnitId) });
@@ -78,29 +65,20 @@ export async function loadApplicableExceptions(ctx: RuleContext, target: Schedul
   const t = await findSchedulingTable(ctx, SCHEDULING_TABLES.scheduleExceptions);
   if (!t) return [];
   const { field, value } = targetField(target);
-  const mine = parsed(await ctx.repository.findRowsByFieldValue(t.id, field, value), okException, toExceptionRow);
+  const mine = validExceptionRows(await ctx.repository.findRowsByFieldValue(t.id, field, value));
   const unitWide = unitId
-    ? parsed(await ctx.repository.findRowsByFieldValue(t.id, 'unitId', unitId), okException, toExceptionRow).filter((e) => !e.employeeId && !e.resourceId)
+    ? validExceptionRows(await ctx.repository.findRowsByFieldValue(t.id, 'unitId', unitId)).filter((e) => !e.employeeId && !e.resourceId)
     : [];
   return [...mine, ...unitWide];
 }
 
 /**
- * Item 24 — os padrões do alvo que valem na unidade do agendamento: os daquela unidade e os sem unidade (migração de
- * funcionário sem unidade, item 22). Ver a lacuna de spec do item 24 sobre o padrão só de outra unidade.
- */
-export function schedulesForUnit(all: ScheduleInZone[], unitId: string | null): ScheduleInZone[] {
-  return all.filter((s) => !s.schedule.unitId || s.schedule.unitId === unitId);
-}
-
-/**
- * Itens 24 e 28 — a disponibilidade do alvo na unidade, dentro de `range`, no fuso da unidade (item 11). `null` = o alvo
- * não tem padrão vivo (F-ESC-15 a: sem restrição).
+ * Itens 24 e 28 — a disponibilidade do alvo na unidade, dentro de `range` (a composição pura é `targetAvailabilityOf`,
+ * a mesma da leitura do item 31). `null` = o alvo não tem padrão vivo (F-ESC-15 a: sem restrição).
  */
 export async function targetAvailability(ctx: RuleContext, target: ScheduleTarget, unitId: string | null, range: Interval): Promise<Interval[] | null> {
-  const all = await loadTargetSchedules(ctx, target, unitId);
-  if (all.length === 0) return null;
+  const schedules = await loadTargetSchedules(ctx, target, unitId);
+  if (schedules.length === 0) return null;
   const exceptions = await loadApplicableExceptions(ctx, target, unitId);
-  const timeZone = await unitTimeZone(ctx, unitId);
-  return resolveAvailability({ schedules: schedulesForUnit(all, unitId), exceptions, timeZone, range });
+  return targetAvailabilityOf({ schedules, exceptions, unitId, timeZone: await unitTimeZone(ctx, unitId), range });
 }

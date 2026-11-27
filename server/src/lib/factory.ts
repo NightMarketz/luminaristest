@@ -112,6 +112,7 @@ import { TaxProvisionClosingGuard } from '../features/accounting/paises/br/TaxPr
 import { BR_DEFAULT_TIME_ZONE } from '../features/scheduling/paises/br/models/timeZone';
 import { statementParserBr } from '../features/accounting/paises/br/StatementParserBr';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
+import { SchedulingRowRepository } from '../features/scheduling/repositories/SchedulingRowRepository';
 import { PackageAcceptanceRepository } from '../features/packages/repositories/PackageAcceptanceRepository';
 
 // Features - Policies
@@ -129,6 +130,7 @@ import { AccountingPolicy } from '../features/accounting/policies/AccountingPoli
 import { AccountingScopeResetPolicy } from '../features/accounting/policies/AccountingScopeResetPolicy';
 import { AccountingScopeResetService } from '../features/accounting/services/AccountingScopeResetService';
 import { PackageBalancePolicy } from '../features/packages/policies/PackageBalancePolicy';
+import { SchedulingPolicy } from '../features/scheduling/policies/SchedulingPolicy';
 import { PackageAcceptancePolicy } from '../features/packages/policies/PackageAcceptancePolicy';
 
 // Features - Services
@@ -261,6 +263,7 @@ import { FiscalDocumentLifecycleService } from '../features/accounting/services/
 import { FiscalNumberVoidService } from '../features/accounting/services/FiscalNumberVoidService';
 import { LalurService } from '../features/accounting/services/LalurService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
+import { AvailabilityService } from '../features/scheduling/services/AvailabilityService';
 import { PackageAcceptanceService } from '../features/packages/services/PackageAcceptanceService';
 import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
 import { CrmReceivableBridge } from '../features/accounting/sync/bridges/CrmReceivableBridge';
@@ -447,6 +450,8 @@ import type { IAccountingPolicy } from '../features/accounting/policies/IAccount
 import type { IAccountingScopeResetPolicy } from '../features/accounting/policies/IAccountingScopeResetPolicy';
 import type { IPackageBalanceRepository } from '../features/packages/repositories/IPackageBalanceRepository';
 import type { IPackageBalancePolicy } from '../features/packages/policies/IPackageBalancePolicy';
+import type { ISchedulingRowRepository } from '../features/scheduling/repositories/ISchedulingRowRepository';
+import type { ISchedulingPolicy } from '../features/scheduling/policies/ISchedulingPolicy';
 import type { IPackageAcceptanceRepository } from '../features/packages/repositories/IPackageAcceptanceRepository';
 import type { IPackageAcceptancePolicy } from '../features/packages/policies/IPackageAcceptancePolicy';
 
@@ -885,6 +890,7 @@ export class ApplicationFactory {
     reconciliation: IReconciliationRepository;
     dataExchange: IDataExchangeRepository;
     packageBalance: IPackageBalanceRepository;
+    schedulingRow: ISchedulingRowRepository;
     packageAcceptance: IPackageAcceptanceRepository; // FE-INCR-PACOTE-VALIDADE
     legalParameter: ILegalParameterRepository; // BE-INCR-LEGAL-PARAMS PR-1
     legalParameterRecalcJob: ILegalParameterRecalcJobRepository; // BE-INCR-LEGAL-PARAMS PR-4 (item 10)
@@ -967,6 +973,7 @@ export class ApplicationFactory {
     accounting: IAccountingPolicy;
     accountingScopeReset: IAccountingScopeResetPolicy; // BE-INCR-RESET-CONSISTENTE item 11 (I7)
     packageBalance: IPackageBalancePolicy;
+    scheduling: ISchedulingPolicy;
     packageAcceptance: IPackageAcceptancePolicy; // FE-INCR-PACOTE-VALIDADE
     legalParameter: ILegalParameterPolicy; // BE-INCR-LEGAL-PARAMS PR-1 (item 12: policy própria, escopo plataforma)
     dp: IDpPolicy; // BE-INCR-DP-F0-F1 PR-1 (item 14, D-7: policy própria do DP)
@@ -1089,6 +1096,7 @@ export class ApplicationFactory {
     accountingPolicyVersion: AccountingPolicyVersionService; // GOV-CONTADOR política versionada
     nfePreview: NfePreviewService;
     packageBalance: PackageBalanceService;
+    availability: AvailabilityService;
     packageAcceptance: PackageAcceptanceService; // FE-INCR-PACOTE-VALIDADE
     legalParameter: LegalParameterService; // BE-INCR-LEGAL-PARAMS PR-1
     presetSync: PresetSyncService;
@@ -1151,6 +1159,7 @@ export class ApplicationFactory {
       reconciliation: new ReconciliationRepository(),
       dataExchange: new DataExchangeRepository(),
       packageBalance: new PackageBalanceRepository(),
+      schedulingRow: new SchedulingRowRepository(new DynamicTableRepository()), // BE-INCR-ESCALA-BASE item 31: só leitura
       packageAcceptance: new PackageAcceptanceRepository(),
       legalParameter: new LegalParameterRepository(),
       legalParameterRecalcJob: new LegalParameterRecalcJobRepository(),
@@ -1234,6 +1243,7 @@ export class ApplicationFactory {
       accounting: new AccountingPolicy(),
       accountingScopeReset: new AccountingScopeResetPolicy(),
       packageBalance: new PackageBalancePolicy(),
+      scheduling: new SchedulingPolicy(),
       packageAcceptance: new PackageAcceptancePolicy(),
       legalParameter: new LegalParameterPolicy(),
       dp: new DpPolicy(), // BE-INCR-DP-F0-F1 PR-1 (item 14)
@@ -2400,6 +2410,7 @@ export class ApplicationFactory {
       ),
       accountingReview: accountingReviewService,
       packageBalance: packageBalanceService,
+      availability: new AvailabilityService(this.repositories.schedulingRow, this.policies.scheduling), // BE-INCR-ESCALA-BASE PR-3
       packageAcceptance: new PackageAcceptanceService(
         this.repositories.packageAcceptance,
         this.policies.packageAcceptance,
@@ -2862,6 +2873,7 @@ export class ApplicationFactory {
   public getFiscalDocumentRepository = (): IFiscalDocumentRepository => this.repositories.fiscalDocument;
   public getLalurService = (): LalurService => this.services.lalur;
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;
+  public getAvailabilityService = (): AvailabilityService => this.services.availability;
   public getPackageAcceptanceService = (): PackageAcceptanceService => this.services.packageAcceptance;
   public getLegalParameterService = (): LegalParameterService => this.services.legalParameter;
   public getTaxAssessmentRecalcService = (): TaxAssessmentRecalcService => this.services.taxAssessmentRecalc;
