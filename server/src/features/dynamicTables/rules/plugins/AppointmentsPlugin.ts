@@ -75,13 +75,15 @@ async function validateAppointment(ctx: RuleContext, after: Record<string, unkno
   // Note: scheduling overlap is enforced declaratively via schema.noOverlap.
 
   await assertOverrideReason(after);
-  // Item 29: remarcar (início, fim, profissional ou recurso) passa pelo gate; mudar só o status não passa.
+  // Item 29: remarcar (início, fim, profissional, recurso ou unidade) passa pelo gate; mudar só o status não passa.
+  // A unidade entra porque o gate lê os padrões e o fuso dela (item 24, F-ESC-19); tirar o encaixe (item 25) também,
+  // porque com ele o gate não recusava.
   if (!before || bookingChanged(after, before)) {
     await assertWithinAvailability(ctx, after, startAt, endAt);
   }
 }
 
-const BOOKING_FIELDS = ['startAt', 'endAt', 'responsibleEmployeeId', 'resourceId'] as const;
+const BOOKING_FIELDS = ['startAt', 'endAt', 'responsibleEmployeeId', 'resourceId', 'unitId'] as const;
 
 /** Valor comparável: instante vira ISO (o motor guarda Date ou string ISO), o resto vira texto. */
 function comparable(v: unknown): string {
@@ -95,7 +97,9 @@ function comparable(v: unknown): string {
 }
 
 function bookingChanged(after: Record<string, unknown>, before: Record<string, unknown>): boolean {
-  return BOOKING_FIELDS.some((f) => comparable(after[f]) !== comparable(before[f]));
+  // O encaixe compara como booleano: linha antiga sem o campo (`undefined`) e `false` são o mesmo "sem encaixe".
+  const overrideRemoved = before.availabilityOverride === true && after.availabilityOverride !== true;
+  return overrideRemoved || BOOKING_FIELDS.some((f) => comparable(after[f]) !== comparable(before[f]));
 }
 
 /** Item 25 (F-ESC-5): o encaixe exige motivo. */

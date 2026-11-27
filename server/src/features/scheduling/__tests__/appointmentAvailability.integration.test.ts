@@ -216,6 +216,22 @@ describe('item 29 — remarcar passa pelo gate; mudar só o status não', () => 
     expect(await codeOf(update(row.id, { startAt: at(MON, '10:30'), endAt: at(MON, '11:30') }))).toBe('OUTSIDE_AVAILABILITY');
     expect(await codeOf(update(row.id, { status: 'Cancelled' }))).toBe('OK');
   });
+
+  it('mudar só a unidade passa pelo gate (F-ESC-19: na outra unidade o profissional não tem escala)', async () => {
+    const s = await seed();
+    await mondaySchedule({ employeeId: s.employeeId }, s.unitId);
+    const row = await create('appointments', appt(s, at(MON, '10:00'), at(MON, '11:00')));
+    expect(await codeOf(update(row.id, { unitId: s.unit2Id }))).toBe('OUTSIDE_AVAILABILITY');
+  });
+
+  it('tirar o encaixe de um agendamento fora da escala passa pelo gate; manter o encaixe e mudar o status não', async () => {
+    const s = await seed();
+    await mondaySchedule({ employeeId: s.employeeId }, s.unitId);
+    const override = { availabilityOverride: true, availabilityOverrideReason: 'cliente fixo' };
+    const row = await create('appointments', appt(s, at(MON, '19:00'), at(MON, '20:00'), override));
+    expect(await codeOf(update(row.id, { status: 'Cancelled' }))).toBe('OK');
+    expect(await codeOf(update(row.id, { availabilityOverride: false }))).toBe('OUTSIDE_AVAILABILITY');
+  });
 });
 
 describe('item 28 — agendamento automático da venda (F-ESC-16)', () => {
