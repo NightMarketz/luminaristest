@@ -237,6 +237,16 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Start Date/Time",
                   "name": "startAt",
                   "required": true,
@@ -268,6 +278,21 @@
                   "name": "notes",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": false,
+                  "label": "Override availability",
+                  "name": "availabilityOverride",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                },
+                {
+                  "label": "Override reason",
+                  "name": "availabilityOverrideReason",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ],
               "immutableAfter": [
@@ -310,9 +335,18 @@
                   "endField": "endAt",
                   "errorMessage": "Conflito de agenda: já existe outro compromisso nesse período.",
                   "scopeFields": [
-                    "unitId",
                     "responsibleEmployeeId"
                   ],
+                  "startField": "startAt",
+                  "skipWhenScopeEmpty": true
+                },
+                {
+                  "endField": "endAt",
+                  "errorMessage": "Conflito de agenda: o recurso já está reservado nesse período.",
+                  "scopeFields": [
+                    "resourceId"
+                  ],
+                  "skipWhenScopeEmpty": true,
                   "startField": "startAt"
                 }
               ]
@@ -848,12 +882,13 @@
                   "type": "boolean"
                 },
                 {
-                  "description": "Ex: { \"monday\": { \"start\": \"09:00\", \"end\": \"18:00\" } }",
+                  "description": "Legacy weekly hours, migrated to the schedule tables. Read-only.",
                   "label": "Work Schedule",
                   "name": "workSchedule",
                   "required": false,
                   "searchable": false,
-                  "type": "json"
+                  "type": "json",
+                  "readOnly": true
                 }
               ]
             }
@@ -3592,6 +3627,16 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Start Date/Time",
                   "name": "startAt",
                   "required": true,
@@ -3623,6 +3668,21 @@
                   "name": "notes",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": false,
+                  "label": "Override availability",
+                  "name": "availabilityOverride",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                },
+                {
+                  "label": "Override reason",
+                  "name": "availabilityOverrideReason",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ],
               "immutableAfter": [
@@ -3665,9 +3725,18 @@
                   "endField": "endAt",
                   "errorMessage": "Conflito de agenda: já existe outro compromisso nesse período.",
                   "scopeFields": [
-                    "unitId",
                     "responsibleEmployeeId"
                   ],
+                  "startField": "startAt",
+                  "skipWhenScopeEmpty": true
+                },
+                {
+                  "endField": "endAt",
+                  "errorMessage": "Conflito de agenda: o recurso já está reservado nesse período.",
+                  "scopeFields": [
+                    "resourceId"
+                  ],
+                  "skipWhenScopeEmpty": true,
                   "startField": "startAt"
                 }
               ]
@@ -4203,12 +4272,13 @@
                   "type": "boolean"
                 },
                 {
-                  "description": "Ex: { \"monday\": { \"start\": \"09:00\", \"end\": \"18:00\" } }",
+                  "description": "Legacy weekly hours, migrated to the schedule tables. Read-only.",
                   "label": "Work Schedule",
                   "name": "workSchedule",
                   "required": false,
                   "searchable": false,
-                  "type": "json"
+                  "type": "json",
+                  "readOnly": true
                 }
               ]
             }
@@ -6945,6 +7015,16 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Start Date/Time",
                   "name": "startAt",
                   "required": true,
@@ -6976,6 +7056,21 @@
                   "name": "notes",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": false,
+                  "label": "Override availability",
+                  "name": "availabilityOverride",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                },
+                {
+                  "label": "Override reason",
+                  "name": "availabilityOverrideReason",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ],
               "immutableAfter": [
@@ -7018,9 +7113,18 @@
                   "endField": "endAt",
                   "errorMessage": "Conflito de agenda: já existe outro compromisso nesse período.",
                   "scopeFields": [
-                    "unitId",
                     "responsibleEmployeeId"
                   ],
+                  "startField": "startAt",
+                  "skipWhenScopeEmpty": true
+                },
+                {
+                  "endField": "endAt",
+                  "errorMessage": "Conflito de agenda: o recurso já está reservado nesse período.",
+                  "scopeFields": [
+                    "resourceId"
+                  ],
+                  "skipWhenScopeEmpty": true,
                   "startField": "startAt"
                 }
               ]
@@ -7420,12 +7524,13 @@
                   "type": "boolean"
                 },
                 {
-                  "description": "Ex: { \"monday\": { \"start\": \"09:00\", \"end\": \"18:00\" } }",
+                  "description": "Legacy weekly hours, migrated to the schedule tables. Read-only.",
                   "label": "Work Schedule",
                   "name": "workSchedule",
                   "required": false,
                   "searchable": false,
-                  "type": "json"
+                  "type": "json",
+                  "readOnly": true
                 }
               ]
             }
@@ -10151,6 +10256,16 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Start Date/Time",
                   "name": "startAt",
                   "required": true,
@@ -10182,6 +10297,21 @@
                   "name": "notes",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": false,
+                  "label": "Override availability",
+                  "name": "availabilityOverride",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                },
+                {
+                  "label": "Override reason",
+                  "name": "availabilityOverrideReason",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ],
               "immutableAfter": [
@@ -10224,9 +10354,18 @@
                   "endField": "endAt",
                   "errorMessage": "Conflito de agenda: já existe outro compromisso nesse período.",
                   "scopeFields": [
-                    "unitId",
                     "responsibleEmployeeId"
                   ],
+                  "startField": "startAt",
+                  "skipWhenScopeEmpty": true
+                },
+                {
+                  "endField": "endAt",
+                  "errorMessage": "Conflito de agenda: o recurso já está reservado nesse período.",
+                  "scopeFields": [
+                    "resourceId"
+                  ],
+                  "skipWhenScopeEmpty": true,
                   "startField": "startAt"
                 }
               ]
@@ -10762,12 +10901,13 @@
                   "type": "boolean"
                 },
                 {
-                  "description": "Ex: { \"monday\": { \"start\": \"09:00\", \"end\": \"18:00\" } }",
+                  "description": "Legacy weekly hours, migrated to the schedule tables. Read-only.",
                   "label": "Work Schedule",
                   "name": "workSchedule",
                   "required": false,
                   "searchable": false,
-                  "type": "json"
+                  "type": "json",
+                  "readOnly": true
                 }
               ]
             }
@@ -13400,6 +13540,16 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Start Date/Time",
                   "name": "startAt",
                   "required": true,
@@ -13431,6 +13581,21 @@
                   "name": "notes",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": false,
+                  "label": "Override availability",
+                  "name": "availabilityOverride",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                },
+                {
+                  "label": "Override reason",
+                  "name": "availabilityOverrideReason",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ],
               "immutableAfter": [
@@ -13473,9 +13638,18 @@
                   "endField": "endAt",
                   "errorMessage": "Conflito de agenda: já existe outro compromisso nesse período.",
                   "scopeFields": [
-                    "unitId",
                     "responsibleEmployeeId"
                   ],
+                  "startField": "startAt",
+                  "skipWhenScopeEmpty": true
+                },
+                {
+                  "endField": "endAt",
+                  "errorMessage": "Conflito de agenda: o recurso já está reservado nesse período.",
+                  "scopeFields": [
+                    "resourceId"
+                  ],
+                  "skipWhenScopeEmpty": true,
                   "startField": "startAt"
                 }
               ]
@@ -13899,12 +14073,13 @@
                   "type": "boolean"
                 },
                 {
-                  "description": "Ex: { \"monday\": { \"start\": \"09:00\", \"end\": \"18:00\" } }",
+                  "description": "Legacy weekly hours, migrated to the schedule tables. Read-only.",
                   "label": "Work Schedule",
                   "name": "workSchedule",
                   "required": false,
                   "searchable": false,
-                  "type": "json"
+                  "type": "json",
+                  "readOnly": true
                 }
               ]
             }
@@ -16768,6 +16943,16 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Start Date/Time",
                   "name": "startAt",
                   "required": true,
@@ -16799,6 +16984,21 @@
                   "name": "notes",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": false,
+                  "label": "Override availability",
+                  "name": "availabilityOverride",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                },
+                {
+                  "label": "Override reason",
+                  "name": "availabilityOverrideReason",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ],
               "immutableAfter": [
@@ -16841,9 +17041,18 @@
                   "endField": "endAt",
                   "errorMessage": "Conflito de agenda: já existe outro compromisso nesse período.",
                   "scopeFields": [
-                    "unitId",
                     "responsibleEmployeeId"
                   ],
+                  "startField": "startAt",
+                  "skipWhenScopeEmpty": true
+                },
+                {
+                  "endField": "endAt",
+                  "errorMessage": "Conflito de agenda: o recurso já está reservado nesse período.",
+                  "scopeFields": [
+                    "resourceId"
+                  ],
+                  "skipWhenScopeEmpty": true,
                   "startField": "startAt"
                 }
               ]
@@ -17387,12 +17596,13 @@
                   "type": "boolean"
                 },
                 {
-                  "description": "Ex: { \"monday\": { \"start\": \"09:00\", \"end\": \"18:00\" } }",
+                  "description": "Legacy weekly hours, migrated to the schedule tables. Read-only.",
                   "label": "Work Schedule",
                   "name": "workSchedule",
                   "required": false,
                   "searchable": false,
-                  "type": "json"
+                  "type": "json",
+                  "readOnly": true
                 }
               ]
             }
@@ -20131,6 +20341,16 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Start Date/Time",
                   "name": "startAt",
                   "required": true,
@@ -20162,6 +20382,21 @@
                   "name": "notes",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": false,
+                  "label": "Override availability",
+                  "name": "availabilityOverride",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                },
+                {
+                  "label": "Override reason",
+                  "name": "availabilityOverrideReason",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ],
               "immutableAfter": [
@@ -20204,9 +20439,18 @@
                   "endField": "endAt",
                   "errorMessage": "Conflito de agenda: já existe outro compromisso nesse período.",
                   "scopeFields": [
-                    "unitId",
                     "responsibleEmployeeId"
                   ],
+                  "startField": "startAt",
+                  "skipWhenScopeEmpty": true
+                },
+                {
+                  "endField": "endAt",
+                  "errorMessage": "Conflito de agenda: o recurso já está reservado nesse período.",
+                  "scopeFields": [
+                    "resourceId"
+                  ],
+                  "skipWhenScopeEmpty": true,
                   "startField": "startAt"
                 }
               ]
@@ -20750,12 +20994,13 @@
                   "type": "boolean"
                 },
                 {
-                  "description": "Ex: { \"monday\": { \"start\": \"09:00\", \"end\": \"18:00\" } }",
+                  "description": "Legacy weekly hours, migrated to the schedule tables. Read-only.",
                   "label": "Work Schedule",
                   "name": "workSchedule",
                   "required": false,
                   "searchable": false,
-                  "type": "json"
+                  "type": "json",
+                  "readOnly": true
                 }
               ]
             }
@@ -23492,6 +23737,16 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Start Date/Time",
                   "name": "startAt",
                   "required": true,
@@ -23523,6 +23778,21 @@
                   "name": "notes",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": false,
+                  "label": "Override availability",
+                  "name": "availabilityOverride",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                },
+                {
+                  "label": "Override reason",
+                  "name": "availabilityOverrideReason",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ],
               "immutableAfter": [
@@ -23565,9 +23835,18 @@
                   "endField": "endAt",
                   "errorMessage": "Conflito de agenda: já existe outro compromisso nesse período.",
                   "scopeFields": [
-                    "unitId",
                     "responsibleEmployeeId"
                   ],
+                  "startField": "startAt",
+                  "skipWhenScopeEmpty": true
+                },
+                {
+                  "endField": "endAt",
+                  "errorMessage": "Conflito de agenda: o recurso já está reservado nesse período.",
+                  "scopeFields": [
+                    "resourceId"
+                  ],
+                  "skipWhenScopeEmpty": true,
                   "startField": "startAt"
                 }
               ]
@@ -23975,12 +24254,13 @@
                   "type": "boolean"
                 },
                 {
-                  "description": "Ex: { \"monday\": { \"start\": \"09:00\", \"end\": \"18:00\" } }",
+                  "description": "Legacy weekly hours, migrated to the schedule tables. Read-only.",
                   "label": "Work Schedule",
                   "name": "workSchedule",
                   "required": false,
                   "searchable": false,
-                  "type": "json"
+                  "type": "json",
+                  "readOnly": true
                 }
               ]
             }
@@ -26706,6 +26986,16 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Start Date/Time",
                   "name": "startAt",
                   "required": true,
@@ -26737,6 +27027,21 @@
                   "name": "notes",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": false,
+                  "label": "Override availability",
+                  "name": "availabilityOverride",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                },
+                {
+                  "label": "Override reason",
+                  "name": "availabilityOverrideReason",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ],
               "immutableAfter": [
@@ -26779,9 +27084,18 @@
                   "endField": "endAt",
                   "errorMessage": "Conflito de agenda: já existe outro compromisso nesse período.",
                   "scopeFields": [
-                    "unitId",
                     "responsibleEmployeeId"
                   ],
+                  "startField": "startAt",
+                  "skipWhenScopeEmpty": true
+                },
+                {
+                  "endField": "endAt",
+                  "errorMessage": "Conflito de agenda: o recurso já está reservado nesse período.",
+                  "scopeFields": [
+                    "resourceId"
+                  ],
+                  "skipWhenScopeEmpty": true,
                   "startField": "startAt"
                 }
               ]
@@ -27325,12 +27639,13 @@
                   "type": "boolean"
                 },
                 {
-                  "description": "Ex: { \"monday\": { \"start\": \"09:00\", \"end\": \"18:00\" } }",
+                  "description": "Legacy weekly hours, migrated to the schedule tables. Read-only.",
                   "label": "Work Schedule",
                   "name": "workSchedule",
                   "required": false,
                   "searchable": false,
-                  "type": "json"
+                  "type": "json",
+                  "readOnly": true
                 }
               ]
             }
@@ -29963,6 +30278,16 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Resource",
+                  "name": "resourceId",
+                  "relation": {
+                    "targetTable": "@@id:resources"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Start Date/Time",
                   "name": "startAt",
                   "required": true,
@@ -29994,6 +30319,21 @@
                   "name": "notes",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": false,
+                  "label": "Override availability",
+                  "name": "availabilityOverride",
+                  "required": false,
+                  "searchable": false,
+                  "type": "boolean"
+                },
+                {
+                  "label": "Override reason",
+                  "name": "availabilityOverrideReason",
+                  "required": false,
+                  "searchable": false,
+                  "type": "string"
                 }
               ],
               "immutableAfter": [
@@ -30036,9 +30376,18 @@
                   "endField": "endAt",
                   "errorMessage": "Conflito de agenda: já existe outro compromisso nesse período.",
                   "scopeFields": [
-                    "unitId",
                     "responsibleEmployeeId"
                   ],
+                  "startField": "startAt",
+                  "skipWhenScopeEmpty": true
+                },
+                {
+                  "endField": "endAt",
+                  "errorMessage": "Conflito de agenda: o recurso já está reservado nesse período.",
+                  "scopeFields": [
+                    "resourceId"
+                  ],
+                  "skipWhenScopeEmpty": true,
                   "startField": "startAt"
                 }
               ]
@@ -30470,12 +30819,13 @@
                   "type": "boolean"
                 },
                 {
-                  "description": "Ex: { \"monday\": { \"start\": \"09:00\", \"end\": \"18:00\" } }",
+                  "description": "Legacy weekly hours, migrated to the schedule tables. Read-only.",
                   "label": "Work Schedule",
                   "name": "workSchedule",
                   "required": false,
                   "searchable": false,
-                  "type": "json"
+                  "type": "json",
+                  "readOnly": true
                 }
               ]
             }
