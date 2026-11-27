@@ -99,7 +99,8 @@ conflitar). Por isso ele começa medindo o dado real e diz no corpo do PR quanta
     sobreposição (item 7).
 15. `SchedulesPlugin` em `scheduleExceptions`: `endAt > startAt`; alvo opcional (ausente = unidade inteira); `kind` e `origin`
     no domínio; usuário não grava `origin ≠ USER` (só `isSystem`). Linha `origin: HR` não é editada nem apagada pelo usuário
-    (400 `EXCEPTION_READ_ONLY`). Linha `origin: HOLIDAY_CALENDAR` pode ser apagada (abrir no feriado), não editada. [F-ESC-6, F-ESC-7]
+    (400 `EXCEPTION_READ_ONLY`). Linha `origin: HOLIDAY_CALENDAR` pode ser **desligada** (abrir no feriado), não editada nem apagada: o "apagar" do usuário
+    vira desligar, e a marca fica, fora do alcance da purga (emenda 4, F-ESC-23). [F-ESC-6, F-ESC-7, F-ESC-23]
 16. `deleteConstraints`: apagar `schedules` apaga os turnos dele (cascata da regra de preset); apagar uma linha `employees`
     ou `resources` com padrão vivo é recusado (`RESTRICT`). Teste dos dois.
 17. `removability.ts`: as quatro tabelas são do Core e não saem pela tela de módulos.
@@ -352,7 +353,7 @@ Os dezesseis forks, com caminhos e recomendação, estão no [PRE-ADR §5](../ad
 | F-ESC-20 Profissional da unidade (emenda 3) | cadastro + escala | 32 |
 | F-ESC-21 Leitura sem padrão vivo (emenda 3) | janela inteira, `unrestricted: true` | 31 |
 | F-ESC-22 Formato do `availability` (emenda 3) | `{ unrestricted, intervals }`, `.strict()` | 31 |
-| F-ESC-23 Feriado apagado depois da purga (emenda 4) | (B) volta após 90 dias; item 15 inalterado | 39 |
+| F-ESC-23 Feriado apagado depois da purga (emenda 4) | (C) marca que fica: o feriado se desliga, não se apaga | 15, 39 |
 | F-ESC-24 Sync manual sem fuso (emenda 4) | preenche o padrão da borda antes de gravar | 39 |
 
 As emendas 1 a 4 (F-ESC-17..24) estão em `docs/plano/decisoes/D-2026-11-26-ESCALA-BASE-FORKS.md`, com o achado e a

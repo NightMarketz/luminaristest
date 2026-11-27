@@ -78,10 +78,12 @@ As três perguntas foram ao dono por questionário; as três respostas foram a r
 
 ## Emenda 4 (dono, chat, 2026-11-27): feriado da escala (item 39, `L-20261127-124714-2e66`)
 
-A sessão que executa o PR-4 (#1447) mandou as duas perguntas à sessão principal, que não as repassou. A sessão de
-planejamento as levou ao dono por questionário, e ele escolheu a recomendação nas duas. O #1447 já implementa as duas.
+A sessão que executa o PR-4 (#1447) mandou as duas perguntas à sessão principal. A sessão de planejamento também as levou
+ao dono por questionário. No F-ESC-23 as duas sessões trouxeram respostas opostas: aqui saiu (B), e na sessão principal
+saiu (C). A sessão de planejamento pôs o conflito ao dono numa pergunta própria, e ele confirmou a (C), que vale. O F-ESC-24
+seguiu a recomendação sem conflito, e o #1447 já o implementa.
 
 | Fork | Achado | Decisão (resposta literal) |
 |---|---|---|
-| F-ESC-23 feriado apagado depois da purga (item 39) | O `PurgeDeletedRecords` (`jobs/PurgeDeletedRecords.ts:135`) apaga de vez a linha soft-deletada há 90 dias, e a versão vai junto por cascade (`schema.prisma:363`). Sem a linha, o sync diário recria o feriado que o usuário apagou | **(B)** Fica como o BRIEF escreveu: a chave idempotente conta só a linha apagada, e o feriado apagado volta depois de 90 dias. O item 15 não muda. A alternativa recusada era (C): uma marca não apagável — *"Aceitar os 90 dias (Recommended)"* |
+| F-ESC-23 feriado apagado depois da purga (item 39) | O `PurgeDeletedRecords` (`jobs/PurgeDeletedRecords.ts:135`) apaga de vez a linha soft-deletada há 90 dias, e a versão vai junto por cascade (`schema.prisma:363`). Sem a linha, o sync diário recria o feriado que o usuário apagou | **(C)** A linha `origin: HOLIDAY_CALENDAR` não se apaga, ela se **desliga**. Uma marca na `scheduleExceptions` (campo novo do preset, levado pelo rollout) fica, e a purga não a leva. O "apagar" do usuário nessa linha vira "desligar". O gate e a leitura ignoram a linha desligada, o sync não recria o feriado desligado, e o FE a esconde. O item 15 muda de "pode ser apagada" para "pode ser desligada". A (B), "aceitar os 90 dias", não fica nem como etapa. A (A), o ledger de versões, caiu pelo cascade. Respostas do dono: *"Marca que fica (Recomendado)"* na sessão principal e, no desempate, *"Marca que fica"*. A resposta anterior aqui, *"Aceitar os 90 dias (Recommended)"*, ficou superada |
 | F-ESC-24 sync manual em unidade sem fuso (item 39) | O `POST /api/scheduling/holidays/sync` pode rodar numa unidade sem `timeZone`, e o instante gravado na exceção não se corrige depois | Antes de gravar, o sync preenche a unidade com o fuso padrão da borda (`BR_DEFAULT_TIME_ZONE`), como o job diário faz pelo F-ESC-18. A alternativa recusada era usar o fuso do processo — *"Padrão da borda antes (Recommended)"* |
