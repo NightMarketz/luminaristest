@@ -265,6 +265,9 @@ import { LalurService } from '../features/accounting/services/LalurService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { AvailabilityService } from '../features/scheduling/services/AvailabilityService';
 import { HolidayExceptionService } from '../features/scheduling/services/HolidayExceptionService';
+import { SYSTEM_VERSION_CONTEXT } from '../features/dynamicTables/repositories/versionContext';
+import { HrAbsenceProjectionService } from '../features/scheduling/services/HrAbsenceProjectionService';
+import { DpAbsenceSourceAdapter } from '../features/scheduling/adapters/DpAbsenceSourceAdapter';
 import { BrHolidayCalendarAdapter } from '../features/scheduling/paises/br/adapters/BrHolidayCalendarAdapter';
 import { PackageAcceptanceService } from '../features/packages/services/PackageAcceptanceService';
 import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
@@ -1100,6 +1103,7 @@ export class ApplicationFactory {
     packageBalance: PackageBalanceService;
     availability: AvailabilityService;
     holidayException: HolidayExceptionService; // BE-INCR-ESCALA-BASE PR-4 (itens 38–41)
+    hrAbsenceProjection: HrAbsenceProjectionService; // BE-INCR-ESCALA-BASE PR-5 (itens 44–46)
     packageAcceptance: PackageAcceptanceService; // FE-INCR-PACOTE-VALIDADE
     legalParameter: LegalParameterService; // BE-INCR-LEGAL-PARAMS PR-1
     presetSync: PresetSyncService;
@@ -2423,6 +2427,21 @@ export class ApplicationFactory {
         this.policies.scheduling,
         BR_DEFAULT_TIME_ZONE,
       ),
+      // BE-INCR-ESCALA-BASE PR-5 (itens 44/45; F-ESC-7 a1): o DP pela porta, lido pelos serviços dele (lidos na hora do uso,
+      // porque nascem neste mesmo objeto). O delete da exceção HR é de sistema, pelo repositório (o plugin recusa o do usuário).
+      hrAbsenceProjection: new HrAbsenceProjectionService(
+        this.repositories.schedulingRow,
+        dynamicTableService,
+        { deleteAsSystem: (id) => new DynamicTableRepository().withVersionContext(SYSTEM_VERSION_CONTEXT).deleteData(id) },
+        dynamicTableWriteEffects,
+        new DpAbsenceSourceAdapter(
+          {
+            listVinculos: (scope, limit) => this.services.dpVinculo.listVinculos(scope, limit),
+            listTrabalhadores: (scope, limit) => this.services.dpVinculo.listTrabalhadores(scope, limit),
+          },
+          { listAfastamentos: (scope, vinculoId) => this.services.dpAfastamentoFerias.listAfastamentos(scope, vinculoId) },
+        ),
+      ),
       packageAcceptance: new PackageAcceptanceService(
         this.repositories.packageAcceptance,
         this.policies.packageAcceptance,
@@ -2887,6 +2906,7 @@ export class ApplicationFactory {
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;
   public getAvailabilityService = (): AvailabilityService => this.services.availability;
   public getHolidayExceptionService = (): HolidayExceptionService => this.services.holidayException;
+  public getHrAbsenceProjectionService = (): HrAbsenceProjectionService => this.services.hrAbsenceProjection;
   public getPackageAcceptanceService = (): PackageAcceptanceService => this.services.packageAcceptance;
   public getLegalParameterService = (): LegalParameterService => this.services.legalParameter;
   public getTaxAssessmentRecalcService = (): TaxAssessmentRecalcService => this.services.taxAssessmentRecalc;
