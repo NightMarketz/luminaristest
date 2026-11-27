@@ -28,6 +28,11 @@ export const DP_LEGAL_TABLES = [
   'RAT_ALIQUOTA',
   'FAP_LIMITES',
   'TERCEIROS_FPAS',
+  // PR-P1 item 7 (F-PNT-3 b): o enquadramento da empresa, linha por CNPJ publicada pelo admin — grau do RAT e FAP do
+  // estabelecimento, FPAS da raiz. Consumidor = features/dp/paises/br/models/enquadramentoCpp.ts.
+  'RAT_GRAU_ESTABELECIMENTO',
+  'FAP_ESTABELECIMENTO',
+  'FPAS_EMPRESA',
 ] as const;
 
 /**

@@ -72,10 +72,10 @@ describe('item 13 — tabela fora do registro', () => {
 });
 
 describe('item 13 — tabelas(): o catálogo do registro', () => {
-  it('53 itens, cada um com pais br, dono e tipoValor no vocabulário do front (misto = valor por chave)', () => {
+  it('56 itens, cada um com pais br, dono e tipoValor no vocabulário do front (misto = valor por chave)', () => {
     const { svc, repo } = montar();
     const tabelas = svc.tabelas(ATOR);
-    expect(tabelas).toHaveLength(53);
+    expect(tabelas).toHaveLength(56);
     expect(tabelas.every((t) => t.pais === 'br')).toBe(true);
     const de = (n: string) => tabelas.find((t) => t.tabela === n);
     expect(de('INSS_EMPREGADO')).toEqual({ tabela: 'INSS_EMPREGADO', dominio: 'dp', pais: 'br', tipoValor: 'json' });
