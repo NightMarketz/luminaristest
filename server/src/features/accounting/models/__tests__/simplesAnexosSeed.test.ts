@@ -327,3 +327,71 @@ describe('Res. CGSN 196/2026 — semente v7 (teto do ISS 2027–28 com IBS; DEFI
     expect(l?.fonte).not.toMatch(/ambiguidade A1|em aberto/);
   });
 });
+
+// BE-INCR-SIMPLES-CGSN-196 item 4: paridade semente × Anexos I–V da Res. CGSN 196/2026 (art. 3º). A semente segue a LEI; o
+// teste só acusa. A única diferença que existia (transfereAIbs 2027–28) é a que a v7 corrige (item 2).
+describe('Res. CGSN 196/2026 — paridade da semente com os Anexos I–V (item 4)', () => {
+  const TXT196 = path.join(REPO_ROOT, 'docs/accounting/fontes-oficiais/TRANSCRICAO-SIMPLES-ANEXOS-RES-CGSN-196-2026-11-25.txt');
+  type Tab = { tipo: 'FAIXA' | 'REPARTICAO' | 'TETO_ISS'; anexo: string; faixa?: number; vig: { desde: string; ate: string | null }; reparticao?: Record<string, number> } & Record<string, unknown>;
+  const tabelas196 = noScript<Tab[]>(`S.parseTranscricao((await import('node:fs')).readFileSync(${JSON.stringify(TXT196)}, 'utf8'))`);
+  const vigentes = linhasEmVigor(legalParamsSeedRows(SIMPLES_SEED_FILES));
+  const TABELA = { FAIXA: 'SIMPLES_ANEXO_FAIXA', REPARTICAO: 'SIMPLES_ANEXO_REPARTICAO', TETO_ISS: 'SIMPLES_TETO_ISS' } as const;
+  /**
+   * O valor do anexo da 196 que cobre a data: a tabela de `vig.desde` mais recente até ela, respeitando o fim quando a 196 o
+   * escreve. Fim omitido (ex. Anexo III "Vigência: 1º/1/2030", seguido de 2031 e 2032 com fim) fecha na véspera da próxima
+   * tabela do mesmo tipo, como o `fecharVigencias` do gerador faz com a lei.
+   */
+  const da196 = (tipo: Tab['tipo'], anexo: string, faixa: number | undefined, data: string) => {
+    const mesmas = tabelas196.filter((x) => x.tipo === tipo && x.anexo === anexo && x.faixa === faixa);
+    const ate = (x: Tab) => x.vig.ate ?? mesmas.filter((y) => y.vig.desde > x.vig.desde).map((y) => y.vig.desde).sort()[0] ?? null;
+    const t = mesmas
+      .filter((x) => x.vig.desde <= data && (ate(x) === null || (x.vig.ate === null ? (ate(x) as string) > data : (ate(x) as string) >= data)))
+      .sort((a, b) => (a.vig.desde < b.vig.desde ? 1 : -1))[0];
+    if (!t) return undefined;
+    if (tipo === 'FAIXA') return { receitaAteCents: t.receitaAteCents, aliquotaNominalBp: t.aliquotaNominalBp, parcelaDeduzirCents: t.parcelaDeduzirCents };
+    if (tipo === 'REPARTICAO') return t.reparticao;
+    return { percentualBp: t.percentualBp, limiarAliquotaEfetiva: t.limiarAliquotaEfetiva, transfereAIbs: t.transfereAIbs, transferencia: t.transferencia };
+  };
+
+  it('a transcrição commitada é o texto do dossiê (D11–D15, sha256 do PDF conferido com o manifest), byte a byte', () => {
+    const gerada = noScript<string>('S.transcreverRes196()');
+    expect(norm(readFileSync(TXT196, 'utf8'))).toBe(norm(gerada));
+  });
+
+  it('a transcrição tem as 5 tabelas de anexo com faixas, repartições e notas de teto (III e IV)', () => {
+    for (const a of ['I', 'II', 'III', 'IV', 'V']) {
+      expect([a, tabelas196.filter((t) => t.anexo === a && t.tipo === 'FAIXA').length]).toEqual([a, 12]);
+      expect([a, tabelas196.filter((t) => t.anexo === a && t.tipo === 'REPARTICAO').length]).toEqual([a, 36]);
+    }
+    expect(tabelas196.filter((t) => t.tipo === 'TETO_ISS').map((t) => t.anexo)).toEqual(['III', 'III', 'III', 'III', 'III', 'IV', 'IV', 'IV', 'IV', 'IV']);
+  });
+
+  /**
+   * Divergências lei × resolução já na caixa (a semente segue a LEI; nenhuma é "consertada" aqui). Uma entrada nova = vermelho.
+   * - L-20261127-004212-731f: Anexo I, 6ª faixa, 2029+ — LC 214 Anexo XVIII (Planalto, 20/11/2026) 19,00%; Res. CGSN 196 18,90%.
+   */
+  const DIVERGENCIAS_CONHECIDAS = [2029, 2030, 2031, 2032, 2033].map(
+    (ano) => `${ano}-06-01 Anexo I FAIXA F6: semente {"receitaAteCents":480000000,"aliquotaNominalBp":1900,"parcelaDeduzirCents":37800000} × 196 {"receitaAteCents":480000000,"aliquotaNominalBp":1890,"parcelaDeduzirCents":37800000}`,
+  );
+
+  it('de 2027 a 2033, toda faixa, repartição e teto vigente na semente tem o número do anexo da Res. CGSN 196', () => {
+    const divergencias: string[] = [];
+    for (let ano = 2027; ano <= 2033; ano++) {
+      const data = `${ano}-06-01`;
+      for (const anexo of ['I', 'II', 'III', 'IV', 'V']) {
+        const casos: Array<[Tab['tipo'], number | undefined]> = [
+          ...[1, 2, 3, 4, 5, 6].map((f): [Tab['tipo'], number] => ['FAIXA', f]),
+          ...[1, 2, 3, 4, 5, 6].map((f): [Tab['tipo'], number] => ['REPARTICAO', f]),
+          ['TETO_ISS', undefined],
+        ];
+        for (const [tipo, faixa] of casos) {
+          const l = linhaLegalVigente(vigentes, TABELA[tipo], anexo, data, faixa === undefined ? null : `F${faixa}`);
+          const semente = l ? json(l.valorJson) : undefined;
+          const res = da196(tipo, anexo, faixa, data);
+          if (JSON.stringify(semente) !== JSON.stringify(res)) divergencias.push(`${data} Anexo ${anexo} ${tipo}${faixa ? ` F${faixa}` : ''}: semente ${JSON.stringify(semente)} × 196 ${JSON.stringify(res)}`);
+        }
+      }
+    }
+    expect(divergencias).toEqual(DIVERGENCIAS_CONHECIDAS);
+  });
+});

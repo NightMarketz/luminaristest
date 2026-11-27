@@ -25,6 +25,7 @@
 //   node scripts/gen-simples-anexos.mjs --transcrever   # HTML do corpus → TXT commitado (aborta se o sha divergir)
 //   node scripts/gen-simples-anexos.mjs                 # TXT → prisma/data/legal_parameters_simples_v1.sql
 //   node scripts/gen-simples-anexos.mjs --stdout        # imprime o SQL (o teste compara com o commitado)
+//   node scripts/gen-simples-anexos.mjs --transcrever-196 # Anexos I–V da Res. CGSN 196 (dossiê D11–D15) → TXT (CGSN 196 item 4)
 //   node scripts/gen-simples-anexos.mjs --correcoes     # imprime as linhas da v7 que corrigem a nota pelo artigo (CGSN 196 item 2)
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -127,7 +128,7 @@ export function bp(s) {
 }
 /** '1.800.000,00' → 180000000 centavos; '-' ou vazio → 0. */
 export function cents(s) {
-  if (!s || s === '-' || s === '–') return 0;
+  if (!s || s === '-' || s === '–' || s === '_') return 0; // '_': erro de digitação da Res. CGSN 196 (Anexo IV 2029, 1ª faixa)
   const [int, dec] = s.replace(/\./g, '').split(',');
   if (dec === undefined || dec.length !== 2) throw new Error(`valor fora do formato R$: ${s}`);
   return Number(int) * 100 + Number(dec);
@@ -145,7 +146,7 @@ export function vigencia(frase) {
 
 const FAIXA = '([1-6]) ?(?:a|ª) Faixa';
 const RE_VIG = /\(Vigência: ([^)]+)\)/y;
-const RE_TAB_FAIXA = /Receita Bruta em 12 Meses \(em R\$\) Alíquota Valor a Deduzir \(em R\$\)/y;
+const RE_TAB_FAIXA = /Receita Bruta em 12 Meses \(em R\$\) Alíquota(?: Nominal)? Valor a Deduzir \(em R\$\)/y; // "Nominal": Res. CGSN 196
 const RE_TAB_REP = /Faixas Percentual de Repartição dos Tributos ((?:[A-Za-z/]+(?: \(\*\))? )+)/y;
 const RE_NOTA = /(?:\(\*\) )?O percentual efetivo máximo devido ao ISS será de ([\d,]+)%[^.]*\. Sendo assim, na 5 ?(?:a|ª) faixa, quando a alíquota efetiva for superior a ([\d,]+)%/y;
 
@@ -154,7 +155,7 @@ const RE_NOTA = /(?:\(\*\) )?O percentual efetivo máximo devido ao ISS será de
  * Uma tabela de faixas aberta pela LC 214 fecha a vigência anterior só pela data (o lookup escolhe por data).
  */
 export function parseBloco(cab, corpo) {
-  const [, fonteId, anexo] = /^### (LC\d+) ANEXO ([IV]+) /.exec(cab);
+  const [, fonteId, anexo] = /^### (LC\d+|RES196) ANEXO ([IV]+) /.exec(cab);
   const out = [];
   let vig = null;
   let ordem = 0;
@@ -169,7 +170,7 @@ export function parseBloco(cab, corpo) {
     RE_TAB_FAIXA.lastIndex = i;
     if ((m = RE_TAB_FAIXA.exec(corpo))) {
       // Regra (i): 6 linhas "Nª Faixa [Até|De X a] Y A% [PD|-|vazio]".
-      const re = new RegExp(`\\s*${FAIXA} (?:Até|De [\\d.,]+ a) ([\\d.]+,\\d{2}) ([\\d,]+)%\\s*([\\d.]+,\\d{2}|-|–)?`, 'y');
+      const re = new RegExp(`\\s*${FAIXA} (?:Até|De [\\d.,]+ a) ([\\d.]+,\\d{2}) ([\\d,]+)%\\s*([\\d.]+,\\d{2}|-|–|_)?`, 'y');
       re.lastIndex = RE_TAB_FAIXA.lastIndex;
       for (let f = 1; f <= 6; f++) {
         const r = re.exec(corpo);
@@ -385,6 +386,28 @@ export function linhasCorrecaoArtigo(txt = readFileSync(TXT_PATH, 'utf8')) {
   });
 }
 
+// ---- BE-INCR-SIMPLES-CGSN-196 item 4: transcrição dos Anexos I–V da Res. CGSN 196/2026 (paridade com a semente) -----
+// Fonte: visão multivigente da RFB, anexos do ato 154694, baixados em 25/11/2026 no dossiê
+// `pesquisas-legais/dp-tabelas-irrf-das-sst` (D11–D15: o PDF e o texto extraído, os dois commitados). A transcrição é o texto
+// extraído com o espaço normalizado, num bloco "### RES196 ANEXO <n>" que o mesmo `parseBloco` lê. Quem compara é o teste
+// (`simplesAnexosSeed.test.ts`): a semente segue a LEI (lei > resolução); diferença vira lacuna, não conserto.
+export const TXT_196_PATH = path.join(ROOT, 'docs', 'accounting', 'fontes-oficiais', 'TRANSCRICAO-SIMPLES-ANEXOS-RES-CGSN-196-2026-11-25.txt');
+const DOSSIE_196 = path.join(ROOT, 'pesquisas-legais', 'dp-tabelas-irrf-das-sst');
+const ANEXOS_196 = [['I', 'D11'], ['II', 'D12'], ['III', 'D13'], ['IV', 'D14'], ['V', 'D15']];
+
+export function transcreverRes196(dossie = DOSSIE_196) {
+  const manifest = JSON.parse(readFileSync(path.join(dossie, 'manifest.json'), 'utf8'));
+  return ANEXOS_196.map(([anexo, id]) => {
+    const doc = manifest.documentos.find((d) => d.id === id);
+    if (!doc) throw new Error(`Res. CGSN 196: ${id} fora do manifest do dossiê`);
+    const pdf = readFileSync(path.join(dossie, doc.arquivo));
+    const sha = createHash('sha256').update(pdf).digest('hex');
+    if (sha !== doc.sha256) throw new Error(`Res. CGSN 196 Anexo ${anexo}: sha256 do PDF ${sha} difere do manifest ${doc.sha256}`);
+    const texto = readFileSync(path.join(dossie, doc.texto), 'utf8').replace(/\s+/g, ' ').trim();
+    return `### RES196 ANEXO ${anexo} sha256=${sha} url=${doc.url}\n${texto}\n`;
+  }).join('\n');
+}
+
 /** As linhas de `linhasCorrecaoArtigo` em SQL, sem o cabeçalho de arquivo gerado (vão dentro da v7). */
 export function gerarSqlCorrecoes(txt) {
   return toSql(linhasCorrecaoArtigo(txt)).split('\n').filter((l) => l.startsWith('INSERT')).join('\n');
@@ -395,6 +418,9 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
   if (args.includes('--transcrever')) {
     writeFileSync(TXT_PATH, transcrever());
     console.log(`escrito ${path.relative(ROOT, TXT_PATH)}`);
+  } else if (args.includes('--transcrever-196')) {
+    writeFileSync(TXT_196_PATH, transcreverRes196());
+    console.log(`escrito ${path.relative(ROOT, TXT_196_PATH)}`);
   } else if (args.includes('--correcoes')) {
     process.stdout.write(`${gerarSqlCorrecoes()}\n`);
   } else if (args.includes('--stdout')) {
