@@ -5,10 +5,9 @@
 > **Autorização:** `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`, emenda de 21/11 (2), item 6: "**Grupo vai a
 > planejamento macro** (dono: 'Planeja como resolver tudo no macro em vez de vários remendos')", com "**uma**
 > `sessao-planejamento` do grupo, com o id de todas as lacunas no brief". Cobre este BRIEF e nada além dele.
-> **Execução:** **não está autorizada.** A dispensa de ratificação ("BRIEF de grupo sem fork executa sem ratificação", dono,
-> chat, 21/11: "Sim, executa") vale só se a seção de forks estiver vazia **e** nenhuma lacuna do grupo estiver `com-dono`.
-> Este BRIEF tem 4 forks novos (F-196-1..4) e cita o F-196-5, que já é `com-dono` (`L-20261124-122830-f73e`). Os dois
-> critérios falham, então o BRIEF vai à pergunta do dia e a execução espera a resposta do dono.
+> **Execução: autorizada** (dono, chat, 26/11/2026: "Ratifico F-196-1 a 4 como recomendado, executa"). F-196-1..4
+> RATIFICADOS na opção (a) de cada um (§5). O F-196-5 (`L-20261124-122830-f73e`) **segue com o dono** e não entra na
+> execução. Ordem: PR-1 (itens 1–5) e o item 6 primeiro; PR-2..PR-4 entram depois de #1425/#1326 (§9, colisões).
 > **Base:** `origin/main` `40b6ab8f4` (fetch em 26/11/2026). `origin/integration/eficiencia-fiscal-montador` não tem commit à
 > frente da `main`. Nenhum PR aberto toca `simplesCalc.ts` (`gh pr list --state open` em 26/11; os PRs que mexem no Simples
 > são #1428, em `paises/br/legalParameters/simples.ts`, e #1425/#1326, em `SimplesApuracaoService`, `SimplesDto` e o DP;
@@ -226,9 +225,11 @@ Gates que o diff aciona (ficam no checklist, não com o implementador):
 - os itens 2 e 5 são migração de dado (`legal_parameters_simples_v7.sql` + migration);
 - os itens 1–6 não acionam openapi.
 
-## 5. Forks, todos RATIFICAÇÃO PENDENTE
+## 5. Forks (F-196-1..4 RATIFICADOS em 26/11/2026; F-196-5 com o dono)
 
 ### F-196-1: Pesos da redistribuição do excesso do ISS na 6ª faixa (09b7)
+**RATIFICADO (a)**, dono, chat, 26/11/2026: "Ratifico F-196-1 a 4 como recomendado, executa".
+
 **Evidência.** A lei manda incluir o IBS ([LC214] art. 517; [R196] art. 21 III e as notas dos Anexos III/IV). Mas a
 repartição da 6ª faixa **não tem IBS** ("–" em [R196-AIII]/[R196-AIV]; semente `…-f6` sem chave IBS), e o IBS da 6ª sai pela
 fórmula da 5ª (art. 21 IV). Por isso "proporcional entre os federais e o IBS da mesma faixa" tem mais de uma leitura. O
@@ -262,6 +263,8 @@ teste prende o valor. **Contra (a):** a 196 escreveu "e o IBS" de propósito, e 
 intenção for dar ao IBS a parte dele, a leitura é (b). Oráculo: o cálculo do PGDAS-D de 2027 (§6).
 
 ### F-196-2: Competência da receita no Simples de 2027 em diante (art. 2º §§ 8º–9º-A)
+**RATIFICADO (a)**, dono, chat, 26/11/2026 (mesma frase).
+
 **Evidência.**
 - [R196] art. 2º: a receita é auferida "no momento do faturamento"; faturamento é a emissão do documento fiscal, "inclusive
   quando o fornecimento ocorrer em momento posterior à emissão" (§ 9º-A I).
@@ -282,6 +285,8 @@ no valor. **Contra:** `ReceitaFiscalLinha` também alimenta Presumido e Real, qu
 é própria do Simples e não troca `competencia`.
 
 ### F-196-3: Juros e multa de mora na receita bruta, de 2027 em diante (art. 2º § 4º V)
+**RATIFICADO (a)**, dono, chat, 26/11/2026 (mesma frase).
+
 **Evidência.**
 - [R196] art. 2º inclui o § 4º V ("os juros moratórios, as multas e demais importâncias cobradas ou recebidas como parte do
   valor da operação ou da prestação").
@@ -301,6 +306,8 @@ contabilização:** a conta de receita financeira continua (F-ENC-2 a, `D-2026-1
 contratual de atraso (não a de rescisão, que continua fora pelo § 5º V) também entra (§6).
 
 ### F-196-4: Compra pública (art. 25-A)
+**RATIFICADO (a)**, dono, chat, 26/11/2026 (mesma frase), na versão incremental: marca manual primeiro.
+
 **Evidência.**
 - [R196] art. 2º (art. 25-A): receita de contrato com a administração pública direta, autarquia ou fundação de qualquer
   ente é identificada à parte, para destinar o IBS/CBS ao ente contratante.
