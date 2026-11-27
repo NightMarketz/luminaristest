@@ -3,9 +3,10 @@
  *
  * Para cada feriado que a porta (`HolidayCalendarPort`, borda BR no item 38) devolve no ano, uma exceção da unidade
  * inteira: `kind: HOLIDAY`, `origin: HOLIDAY_CALENDAR`, o dia inteiro no fuso da unidade, `sourceType: 'HOLIDAY'`,
- * `sourceId: '<unitId>:<date>'`. A chave idempotente é `(sourceType, sourceId)` **contando a linha apagada**: o feriado
- * que o usuário apagou (abriu a unidade no feriado, item 15) não volta. A linha purgada pelo `PurgeDeletedRecords`
- * (90 dias) já não é vista — limite registrado na caixa e no corpo do PR-4.
+ * `sourceId: '<unitId>:<date>'`. A chave idempotente é `(sourceType, sourceId)`, contando a linha desligada e a apagada:
+ * o feriado que o usuário abriu não volta. F-ESC-23 (C, emenda 4 corrigida em 97540313c): o usuário desliga o feriado
+ * (`disabled: true`, item 15), não o apaga, então a linha nunca chega à purga de 90 dias do `PurgeDeletedRecords`. A
+ * linha apagada conta só para o dado de antes da emenda. As duas somam em `deletedByUser` ("o usuário abriu").
  *
  * Escreve pelo `DynamicTableService` com `isSystem` (só o sistema grava `origin ≠ USER`, item 15), então o
  * `SchedulesPlugin` valida a linha como em qualquer escrita. Depois de gravar, chama o efeito pós-escrita do dono.
@@ -68,19 +69,20 @@ export class HolidayExceptionService {
     const tableId = await this.rows.tableId(user.userId, 'scheduleExceptions');
     if (!tableId || units.length === 0) return result; // instância sem a escala (rollout não rodou) ou sem unidade
 
-    const known = new Map((await this.rows.projectionRows(user.userId, HOLIDAY_SOURCE_TYPE)).map((r) => [r.sourceId, r.deleted]));
+    // `true` = o usuário abriu o feriado (desligou, F-ESC-23; ou apagou, dado de antes da emenda); `false` = vivo.
+    const known = new Map((await this.rows.projectionRows(user.userId, HOLIDAY_SOURCE_TYPE)).map((r) => [r.sourceId, r.deleted || r.data.disabled === true]));
     let wrote = false;
     try {
       for (const unitId of units) {
         const timeZone = await this.unitTimeZone(user, unitId, () => (wrote = true));
         for (const date of await this.calendar.holidaysFor(user.userId, unitId, input.year)) {
           const sourceId = holidaySourceId(unitId, date);
-          const deleted = known.get(sourceId);
-          if (deleted === true) {
+          const openedByUser = known.get(sourceId);
+          if (openedByUser === true) {
             result.deletedByUser += 1;
             continue;
           }
-          if (deleted === false) {
+          if (openedByUser === false) {
             result.skipped += 1;
             continue;
           }

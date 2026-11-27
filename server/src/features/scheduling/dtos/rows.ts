@@ -81,9 +81,13 @@ export const scheduleExceptionSchema = z
     reason: z.string().max(300).optional(),
     sourceType: z.enum(EXCEPTION_SOURCE_TYPES).optional(), // chave idempotente das projeções
     sourceId: z.string().min(1).optional(),
+    // F-ESC-23 (C, emenda 4 corrigida em 97540313c): o feriado do calendário se desliga, não se apaga. A linha fica
+    // (fora do alcance da purga), o gate e a leitura a ignoram, e o sync não a recria. Só em `HOLIDAY_CALENDAR`.
+    disabled: z.boolean().optional(),
   })
   .strict()
   .superRefine((e, ctx) => {
+    if (e.disabled === true && e.origin !== 'HOLIDAY_CALENDAR') ctx.addIssue({ code: 'custom', path: ['disabled'], message: 'only HOLIDAY_CALENDAR is disabled' });
     if (e.employeeId && e.resourceId) ctx.addIssue({ code: 'custom', message: 'one target at most' });
     // Instantes comparam como instante, não como texto: offsets diferentes ordenam errado em string.
     if (Date.parse(e.endAt) <= Date.parse(e.startAt)) ctx.addIssue({ code: 'custom', path: ['endAt'], message: 'endAt <= startAt' });

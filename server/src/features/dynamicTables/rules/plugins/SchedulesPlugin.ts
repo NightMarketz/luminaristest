@@ -5,7 +5,8 @@
  *   sobreposição contra os padrões vivos dele (item 7).
  * - `scheduleShifts`: `dayOfCycle ≤ cycleLengthDays` do padrão-pai e a escala do alvo sem sobreposição (item 7).
  * - `scheduleExceptions`: contrato da linha; só o sistema grava `origin ≠ USER`; `HR` não se edita nem se apaga;
- *   `HOLIDAY_CALENDAR` se apaga (abrir no feriado), não se edita.
+ *   `HOLIDAY_CALENDAR` se desliga (`disabled: true`, abrir no feriado), não se edita nem se apaga (F-ESC-23, emenda 4
+ *   corrigida em 97540313c: a linha fica, fora do alcance da purga, e o sync não a recria).
  * - `units`: `timeZone` IANA validado por `Intl.supportedValuesOf('timeZone')`.
  *
  * Lê só DynamicTable pelo `ctx.repository` (AC-2.1-B1); a regra é a função pura de `features/scheduling/models`.
@@ -79,24 +80,52 @@ async function validateShift(ctx: RuleContext): Promise<void> {
 }
 
 // ------------------------------------------------------------------------------------- scheduleExceptions (item 15)
+/** As chaves do contrato que mudaram entre `before` e `after`, já normalizadas (`Date` × ISO não conta como mudança). */
+function changedExceptionKeys(before: Record<string, unknown>, after: Record<string, unknown>): string[] {
+  const b = normalizeExceptionData(before);
+  const a = normalizeExceptionData(after);
+  return [...new Set([...Object.keys(b), ...Object.keys(a)])].filter((k) =>
+    k === 'disabled' ? (b[k] === true) !== (a[k] === true) : JSON.stringify(b[k]) !== JSON.stringify(a[k]),
+  );
+}
+
+/**
+ * F-ESC-23: na linha `HOLIDAY_CALENDAR` o usuário só desliga o feriado (`disabled` de não-`true` para `true`). Qualquer
+ * outra mudança, e religar (pergunta de spec aberta à sessão de planejamento), é `EXCEPTION_READ_ONLY`.
+ */
+function assertHolidayOnlyDisabled(before: Record<string, unknown>, after: Record<string, unknown>): void {
+  const changed = changedExceptionKeys(before, after);
+  const turningOff = changed.length === 1 && changed[0] === 'disabled' && after.disabled === true;
+  if (changed.length > 0 && !turningOff) {
+    throw schedulingError('EXCEPTION_READ_ONLY', 'Feriado do calendário não se edita: só se desliga (disabled: true).', { origin: 'HOLIDAY_CALENDAR' });
+  }
+}
+
 async function validateExceptionWrite(ctx: RuleContext): Promise<void> {
   const before = ctx.before ?? null;
   if (before && !ctx.isSystem) {
     const origin = String(before.origin ?? 'USER');
-    if (origin === 'HR' || origin === 'HOLIDAY_CALENDAR') {
+    if (origin === 'HR') {
       throw schedulingError('EXCEPTION_READ_ONLY', 'Exceção projetada pelo sistema não se edita.', { origin });
     }
+    if (origin === 'HOLIDAY_CALENDAR') assertHolidayOnlyDisabled(before, ctx.after ?? {});
   }
   const e = parseOrThrow(scheduleExceptionSchema, normalizeExceptionData(ctx.after ?? {}), 'Exceção');
-  if (e.origin !== 'USER' && !ctx.isSystem) {
+  // Desligar o feriado (acima) não troca a origem: a regra pega quem cria ou muda uma linha para `origin ≠ USER`.
+  if (e.origin !== 'USER' && !ctx.isSystem && String(before?.origin ?? 'USER') !== e.origin) {
     throw schedulingError('EXCEPTION_READ_ONLY', 'Só o sistema grava exceção de feriado ou de afastamento.', { origin: e.origin });
   }
 }
 
 function assertExceptionDeletable(ctx: RuleContext): void {
   // O delete do motor não carrega `isSystem`: a projeção do DP apaga pelo repositório, fora deste gancho.
-  if (String(ctx.before?.origin ?? 'USER') === 'HR') {
+  const origin = String(ctx.before?.origin ?? 'USER');
+  if (origin === 'HR') {
     throw schedulingError('EXCEPTION_READ_ONLY', 'Afastamento projetado do DP não se apaga aqui; ajuste no DP.', { origin: 'HR' });
+  }
+  // F-ESC-23: apagada, a linha seria purgada em 90 dias e o sync recriaria o feriado. Ela se desliga.
+  if (origin === 'HOLIDAY_CALENDAR') {
+    throw schedulingError('EXCEPTION_READ_ONLY', 'Feriado do calendário não se apaga: desligue-o (disabled: true).', { origin });
   }
 }
 

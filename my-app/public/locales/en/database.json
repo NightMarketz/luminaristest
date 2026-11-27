@@ -136,6 +136,7 @@
         "reason": "Reason",
         "sourceType": "Source type",
         "sourceId": "Source id",
+        "disabled": "Disabled",
         "timeZone": "Time zone",
         "employeeId": "Employee",
         "startAt": "Start",

@@ -86,7 +86,15 @@ describe('HolidayExceptionService.sync (item 39)', () => {
     expect(effects.afterDataWrite).not.toHaveBeenCalled();
   });
 
-  it('o feriado que o usuário apagou não volta (a chave conta a linha apagada)', async () => {
+  it('F-ESC-23: o feriado que o usuário desligou não volta, e conta em deletedByUser', async () => {
+    const { service, store, writer } = setup();
+    await service.sync(user, { unitId: 'unit-1', year: 2027 });
+    store[0].data = { ...store[0].data, disabled: true }; // o usuário abriu a unidade no 01/01 (linha viva, desligada)
+    await expect(service.sync(user, { unitId: 'unit-1', year: 2027 })).resolves.toEqual({ created: 0, skipped: 1, deletedByUser: 1 });
+    expect(writer.createTableData).toHaveBeenCalledTimes(2);
+  });
+
+  it('dado de antes da emenda: o feriado apagado também não volta (a chave conta a linha apagada)', async () => {
     const { service, store, writer } = setup();
     await service.sync(user, { unitId: 'unit-1', year: 2027 });
     store[0].deleted = true; // o usuário abriu a unidade no 01/01

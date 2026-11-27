@@ -15,6 +15,7 @@ import { CoreSystemPreset } from '@/features/dynamicTables/presets';
 import { composeModuleTables } from '@/features/dynamicTables/presets/modules/registry';
 import { resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
 import { Role } from '@/features/users/models/User.model';
+import { purgeOldDeletedRecords } from '@/jobs/PurgeDeletedRecords';
 import type { UserContext } from '@/lib/authUtils';
 
 const app = makeApp();
@@ -79,7 +80,7 @@ describe('POST /api/scheduling/holidays/sync (itens 39 e 40)', () => {
     expect(await a.holidays()).toEqual([]);
   });
 
-  it('cria os feriados do ano no fuso da unidade; a 2ª rodada pula; o apagado pelo usuário não volta', async () => {
+  it('cria os feriados do ano no fuso da unidade; a 2ª rodada pula; o desligado pelo usuário não volta', async () => {
     const a = await owner('ownerA');
     const r1 = await sync(a.actor, { unitId: a.unitId, year: 2027 });
     expect(r1.status).toBe(200);
@@ -94,11 +95,37 @@ describe('POST /api/scheduling/holidays/sync (itens 39 e 40)', () => {
     const r2 = await sync(a.actor, { unitId: a.unitId, year: 2027 });
     expect(r2.body.data).toEqual({ created: 0, skipped: r1.body.data.created, deletedByUser: 0 });
 
-    // Item 15: o usuário apaga o feriado (abre a unidade). O sync seguinte não o recria.
-    await service.deleteTableData(ctxOf(a.id), newYear!.id);
+    // Item 15 / F-ESC-23: o usuário desliga o feriado (abre a unidade); apagar é recusado. O sync seguinte não o recria.
+    expect(await codeOf(service.deleteTableData(ctxOf(a.id), newYear!.id))).toBe('EXCEPTION_READ_ONLY');
+    await service.updateTableData(ctxOf(a.id), newYear!.id, { data: { disabled: true } } as never);
     const r3 = await sync(a.actor, { year: 2027 }); // sem unitId: todas as unidades vivas
     expect(r3.body.data).toEqual({ created: 0, skipped: r1.body.data.created - 1, deletedByUser: 1 });
-    expect((await a.holidays()).filter((r) => r.data.sourceId === `${a.unitId}:2027-01-01`)).toEqual([expect.objectContaining({ deleted: true })]);
+    expect((await a.holidays()).filter((r) => r.data.sourceId === `${a.unitId}:2027-01-01`)).toEqual([
+      expect.objectContaining({ deleted: false, data: expect.objectContaining({ disabled: true }) }),
+    ]);
+  });
+
+  it('F-ESC-23: desligar → purga de 90 dias → sync: o feriado não volta, e a agenda abre no dia', async () => {
+    const a = await owner('ownerA');
+    await a.schedule();
+    await sync(a.actor, { unitId: a.unitId, year: 2027 });
+    const newYear = (await a.holidays()).find((r) => r.data.sourceId === `${a.unitId}:2027-01-01`)!;
+    await service.updateTableData(ctxOf(a.id), newYear.id, { data: { disabled: true } } as never);
+    expect(await codeOf(a.book('2027-01-01T10:00:00-03:00', '2027-01-01T11:00:00-03:00'))).toBe('OK');
+
+    // A purga roda 100 dias depois. Na opção (B), a linha apagada sairia aqui e o sync a recriaria.
+    const now = Date.now();
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(now + 100 * 86_400_000);
+    const alert = jest.fn();
+    try {
+      await purgeOldDeletedRecords({ alert });
+    } finally {
+      clock.mockRestore();
+    }
+    expect(alert).not.toHaveBeenCalled(); // todos os passos da purga rodaram
+    const r = await sync(a.actor, { unitId: a.unitId, year: 2027 });
+    expect(r.body.data).toMatchObject({ created: 0, deletedByUser: 1 });
+    expect((await a.holidays()).filter((h) => h.data.sourceId === `${a.unitId}:2027-01-01`)).toHaveLength(1);
   });
 
   it('F-ESC-18: unidade sem fuso recebe o padrão da borda antes do feriado', async () => {
