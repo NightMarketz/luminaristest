@@ -91,3 +91,20 @@ export function toResourceRow(r: RawRow): ResourceRow {
 export const normalizeScheduleData = (d: Record<string, unknown>) => pick(d, SCHEDULE_KEYS);
 export const normalizeShiftData = (d: Record<string, unknown>) => pick(d, SHIFT_KEYS);
 export const normalizeExceptionData = (d: Record<string, unknown>) => pick(d, EXCEPTION_KEYS);
+
+/**
+ * Linhas vivas que passam no contrato; as que não passam ficam de fora: o SchedulesPlugin recusa na escrita, então só
+ * sobra dado antigo. Uma regra para o gate (motor) e para a leitura (`SchedulingRowRepository`, item 31).
+ */
+function validRows<T>(rows: Array<{ id: string; data: unknown }>, ok: (d: Record<string, unknown>) => boolean, map: (r: RawRow) => T): T[] {
+  return rows
+    .map((r): RawRow => ({ id: r.id, data: (r.data ?? {}) as Record<string, unknown> }))
+    .filter((r) => ok(r.data))
+    .map(map);
+}
+export const validScheduleRows = (rows: Array<{ id: string; data: unknown }>) =>
+  validRows(rows, (d) => scheduleSchema.safeParse(normalizeScheduleData(d)).success, toScheduleRow);
+export const validShiftRows = (rows: Array<{ id: string; data: unknown }>) =>
+  validRows(rows, (d) => scheduleShiftSchema.safeParse(normalizeShiftData(d)).success, toShiftRow);
+export const validExceptionRows = (rows: Array<{ id: string; data: unknown }>) =>
+  validRows(rows, (d) => scheduleExceptionSchema.safeParse(normalizeExceptionData(d)).success, toExceptionRow);
