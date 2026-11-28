@@ -77,11 +77,11 @@ describe('BE-INCR-LEGAL-PARAMS PR-1 — /api/legal-parameters', () => {
     expect([v.status, v.body.code]).toEqual([400, 'PARAMETRO_LEGAL_TABELA_DESCONHECIDA']);
   });
 
-  it('PAIS-NA-BORDA-F3 item 13 — GET /tabelas: o catálogo do registro, 50 itens com pais br; qualquer autenticado lê', async () => {
+  it('PAIS-NA-BORDA-F3 item 13 — GET /tabelas: o catálogo do registro, 53 itens (+3 da ponte PR-P0) com pais br; qualquer autenticado lê', async () => {
     expect((await request(app).get(`${BASE}/tabelas`)).status).toBe(401);
     const r = await request(app).get(`${BASE}/tabelas`).set(authHeader(USER));
     expect(r.status).toBe(200);
-    expect(r.body.data).toHaveLength(50);
+    expect(r.body.data).toHaveLength(53);
     expect((r.body.data as { pais: string }[]).every((t) => t.pais === 'br')).toBe(true);
     expect(r.body.data).toContainEqual({ tabela: 'INSS_EMPREGADO', dominio: 'dp', pais: 'br', tipoValor: 'json' });
   });

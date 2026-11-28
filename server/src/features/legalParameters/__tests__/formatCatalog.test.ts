@@ -18,7 +18,7 @@ describe('cobertura do catálogo (item 9)', () => {
     const registradas = LEGAL_PARAMETER_FORMATS.map((r) => r.table);
     expect(new Set(registradas).size).toBe(registradas.length);
     expect([...registradas].sort()).toEqual([...ACCOUNTING_LEGAL_TABLES, ...DP_LEGAL_TABLES].sort());
-    expect(registradas).toHaveLength(50);
+    expect(registradas).toHaveLength(53);
   });
 
   it('item 13 (F-F3-1 a): cada borda registra exatamente os nomes que o centro do seu domínio declara; o que o DP lê da contabilidade é dela', () => {
@@ -34,7 +34,7 @@ describe('cobertura do catálogo (item 9)', () => {
   it('dono de cada tabela (§5; F-F3-2 a) e país br', () => {
     const dono = (d: string) => registry.tables().filter((t) => t.domain === d).map((t) => t.table).sort();
     expect(dono('dp')).toEqual(
-      ['DP_CATEGORIA_ENCARGO', 'ESOCIAL_CATEGORIA', 'ESOCIAL_INCIDENCIA_RUBRICA', 'ESOCIAL_MOTIVO_AFASTAMENTO', 'ESOCIAL_NATUREZA_RUBRICA', 'ESOCIAL_TIPO_DEPENDENTE', 'FOLHA_REGRA', 'INSS_EMPREGADO'],
+      ['DP_CATEGORIA_ENCARGO', 'ESOCIAL_CATEGORIA', 'ESOCIAL_INCIDENCIA_RUBRICA', 'ESOCIAL_MOTIVO_AFASTAMENTO', 'ESOCIAL_NATUREZA_RUBRICA', 'ESOCIAL_TIPO_DEPENDENTE', 'FAP_LIMITES', 'FOLHA_REGRA', 'INSS_EMPREGADO', 'RAT_ALIQUOTA', 'TERCEIROS_FPAS'],
     );
     expect(dono('accounting')).toHaveLength(42);
     for (const t of ['FERIADO_NACIONAL', 'FERIADO_LOCAL', 'SALARIO_MINIMO', 'IRRF_PF_MENSAL', 'ENCARGO_FOLHA']) expect(dono('accounting')).toContain(t);

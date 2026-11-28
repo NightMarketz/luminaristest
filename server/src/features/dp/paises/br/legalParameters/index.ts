@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { LegalParameterFormatRegistration } from '../../../../legalParameters/models/formatRegistry';
 import { jsonOk, semDisc, so } from '../../../../legalParameters/models/formatHelpers';
 import { InssEmpregadoFaixaJson } from '../../../models/parametrosFolha';
+import { DP_BR_ENCARGOS_FORMATS } from './formatosEncargos';
 import { DpCategoriaEncargoJson, FOLHA_REGRA_CHAVES_INT, FOLHA_REGRA_CHAVES_TEXTO, type FolhaRegraChaveInt, type FolhaRegraChaveTexto } from '../../../models/regrasFolha';
 
 /**
@@ -104,4 +105,6 @@ export const DP_BR_LEGAL_PARAMETER_FORMATS: readonly LegalParameterFormatRegistr
       so(/^\d{3}$/.test(l.chave) && semDisc(l), 'chave = categoria de 3 dígitos, sem discriminador') ??
       jsonOk(DpCategoriaEncargoJson, l.valorJson, "valorJson = { inss: EMPREGADO|CONTRIBUINTE_INDIVIDUAL|NENHUM, fgtsChave: FGTS_BP|FGTS_APRENDIZ_BP|null, irrf: boolean }"),
   },
+  // BE-INCR-DP-PONTE-RAZAO PR-P0 itens 1–3: tabelas de lei da CPP patronal fora do DAS.
+  ...DP_BR_ENCARGOS_FORMATS,
 ];

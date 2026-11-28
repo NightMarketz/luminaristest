@@ -22,6 +22,12 @@ export const DP_LEGAL_TABLES = [
   // BE-INCR-DP-F2 PR-1 (item 13): Tabela 07 do eSocial (tipos de dependente), no padrão do D-8 do F0+F1. Consumidor =
   // features/dp/services/DpDependenteService.ts.
   'ESOCIAL_TIPO_DEPENDENTE',
+  // BE-INCR-DP-PONTE-RAZAO PR-P0 (nó PES-4, itens 1–3): o que a CPP patronal fora do DAS lê além da ENCARGO_FOLHA —
+  // alíquota do RAT por grau (Lei 8.212 art. 22 II), limites do FAP (Lei 10.666 art. 10) e terceiros por FPAS (IN RFB
+  // 2.110 Anexo III). Consumidor = features/dp/paises/br/models/folha/cpp.ts.
+  'RAT_ALIQUOTA',
+  'FAP_LIMITES',
+  'TERCEIROS_FPAS',
 ] as const;
 
 /**
