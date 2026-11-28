@@ -41,6 +41,15 @@ export function stripCnpjMask(raw: string): string {
   return raw.replace(/[./\-\s]/g, '').toUpperCase();
 }
 
+/**
+ * Máscara de exibição `XX.XXX.XXX/XXXX-XX` de um CNPJ na forma canônica (`CNPJ_REGEX`); fora dela, devolve o valor como veio.
+ * `'12ABC34501DE35'` → `'12.ABC.345/01DE-35'`. Para mensagem, não para gravar (o banco guarda sem máscara).
+ */
+export function formatCnpj(cnpj: string): string {
+  if (!CNPJ_REGEX.test(cnpj)) return cnpj;
+  return `${cnpj.slice(0, 2)}.${cnpj.slice(2, 5)}.${cnpj.slice(5, 8)}/${cnpj.slice(8, 12)}-${cnpj.slice(12)}`;
+}
+
 /** Valor de uma posição: código ASCII − 48 (vale para dígitos e para A–Z). */
 function charValue(ch: string): number {
   return ch.charCodeAt(0) - 48;

@@ -10,6 +10,7 @@ import {
   CPF_REGEX,
   NFE_CHAVE_REGEX,
   cnpjCheckDigits,
+  formatCnpj,
   isValidCnpj,
   isValidNfeChave,
   nfeChaveCheckDigit,
@@ -97,5 +98,14 @@ describe('nfeChaveCheckDigit / isValidNfeChave (comportamento 4)', () => {
 
   it('lança Error (programação) se não receber 43 posições', () => {
     expect(() => nfeChaveCheckDigit('123')).toThrow(Error);
+  });
+});
+
+describe('formatCnpj (BE-INCR-DP-PONTE-RAZAO item 9: CNPJ formatado na pendência)', () => {
+  it('máscara XX.XXX.XXX/XXXX-XX no alfanumérico e no numérico; fora da forma canônica, devolve como veio', () => {
+    expect(formatCnpj('12ABC34501DE35')).toBe('12.ABC.345/01DE-35');
+    expect(formatCnpj('11222333000181')).toBe('11.222.333/0001-81');
+    expect(formatCnpj('12.ABC.345/01DE-35')).toBe('12.ABC.345/01DE-35');
+    expect(formatCnpj('123')).toBe('123');
   });
 });

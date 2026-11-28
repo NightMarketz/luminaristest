@@ -71,3 +71,38 @@ describe('PR-P0 itens 1–3 — formatos', () => {
     expect(erroDeFormato({ tabela: 'TERCEIROS_FPAS', chave: '51', valorJson: fpas515 })).toMatch(/3 dígitos/);
   });
 });
+
+describe('PR-P1 item 7 — enquadramento por CNPJ (formato e checagem contra a tabela de lei)', () => {
+  const CNPJ = '12ABC34501DE35';
+  const TERCEIROS_515: LinhaLegal = {
+    id: 'teste-fpas-515', tabela: 'TERCEIROS_FPAS', chave: '515', discriminador: null, valorInt: null, valorTexto: null,
+    valorJson: JSON.stringify({ entidades: { '0001': 250, '0064': 60 }, totalBp: 310 }), fonte: 'teste', vigenteDesde: '2022-10-19', vigenteAte: null, status: 'PUBLISHED', supersedesId: null,
+  };
+  const deps = { rowsOf: (t: string) => [...LINHAS, TERCEIROS_515].filter((l) => l.tabela === t) };
+
+  it('RAT_GRAU_ESTABELECIMENTO: chave = CNPJ com DV, grau 1..3 com linha em RAT_ALIQUOTA em toda a vigência', () => {
+    expect(erroDeFormato({ tabela: 'RAT_GRAU_ESTABELECIMENTO', chave: CNPJ, valorInt: 2, vigenteDesde: '2026-01-01' }, deps)).toBeNull();
+    expect(erroDeFormato({ tabela: 'RAT_GRAU_ESTABELECIMENTO', chave: '12ABC34501DE36', valorInt: 2 })).toMatch(/DV válido/);
+    expect(erroDeFormato({ tabela: 'RAT_GRAU_ESTABELECIMENTO', chave: CNPJ, valorInt: 4 })).toMatch(/grau 1\.\.3/);
+    expect(erroDeFormato({ tabela: 'RAT_GRAU_ESTABELECIMENTO', chave: CNPJ, valorInt: 2, vigenteDesde: '1998-01-01' }, deps)).toMatch(/RAT_ALIQUOTA sem GRAU_2 em vigor \(em 1998-01-01\)/);
+  });
+
+  it('FAP_ESTABELECIMENTO: vigência anual, fim obrigatório e FAP entre os FAP_LIMITES vigentes', () => {
+    const ok = { tabela: 'FAP_ESTABELECIMENTO', chave: CNPJ, valorInt: 12_345, vigenteDesde: '2026-01-01', vigenteAte: '2026-12-31' };
+    expect(erroDeFormato(ok, deps)).toBeNull();
+    expect(erroDeFormato({ ...ok, valorInt: 20_001 }, deps)).toMatch(/FAP 20001 fora de 5000\.\.20000/);
+    expect(erroDeFormato({ ...ok, vigenteDesde: '2026-02-01' })).toMatch(/1º de janeiro/);
+    expect(erroDeFormato({ ...ok, vigenteAte: '2027-12-31' })).toMatch(/31 de dezembro do mesmo ano/);
+    const registry = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]);
+    expect(registry.endRequiredError({ tabela: 'FAP_ESTABELECIMENTO', chave: CNPJ, vigenteAte: null })).toMatch(/vigenteAte é obrigatório/);
+  });
+
+  it('FPAS_EMPRESA: chave = raiz de 8 posições, valorTexto = FPAS com linha em TERCEIROS_FPAS, valorJson opcional', () => {
+    const ok = { tabela: 'FPAS_EMPRESA', chave: CNPJ.slice(0, 8), valorTexto: '515', vigenteDesde: '2026-01-01' };
+    expect(erroDeFormato(ok, deps)).toBeNull();
+    expect(erroDeFormato({ ...ok, valorJson: { codigoTerceiros: '0115' } }, deps)).toBeNull();
+    expect(erroDeFormato({ ...ok, valorJson: { codigoTerceiros: '115' } })).toMatch(/codigoTerceiros/);
+    expect(erroDeFormato({ ...ok, chave: CNPJ })).toMatch(/raiz do CNPJ/);
+    expect(erroDeFormato({ ...ok, valorTexto: '999' }, deps)).toMatch(/TERCEIROS_FPAS sem a linha do FPAS 999/);
+  });
+});

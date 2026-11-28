@@ -18,7 +18,7 @@ describe('cobertura do catálogo (item 9)', () => {
     const registradas = LEGAL_PARAMETER_FORMATS.map((r) => r.table);
     expect(new Set(registradas).size).toBe(registradas.length);
     expect([...registradas].sort()).toEqual([...ACCOUNTING_LEGAL_TABLES, ...DP_LEGAL_TABLES].sort());
-    expect(registradas).toHaveLength(53);
+    expect(registradas).toHaveLength(56);
   });
 
   it('item 13 (F-F3-1 a): cada borda registra exatamente os nomes que o centro do seu domínio declara; o que o DP lê da contabilidade é dela', () => {
@@ -34,7 +34,7 @@ describe('cobertura do catálogo (item 9)', () => {
   it('dono de cada tabela (§5; F-F3-2 a) e país br', () => {
     const dono = (d: string) => registry.tables().filter((t) => t.domain === d).map((t) => t.table).sort();
     expect(dono('dp')).toEqual(
-      ['DP_CATEGORIA_ENCARGO', 'ESOCIAL_CATEGORIA', 'ESOCIAL_INCIDENCIA_RUBRICA', 'ESOCIAL_MOTIVO_AFASTAMENTO', 'ESOCIAL_NATUREZA_RUBRICA', 'ESOCIAL_TIPO_DEPENDENTE', 'FAP_LIMITES', 'FOLHA_REGRA', 'INSS_EMPREGADO', 'RAT_ALIQUOTA', 'TERCEIROS_FPAS'],
+      ['DP_CATEGORIA_ENCARGO', 'ESOCIAL_CATEGORIA', 'ESOCIAL_INCIDENCIA_RUBRICA', 'ESOCIAL_MOTIVO_AFASTAMENTO', 'ESOCIAL_NATUREZA_RUBRICA', 'ESOCIAL_TIPO_DEPENDENTE', 'FAP_ESTABELECIMENTO', 'FAP_LIMITES', 'FOLHA_REGRA', 'FPAS_EMPRESA', 'INSS_EMPREGADO', 'RAT_ALIQUOTA', 'RAT_GRAU_ESTABELECIMENTO', 'TERCEIROS_FPAS'],
     );
     expect(dono('accounting')).toHaveLength(42);
     for (const t of ['FERIADO_NACIONAL', 'FERIADO_LOCAL', 'SALARIO_MINIMO', 'IRRF_PF_MENSAL', 'ENCARGO_FOLHA']) expect(dono('accounting')).toContain(t);
@@ -64,11 +64,12 @@ describe('fallback do PR-1 vira registração explícita (item 4)', () => {
     }
   });
 
-  it('fim obrigatório (lacuna 03e4, F-F3-6 a): PIS_COFINS inteira e ISS_LIMITE/ALIQUOTA_MAX_BP, declarados pela contabilidade', () => {
+  it('fim obrigatório (lacuna 03e4, F-F3-6 a): PIS_COFINS inteira e ISS_LIMITE/ALIQUOTA_MAX_BP, declarados pela contabilidade; FAP_ESTABELECIMENTO, pelo DP', () => {
     expect(registry.endRequiredError({ tabela: 'PIS_COFINS', chave: 'COFINS', vigenteAte: null })).toMatch(/^PIS_COFINS\/COFINS: vigenteAte é obrigatório/);
     expect(registry.endRequiredError({ tabela: 'ISS_LIMITE', chave: 'ALIQUOTA_MAX_BP', vigenteAte: null })).toMatch(/^ISS_LIMITE\/ALIQUOTA_MAX_BP: vigenteAte é obrigatório/);
     expect(registry.endRequiredError({ tabela: 'ISS_LIMITE', chave: 'ALIQUOTA_MIN_BP', vigenteAte: null })).toBeNull();
     const comFim = LEGAL_PARAMETER_FORMATS.filter((r) => r.endRequired).map((r) => r.table).sort();
-    expect(comFim).toEqual(['ISS_LIMITE', 'PIS_COFINS']);
+    // DP-PONTE-RAZAO PR-P1 item 7: o FAP do estabelecimento vale por ano (Dec. 3.048 art. 202-A), então publica o fim.
+    expect(comFim).toEqual(['FAP_ESTABELECIMENTO', 'ISS_LIMITE', 'PIS_COFINS']);
   });
 });
