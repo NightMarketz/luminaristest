@@ -27,6 +27,8 @@ Orquestra a geração de TODOS os átomos de um novo recurso, do Prisma ao front
 
 Esta skill gera múltiplas camadas — TODO arquivo gerado deve cumprir `.claude/skills/_ARCHITECTURE-CONTRACT.md` (camadas, DI, soft-delete, policy-first, registro de rota = 2 toques com auth deny-by-default, no-`any`, frontend service layer, reuse de canônicos, design system, testes). O contrato é o gate final; as sub-skills herdam-no.
 
+> **Fronteira entre features (Contrato §2, `npm run check:arch`):** toda peça gerada mora em pasta de camada (`services/`, `repositories/`, `policies/`, `models/`, `dtos/`, `domain/` para lógica pura, `ports/` e `adapters/` para o que é externo); import de outra feature só por `features/<x>/public/`, criando o arquivo em `public/` da feature alvo quando ele não existe. No frontend, import de outra feature só por `my-app/features/<x>/public/` (regra `U9`, `cd my-app && npm run check:arch`); se o arquivo não existe, crie-o em `public/` da feature alvo no mesmo PR.
+
 ## Regras de composição (gated) — esta skill COMPÕE, não duplica os contratos-filhos
 
 São as regras próprias da camada de orquestração. O **texto** de cada contrato-filho (DTO/Repo/Policy/…) é

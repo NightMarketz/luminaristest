@@ -36,6 +36,7 @@ Cada item abaixo é uma REGRA DE GERAÇÃO (o `luminaris-reviewer` cobra exatame
 - [ ] **[REPO-007]** **Tipos Prisma de `'generated/prisma'`** (`import { Prisma } from 'generated/prisma'`) — NUNCA `@prisma/client` (output path customizado).
 - [ ] Ordenação padrão `orderBy: { createdAt: 'desc' }`.
 - [ ] Métodos obrigatórios: `create`, `findById`, `findAll`, `update`, `delete`.
+- [ ] **Import de outra feature só por `features/<x>/public/`** (Contrato §2; regras `M1`/`M1a` do `npm run check:arch`): nunca `repositories/`, `services/`, `models/` ou `dtos/` de outra feature. Se a porta não existe, crie o arquivo em `public/` da feature **alvo** no mesmo PR (tipo em `public/<nome>.types.ts`, função ou porta em `public/<nome>.ts`; `public/` não reexporta `repositories/` — regra `M3`).
 
 ## When to use
 

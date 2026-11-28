@@ -44,6 +44,7 @@ Cada item abaixo é uma REGRA DE GERAÇÃO (o `luminaris-reviewer` cobra exatame
 
 - [ ] **[DTO-005]** `export interface I<Resource>` com `id`, `userId`, campos do domínio, `createdAt: Date`, `updatedAt: Date`, `deletedAt?: Date`.
 - [ ] Enums locais do domínio declarados aqui (não em `@prisma/client`).
+- [ ] **De outra feature, só o tipo, por `features/<x>/public/<nome>.types.ts`** (Contrato §2; regras `M1` e `L6` do `npm run check:arch`): model e dto não importam `public/<nome>.ts` (porta executável), `repositories/` nem `services/` de outra feature. Se o arquivo de tipo não existe, crie-o em `public/` da feature **alvo** no mesmo PR.
 
 ## When to use
 

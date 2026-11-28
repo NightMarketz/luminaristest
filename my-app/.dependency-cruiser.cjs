@@ -55,6 +55,23 @@ module.exports = {
       from: {},
       to: { circular: true },
     },
+    // ---- fronteira entre features — ADR-MODULE-BOUNDARIES §10 (ligadas em 24/11/2026, PR-2 do BRIEF) ----
+    {
+      name: 'U8-components-no-domain-service',
+      severity: 'error',
+      comment:
+        'components/ é só o visual: recebe dado e ação por props ou contexto, não chama lib/services/. A lógica ' +
+        '(container) mora em features/<x>/ (BRIEF MODULE-BOUNDARIES §7.2).',
+      from: { path: '^components/', pathNot: TEST },
+      to: { path: '^lib/services/' },
+    },
+    {
+      name: 'U9-cross-feature-via-public',
+      severity: 'error',
+      comment: 'Import de outra feature só por features/<x>/public/.',
+      from: { path: '^features/([^/]+)/', pathNot: TEST },
+      to: { path: '^features/[^/]+/', pathNot: ['^features/$1/', '^features/[^/]+/public/'] },
+    },
   ],
   options: {
     doNotFollow: { path: ['node_modules'] },

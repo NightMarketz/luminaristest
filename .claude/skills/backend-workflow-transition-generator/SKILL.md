@@ -77,6 +77,8 @@ server/src/features/dynamicTables/repositories/IDynamicTableRepository.ts ← fi
 - [ ] Rota: 2 toques (index + OpenAPI); zero edição em `auth.ts` (deny-by-default)
 - [ ] Factory: serviço registrado após deps; getter exposto
 - [ ] Teste: `buildService`, atomicidade (`runInTransaction` 1x), cross-tenant `NotFoundError`
+- [ ] **Import de outra feature só por `features/<x>/public/`** (Contrato §2; regras `M1`/`M1a` do `npm run check:arch`): nunca `repositories/`, `services/`, `models/` ou `dtos/` de outra feature. Se a porta não existe, crie o arquivo em `public/` da feature **alvo** no mesmo PR (tipo em `public/<nome>.types.ts`, função ou porta em `public/<nome>.ts`; `public/` não reexporta `repositories/` — regra `M3`).
+- [ ] **Peça de feature mora em pasta de camada** (Contrato §2): lógica pura (cálculo, mapeamento, tabela) vai em `domain/` e não importa repository, service nem Prisma (regra `D2`); interface do que é externo à feature vai em `ports/` e a implementação em `adapters/`. Nada de arquivo solto nem pasta nova na raiz da feature.
 
 ## Files usually created or changed
 
