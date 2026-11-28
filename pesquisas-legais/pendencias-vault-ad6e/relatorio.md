@@ -23,7 +23,8 @@ linha, na coluna "Estado" daquele relatório (26/11). Resumo:
   - `L-20261127-005504-79dc`: o bloco socioeconômico do art. 38-B no PGDAS-D, a partir do AC 2027, não existe no produto.
     A mensagem do código diz "aguarda regulamentação", o que é falso desde a Res. 190.
   - `L-20261127-005539-e917`: o corpus local da Res. CGSN 140 parou na Res. 183.
-- **Seis achados ficam só descritos**, porque a caixa recusa filha fora da meta (D-2026-11-25 §8b). Estão no §5.
+- **Seis achados foram à caixa sem `--pai`** (dono, 27/11). Com `--pai` a caixa os recusava como filhos fora da meta
+  (D-2026-11-25 §8b). Estão no §5.
 - **Não sobra ambiguidade para o contador.** A A1 da DEFIS de 2026 foi respondida por lei (art. 144-F). A A1 do combo foi
   respondida em 21/10.
 
@@ -117,34 +118,39 @@ Nenhuma nova.
   documentos do corpus não foram reconferidos: o `--forcar` reescreve `.txt` versionados e o MANIFEST, então vai em PR
   próprio.
 
-**Só descritos** (a caixa recusou ou recusaria: filha fora da meta, D-2026-11-25 §8b):
-1. **`~/.claude/tools/pesquisa-legal/legal.py:83-84`** (defeito·engenharia·G3·E2·ruidoso·verificado, P2; `add`
-   recusado).
+**Na caixa sem `--pai`** (dono, 27/11). Com `--pai`, a caixa recusava cada um como filho fora da meta (D-2026-11-25 §8b).
+Os eixos abaixo são os gravados; a prioridade é a que a caixa derivou:
+1. **`~/.claude/tools/pesquisa-legal/legal.py:83-84`**: `L-20261128-000742-8085` (defeito·engenharia·G3·E2·ruidoso·
+   verificado, P2). A mesma sessão deve pegar a 04ca e a 0a90, que estão no mesmo arquivo.
    - **Defeito:** o `baixar` não guarda cookie. Por isso o portal da NF-e entra em laço (`AspxAutoDetectCookieSupport`).
    - **Prova:** com cookie jar, o curl recebe 200 depois de 1 redirect.
    - **Falta também:** um modo de achar o idAto de um ato da RFB por tipo, número e ano. O portal novo devolve o idAto num
      POST a `/api/indexacao/ato/pesquisar`.
    - **Correção:** `urllib.request.build_opener(HTTPCookieProcessor())` e um comando de busca.
-2. **`my-app/features/accounting/components/CatalogCombobox.tsx:106`** (defeito·produto·G3·E3·ruidoso·verificado, P2).
+2. **`my-app/features/accounting/components/CatalogCombobox.tsx:106`**: `L-20261128-000744-c5a6`
+   (defeito·produto·G3·E3·ruidoso·verificado, P2).
    - **Defeito:** quem digita o código antes de o catálogo carregar recebe "não encontrado", e o valor é limpo.
    - **Origem:** achado de produção "relatado" na nota de 30/09 e não registrado desde então.
    - **Correção:** `commitText` não decide com `loading` verdadeiro, e o input fica `readOnly` enquanto carrega.
-3. **`my-app/features/accounting/components/__tests__/LalurEntryModal.test.tsx:119`** (débito·engenharia·G4·inferido,
-   P3).
+3. **`my-app/features/accounting/components/__tests__/LalurEntryModal.test.tsx:119`**: `L-20261128-000745-4c87`
+   (defeito·engenharia·G4·E4·silencioso·inferido, P3).
    - **Defeito:** o caso "matrix…" assere `toBeDisabled` ("histórico missing") sem precondição de `toBeEnabled` com o
      histórico preenchido. Pode passar vácuo, como o "switching the tributo" passava antes do #434.
-4. **A1 da DEFIS de 2026 ainda "aberta" em três documentos** (débito·fiscal·G4·E1·verificado, P3):
+4. **A1 da DEFIS de 2026 ainda "aberta" em três documentos**: `L-20261128-000748-2ff3`
+   (débito·fiscal·G4·E2·silencioso·verificado, P2 fiscal: entra na meta):
    - `docs/accounting/BE-INCR-SIMPLES-DEFIS-MANUAL-brief.md:149`;
    - `docs/accounting/BE-INCR-SIMPLES-NACIONAL-brief.md:284`;
    - `docs/accounting/PEDIDO-CONTADOR-2026-10-17-AMBIGUIDADES.md:23`.
    - O art. 144-F responde. O item 5 do BRIEF #1436 só troca a `fonte` da semente. Sem a correção, a pergunta pode voltar
      ao pacote do contador.
-5. **`my-app/features/accounting/components/LalurPanel.tsx:107-108`** (débito·engenharia·G4·inferido, P3).
+5. **`my-app/features/accounting/components/LalurPanel.tsx:107-108`**: `L-20261128-000751-6bef`
+   (defeito·produto·G4·E3·silencioso·inferido, P2).
    - **Defeito possível:** a nota de 30/09 relatou um latente no "loader do padrão" sem `cancelled`, que deixa uma
      resposta em voo depois do teardown do jsdom.
    - **Estado em 26/11:** só o loader do catálogo tem `cancelled` (`:124-138`). `fetchEntries` e `fetchParteB` não têm. A
      nota não diz qual loader era, então ele não foi identificado.
-6. **`docs/accounting/BE-INCR-EFICIENCIA-FISCAL-brief.md:302`** (G5, estilo): o item 28 ainda diz "valor 2026 não
+6. **`docs/accounting/BE-INCR-EFICIENCIA-FISCAL-brief.md:302`**: `L-20261128-000754-d421` (débito·fiscal·G5, fora da
+   contagem): o item 28 ainda diz "valor 2026 não
    conferido". O §6 do mesmo BRIEF (P-EF-8) registra o valor conferido em 27/10.
 
 **Não achado:** SC Cosit ou acórdão CARF sobre rateio de desconto em kit/combo. A busca foi feita em 20–21/10
