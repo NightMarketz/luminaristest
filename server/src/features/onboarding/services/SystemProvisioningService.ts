@@ -12,7 +12,6 @@ import { UpsertFiscalProfileSchema } from '../../accounting/dtos/FiscalProfileDt
 import type { FiscalProfileService } from '../../accounting/services/FiscalProfileService';
 import { deriveUnitFiscalProfile } from './deriveUnitFiscalProfile';
 import type { ObrigacaoResolvida } from '../../accounting/models/obrigacoesPorRegime';
-import { scopeToday } from '../../accounting/models/dates';
 import { resolveAccountingScopeInternal } from '../../accounting/scope/resolveAccountingScopeInternal';
 import type { IActionProposalRepository } from '../../chat/repositories/IActionProposalRepository';
 import type { IKnowledgeGraphRepository } from '../../chat/repositories/IKnowledgeGraphRepository';
@@ -224,7 +223,7 @@ export class SystemProvisioningService implements ISystemProvisioningService {
     try {
       const input = UpsertCompanyFiscalProfileSchema.parse({ unitId, regime, grandePorte: fiscal.grandePorte ?? null });
       const perfil = await this.companyFiscalProfile.upsert(scope, ano, input);
-      return { status: 'criado', ano, obrigacoes: await this.companyFiscalProfile.resolverObrigacoesEm(scopeToday(scope), { regime, inativa: perfil.inativa, condicoes: perfil.condicoes }) };
+      return { status: 'criado', ano, obrigacoes: await this.companyFiscalProfile.resolverObrigacoesEm(scope, ano, { regime, inativa: perfil.inativa, condicoes: perfil.condicoes, inicioAtividadeEm: perfil.inicioAtividadeEm }) };
     } catch (error) {
       logger.error(`Onboarding: falha ao criar o perfil fiscal da empresa do usuário ${ctx.userId} — compensando.`, { error });
       throw await this.compensate(ctx, error, {

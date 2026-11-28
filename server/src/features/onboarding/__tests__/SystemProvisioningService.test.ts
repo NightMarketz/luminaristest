@@ -80,7 +80,10 @@ function build(opts: {
       return { inativa: false, condicoes: {} };
     }),
     // BE-INCR-LEGAL-PARAMS PR-2: a matriz vem do serviço da contabilidade (fotografia OBRIGACAO_REGIME) — aqui, a semente.
-    resolverObrigacoesEm: jest.fn(async (_data: string, perfil: PerfilParaObrigacoes) => resolverObrigacoes(perfil, MATRIZ_OBRIGACOES_SEMENTE)),
+    // L-7694: assinatura (scope, ano, perfil) — a condição derivada é do serviço; o novo usuário não tem perfil anterior (null).
+    resolverObrigacoesEm: jest.fn(async (_scope: unknown, _ano: number, perfil: Omit<PerfilParaObrigacoes, 'derivadas'>) =>
+      resolverObrigacoes({ ...perfil, derivadas: { ingressoComReceitasAnteriores: null } }, MATRIZ_OBRIGACOES_SEMENTE),
+    ),
   };
   const unitFiscal = {
     upsert: jest.fn(async () => {

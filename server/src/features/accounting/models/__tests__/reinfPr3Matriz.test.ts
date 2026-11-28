@@ -51,8 +51,9 @@ describe('item 20 — REINF na matriz', () => {
     expect(reinf('REAL', '2025-01-01')?.status).toBe('CONDICIONAL');
   });
 
-  it('vai no fim da ordem da matriz', () => {
-    expect(ORDEM_OBRIGACOES[ORDEM_OBRIGACOES.length - 1]).toBe('REINF');
+  // L-7694: RECEITAS_ANTERIORES_OPCAO (só SIMPLES) entrou depois da REINF — mudança esperada, não regressão.
+  it('vai no fim da ordem da matriz (antes só da RECEITAS_ANTERIORES_OPCAO, L-7694)', () => {
+    expect(ORDEM_OBRIGACOES.slice(-2)).toEqual(['REINF', 'RECEITAS_ANTERIORES_OPCAO']);
     const real = resolverObrigacoes({ regime: 'REAL', inativa: false, condicoes }, matrizObrigacoesDe(todas, '2027-01-01'));
     expect(real.map((o) => o.obrigacao).slice(-2)).toEqual(['IBS_CBS_APURACAO', 'REINF']);
   });

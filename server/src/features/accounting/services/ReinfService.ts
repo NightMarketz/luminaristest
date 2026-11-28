@@ -361,6 +361,8 @@ export class ReinfService {
         regime,
         inativa: perfil.inativa,
         condicoes: { aporteInvestidorAnjo: perfil.aporteInvestidorAnjo, livroCaixaSemEscrituracao: perfil.livroCaixaSemEscrituracao, distribuicaoAcimaBase: perfil.distribuicaoAcimaBase },
+        // L-7694: só a ECD importa aqui, e ela não lê condição derivada — `null` (não sei), nunca "não sujeito".
+        derivadas: { ingressoComReceitasAnteriores: null },
       },
       matrizObrigacoesDe(tabelas, `${competencia}-01`),
     ).filter((o) => o.obrigacao === 'ECD');

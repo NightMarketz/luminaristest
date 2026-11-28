@@ -10,7 +10,10 @@
  *
  * O caso é o inequívoco: perfil de 2026 PRESUMIDO, perfil de 2027 SIMPLES, consulta em 28/12/2026 (entre os dois prazos).
  */
-import { LEGAL_PARAMS_SEED_FILES, SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
+import fs from 'fs';
+import path from 'path';
+import { LEGAL_PARAMS_SEED_FILES, SIMPLES_SEED_FILES, SIMPLES_SEED_FILE_RECEITAS_ANTERIORES, legalParamsSeedRows } from '@test/helpers/legalParams';
+import { ObrigacaoRegimeJson } from '../../../legalParameters/models/formatoLinha';
 import { linhasEmVigor, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import { CompanyFiscalProfileService } from '../CompanyFiscalProfileService';
@@ -74,5 +77,70 @@ describe('L-7694 — Receitas Anteriores à Opção no calendário (Res. CGSN 14
         expect.objectContaining({ competenciaDe: '2026-12', competenciaAte: '2026-12', prazo: '2027-01-20' }),
       ]),
     });
+  });
+
+  // ── Ramos do art. 144-D (correção da L-7694) ─────────────────────────────────────────────────────────────────────────
+  it('sem perfil de 2026 ⇒ CONDICIONAL com a pergunta (falta o dado de entrada; nunca "não sujeito"), com os prazos', async () => {
+    const o = await receitasAnteriores({ 2027: perfil(2027, 'SIMPLES') }, 2027);
+    expect(o).toMatchObject({ status: 'CONDICIONAL', perguntaPendente: expect.stringMatching(/todo o ano de 2026/), entregas: expect.any(Array) });
+  });
+
+  it('Simples o ano inteiro de 2026 ⇒ NAO_SE_APLICA, sem prazos', async () => {
+    const o = await receitasAnteriores({ 2026: perfil(2026, 'SIMPLES'), 2027: perfil(2027, 'SIMPLES') }, 2027);
+    expect(o).toEqual({ obrigacao: 'RECEITAS_ANTERIORES_OPCAO', status: 'NAO_SE_APLICA', fonte: expect.stringMatching(/art\. 144-D/), faltantes: [] });
+  });
+
+  it('MEI em 2026 ⇒ OBRIGATORIA (inciso II: desenquadramento do Simei)', async () => {
+    expect((await receitasAnteriores({ 2026: perfil(2026, 'MEI'), 2027: perfil(2027, 'SIMPLES') }, 2027))?.status).toBe('OBRIGATORIA');
+  });
+
+  it('Simples em 2026 com exclusão de efeitos no meio do ano ⇒ OBRIGATORIA (inciso I "b")', async () => {
+    const o = await receitasAnteriores({ 2026: perfil(2026, 'SIMPLES', { simplesExclusaoEfeitosEm: '2026-07-01' }), 2027: perfil(2027, 'SIMPLES') }, 2027);
+    expect(o?.status).toBe('OBRIGATORIA');
+  });
+
+  it('início de atividade em 2026 no Simples, nele até 31/12 ⇒ NAO_SE_APLICA (§ 1º)', async () => {
+    const o = await receitasAnteriores({ 2026: perfil(2026, 'SIMPLES', { inicioAtividadeEm: '2026-05-10' }), 2027: perfil(2027, 'SIMPLES') }, 2027);
+    expect(o?.status).toBe('NAO_SE_APLICA');
+  });
+
+  it('início de atividade em 2027 depois de 01/01 ⇒ NAO_SE_APLICA (opção não produz efeitos em 01/01/2027)', async () => {
+    expect((await receitasAnteriores({ 2027: perfil(2027, 'SIMPLES', { inicioAtividadeEm: '2027-03-01' }) }, 2027))?.status).toBe('NAO_SE_APLICA');
+  });
+
+  it('inativa em 2027 vinda do Presumido ⇒ OBRIGATORIA (a norma não distingue a inativa: segueCondicoes)', async () => {
+    expect((await receitasAnteriores({ 2026: perfil(2026, 'PRESUMIDO'), 2027: perfil(2027, 'SIMPLES', { inativa: true }) }, 2027))?.status).toBe('OBRIGATORIA');
+  });
+
+  it('perfil de 2026 (Simples) não recebe a obrigação: o ingresso é o de 01/01/2027', async () => {
+    expect((await receitasAnteriores({ 2025: perfil(2025, 'PRESUMIDO'), 2026: perfil(2026, 'SIMPLES') }, 2026))?.status).toBe('NAO_SE_APLICA');
+  });
+
+  it('depois do último prazo (21/01/2027) a linha sai da matriz', async () => {
+    jest.setSystemTime(new Date('2027-01-21T15:00:00.000Z'));
+    try {
+      const view = await servico({ 2026: perfil(2026, 'PRESUMIDO'), 2027: perfil(2027, 'SIMPLES') }).obligations(scope, 2027);
+      expect(view.obrigacoes.map((o) => o.obrigacao)).not.toContain('RECEITAS_ANTERIORES_OPCAO');
+    } finally {
+      jest.setSystemTime(new Date('2026-12-28T15:00:00.000Z'));
+    }
+  });
+});
+
+describe('L-7694 — semente da linha', () => {
+  const norm = (s: string) => s.replace(/\r\n/g, '\n');
+  const raiz = path.resolve(__dirname, '../../../../..');
+  it('o migration.sql carrega o texto do arquivo de dado, byte a byte, e só insere', () => {
+    const mig = norm(fs.readFileSync(path.join(raiz, 'prisma/migrations/20261127190000_seed_receitas_anteriores_opcao/migration.sql'), 'utf8'));
+    expect(mig).toContain(norm(fs.readFileSync(SIMPLES_SEED_FILE_RECEITAS_ANTERIORES, 'utf8')).trimEnd());
+    expect(mig.split('\n').filter((l) => l.trim() && !l.startsWith('--')).every((l) => l.startsWith('INSERT OR IGNORE INTO "legal_parameters" '))).toBe(true);
+  });
+  it('uma linha SIMPLES, vigente de 24/11/2026 (Res. CGSN 196 art. 4º) a 20/01/2027 (art. 144-E II), no formato da tabela', () => {
+    const [l, ...resto] = legalParamsSeedRows(SIMPLES_SEED_FILE_RECEITAS_ANTERIORES);
+    expect(resto).toEqual([]);
+    expect([l.tabela, l.chave, l.discriminador, l.status, l.vigenteDesde, l.vigenteAte]).toEqual(['OBRIGACAO_REGIME', 'RECEITAS_ANTERIORES_OPCAO', 'SIMPLES', 'PUBLISHED', '2026-11-24', '2027-01-20']);
+    expect(l.fonte).toMatch(/Res\. CGSN 196\/2026 art\. 4º/);
+    expect(l.fonteSha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(() => ObrigacaoRegimeJson.parse(JSON.parse(l.valorJson ?? ''))).not.toThrow();
   });
 });
