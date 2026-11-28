@@ -53,7 +53,7 @@ export interface DepreciationRatesSectionProps {
 
 /**
  * Seção "Taxas" (FE-INCR-FIXED-ASSETS itens 23–26): catálogo do Anexo III (IN RFB 1.700/2017) + taxas `CUSTOM`.
- * O 1º `GET` do escopo semeia o Anexo III no BE (lazy) — aqui é só um carregamento normal, sem botão "semear".
+ * O Anexo III vem da tabela de plataforma `DEPRECIACAO_ANEXO_III` (BE-INCR-LEGAL-PARAMS PR-3; não é semeado por escopo).
  * Sem edição (o BE não tem rota). "Ocultar" nunca apaga: o bem que já usa a taxa mantém o snapshot, e só vale
  * para taxa `CUSTOM` (L-14) — o Anexo III é tabela de plataforma e não tem botão.
  */

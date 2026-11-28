@@ -154,7 +154,8 @@ export function IncomeStatementPanel({ unitId }: Props) {
           {/* DRE sections */}
           <SectionTable section={report.grossRevenue} title={t('incomeStatement.section.grossRevenue', 'Receita Bruta')} subtitle="3.1" />
           <SectionTable section={report.revenueDeductions} title={t('incomeStatement.section.revenueDeductions', '(−) Deduções de Receita')} subtitle="3.2" />
-          <SectionTable section={report.costOfGoodsSold} title={t('incomeStatement.section.costOfGoodsSold', '(−) Custo das Mercadorias Vendidas')} subtitle="4.2" />
+          {/* Lei 6.404 art. 187 II: a seção recebe 4.2, 4.7 e a conta do insumo de qualquer código — sem subtítulo de código. */}
+          <SectionTable section={report.costOfGoodsSold} title={t('incomeStatement.section.costOfGoodsSold', '(−) Custo das Mercadorias e Serviços Vendidos')} />
           <SectionTable section={report.expenses} title={t('incomeStatement.section.expenses', '(−) Despesas')} />
 
           {/* Net result */}
