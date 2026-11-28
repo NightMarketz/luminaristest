@@ -8,7 +8,8 @@ import { z } from 'zod';
  * vigência. `RegrasFolha` é o único caminho de número de regra para as calculadoras do F2 (§0.1 do BRIEF): nelas não há
  * literal numérico de regra legal.
  */
-import { exigirLinhaVigente, ParametroLegalAusenteError, type LegalParameterTabela, type LinhaLegal } from '../../legalParameters/models/legalParameter';
+import { exigirLinhaVigente, ParametroLegalAusenteError, type LinhaLegal } from '../../legalParameters/models/legalParameter';
+import type { DpLegalTable } from './legalTables';
 import { CATEGORIAS_NUCLEO, CHAVES_IDADE_POR_CATEGORIA, type CategoriaNucleo, type RegrasIdade } from './vinculo';
 import type { MesesFerias } from './ferias';
 import { DIAS_SEMANA, type DiaSemana } from './escala';
@@ -59,7 +60,7 @@ export const DpCategoriaEncargoJson = z
   .strict();
 
 /** As tabelas que o leitor consome — o que o serviço pede à `fotografia`. */
-export const TABELAS_REGRAS_FOLHA = ['FOLHA_REGRA', 'DP_CATEGORIA_ENCARGO'] as const satisfies readonly LegalParameterTabela[];
+export const TABELAS_REGRAS_FOLHA = ['FOLHA_REGRA', 'DP_CATEGORIA_ENCARGO'] as const satisfies readonly DpLegalTable[];
 
 export interface EncargoCategoria {
   inss: 'EMPREGADO' | 'CONTRIBUINTE_INDIVIDUAL' | 'NENHUM';

@@ -7,7 +7,7 @@
 import fs from 'fs';
 import path from 'path';
 import { LEGAIS_SEMENTE, LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO, legalParamsSeedRows } from '@test/helpers/legalParams';
-import { FimDeVigenciaNaoPublicadoError, ParametroLegalAusenteError, SemLinhaVigenteError, type LegalParameterTabela } from '../../../legalParameters/models/legalParameter';
+import { FimDeVigenciaNaoPublicadoError, ParametroLegalAusenteError, SemLinhaVigenteError } from '../../../legalParameters/models/legalParameter';
 import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
 import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
 import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
@@ -35,7 +35,7 @@ describe('semente do PR-1', () => {
   });
 
   it('as linhas PUBLISHED obedecem ao formato da tabela', () => {
-    for (const l of pr1.filter((x) => x.status === 'PUBLISHED')) expect([l.id, erroDeFormato({ ...l, tabela: l.tabela as LegalParameterTabela })]).toEqual([l.id, null]);
+    for (const l of pr1.filter((x) => x.status === 'PUBLISHED')) expect([l.id, erroDeFormato({ ...l, tabela: l.tabela })]).toEqual([l.id, null]);
   });
 });
 

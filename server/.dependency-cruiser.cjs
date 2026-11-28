@@ -186,6 +186,21 @@ module.exports = {
       from: { path: '^src/features/[^/]+/paises/([^/]+)/', pathNot: TEST },
       to: { path: PAIS, pathNot: '^src/features/[^/]+/paises/$1/' },
     },
+    // ---- ADR-PAIS-NA-BORDA fatia F3: a plataforma de parâmetros legais não conhece domínio — emenda 2026-11-26 (ADR-ARCH-BOUNDARIES §1.4) ----
+    {
+      name: 'LP1-legal-params-platform-not-domain',
+      severity: 'error',
+      comment:
+        'F-F3-3 (a), lacuna 0d37: features/legalParameters/ (fora de teste) não importa outra feature. O formato e o nome de cada ' +
+        'tabela vêm do registro que a borda de cada domínio e país declara (lib/factory.ts compõe). O pathNot é o resíduo da fatia ' +
+        'F2 (lacuna b556): as 3 arestas para a contabilidade (dates, AuditService, AccountingScope), escopo que só encolhe — a F2 o ' +
+        'esvazia; entrada nova = emenda datada do ADR. Import type conta. Nasce em 0: nunca entra no known-violations.',
+      from: { path: '^src/features/legalParameters/', pathNot: TEST },
+      to: {
+        path: '^src/features/(?!legalParameters/)',
+        pathNot: '^src/features/accounting/(models/dates|services/AuditService|scope/AccountingScope)\\.ts$',
+      },
+    },
     // ---- lib/ é infraestrutura ----
     {
       name: 'X1-lib-not-feature-logic',

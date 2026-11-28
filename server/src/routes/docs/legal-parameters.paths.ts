@@ -22,7 +22,8 @@
  *       summary: Propose a legal parameter row as DRAFT (PLATFORM_ADMIN only, item 8)
  *       description: >-
  *         Linha append-only com fonte obrigatória. Correção de linha publicada = linha nova com supersedesId
- *         (mesma tabela, chave e discriminador). Só as tabelas já migradas aceitam proposta.
+ *         (mesma tabela, chave e discriminador). Tabela fora do registro de formato ⇒ 400
+ *         PARAMETRO_LEGAL_TABELA_DESCONHECIDA (GET /api/legal-parameters/tabelas lista as registradas).
  *       tags: [LegalParameters]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -54,6 +55,18 @@
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *         '409': { description: 'supersedesId não publicada' }
+ *
+ *   /api/legal-parameters/tabelas:
+ *     get:
+ *       summary: Catalog of legal-parameter tables, read from the format registry (BE-INCR-PAIS-NA-BORDA-F3 item 13)
+ *       description: >-
+ *         Cada domínio e país registra as suas tabelas (F-F3-1 a); a plataforma não tem enum de nomes. tipoValor =
+ *         int | texto | json | misto (misto = o tipo depende da chave ou do discriminador). Qualquer autenticado lê.
+ *       tags: [LegalParameters]
+ *       security: [{ bearerAuth: [] }]
+ *       responses:
+ *         '200': { description: '{ tabela, dominio, pais, tipoValor }[]' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *
  *   /api/legal-parameters/recalc-jobs:
  *     get:

@@ -2,10 +2,11 @@
  * BE-INCR-IRRF-DISTRIBUICAO PR-1 (BRIEF item 5; F-IRD-13, F-IRD-18) — tabelas IRRF_DISTRIBUICAO e TJLP na tabela de
  * parâmetros legais, com a carga inicial de 2026. Fontes: dossiê pesquisas-legais/irrf-distribuicao [D02] [D05] [D12] [D19].
  */
+import { ACCOUNTING_LEGAL_TABLES } from '../../accounting/models/legalTables';
 import fs from 'fs';
 import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE_IRRF_DISTRIBUICAO, legalParamsSeedRows } from '@test/helpers/legalParams';
-import { LEGAL_PARAMETER_TABELAS, ParametroLegalAusenteError, exigirLinhaVigente } from '../models/legalParameter';
+import { ParametroLegalAusenteError, exigirLinhaVigente } from '../models/legalParameter';
 import { createFormatRegistry } from '../models/formatRegistry';
 import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../accounting/paises/br/legalParameters';
 import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../dp/paises/br/legalParameters';
@@ -23,7 +24,7 @@ describe('IRRF_DISTRIBUICAO e TJLP (item 5)', () => {
   });
 
   it('as duas tabelas estão no catálogo', () => {
-    expect(LEGAL_PARAMETER_TABELAS).toEqual(expect.arrayContaining(['IRRF_DISTRIBUICAO', 'TJLP']));
+    expect(ACCOUNTING_LEGAL_TABLES).toEqual(expect.arrayContaining(['IRRF_DISTRIBUICAO', 'TJLP']));
   });
 
   it('carga: valores do BRIEF, todas PUBLISHED, com fonte, URL e sha256, e no formato', () => {

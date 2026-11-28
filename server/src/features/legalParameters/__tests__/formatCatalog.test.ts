@@ -8,7 +8,8 @@ import { LEGAL_PARAMETER_FORMATS } from '../../../lib/factory';
 import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../accounting/paises/br/legalParameters';
 import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../dp/paises/br/legalParameters';
 import { createFormatRegistry, type LinhaParaFormato } from '../models/formatRegistry';
-import { LEGAL_PARAMETER_TABELAS } from '../models/legalParameter';
+import { ACCOUNTING_LEGAL_TABLES } from '../../accounting/models/legalTables';
+import { DP_LEGAL_TABLES, DP_SHARED_LEGAL_TABLES_READ } from '../../dp/models/legalTables';
 
 const registry = createFormatRegistry(LEGAL_PARAMETER_FORMATS);
 
@@ -16,8 +17,14 @@ describe('cobertura do catálogo (item 9)', () => {
   it('todo nome do catálogo tem exatamente uma registração, e toda registração tem nome no catálogo', () => {
     const registradas = LEGAL_PARAMETER_FORMATS.map((r) => r.table);
     expect(new Set(registradas).size).toBe(registradas.length);
-    expect([...registradas].sort()).toEqual([...LEGAL_PARAMETER_TABELAS].sort());
+    expect([...registradas].sort()).toEqual([...ACCOUNTING_LEGAL_TABLES, ...DP_LEGAL_TABLES].sort());
     expect(registradas).toHaveLength(50);
+  });
+
+  it('item 13 (F-F3-1 a): cada borda registra exatamente os nomes que o centro do seu domínio declara; o que o DP lê da contabilidade é dela', () => {
+    expect(ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS.map((r) => r.table).sort()).toEqual([...ACCOUNTING_LEGAL_TABLES].sort());
+    expect(DP_BR_LEGAL_PARAMETER_FORMATS.map((r) => r.table).sort()).toEqual([...DP_LEGAL_TABLES].sort());
+    for (const t of DP_SHARED_LEGAL_TABLES_READ) expect(ACCOUNTING_LEGAL_TABLES).toContain(t);
   });
 
   it('a factory compõe exatamente as bordas da contabilidade BR e do DP BR (os testes de domínio montam a mesma união)', () => {

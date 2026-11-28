@@ -3,6 +3,7 @@
  * NATUREZA_RENDIMENTO e IRRF_PF_MENSAL. Carga gerada do zip oficial da Reinf (dossiê
  * pesquisas-legais/retencoes-fonte-pr1-reinf-tabelas [D01]) e das normas dos dossiês de 22/10 e 24/10.
  */
+import { ACCOUNTING_LEGAL_TABLES } from '../../accounting/models/legalTables';
 import fs from 'fs';
 import path from 'path';
 import {
@@ -11,7 +12,7 @@ import {
   LEGAL_PARAMS_SEED_FILE_RETENCOES_V3,
   legalParamsSeedRows,
 } from '@test/helpers/legalParams';
-import { LEGAL_PARAMETER_TABELAS, linhaLegalVigente, linhasEmVigor } from '../models/legalParameter';
+import { linhaLegalVigente, linhasEmVigor } from '../models/legalParameter';
 import { createFormatRegistry } from '../models/formatRegistry';
 import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../accounting/paises/br/legalParameters';
 import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../dp/paises/br/legalParameters';
@@ -52,7 +53,7 @@ describe('RETENCOES-FONTE PR-1 — carga das tabelas de retenção', () => {
   });
 
   it('as quatro tabelas estão no catálogo', () => {
-    expect(LEGAL_PARAMETER_TABELAS).toEqual(expect.arrayContaining(['RETENCAO', 'RETENCAO_CODIGO', 'NATUREZA_RENDIMENTO', 'IRRF_PF_MENSAL']));
+    expect(ACCOUNTING_LEGAL_TABLES).toEqual(expect.arrayContaining(['RETENCAO', 'RETENCAO_CODIGO', 'NATUREZA_RENDIMENTO', 'IRRF_PF_MENSAL']));
   });
 
   it('PUBLISHED com fonte e sha256 e no formato; DRAFT só onde não há fonte lida (INSS/CPRB e código do INSS)', () => {

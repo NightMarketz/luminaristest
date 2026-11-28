@@ -33,6 +33,17 @@ export const listLegalParameters = async (req: Request, res: Response) => {
   }
 };
 
+/** GET /api/legal-parameters/tabelas — o catálogo do registro de formato (BE-INCR-PAIS-NA-BORDA-F3 item 13, F-F3-1 a). */
+export const listLegalParameterTabelas = async (req: Request, res: Response) => {
+  try {
+    const actor = actorOf(req);
+    if (!actor) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    return res.json({ success: true, data: getFactory().getLegalParameterService().tabelas(actor) });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
 /** GET /api/legal-parameters/recalc-jobs?status=&legalParameterId=&page=&pageSize= (RECALC-STATUS) */
 export const listLegalParameterRecalcJobs = async (req: Request, res: Response) => {
   try {

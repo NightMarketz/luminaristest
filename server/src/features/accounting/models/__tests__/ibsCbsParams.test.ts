@@ -3,11 +3,12 @@
  * (o mesmo texto da migração) — LC 214/2025 arts. 343, 344, 346, 347, 349 I (Planalto compilado, dossiê
  * verif-2026-10-20-f1-retencoes-reinf-ibscbs [D08]).
  */
+import { ACCOUNTING_LEGAL_TABLES } from '../legalTables';
 import fs from 'fs';
 import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE_IBS_CBS, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { CBS_REFERENCIA_NAO_PUBLICADA, parametroIbsCbsVigente, tabelaIbsCbsDe } from '../ibsCbsParams';
-import { LEGAL_PARAMETER_TABELAS, SemLinhaVigenteError } from '../../../legalParameters/models/legalParameter';
+import { SemLinhaVigenteError } from '../../../legalParameters/models/legalParameter';
 
 const linhas = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_IBS_CBS);
 const tabela = tabelaIbsCbsDe(linhas);
@@ -21,7 +22,7 @@ describe('IBS_CBS — semente (item 1)', () => {
   });
 
   it('IBS_CBS está no catálogo; toda linha tem fonte não vazia e o sha da LC 214 lida', () => {
-    expect(LEGAL_PARAMETER_TABELAS).toContain('IBS_CBS');
+    expect(ACCOUNTING_LEGAL_TABLES).toContain('IBS_CBS');
     expect(linhas).toHaveLength(5);
     expect(linhas.every((l) => l.tabela === 'IBS_CBS' && l.fonte.startsWith('LC 214/2025 art. 34') && l.fonteSha256 === 'e728c970927f55eabf0abc04c8cfbcf0f6485d2f77f6de46c8343fae6d6d86a6')).toBe(true);
   });

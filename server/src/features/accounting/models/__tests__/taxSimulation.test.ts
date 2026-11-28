@@ -4,7 +4,7 @@ import { LEGAL_PARAMS_SEED_FILE_ENCARGO_FOLHA, LEGAL_PARAMS_SEED_FILE_MARCO_LEGA
 import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
 import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
 import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
-import type { LegalParameterTabela, LinhaLegal } from '../../../legalParameters/models/legalParameter';
+import type { LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { tabelaIbsCbsDe, tabelaProvisoriaCbsDe } from '../ibsCbsParams';
 import type { ApuracaoInput, MesReceita } from '../simplesCalc';
 import {
@@ -46,7 +46,7 @@ describe('decisão 1 — semente ENCARGO_FOLHA', () => {
       ['TETO_RGPS_CENTS', 847555, '2026-01-01', 'PUBLISHED'],
     ]);
     for (const l of ENCARGO) {
-      expect([l.id, erroDeFormato({ ...l, tabela: l.tabela as LegalParameterTabela, valorJson: undefined })]).toEqual([l.id, null]);
+      expect([l.id, erroDeFormato({ ...l, tabela: l.tabela, valorJson: undefined })]).toEqual([l.id, null]);
       expect((l as { fonteSha256?: string | null }).fonteSha256).toMatch(/^[0-9a-f]{64}$/);
     }
     expect(ENCARGO.find((l) => l.chave === 'TETO_RGPS_CENTS')!.fonte).toContain('Portaria Interministerial MPS/MF nº 13/2026');

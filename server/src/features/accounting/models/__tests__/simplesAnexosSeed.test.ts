@@ -8,13 +8,14 @@
  *  3. SQL → migração: o `migration.sql` carrega o mesmo texto.
  * Mais as invariantes da fonte: contagens, soma 100% da repartição, coerência do teto do ISS com a 5ª faixa.
  */
+import { ACCOUNTING_LEGAL_TABLES } from '../legalTables';
 import { existsSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { SIMPLES_SEED_FILE, SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
-import { LEGAL_PARAMETER_TABELAS, TABELAS_MIGRADAS, linhaLegalVigente } from '../../../legalParameters/models/legalParameter';
+import { linhaLegalVigente } from '../../../legalParameters/models/legalParameter';
 import { EnquadramentoJsonSchema, FaixaJsonSchema, ReparticaoJsonSchema, TetoIssJsonSchema } from '../simplesCalc';
 
 const REPO_ROOT = path.resolve(__dirname, '../../../../../..');
@@ -35,11 +36,10 @@ const por = (t: string) => rows.filter((r) => r.tabela === t);
 const json = (v: string | null) => JSON.parse(v ?? 'null');
 
 describe('catálogo (item 1)', () => {
-  it('as 7 tabelas do Simples estão no catálogo e em TABELAS_MIGRADAS (edição pelo admin com trilha continua possível)', () => {
+  it('as 7 tabelas do Simples estão no catálogo da contabilidade (F3 item 13: o registro é o catálogo; edição pelo admin com trilha continua possível)', () => {
     const novas = ['SIMPLES_ANEXO_FAIXA', 'SIMPLES_ANEXO_REPARTICAO', 'SIMPLES_TETO_ISS', 'SIMPLES_ENQUADRAMENTO', 'SIMPLES_LIMITE', 'SIMEI_VALOR', 'SALARIO_MINIMO'];
     for (const t of novas) {
-      expect(LEGAL_PARAMETER_TABELAS).toContain(t);
-      expect(TABELAS_MIGRADAS.has(t as never)).toBe(true);
+      expect(ACCOUNTING_LEGAL_TABLES).toContain(t);
     }
   });
 });

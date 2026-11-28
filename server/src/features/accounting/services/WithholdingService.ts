@@ -1,7 +1,8 @@
 import type { Account, FiscalProfile, LegalParameter, Payable, Prisma, TaxWithholding, WithholdingProfile } from 'generated/prisma';
 import { ConflictError, ForbiddenError, ValidationError } from '../../../lib/errors';
 import { ultimoDiaUtilAteDia20 } from '../../../lib/vencimentoRetencao';
-import { linhaLegalVigente, type LegalParameterTabela } from '../../legalParameters/models/legalParameter';
+import { linhaLegalVigente } from '../../legalParameters/models/legalParameter';
+import type { AccountingLegalTable } from '../models/legalTables';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
@@ -31,7 +32,7 @@ export const TAX_PAYABLE_UPSERTED = 'tax_payable.upserted';
 export const AVISO_TITULO_IMPOSTO = { VENCIMENTO_ISS_INFORMAR: 'VENCIMENTO_ISS_INFORMAR' } as const;
 
 /** Tabelas que o cálculo lê (fotografia de plataforma, F-LP-4 a). */
-const TABELAS: readonly LegalParameterTabela[] = ['RETENCAO', 'RETENCAO_CODIGO', 'IRRF_PF_MENSAL', 'FERIADO_NACIONAL', 'FERIADO_LOCAL'];
+const TABELAS: readonly AccountingLegalTable[] = ['RETENCAO', 'RETENCAO_CODIGO', 'IRRF_PF_MENSAL', 'FERIADO_NACIONAL', 'FERIADO_LOCAL'];
 /** Item 20: só tributo administrado pela RFB acumula o DARF < R$ 10 (Lei 9.430 art. 68 § 1º). */
 const TRIBUTOS_DARF: readonly string[] = ['IRRF', ...TRIBUTOS_CSRF];
 
@@ -92,7 +93,7 @@ export class WithholdingService {
     private readonly fiscalProfileRepo: Pick<IFiscalProfileRepository, 'findByScope'>,
     private readonly companyProfileRepo: Pick<ICompanyFiscalProfileRepository, 'findByYear'>,
     private readonly accountRepo: Pick<IAccountRepository, 'findById'>,
-    private readonly legalParams: { fotografia(tabelas: readonly LegalParameterTabela[]): Promise<LegalParameter[]> },
+    private readonly legalParams: { fotografia(tabelas: readonly string[]): Promise<LegalParameter[]> },
     private readonly policy: IAccountingPolicy,
     private readonly auditService: AuditService,
   ) {}

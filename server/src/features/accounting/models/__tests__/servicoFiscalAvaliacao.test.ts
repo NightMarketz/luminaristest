@@ -2,10 +2,11 @@
  * EFICIENCIA-FISCAL PR-5 (BRIEF itens 30, 31, 32; ADR §13 I-17, I-19) — alertas de enquadramento dos serviços e a carga de
  * IBS/CBS de 2027 do serviço (LC 214 art. 130 e Anexo III, lido na compilada do Planalto — dossiê eficiencia-fiscal-pr5-servicos).
  */
+import { ACCOUNTING_LEGAL_TABLES } from '../legalTables';
 import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
 import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
 import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
-import { LEGAL_PARAMETER_TABELAS, type LegalParameterTabela, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
+import { type LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { alertaPacote, alertasDeEnquadramento, cargaIbsCbsDoServico, reducaoNbsVigente, type ServicoParaAvaliar } from '../servicoFiscalAvaliacao';
 import { LEGAL_PARAMS_SEED_FILE_EFICIENCIA_SERVICOS, fotografiaSemente, legalParamsSeedRows } from '@test/helpers/legalParams';
 
@@ -59,11 +60,11 @@ describe('item 32 — IBS_CBS_REDUCAO_NBS e a carga de 2027 do serviço', () => 
   const seed = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_EFICIENCIA_SERVICOS).filter((l) => l.tabela === 'IBS_CBS_REDUCAO_NBS');
 
   it('semente: tabela no catálogo, 20 prefixos de NBS do Anexo III (30 itens), 6000 bp, desde 2027-01-01, PUBLISHED, formato aceito', () => {
-    expect(LEGAL_PARAMETER_TABELAS).toContain('IBS_CBS_REDUCAO_NBS');
+    expect(ACCOUNTING_LEGAL_TABLES).toContain('IBS_CBS_REDUCAO_NBS');
     expect(seed).toHaveLength(20);
     for (const l of seed) {
       expect(l).toMatchObject({ valorInt: 6000, vigenteDesde: '2027-01-01', status: 'PUBLISHED', discriminador: null });
-      expect(erroDeFormato({ ...l, tabela: l.tabela as LegalParameterTabela })).toBeNull();
+      expect(erroDeFormato({ ...l, tabela: l.tabela })).toBeNull();
       expect(l.fonte).toContain('LC 214/2025 art. 130 e Anexo III');
     }
     expect(seed.map((l) => l.chave)).toEqual(expect.arrayContaining(['123011100', '123019900', '12302', '126030000']));

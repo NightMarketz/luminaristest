@@ -6,6 +6,7 @@ import type { ILegalParameterRepository } from '../repositories/ILegalParameterR
 import type { ILegalParameterRecalcJobRepository } from '../repositories/ILegalParameterRecalcJobRepository';
 import type { ILegalParameterPolicy, LegalParameterActor } from '../policies/ILegalParameterPolicy';
 import type {
+  LegalParameterTableView,
   LegalParameterView,
   ListRecalcJobsQuery,
   RecalcJobView,
@@ -13,8 +14,8 @@ import type {
   ProposeLegalParameterInput,
   VigenteLegalParameterQuery,
 } from '../dtos/LegalParameterDto';
-import { LEGAL_PARAMETER_TABELAS, LinhaLegalIlegivelError, TABELAS_MIGRADAS, linhaLegalVigente, linhasEmVigor, type LegalParameterTabela } from '../models/legalParameter';
-import type { CrossTableRows, LegalParameterFormatRegistry, LinhaParaFormato } from '../models/formatRegistry';
+import { LinhaLegalIlegivelError, TabelaLegalDesconhecidaError, linhaLegalVigente, linhasEmVigor } from '../models/legalParameter';
+import type { CrossTableRows, LegalParameterFormatRegistry, LegalParameterTableInfo, LinhaParaFormato } from '../models/formatRegistry';
 import { cachedPublished, storePublished } from './legalParameterCache';
 
 /**
@@ -59,6 +60,8 @@ export interface LinhaPublicadaForaDoFormato {
   vigenteDesde: string;
   erro: string;
 }
+
+const TIPO_VALOR: Record<LegalParameterTableInfo['value'], LegalParameterTableView['tipoValor']> = { int: 'int', text: 'texto', json: 'json', mixed: 'misto' };
 
 const mesmaLinhaLogica = (a: Pick<LegalParameter, 'tabela' | 'chave' | 'discriminador'>, b: Pick<LegalParameter, 'tabela' | 'chave' | 'discriminador'>) =>
   a.tabela === b.tabela && a.chave === b.chave && a.discriminador === b.discriminador;
@@ -142,6 +145,16 @@ export class LegalParameterService {
     return linhasDe(requeridas.length === 0 ? [] : await this.repo.findPublished(requeridas, tx));
   }
 
+  /** Item 13 (F-F3-1 a) — tabela fora do registro ⇒ 400 `PARAMETRO_LEGAL_TABELA_DESCONHECIDA` (substitui o `TABELAS_MIGRADAS`). */
+  private exigirTabelaRegistrada(tabela: string): void {
+    if (!this.formats.has(tabela)) throw new TabelaLegalDesconhecidaError(tabela);
+  }
+
+  /** Os nomes de todas as tabelas registradas (o `aquecer` e o CLI percorrem o registro, não um enum). */
+  private tabelasRegistradas(): string[] {
+    return this.formats.tables().map((t) => t.table);
+  }
+
   /** PR-4 — o factory liga o agendador do recálculo depois de construir os dois (sem ciclo de construção). */
   setAoEnfileirar(fn: () => void): void {
     this.aoEnfileirar = fn;
@@ -156,7 +169,7 @@ export class LegalParameterService {
   }
 
   /** Item 5 — linhas em vigor (PUBLISHED, sem as substituídas) das tabelas pedidas. Sem I/O quando o cache está quente. */
-  async fotografia(tabelas: readonly LegalParameterTabela[]): Promise<LegalParameter[]> {
+  async fotografia(tabelas: readonly string[]): Promise<LegalParameter[]> {
     const faltam = tabelas.filter((t) => cachedPublished(t) === undefined);
     if (faltam.length > 0) {
       const lidas = await this.repo.findPublished(faltam);
@@ -171,8 +184,9 @@ export class LegalParameterService {
    */
   async aquecer(): Promise<void> {
     // Lê tudo e só então troca tabela a tabela: o cache nunca fica frio no meio (um DTO concorrente leria o antigo).
-    const lidas = await this.repo.findPublished(LEGAL_PARAMETER_TABELAS);
-    for (const t of LEGAL_PARAMETER_TABELAS) storePublished(t, lidas.filter((l) => l.tabela === t));
+    const tabelas = this.tabelasRegistradas();
+    const lidas = await this.repo.findPublished(tabelas);
+    for (const t of tabelas) storePublished(t, lidas.filter((l) => l.tabela === t));
   }
 
   /**
@@ -181,7 +195,7 @@ export class LegalParameterService {
    */
   async linhasPublicadasForaDoFormato(): Promise<LinhaPublicadaForaDoFormato[]> {
     const fora: LinhaPublicadaForaDoFormato[] = [];
-    const publicadas = await this.repo.findPublished(LEGAL_PARAMETER_TABELAS);
+    const publicadas = await this.repo.findPublished(this.tabelasRegistradas());
     // Item 10: a checagem entre tabelas também roda aqui, contra o conjunto publicado inteiro (a dependência revogada acusa).
     const deps = linhasDe(publicadas);
     for (const r of publicadas) {
@@ -218,14 +232,22 @@ export class LegalParameterService {
     return { items, total, page: q.page, pageSize: q.pageSize };
   }
 
+  /** GET /tabelas (item 13, F-F3-1 a) — o catálogo do registro, sem repositório; a mesma policy do `list`. */
+  tabelas(actor: LegalParameterActor): LegalParameterTableView[] {
+    this.exigirLeitura(actor);
+    return this.formats.tables().map((t) => ({ tabela: t.table, dominio: t.domain, pais: t.country, tipoValor: TIPO_VALOR[t.value] }));
+  }
+
   async list(actor: LegalParameterActor, q: ListLegalParametersQuery): Promise<LegalParameterView[]> {
     this.exigirLeitura(actor);
+    if (q.tabela !== undefined) this.exigirTabelaRegistrada(q.tabela);
     return (await this.repo.findMany(q)).map(toView);
   }
 
   /** Item 4 — sem linha vigente ⇒ 404 (a prévia de cada cálculo traduz a ausência no próprio 400). */
   async vigente(actor: LegalParameterActor, q: VigenteLegalParameterQuery): Promise<LegalParameterView> {
     this.exigirLeitura(actor);
+    this.exigirTabelaRegistrada(q.tabela); // antes da fotografia: nome fora do registro não entra no cache
     const linha = linhaLegalVigente(await this.fotografia([q.tabela]), q.tabela, q.chave, q.data, q.discriminador ?? null);
     if (!linha) throw new NotFoundError(`Sem linha vigente de ${q.tabela}/${q.chave}${q.discriminador ? `/${q.discriminador}` : ''} em ${q.data}.`);
     return toView(linha);
@@ -233,9 +255,7 @@ export class LegalParameterService {
 
   async propose(actor: LegalParameterActor, d: ProposeLegalParameterInput): Promise<LegalParameterView> {
     this.exigirGestao(actor);
-    if (!TABELAS_MIGRADAS.has(d.tabela)) {
-      throw new ValidationError(`${d.tabela}: tabela ainda não migrada para o banco — nenhum cálculo a lê (BE-INCR-LEGAL-PARAMS, PR-2/PR-3).`);
-    }
+    this.exigirTabelaRegistrada(d.tabela);
     // Item 7: fora da tx, como antes; as dependências pelo repositório (o publish re-checa dentro da tx).
     this.exigirFormato({ ...d, vigenteAte: d.vigenteAte ?? null }, await this.dependencias(d.tabela));
     this.exigirFim({ tabela: d.tabela, chave: d.chave, discriminador: d.discriminador ?? null, vigenteAte: d.vigenteAte ?? null });

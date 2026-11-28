@@ -6,7 +6,7 @@
 import fs from 'fs';
 import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE_FERIADO_LOCAL, legalParamsSeedRows } from '@test/helpers/legalParams';
-import { LEGAL_PARAMETER_TABELAS } from '../models/legalParameter';
+import { ACCOUNTING_LEGAL_TABLES } from '../../accounting/models/legalTables';
 import { createFormatRegistry } from '../models/formatRegistry';
 import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../accounting/paises/br/legalParameters';
 import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../dp/paises/br/legalParameters';
@@ -23,7 +23,7 @@ describe('FERIADO_LOCAL (F-E4-1 a)', () => {
   });
 
   it('a tabela está no catálogo', () => {
-    expect(LEGAL_PARAMETER_TABELAS).toContain('FERIADO_LOCAL');
+    expect(ACCOUNTING_LEGAL_TABLES).toContain('FERIADO_LOCAL');
   });
 
   it('6 linhas: 09/07 de SP (UF 35) e os 5 dias da Lei municipal 7.008/1967 art. 1º (red. Lei 13.707/2004); todas no formato', () => {

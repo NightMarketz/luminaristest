@@ -22,7 +22,8 @@ import type { Prisma, ReceitaFiscalLinha, SalaoParceriaContrato, SimplesApuracao
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import { inicioLc214Competencia } from '../models/marcoLegal';
-import { ParametroLegalAusenteError, linhaLegalVigente, type LegalParameterTabela, type LinhaLegal } from '../../legalParameters/models/legalParameter';
+import { ParametroLegalAusenteError, linhaLegalVigente, type LinhaLegal } from '../../legalParameters/models/legalParameter';
+import type { AccountingLegalTable } from '../models/legalTables';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import { apurar, apurarSimei, janelaRbt12, type ApuracaoInput, type ApuracaoSimei, type ApuracaoCalculada, type AtividadeInput, type MesReceita, type NaturezaSimples, type TributoSimples } from '../models/simplesCalc';
 import { normalizeNcm } from '../models/pisCofinsMonofasicoNcm';
@@ -67,7 +68,7 @@ export const SIMPLES_DAS_SUBSTITUIDO = 'tax.simples_das.substituido';
 export const SIMPLES_DAS_DOCUMENTO_ANEXADO = 'tax.simples_das.documento_anexado';
 
 // Onda 3.2 fatia 4: + MARCO_LEGAL (o 1º PA da redação da LC 214 sobre o RBT12 é linha, não literal).
-const TABELAS: readonly LegalParameterTabela[] = ['SIMPLES_ANEXO_FAIXA', 'SIMPLES_ANEXO_REPARTICAO', 'SIMPLES_TETO_ISS', 'SIMPLES_ENQUADRAMENTO', 'SIMPLES_LIMITE', 'ISS_LIMITE', 'MARCO_LEGAL'];
+const TABELAS: readonly AccountingLegalTable[] = ['SIMPLES_ANEXO_FAIXA', 'SIMPLES_ANEXO_REPARTICAO', 'SIMPLES_TETO_ISS', 'SIMPLES_ENQUADRAMENTO', 'SIMPLES_LIMITE', 'ISS_LIMITE', 'MARCO_LEGAL'];
 
 /**
  * Res. CGSN 140 art. 27 II, red. Res. CGSN 190/2026 (DOU 10/08/2026), efeitos em 01/01/2027 pelo art. 9º II da 190, na redação da

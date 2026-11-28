@@ -4,7 +4,7 @@ import { LEGAIS_SEMENTE, LEGAL_PARAMS_SEED_FILE_ICMS_ST_NCM_UF, legalParamsSeedR
 import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
 import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
 import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
-import { ParametroLegalAusenteError, type LegalParameterTabela, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
+import { ParametroLegalAusenteError, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { fimMonofasicoPisCofins, icmsStDaNcm, segregacaoPorNcm } from '../segregacaoNcm';
 
 // PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
@@ -40,7 +40,7 @@ describe('item 11 — semente ICMS_ST_NCM_UF', () => {
     for (const l of seedSt) {
       expect(l).toMatchObject({ tabela: 'ICMS_ST_NCM_UF', discriminador: SP, status: 'DRAFT', vigenteDesde: '2026-01-01', vigenteAte: '2026-03-31' });
       expect(l.chave).toMatch(/^330[345]\d{4}$/);
-      expect([l.id, erroDeFormato({ ...l, tabela: l.tabela as LegalParameterTabela, valorJson: JSON.parse(l.valorJson!) })]).toEqual([l.id, null]);
+      expect([l.id, erroDeFormato({ ...l, tabela: l.tabela, valorJson: JSON.parse(l.valorJson!) })]).toEqual([l.id, null]);
       expect(l.fonte).toContain('Conv. ICMS 142/2018 Anexo XIX');
       expect(l.fonte).toContain('Portaria SRE 94/2025');
       expect((l as { fonteSha256?: string | null }).fonteSha256).toMatch(/^[0-9a-f]{64}$/);

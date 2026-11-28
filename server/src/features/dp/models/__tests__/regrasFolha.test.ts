@@ -3,11 +3,12 @@
  * pesquisas-legais/brief-pes4-f2/gerar_carga_regras.py), o formato das tabelas `FOLHA_REGRA` e `DP_CATEGORIA_ENCARGO` e o
  * leitor `regrasFolha`: linha ausente ⇒ `PARAMETRO_LEGAL_AUSENTE`, nunca valor padrão; a virada da EC 141/2026 é vigência.
  */
+import { DP_LEGAL_TABLES } from '../legalTables';
 import { createHash } from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE_DP_REGRAS, legalParamsSeedRows } from '@test/helpers/legalParams';
-import { ParametroLegalAusenteError, TABELAS_MIGRADAS, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
+import { ParametroLegalAusenteError, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
 import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../../accounting/paises/br/legalParameters';
 import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
@@ -41,10 +42,10 @@ describe('DP-F2 PR-0R — carga legal_parameters_dp_regras_v1.sql', () => {
     expect(LINHAS.filter((l) => l.fonteSha256 === null).map((l) => l.id).sort()).toEqual(['dp-regra-arredondamento-2026', 'dp-regra-divisor-2026']);
   });
 
-  it('itens 65–66 — toda linha está no formato da tabela; as duas tabelas são migradas (DRAFT → PUBLISHED → REVOKED, item 75)', () => {
+  it('itens 65–66 — toda linha está no formato da tabela; as duas tabelas estão no catálogo do DP (DRAFT → PUBLISHED → REVOKED, item 75)', () => {
     const fora = LINHAS.map((l) => ({ id: l.id, erro: erroDeFormato({ ...l, tabela: l.tabela as never, valorJson: json(l) }) })).filter((x) => x.erro !== null);
     expect(fora).toEqual([]);
-    expect([TABELAS_MIGRADAS.has('FOLHA_REGRA'), TABELAS_MIGRADAS.has('DP_CATEGORIA_ENCARGO')]).toEqual([true, true]);
+    expect(DP_LEGAL_TABLES).toEqual(expect.arrayContaining(['FOLHA_REGRA', 'DP_CATEGORIA_ENCARGO']));
   });
 
   it('formato recusa chave fora do catálogo, texto fora das formas do código e inteiro fora da faixa', () => {

@@ -1,4 +1,5 @@
 import { createHash } from 'crypto';
+import { ACCOUNTING_LEGAL_TABLES } from '../legalTables';
 import fs from 'fs';
 import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE_IBS_CBS_TABELAS, legalParamsSeedRows } from '@test/helpers/legalParams';
@@ -6,7 +7,7 @@ import { LEGAL_PARAMS_SEEDS } from '@test/helpers/templateDb';
 import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
 import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
 import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
-import { ParametroLegalAusenteError, TABELAS_MIGRADAS, type LegalParameterTabela } from '../../../legalParameters/models/legalParameter';
+import { ParametroLegalAusenteError } from '../../../legalParameters/models/legalParameter';
 import { TABELAS_IBS_CBS, buscarCClassTrib, buscarCCredPres, buscarCst, tabelasIbsCbsDe } from '../ibsCbsTabelas';
 
 // PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
@@ -29,14 +30,14 @@ describe('Onda 3.2 fatia 5 — seed das tabelas do IBS/CBS', () => {
       expect(l.status).toBe('PUBLISHED');
       expect(l.fonte.trim()).not.toBe('');
       expect(l.fonteSha256).toMatch(/^[0-9a-f]{64}$/);
-      expect(TABELAS_MIGRADAS.has(l.tabela as LegalParameterTabela)).toBe(true);
+      expect(ACCOUNTING_LEGAL_TABLES).toContain(l.tabela);
     }
     expect(new Set(linhas.map((l) => l.id)).size).toBe(204);
   });
 
   it('toda linha passa no formato por tabela (a mesma regra que barra a proposta pelo admin)', () => {
     for (const l of linhas) {
-      expect(erroDeFormato({ tabela: l.tabela as LegalParameterTabela, chave: l.chave, discriminador: l.discriminador, valorInt: l.valorInt, valorTexto: l.valorTexto, valorJson: l.valorJson ? JSON.parse(l.valorJson) : undefined })).toBeNull();
+      expect(erroDeFormato({ tabela: l.tabela, chave: l.chave, discriminador: l.discriminador, valorInt: l.valorInt, valorTexto: l.valorTexto, valorJson: l.valorJson ? JSON.parse(l.valorJson) : undefined })).toBeNull();
     }
   });
 

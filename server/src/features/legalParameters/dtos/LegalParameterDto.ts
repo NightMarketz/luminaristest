@@ -1,13 +1,17 @@
 import { z } from 'zod';
 import { isValidDateOnly } from '../../accounting/models/dates';
-import { LEGAL_PARAMETER_STATUS, LEGAL_PARAMETER_TABELAS } from '../models/legalParameter';
+import { LEGAL_PARAMETER_STATUS } from '../models/legalParameter';
 
 /**
  * BE-INCR-LEGAL-PARAMS PR-1 (BRIEF §3 itens 2–4, 8, 11; §4) — DTOs `.strict()` da tabela de plataforma. Date-only
  * validado contra o calendário (memória date-only-regex-nao-valida-calendario).
  */
 const dateOnly = z.string().refine(isValidDateOnly, { message: 'data YYYY-MM-DD de calendário' });
-const tabela = z.enum(LEGAL_PARAMETER_TABELAS);
+/**
+ * BE-INCR-PAIS-NA-BORDA-F3 item 13 (F-F3-1 a) — o DTO só confere a sintaxe do nome; quem diz se a tabela existe é o
+ * registro de formato, no serviço (400 `PARAMETRO_LEGAL_TABELA_DESCONHECIDA`).
+ */
+const tabela = z.string().regex(/^[A-Z][A-Z0-9_]{1,63}$/, { message: 'nome de tabela: maiúsculas, dígitos e _ (2 a 64)' });
 
 export const ProposeLegalParameterSchema = z
   .object({
@@ -79,6 +83,17 @@ export const VigenteLegalParameterQuerySchema = z
   })
   .strict();
 export type VigenteLegalParameterQuery = z.infer<typeof VigenteLegalParameterQuerySchema>;
+
+/**
+ * GET /api/legal-parameters/tabelas (F-F3-1 a) — o catálogo, lido do registro de formato. `tipoValor` segue o formulário
+ * do front (`int | texto | json`); `misto` = a tabela escolhe o valor por chave ou discriminador (F-F3-9).
+ */
+export type LegalParameterTableView = {
+  tabela: string;
+  dominio: string;
+  pais: string;
+  tipoValor: 'int' | 'texto' | 'json' | 'misto';
+};
 
 export type LegalParameterView = {
   id: string;

@@ -9,7 +9,7 @@ import { getFactory } from '@/lib/factory';
 import { createFormatRegistry } from '../models/formatRegistry';
 import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../accounting/paises/br/legalParameters';
 import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../dp/paises/br/legalParameters';
-import type { LegalParameterTabela, LinhaLegal } from '../models/legalParameter';
+import type { LinhaLegal } from '../models/legalParameter';
 import { TABELAS_IBS_CBS, buscarCClassTrib, buscarCst, tabelasIbsCbsDe } from '@/features/accounting/models/ibsCbsTabelas';
 
 // PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
@@ -35,7 +35,7 @@ describe('Onda 3.2 fatia 5 — paridade das tabelas do IBS/CBS: semente × banco
   it('toda linha do banco passa no formato por tabela e tem fonte', () => {
     for (const l of fot) {
       expect(l.fonte.trim()).not.toBe('');
-      expect(erroDeFormato({ tabela: l.tabela as LegalParameterTabela, chave: l.chave, discriminador: l.discriminador, valorJson: l.valorJson ? JSON.parse(l.valorJson) : undefined })).toBeNull();
+      expect(erroDeFormato({ tabela: l.tabela, chave: l.chave, discriminador: l.discriminador, valorJson: l.valorJson ? JSON.parse(l.valorJson) : undefined })).toBeNull();
     }
   });
 

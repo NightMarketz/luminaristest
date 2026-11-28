@@ -9,7 +9,7 @@ import { pushTestSchema, resetDb, disconnectDb } from '@test/helpers';
 import { getFactory } from '@/lib/factory';
 import antigas from './__fixtures__/tabelas-antigas-pr2.json';
 import { LegalParameterRepository } from '../repositories/LegalParameterRepository';
-import { SemLinhaVigenteError, type LegalParameterTabela, type LinhaLegal } from '../models/legalParameter';
+import { SemLinhaVigenteError, type LinhaLegal } from '../models/legalParameter';
 import { tabelaApuracaoDe } from '@/features/accounting/models/taxAssessmentParams';
 import { razaoCreditoPisCofins, tabelaPisCofinsDe } from '@/features/accounting/models/pisCofinsParams';
 import { findMonofasicoRule, tabelaPisCofinsItemDe, type MonofasicoNcmRule } from '@/features/accounting/models/pisCofinsMonofasicoNcm';
@@ -29,7 +29,7 @@ const DATAS = ['2025-01-01', ...[2025, 2026, 2027].flatMap((a) => Array.from({ l
 const VESPERA = '2024-12-31';
 
 let fot: LinhaLegal[];
-const tabelas = async (ts: LegalParameterTabela[]) => getFactory().getLegalParameterService().fotografia(ts);
+const tabelas = async (ts: string[]) => getFactory().getLegalParameterService().fotografia(ts);
 
 describe('BE-INCR-LEGAL-PARAMS PR-2 item 6 — paridade tabela em código × banco', () => {
   // Síncrono à parte: o build a frio do banco-modelo (db push) bloqueia o loop por mais de 5 s e, dentro do hook
