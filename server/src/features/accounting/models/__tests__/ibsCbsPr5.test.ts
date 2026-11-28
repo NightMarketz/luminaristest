@@ -34,7 +34,7 @@ describe('semente do PR-5', () => {
 describe('item 21 — matriz OBRIGACAO_REGIME ganha IBS_CBS_APURACAO', () => {
   const condicoes = { aporteInvestidorAnjo: null, livroCaixaSemEscrituracao: null, distribuicaoAcimaBase: null };
   const status = (regime: 'MEI' | 'SIMPLES' | 'PRESUMIDO' | 'REAL', data: string, inativa = false) =>
-    resolverObrigacoes({ regime, inativa, condicoes }, matrizObrigacoesDe(todas, data)).find((o) => o.obrigacao === 'IBS_CBS_APURACAO');
+    resolverObrigacoes({ regime, inativa, condicoes, derivadas: { ingressoComReceitasAnteriores: null } }, matrizObrigacoesDe(todas, data)).find((o) => o.obrigacao === 'IBS_CBS_APURACAO');
 
   it('o valorJson de cada linha nova obedece ao formato da tabela', () => {
     for (const l of pr5.filter((x) => x.tabela === 'OBRIGACAO_REGIME')) expect([l.id, ObrigacaoRegimeJson.safeParse(JSON.parse(l.valorJson ?? '')).success]).toEqual([l.id, true]);
@@ -51,7 +51,7 @@ describe('item 21 — matriz OBRIGACAO_REGIME ganha IBS_CBS_APURACAO', () => {
 
   it('sem linha de 2026 (F-IBS-7 b) e vai no fim da ordem da matriz', () => {
     expect(status('REAL', '2026-12-31')).toBeUndefined();
-    const real = resolverObrigacoes({ regime: 'REAL', inativa: false, condicoes }, matrizObrigacoesDe(todas, '2027-01-01'));
+    const real = resolverObrigacoes({ regime: 'REAL', inativa: false, condicoes, derivadas: { ingressoComReceitasAnteriores: null } }, matrizObrigacoesDe(todas, '2027-01-01'));
     // EFD-REINF PR-3 (item 20): REINF passou a ser a última; IBS_CBS_APURACAO vem logo antes.
     expect(real[real.length - 2].obrigacao).toBe('IBS_CBS_APURACAO');
   });

@@ -14,7 +14,7 @@ const todas = legalParamsSeedRows();
 const REGIMES = ['MEI', 'SIMPLES', 'PRESUMIDO', 'REAL'] as const;
 const condicoes = { aporteInvestidorAnjo: null, livroCaixaSemEscrituracao: null, distribuicaoAcimaBase: null };
 const reinf = (regime: (typeof REGIMES)[number], data: string, inativa = false) =>
-  resolverObrigacoes({ regime, inativa, condicoes }, matrizObrigacoesDe(todas, data)).find((o) => o.obrigacao === 'REINF');
+  resolverObrigacoes({ regime, inativa, condicoes, derivadas: { ingressoComReceitasAnteriores: null } }, matrizObrigacoesDe(todas, data)).find((o) => o.obrigacao === 'REINF');
 
 describe('semente do EFD-REINF PR-3', () => {
   it('a migração carrega o texto de prisma/data/legal_parameters_reinf_v1.sql e só insere', () => {
@@ -54,7 +54,7 @@ describe('item 20 — REINF na matriz', () => {
   // L-7694: RECEITAS_ANTERIORES_OPCAO (só SIMPLES) entrou depois da REINF — mudança esperada, não regressão.
   it('vai no fim da ordem da matriz (antes só da RECEITAS_ANTERIORES_OPCAO, L-7694)', () => {
     expect(ORDEM_OBRIGACOES.slice(-2)).toEqual(['REINF', 'RECEITAS_ANTERIORES_OPCAO']);
-    const real = resolverObrigacoes({ regime: 'REAL', inativa: false, condicoes }, matrizObrigacoesDe(todas, '2027-01-01'));
+    const real = resolverObrigacoes({ regime: 'REAL', inativa: false, condicoes, derivadas: { ingressoComReceitasAnteriores: null } }, matrizObrigacoesDe(todas, '2027-01-01'));
     expect(real.map((o) => o.obrigacao).slice(-2)).toEqual(['IBS_CBS_APURACAO', 'REINF']);
   });
 });

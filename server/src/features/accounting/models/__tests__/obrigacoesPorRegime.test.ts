@@ -14,7 +14,7 @@ import { MATRIZ_OBRIGACOES_SEMENTE } from '@test/helpers/legalParams';
 const OBRIGACOES_POR_REGIME = MATRIZ_OBRIGACOES_SEMENTE;
 const NENHUMA: CondicoesPerfil = { aporteInvestidorAnjo: false, livroCaixaSemEscrituracao: false, distribuicaoAcimaBase: false };
 const status = (regime: (typeof REGIMES_EMPRESA)[number], condicoes: Partial<CondicoesPerfil> = {}, inativa = false) =>
-  Object.fromEntries(resolverObrigacoes({ regime, inativa, condicoes: { ...NENHUMA, ...condicoes } }, MATRIZ_OBRIGACOES_SEMENTE).map((o) => [o.obrigacao, o]));
+  Object.fromEntries(resolverObrigacoes({ regime, inativa, condicoes: { ...NENHUMA, ...condicoes }, derivadas: { ingressoComReceitasAnteriores: false } }, MATRIZ_OBRIGACOES_SEMENTE).map((o) => [o.obrigacao, o]));
 
 describe('regimeEmpresa (item 2)', () => {
   it('MEI e SIMPLES → unidade SIMPLES; PRESUMIDO e REAL → o próprio (LC 123 art. 18-A §1º)', () => {
