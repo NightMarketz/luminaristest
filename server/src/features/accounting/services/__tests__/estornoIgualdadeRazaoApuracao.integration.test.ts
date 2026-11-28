@@ -158,15 +158,21 @@ async function calcular(ctx: Ctx, ym: string): Promise<Apuracao> {
   };
 }
 
-beforeAll(() => pushTestSchema());
-beforeAll(async () => {
-  const u = await prisma.user.create({ data: { name: 'ond22', username: 'ond22', email: 'ond22@test.local', password: 'x', role: 'USER' } });
+/**
+ * Dono (PJ) próprio por bloco: duas unidades com venda sob o mesmo dono é PJ multiunidade, que o Simples recusa com 400
+ * (L-20261121-200757-976c, Res. CGSN 140 art. 16 § 2º). As provas daqui são de estorno × apuração de UMA unidade.
+ */
+async function novoDono(username: string) {
+  const u = await prisma.user.create({ data: { name: username, username, email: `${username}@test.local`, password: 'x', role: 'USER' } });
   user = { id: u.id, username: u.username };
   const created = await request(app).post('/api/dashboard/create').set(authHeader(user)).send({ suiteKey: 'beautySalon', unit: { name: 'Matriz' } });
   expect(created.status).toBe(201);
   const byName = async (n: string) => (await prisma.dynamicTable.findFirstOrThrow({ where: { userId: user.id, internalName: n } })).id;
   tables = { sales: await byName('sales'), saleItems: await byName('saleItems'), units: await byName('units') };
-}, 180_000);
+}
+
+beforeAll(() => pushTestSchema());
+beforeAll(() => novoDono('ond22'), 180_000);
 afterAll(() => prisma.$disconnect());
 
 describe('competência — cancelar e devolver HOJE vendas do mês anterior: razão = subrazão = apuração = espelho', () => {
@@ -245,6 +251,7 @@ const hojeAno = Number(scopeToday(resolveAccountingScopeInternal({ userId: 'x' }
   let vendaB: { id: string; data: unknown };
 
   beforeAll(async () => {
+    await novoDono('ond22caixa');
     ctx = await novaUnidade('Caixa');
     for (const ano of new Set([Number(ctx.m0.slice(0, 4)), Number(ctx.hojeYm.slice(0, 4))])) {
       expect((await perfil(ctx, ano, { regime: 'SIMPLES', simplesRegimeApuracao: 'CAIXA', ...PRAZOS })).status).toBe(200);
