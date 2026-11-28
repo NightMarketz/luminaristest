@@ -1,5 +1,5 @@
 -- Lacuna L-20261127-184105-7694. Só dado: o texto de prisma/data/legal_parameters_simples_receitas_anteriores_v1.sql
--- (teste-guarda de igualdade em simplesAnexosSeed.test.ts). Memória migracao-sqlite-nao-e-transacional: INSERT OR IGNORE com id fixo.
+-- (teste-guarda de igualdade em CompanyFiscalProfileService.receitasAnteriores.test.ts). Memória migracao-sqlite-nao-e-transacional: INSERT OR IGNORE com id fixo.
 -- Lacuna L-20261127-184105-7694 (dono, chat, 27/11/2026): obrigação "Receitas Anteriores à Opção" na matriz OBRIGACAO_REGIME.
 -- Res. CGSN 140/2018 arts. 144-D e 144-E (incl. Res. CGSN 190/2026), com efeitos imediatos pela Res. CGSN 196/2026 art. 4º
 -- (nova redação do art. 9º I da 190, vigência 24/11/2026). Lidos no Normas RFB, visão multivigente (idAto 92278), dossiê
