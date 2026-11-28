@@ -1,6 +1,7 @@
-import { CANONICAL_ACCOUNTS, isContaDoPlanoPadrao } from '../fixtures/ChartOfAccountsFixture';
+import { CANONICAL_ACCOUNTS, isCodeUnder, isContaDoPlanoPadrao } from '../fixtures/ChartOfAccountsFixture';
 
-export const STATEMENT_MAPPING_VERSION = 'statement-mapping.v8';
+// v9: prefixo de `Expense` com fronteira de ponto (lacuna 9b46; ADR-INCR4 Q4.1 — mudança de mapeamento sobe a versão).
+export const STATEMENT_MAPPING_VERSION = 'statement-mapping.v9';
 
 /**
  * Declarative mapping rules for BP (Balanço Patrimonial) and DRE (Demonstração
@@ -50,11 +51,21 @@ export const STATEMENT_MAPPING_RULES = [
 export type StatementMappingRule = (typeof STATEMENT_MAPPING_RULES)[number];
 export type StatementId = 'BP' | 'DRE';
 
+/**
+ * O `codePrefix` de uma regra cobre `code`? Em `Expense`, com fronteira de ponto (`isCodeUnder`; lacuna 9b46, metade
+ * `Expense`): `4.30` não é `4.3` e cai na regra por natureza `dre.expenses`, sem mudar o líquido (mesmo sinal). Em `Revenue`
+ * segue o `startsWith` de antes (`3.10` casa `3.1`) até a F-DRM-3 do BRIEF BE-INCR-DRE-MAPEAMENTO (item 3): `Revenue` não
+ * tem regra genérica, e com a fronteira a conta ficaria sem regra e sairia do líquido.
+ */
+function codeMatchesPrefix(nature: string, code: string, prefix: string): boolean {
+  return nature === 'Expense' ? isCodeUnder(code, prefix) : code.startsWith(prefix);
+}
+
 /** Does `rule` match (nature, code) in `statement` by the rule table alone (nature + `codePrefix`)? */
 function matchesByTable(r: StatementMappingRule, nature: string, code: string, statement: StatementId): boolean {
   if (r.statement !== statement) return false;
   if (r.match.nature !== nature) return false;
-  if ('codePrefix' in r.match && !code.startsWith(r.match.codePrefix)) return false;
+  if ('codePrefix' in r.match && !codeMatchesPrefix(nature, code, r.match.codePrefix)) return false;
   return true;
 }
 

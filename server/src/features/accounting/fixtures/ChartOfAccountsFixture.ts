@@ -213,6 +213,14 @@ export function isContaDoPlanoPadrao(account: { code: string; name: string; natu
 }
 
 /**
+ * `code` é o próprio `prefix` ou uma subconta dele, com fronteira de ponto: `4.3.1` está sob `4.3`; `4.30` não (lacuna 9b46,
+ * BRIEF BE-INCR-DRE-MAPEAMENTO item 1). A única implementação do teste de prefixo de código; não re-inline `startsWith`.
+ */
+export function isCodeUnder(code: string, prefix: string): boolean {
+  return code === prefix || code.startsWith(`${prefix}.`);
+}
+
+/**
  * Canonical retained-earnings leaf (Lucros ou Prejuízos Acumulados). The year-end closing
  * entry (BE-INCR-SPED-APURACAO) posts the net result of the exercise against this account.
  * Resolved by CODE (stable), never by name.

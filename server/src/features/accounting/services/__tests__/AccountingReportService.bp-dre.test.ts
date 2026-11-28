@@ -480,6 +480,72 @@ describe('incomeStatement', () => {
     expect(report.diagnostics.unmappedAccounts[0].code).toBe('3.9.01');
   });
 
+  // ── Guarda de totalidade (BRIEF BE-INCR-DRE-MAPEAMENTO item 5; lacunas 9b46/618f). Naturezas misturadas (memória "Teste
+  // BP/DRE mistura naturezas"): nenhuma conta de resultado com saldo some da DRE em silêncio. Toda regra da DRE dá −raw, então
+  // Σ seções + Σ(−saldo das sem regra) = −Σ saldos Revenue/Expense (a base do I355), e INVALID ⇔ alguma delas sem seção.
+  describe('totalidade da DRE', () => {
+    const SECOES = ['grossRevenue', 'revenueDeductions', 'costOfGoodsSold', 'financialResult', 'expenses'] as const;
+
+    async function conferir(accounts: ReturnType<typeof makeAccount>[], raw: MockGroupByResult[]) {
+      // só o ano corrente tem movimento: a janela do ano anterior volta vazia (sem WARNING de resultado não encerrado)
+      const { svc } = buildService(accounts, (opts) => (opts?.to && opts.to.getUTCFullYear() < 2026 ? [] : raw));
+      const report = await svc.incomeStatement(SCOPE, AS_OF);
+      const natureza = new Map(accounts.map((a) => [a.id, a.nature]));
+      const deResultado = raw.filter((r) => ['Revenue', 'Expense'].includes(natureza.get(r.accountId) ?? ''));
+      const base = -deResultado.reduce((s, r) => s + r.debitCents - r.creditCents, 0);
+      const somaSecoes = SECOES.reduce((s, k) => s + Number(report[k].totalCents), 0);
+      const semSecao = report.diagnostics.unmappedAccounts.reduce((s, u) => s - u.balanceCents, 0);
+      expect(somaSecoes + semSecao).toBe(base);
+      expect(Number(report.netResult.amountCents)).toBe(somaSecoes);
+      const algumaSemSecao = deResultado.some(
+        (r) => r.debitCents !== r.creditCents && report.diagnostics.unmappedAccounts.some((u) => u.accountId === r.accountId),
+      );
+      expect(report.reportStatus === 'INVALID').toBe(algumaSemSecao);
+      return report;
+    }
+
+    const contas = [
+      makeAccount({ code: '1.1.1.01', nature: 'Asset' }),
+      makeAccount({ code: '3.1.01', nature: 'Revenue' }),
+      makeAccount({ code: '3.5.1', nature: 'Revenue' }),
+      makeAccount({ code: '4.2', nature: 'Expense' }),
+      makeAccount({ code: '4.3.1', nature: 'Expense' }),
+      makeAccount({ code: '4.30', nature: 'Expense' }),
+    ];
+    const saldos: MockGroupByResult[] = [
+      { accountId: '1.1.1.01', debitCents: 10000, creditCents: 0 },
+      { accountId: '3.1.01', debitCents: 0, creditCents: 5000 },
+      { accountId: '3.5.1', debitCents: 0, creditCents: 300 },
+      { accountId: '4.2', debitCents: 1200, creditCents: 0 },
+      { accountId: '4.3.1', debitCents: 100, creditCents: 0 },
+      { accountId: '4.30', debitCents: 400, creditCents: 0 },
+    ];
+
+    it('totalidade: todas com seção → OK, Σ seções = −Σ saldos de resultado; 4.30 em expenses, não em financialResult', async () => {
+      const report = await conferir(contas, saldos);
+      expect(report.reportStatus).toBe('OK');
+      expect(report.expenses.accounts.map((a) => a.code)).toContain('4.30');
+      expect(report.financialResult.accounts.map((a) => a.code)).not.toContain('4.30');
+    });
+
+    it('totalidade: receita do usuário fora da tabela (3.9.01) → INVALID, e o saldo dela está no diagnóstico', async () => {
+      const report = await conferir(
+        [...contas, makeAccount({ code: '3.9.01', nature: 'Revenue' })],
+        [...saldos, { accountId: '3.9.01', debitCents: 0, creditCents: 700 }],
+      );
+      expect(report.reportStatus).toBe('INVALID');
+      expect(report.diagnostics.unmappedAccounts.map((u) => u.code)).toEqual(['3.9.01']);
+    });
+
+    it('totalidade: conta de resultado sem regra mas com saldo zero não invalida a DRE', async () => {
+      const report = await conferir(
+        [...contas, makeAccount({ code: '3.9.02', nature: 'Revenue' })],
+        [...saldos, { accountId: '3.9.02', debitCents: 250, creditCents: 250 }],
+      );
+      expect(report.reportStatus).toBe('OK');
+    });
+  });
+
   // ── FIX-FE-INCR1-M1M2 — T1: Asset (BP) accounts must not be flagged as
   // "unmapped" in DRE diagnostics. Regression for the guard added at
   // buildDiagnostics() mirroring the existing BP→DRE guard. ─────────────────

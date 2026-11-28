@@ -10,7 +10,7 @@ import { CLOSING_SOURCE_TYPE } from '../models/closing';
 import { scopeToday } from '../models/dates';
 import { STATEMENT_MAPPING_VERSION } from './StatementMappingFixture';
 import type { AccountingReportService } from './AccountingReportService';
-import { DISPONIVEL_CODE } from '../fixtures/ChartOfAccountsFixture';
+import { DISPONIVEL_CODE, isCodeUnder } from '../fixtures/ChartOfAccountsFixture';
 
 // ─── Cash-flow classification (por natureza/code de conta) ──────────────────────
 
@@ -39,7 +39,7 @@ export type CashFlowSectionId = 'operating' | 'investing' | 'financing';
 
 /** True iff `code` is (or is a sub-account of) one of the given prefixes. */
 function matchesPrefix(code: string, prefixes: readonly string[]): boolean {
-  return prefixes.some((p) => code === p || code.startsWith(`${p}.`));
+  return prefixes.some((p) => isCodeUnder(code, p));
 }
 
 /** True iff `code` is a cash & equivalents leaf. */

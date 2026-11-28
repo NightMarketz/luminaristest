@@ -111,7 +111,23 @@ describe('E3/E26 — DRE: seção financialResult (statement-mapping v5)', () =>
     // v6: a lacuna 35d3 (21/11) somou a regra dre.cogs_services (4.7); o resultado financeiro segue igual.
     // v7: a lacuna 038d (21/11) classifica o insumo do perfil fiscal pelo papel (findDreRule) — ADR-INCR4 Q4.1: mudança exige bump.
     // v8: a lacuna 13dd (24/11) casa a regra de folha (4.2, 4.7) só com a conta que É a folha do plano padrão (findDreRule).
-    expect(STATEMENT_MAPPING_VERSION).toBe('statement-mapping.v8');
+    // v9: a lacuna 9b46 (26/11) põe fronteira de ponto no prefixo das regras de Expense (isCodeUnder).
+    expect(STATEMENT_MAPPING_VERSION).toBe('statement-mapping.v9');
+  });
+
+  it('9b46 (metade Expense): prefixo com fronteira de ponto — 4.30 não é 4.3, 4.20 não é 4.2, 4.70 não é 4.7', () => {
+    expect(findMappingRule('Expense', '4.30', 'DRE')?.id).toBe('dre.expenses');
+    expect(findMappingRule('Expense', '4.20', 'DRE')?.id).toBe('dre.expenses');
+    expect(findMappingRule('Expense', '4.70', 'DRE')?.id).toBe('dre.expenses');
+    // subconta e o próprio código seguem a regra do prefixo
+    expect(findMappingRule('Expense', '4.3.3', 'DRE')?.id).toBe('dre.financial_exp');
+    expect(findMappingRule('Expense', '4.3', 'DRE')?.id).toBe('dre.financial_exp');
+    expect(findMappingRule('Expense', '4.2.1', 'DRE')?.id).toBe('dre.cogs');
+  });
+
+  it('9b46 (limite até a F-DRM-3): Revenue segue startsWith — 3.10 ainda casa 3.1 e não fica sem regra', () => {
+    expect(findMappingRule('Revenue', '3.10', 'DRE')?.id).toBe('dre.gross_rev');
+    expect(findMappingRule('Revenue', '3.60', 'DRE')?.id).toBe('dre.deductions_taxes');
   });
 
   it('first-match: 3.5.x e 4.3.x → financialResult; 4.4.x e 4.6 → expenses', () => {
