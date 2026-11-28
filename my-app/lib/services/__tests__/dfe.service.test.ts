@@ -80,6 +80,14 @@ describe('dfeService', () => {
     expect(jsonBody(init)).toEqual({ unitId: 'u1', errors: [{ code: 'E0001', message: 'CNPJ inválido' }] });
   });
 
+  it('rearmarPolling (lacunas cf36/3cf5): POST /documents/:id/rearmar-polling com { unitId }', async () => {
+    await dfeService.rearmarPolling('d1', { unitId: 'u1' });
+    const { url, init } = lastCall();
+    expect(url).toMatch(/\/nfe\/dfe\/documents\/d1\/rearmar-polling$/);
+    expect(init.method).toBe('POST');
+    expect(jsonBody(init)).toEqual({ unitId: 'u1' });
+  });
+
   it('retornoManual: multipart com file, pdf e unitId — e sem pdf quando não há DANFSe', async () => {
     const xml = new File(['<NFSe/>'], 'nota.xml', { type: 'text/xml' });
     const pdf = new File(['%PDF'], 'danfse.pdf', { type: 'application/pdf' });

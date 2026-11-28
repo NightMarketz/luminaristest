@@ -35,6 +35,13 @@ const STATUS_TONE: Record<FiscalDocumentView['status'], string> = {
   DENIED: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
 };
 
+const emVoo = (d: FiscalDocumentView) => d.status === 'SENT' || d.status === 'PROCESSING';
+/** Lacunas cf36/3cf5: o job de polling parou de consultar a nota que ainda está em voo (a tela não promete re-arme automático — o servidor não devolve o abandonado à fila sozinho; o botão re-arma). */
+const pollParado = (d: FiscalDocumentView) => d.partner !== 'manual' && emVoo(d) && !!d.poll?.gaveUpAt;
+/** Lacuna 92c5: nota em voo adiada porque o assinador local está indisponível. Só enquanto o job não desistiu (153d: estado velho em nota terminal não aparece). */
+const pollAdiado = (d: FiscalDocumentView) => d.partner !== 'manual' && emVoo(d) && !d.poll?.gaveUpAt && !!d.poll?.deferredSince;
+const dataLocal = (iso: string) => new Date(iso).toLocaleDateString();
+
 const isAuthorized = (d: FiscalDocumentView) => d.status === 'AUTHORIZED' || d.status === 'AUTHORIZED_DIVERGENT';
 /** Caso F6 (GAP-MAP "resíduo do applyResult"): autorizada em produção sem o XML guardado. */
 const xmlNaoGuardado = (d: FiscalDocumentView) => d.partner === 'manual' && isAuthorized(d) && d.ambiente === 'producao' && !d.xmlAttachmentId;
@@ -137,6 +144,13 @@ export function FiscalDocumentsSection({ unitId, saleId, emitted }: FiscalDocume
     else setCardError((m) => ({ ...m, [doc.id]: result.message }));
   }
 
+  async function rearmarPolling(doc: FiscalDocumentView) {
+    setBusy(doc.id);
+    const result = await run(doc, t('dfe.poll.rearmError', 'Não foi possível re-armar a consulta.'), () => dfeService.rearmarPolling(doc.id, { unitId }));
+    setBusy(null);
+    if (!result.ok) setCardError((m) => ({ ...m, [doc.id]: result.message }));
+  }
+
   async function download(doc: FiscalDocumentView, attachmentId: string, ext: 'xml' | 'pdf') {
     try {
       await accountingService.downloadDocumentAttachment(attachmentId, unitId, `nfse-${doc.nNFSe ?? doc.id}.${ext}`);
@@ -189,6 +203,25 @@ export function FiscalDocumentsSection({ unitId, saleId, emitted }: FiscalDocume
             {doc.releitura && <ReleituraView releitura={doc.releitura} />}
 
             {!manual && <p className="text-xs text-neutral-500">{t('dfe.card.automatico', 'Emissão automática pelo parceiro.')}</p>}
+
+            {pollParado(doc) && doc.poll.gaveUpAt && (
+              <div className={`${warnBox} space-y-1`} data-testid="fiscal-doc-poll-parado">
+                <p>
+                  {t('dfe.poll.stopped', 'A consulta automática desta nota ao parceiro parou')} ({dataLocal(doc.poll.gaveUpAt)}).{' '}
+                  {t('dfe.poll.stoppedHint', 'Para o sistema consultar o parceiro de novo, use “Re-armar consulta”.')}
+                </p>
+                {doc.poll.lastError && <p className="font-mono text-[11px]">{doc.poll.lastError}</p>}
+                <button type="button" className={btn} disabled={busy === doc.id} onClick={() => void rearmarPolling(doc)}>
+                  <FiRefreshCw size={11} /> {t('dfe.poll.rearm', 'Re-armar consulta')}
+                </button>
+              </div>
+            )}
+            {pollAdiado(doc) && doc.poll.deferredSince && (
+              <div className={warnBox} data-testid="fiscal-doc-poll-adiado">
+                {t('dfe.poll.deferred', 'Assinador local indisponível: a consulta desta nota está adiada desde')} {dataLocal(doc.poll.deferredSince)}.{' '}
+                {t('dfe.poll.deferredHint', 'Ligue o assinador; a consulta volta sozinha.')}
+              </div>
+            )}
 
             {manual && (doc.status === 'SENT' || doc.status === 'PROCESSING') && (
               <div className="space-y-2">

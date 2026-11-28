@@ -2689,6 +2689,14 @@
       "releitura_divergente": "The authorized invoice differs from what was sent — the only way out is to cancel and issue again.",
       "sale_cancelled_with_live_document": "The sale was cancelled, but this invoice is still valid — cancel it on the portal and record it here."
     },
+    "poll": {
+      "deferred": "Local signer unavailable: the status check for this invoice has been postponed since",
+      "deferredHint": "Turn the signer on; the check resumes by itself.",
+      "rearm": "Re-arm check",
+      "rearmError": "Could not re-arm the check.",
+      "stopped": "The automatic status check of this invoice with the partner has stopped",
+      "stoppedHint": "To have the system check with the partner again, use “Re-arm check”."
+    },
     "reenviar": {
       "error": "Could not resend.",
       "hint": "Fix the tax profile or the sale before resending — the DPS is rebuilt."
