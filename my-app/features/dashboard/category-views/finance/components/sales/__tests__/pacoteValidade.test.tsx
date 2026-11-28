@@ -219,14 +219,14 @@ describe('itens 10 e 11 — venda de pacote: bloco de validade, checkbox e grava
         await openPackageSale();
         fireEvent.click(screen.getByLabelText('Li este texto ao cliente e ele concordou'));
         expect(finalizeBtn().disabled).toBe(false);
-        // volta ao Cabeçalho e muda a data
-        vi.mocked(packageAcceptancesService.getNotice).mockResolvedValue(notice({ saleDate: '2026-11-26', expiresOn: '2026-12-27', textSha256: 'b'.repeat(64) }));
+        // volta ao Cabeçalho e muda a data — data passada fixa: a de antes (2026-11-26) caía no próprio dia e não mudava nada
+        vi.mocked(packageAcceptancesService.getNotice).mockResolvedValue(notice({ saleDate: '2026-01-15', expiresOn: '2026-02-15', textSha256: 'b'.repeat(64) }));
         fireEvent.click(screen.getByText('Cabeçalho'));
         const date = document.querySelector('input[type="date"]') as HTMLInputElement;
-        fireEvent.change(date, { target: { value: '2026-11-26' } });
+        fireEvent.change(date, { target: { value: '2026-01-15' } });
         fireEvent.click(screen.getByText('Próximo'));
-        await waitFor(() => expect(packageAcceptancesService.getNotice).toHaveBeenLastCalledWith('u1', 'pkg1', '2026-11-26'));
-        await screen.findByText('Válido até 27/12/2026');
+        await waitFor(() => expect(packageAcceptancesService.getNotice).toHaveBeenLastCalledWith('u1', 'pkg1', '2026-01-15'));
+        await screen.findByText('Válido até 15/02/2026');
         expect((screen.getByLabelText('Li este texto ao cliente e ele concordou') as HTMLInputElement).checked).toBe(false);
         expect(finalizeBtn().disabled).toBe(true);
     });
