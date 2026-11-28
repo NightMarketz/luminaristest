@@ -77,13 +77,15 @@ describe('ECD sem código referencial numa conta analítica (Manual da ECD 1.17)
     const posting = ApplicationFactory.getInstance().getPostingService();
     // O plano padrão nasce no 1º acesso (ensureChartOfAccounts) — materializa ANTES de criar a conta do caso.
     await posting.ensureChartOfAccounts(scope);
-    // A conta do caso: analítica, com movimento, SEM código referencial na versão.
+    // A conta do caso: analítica, com movimento, SEM código referencial na versão. Código 3.1.9 (prefixo 3.1): a DRE a
+    // classifica — fora da DRE a ECD seria recusada pela L-20261126-205932-5235, não pela cobertura; e o gate da ECF
+    // (código exato ∉ 3.1/3.3/3.4) continua a barrando.
     await prisma.account.create({
-      data: { userId: dono.id, unitId: UNIT, code: '3.9', name: 'Receita sem referencial', nature: 'Revenue', acceptsEntries: true },
+      data: { userId: dono.id, unitId: UNIT, code: '3.1.9', name: 'Receita sem referencial', nature: 'Revenue', acceptsEntries: true },
     });
-    // Toda outra folha do plano ganha código, para que a 3.9 seja a ÚNICA sem mapeamento.
+    // Toda outra folha do plano ganha código, para que a 3.1.9 seja a ÚNICA sem mapeamento.
     const outrasFolhas = await prisma.account.findMany({
-      where: { userId: dono.id, unitId: UNIT, acceptsEntries: true, code: { not: '3.9' } },
+      where: { userId: dono.id, unitId: UNIT, acceptsEntries: true, code: { not: '3.1.9' } },
     });
     expect(outrasFolhas.map((a) => a.code)).toContain(BANCO);
     for (const a of outrasFolhas) {
@@ -101,7 +103,7 @@ describe('ECD sem código referencial numa conta analítica (Manual da ECD 1.17)
       description: 'Receita lançada numa conta sem referencial',
       lines: [
         { accountCode: BANCO, debitCents: 100_000, creditCents: 0 },
-        { accountCode: '3.9', debitCents: 0, creditCents: 100_000 },
+        { accountCode: '3.1.9', debitCents: 0, creditCents: 100_000 },
       ],
     });
   }, 120000);
@@ -110,34 +112,34 @@ describe('ECD sem código referencial numa conta analítica (Manual da ECD 1.17)
     await prisma.$disconnect();
   });
 
-  it('ECD: 201 com aviso (unmappedAccounts = [3.9]); a 3.9 sai sem I051 e a folha mapeada mantém o I051', async () => {
+  it('ECD: 201 com aviso (unmappedAccounts = [3.1.9]); a 3.1.9 sai sem I051 e a folha mapeada mantém o I051', async () => {
     const r = await request(app).post('/api/accounting/sped/ecd/generate').set(authHeader(dono)).send(ecdBody());
 
     expect({ status: r.status, error: r.status === 201 ? undefined : r.body }).toEqual({ status: 201, error: undefined });
     expect(r.body.coberturaReferencial).toEqual({
       mappingVersion: VERSION,
-      unmappedAccounts: [expect.objectContaining({ code: '3.9', name: 'Receita sem referencial' })],
+      unmappedAccounts: [expect.objectContaining({ code: '3.1.9', name: 'Receita sem referencial' })],
     });
-    expect((r.body.avisos as string[]).join(' ')).toMatch(/3\.9.*I051|I051.*3\.9/);
+    expect((r.body.avisos as string[]).join(' ')).toMatch(/3\.1\.9.*I051|I051.*3\.1\.9/);
 
     const txt = String(
       (await request(app).get(`/api/accounting/data-exchange/jobs/${r.body.data.id}/download`).query({ unitId: UNIT }).set(authHeader(dono))).text,
     );
     const lines = txt.split(/\r?\n/);
     const i050 = (code: string) => lines.findIndex((l) => l.startsWith('|I050|') && l.includes(`|${code}|`));
-    expect(i050('3.9')).toBeGreaterThanOrEqual(0);
-    expect(lines[i050('3.9') + 1].startsWith('|I051|')).toBe(false);
+    expect(i050('3.1.9')).toBeGreaterThanOrEqual(0);
+    expect(lines[i050('3.1.9') + 1].startsWith('|I051|')).toBe(false);
     expect(lines[i050(BANCO) + 1]).toContain('|I051|');
     expect(lines[i050(BANCO) + 1]).toContain(`1.01.${BANCO}`);
   });
 
-  it('CONTROLE ECF: a mesma 3.9 continua 400 pelo gate da ECF (unmappedRevenueAccounts) e não cria job', async () => {
+  it('CONTROLE ECF: a mesma 3.1.9 continua 400 pelo gate da ECF (unmappedRevenueAccounts) e não cria job', async () => {
     const antes = await prisma.accountingDataExchangeJob.count({ where: { userId: dono.id, unitId: UNIT, kind: 'EXPORT_SPED_ECF' } });
     const r = await request(app).post('/api/accounting/sped/ecf/generate').set(authHeader(dono)).send(ecfBody());
 
     expect(r.status).toBe(400);
     expect(JSON.stringify(r.body)).toContain('unmappedRevenueAccounts');
-    expect(JSON.stringify(r.body)).toContain('3.9');
+    expect(JSON.stringify(r.body)).toContain('3.1.9');
     expect(await prisma.accountingDataExchangeJob.count({ where: { userId: dono.id, unitId: UNIT, kind: 'EXPORT_SPED_ECF' } })).toBe(antes);
   });
 });

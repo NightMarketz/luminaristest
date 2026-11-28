@@ -517,6 +517,15 @@ export class SpedGenerationService {
       this.reports.balanceSheet(scope, asOf),
       this.reports.incomeStatement(scope, asOf),
     ]);
+    // L-20261126-205932-5235 (contenção até o BE-INCR-DRE-MAPEAMENTO): DRE INVALID = conta de resultado com saldo e sem
+    // regra, fora do netResult — o J150 sairia divergente do I355. Recusa antes do job (composeFile roda antes do createJob).
+    if (dre.reportStatus === 'INVALID') {
+      const contas = dre.diagnostics.unmappedAccounts.map((u) => `${u.code} ${u.name}`).join(', ');
+      throw new ValidationError(
+        `A DRE de ${year} está inválida: conta(s) com saldo fora da estrutura da DRE (${contas}). ` +
+          'O J150 sairia com o resultado incompleto; reclassifique os lançamentos numa conta da DRE antes de gerar a ECD.',
+      );
+    }
 
     const balanceSheet = this.buildJ100(bp);
     const incomeStatement = this.buildJ150(dre);
