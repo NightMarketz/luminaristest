@@ -28,7 +28,9 @@ export const SIMPLES_SEED_FILE_V4 = path.resolve(__dirname, '../../prisma/data/l
 export const SIMPLES_SEED_FILE_V5 = path.resolve(__dirname, '../../prisma/data/legal_parameters_simples_v5.sql');
 /** Verificação legal de 17/10/2026: Res. CGSN 190/2026 (DEFIS e SIMEI 2027). Mesma regra de igualdade com o migration.sql. */
 export const SIMPLES_SEED_FILE_V6 = path.resolve(__dirname, '../../prisma/data/legal_parameters_simples_v6.sql');
-export const SIMPLES_SEED_FILES = [SIMPLES_SEED_FILE, SIMPLES_SEED_FILE_V2, SIMPLES_SEED_FILE_V3, SIMPLES_SEED_FILE_V4, SIMPLES_SEED_FILE_V5, SIMPLES_SEED_FILE_V6];
+/** Lacuna L-20261127-184105-7694: OBRIGACAO_REGIME/RECEITAS_ANTERIORES_OPCAO (Res. CGSN 140 arts. 144-D/E). Mesma regra de igualdade. */
+export const SIMPLES_SEED_FILE_RECEITAS_ANTERIORES = path.resolve(__dirname, '../../prisma/data/legal_parameters_simples_receitas_anteriores_v1.sql');
+export const SIMPLES_SEED_FILES = [SIMPLES_SEED_FILE, SIMPLES_SEED_FILE_V2, SIMPLES_SEED_FILE_V3, SIMPLES_SEED_FILE_V4, SIMPLES_SEED_FILE_V5, SIMPLES_SEED_FILE_V6, SIMPLES_SEED_FILE_RECEITAS_ANTERIORES];
 /** PR-2: as tabelas restantes (exceto DEPRECIACAO_ANEXO_III, PR-3). Mesma regra de igualdade com o migration.sql. */
 export const LEGAL_PARAMS_SEED_FILE_V2 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v2.sql');
 /** PR-3: DEPRECIACAO_ANEXO_III (cópia do fixture do Anexo III). Mesma regra de igualdade com o migration.sql. */

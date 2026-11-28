@@ -20,7 +20,7 @@ import type { IAccountRepository } from '../repositories/IAccountRepository';
 
 export type IbsCbsOpcao = (typeof IBS_CBS_OPCOES)[number];
 export type SimplesRegimeApuracao = (typeof SIMPLES_REGIMES_APURACAO)[number];
-import { matrizObrigacoesDe, resolverObrigacoes, type ObrigacaoResolvida, type PerfilParaObrigacoes } from '../models/obrigacoesPorRegime';
+import { ingressoComReceitasAnteriores, matrizObrigacoesDe, resolverObrigacoes, type Entrega, type ObrigacaoResolvida, type PerfilParaObrigacoes } from '../models/obrigacoesPorRegime';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { CondicoesPerfil, ObrigacaoSped, StatusObrigacao } from '../models/obrigacoesPorRegime';
 import type { RegimeEmpresa } from '../models/regimeEmpresa';
@@ -97,8 +97,13 @@ export interface ObrigacaoComFaltantes {
   status: StatusObrigacao;
   fonte: string;
   perguntaPendente?: string;
+  /** L-7694: prazos da obrigação de calendário (RECEITAS_ANTERIORES_OPCAO). */
+  entregas?: Entrega[];
   faltantes: string[];
 }
+
+/** L-7694: o que o chamador de `resolverObrigacoesEm` dá — as condições derivadas o serviço calcula. */
+export type PerfilBaseParaObrigacoes = Omit<PerfilParaObrigacoes, 'derivadas'> & { inicioAtividadeEm: string | null };
 
 export interface CompanyObligationsView {
   ano: number;
@@ -153,8 +158,17 @@ export class CompanyFiscalProfileService {
    * lia vigência, e filtrar pelo ano do perfil tiraria a DCTFWEB (vigente desde 2025) de um perfil de 2024 — mudança
    * de comportamento que esta cópia não decide (relatório do PR-2, "Lacunas de spec").
    */
-  async resolverObrigacoesEm(data: string, perfil: PerfilParaObrigacoes): Promise<ObrigacaoResolvida[]> {
-    return resolverObrigacoes(perfil, matrizObrigacoesDe(await this.legalParams.fotografia(['OBRIGACAO_REGIME']), data));
+  async resolverObrigacoesEm(scope: AccountingScope, ano: number, perfil: PerfilBaseParaObrigacoes): Promise<ObrigacaoResolvida[]> {
+    // L-7694: a condição derivada (Res. CGSN 140 art. 144-D) lê o perfil do ano anterior — aqui, para que nenhum chamador
+    // (onboarding incluso) resolva a matriz sem ela.
+    const anterior = await this.repo.findByYear(scope, ano - 1);
+    const derivadas = {
+      ingressoComReceitasAnteriores: ingressoComReceitasAnteriores(
+        { ano, regime: perfil.regime, inicioAtividadeEm: perfil.inicioAtividadeEm, simplesExclusaoEfeitosEm: null },
+        anterior ? { ano: anterior.anoCalendario, regime: anterior.regime as RegimeEmpresa, inicioAtividadeEm: anterior.inicioAtividadeEm, simplesExclusaoEfeitosEm: anterior.simplesExclusaoEfeitosEm } : null,
+      ),
+    };
+    return resolverObrigacoes({ ...perfil, derivadas }, matrizObrigacoesDe(await this.legalParams.fotografia(['OBRIGACAO_REGIME']), scopeToday(scope)));
   }
 
   async get(scope: AccountingScope, ano: number): Promise<CompanyFiscalProfileView | null> {
@@ -362,7 +376,7 @@ export class CompanyFiscalProfileService {
     const contadorVivo = view.contadorContactId ? !!(await this.contactRepo.findById(scope, view.contadorContactId)) : false;
     const representanteVivo = view.representanteLegalSignerId ? !!(await this.signerRepo.findById(scope, view.representanteLegalSignerId)) : false;
 
-    const obrigacoes = (await this.resolverObrigacoesEm(scopeToday(scope), { regime: view.regime, inativa: view.inativa, condicoes: view.condicoes })).map((o) => {
+    const obrigacoes = (await this.resolverObrigacoesEm(scope, ano, { regime: view.regime, inativa: view.inativa, condicoes: view.condicoes, inicioAtividadeEm: view.inicioAtividadeEm })).map((o) => {
       const cobra = o.status === 'OBRIGATORIA' || o.status === 'CONDICIONAL';
       const faltantes: string[] = [];
       if (o.obrigacao === 'DCTFWEB') {

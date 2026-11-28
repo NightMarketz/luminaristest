@@ -57,7 +57,8 @@ export const ObrigacaoRegimeJson = z
     condicoes: z.array(
       z
         .object({
-          chave: z.enum(['aporteInvestidorAnjo', 'livroCaixaSemEscrituracao', 'distribuicaoAcimaBase']),
+          // L-7694: + ingressoComReceitasAnteriores (condição derivada — obrigacoesPorRegime.CondicoesDerivadas).
+          chave: z.enum(['aporteInvestidorAnjo', 'livroCaixaSemEscrituracao', 'distribuicaoAcimaBase', 'ingressoComReceitasAnteriores']),
           quandoTrue: status,
           pergunta: texto,
           fonte: texto,
@@ -65,7 +66,17 @@ export const ObrigacaoRegimeJson = z
         .strict(),
     ),
     perguntaBase: texto.optional(),
-    inativa: z.object({ status, fonte: texto, pergunta: texto.optional() }).strict(),
+    inativa: z.object({ status, fonte: texto, pergunta: texto.optional(), segueCondicoes: z.literal(true).optional() }).strict(),
+    // L-7694: prazos da obrigação de calendário — competências YYYY-MM (de ≤ até) e prazo YYYY-MM-DD.
+    entregas: z
+      .array(
+        z
+          .object({ competenciaDe: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/), competenciaAte: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/), prazo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), fonte: texto })
+          .strict()
+          .refine((e) => e.competenciaDe <= e.competenciaAte, 'competenciaDe ≤ competenciaAte'),
+      )
+      .min(1)
+      .optional(),
   })
   .strict();
 export const Lc116ServicoJson = z
@@ -208,7 +219,7 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
     checar: (l) =>
       // Achado 4 do #861: a chave é qualquer obrigação da matriz (ORDEM_OBRIGACOES), não só as do PR-2.
       so((ORDEM_OBRIGACOES as readonly string[]).includes(l.chave) && (REGIMES_EMPRESA as readonly string[]).includes(l.discriminador ?? ''), `chave ${ORDEM_OBRIGACOES.join('|')}; discriminador = regime (MEI|SIMPLES|PRESUMIDO|REAL)`) ??
-      jsonOk(ObrigacaoRegimeJson, l.valorJson, 'valorJson = { statusBase, condicoes[], perguntaBase?, inativa }'),
+      jsonOk(ObrigacaoRegimeJson, l.valorJson, 'valorJson = { statusBase, condicoes[], perguntaBase?, inativa, entregas? }'),
   },
   LC116_SERVICO: {
     valor: 'json',
