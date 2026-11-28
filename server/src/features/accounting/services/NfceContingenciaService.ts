@@ -206,9 +206,18 @@ export class NfceContingenciaService {
     // de resposta depois da transmissão —, não só para a que segue `CONTINGENCY`.
     const feriados = await this.legalParams.fotografia(['FERIADO_NACIONAL']);
     for (const doc of await this.docRepo.listContingenciaNaoAutorizada(new Date(this.now().getTime() - ALERTA_JANELA_MS))) {
+      // F-DEN-3 a (BE-INCR-DFE-DENIED-SUBSTITUIVEL, dono 25/11): a denegada alerta até a substituta ser autorizada.
+      if (doc.status === 'DENIED' && (await this.temSubstitutaAutorizada(doc))) continue;
       this.conferirPrazo(doc, feriados, s);
     }
     return ContingenciaTickSummarySchema.parse(s);
+  }
+
+  /** A denegada já foi substituída: existe irmão da mesma venda/kind em `AUTHORIZED_STATUSES` — a ação humana foi feita. */
+  private async temSubstitutaAutorizada(doc: FiscalDocumentWithAttempts): Promise<boolean> {
+    const scope = resolveAccountingScopeInternal({ userId: doc.userId }, doc.unitId);
+    const irmaos = await this.docRepo.listBySale(scope, doc.saleId);
+    return irmaos.some((o) => o.id !== doc.id && o.kind === doc.kind && AUTHORIZED_STATUSES.includes(o.status as FiscalDocumentStatus));
   }
 
   private async transmitirUma(doc: FiscalDocument, s: ContingenciaTickSummary): Promise<void> {
@@ -292,7 +301,7 @@ export class NfceContingenciaService {
     return true;
   }
 
-  /** Decisão 9 — NFC-e de contingência sem autorização faltando ≤ 4 h (ou depois) do fim do prazo vira alerta. */
+  /** Decisão 9 — NFC-e de contingência sem autorização faltando ≤ 4 h (ou depois) do fim do prazo vira alerta (a DENEGADA também não foi autorizada: segue aqui até a substituta autorizar, F-DEN-3 a). */
   private conferirPrazo(doc: FiscalDocumentWithAttempts, feriados: Awaited<ReturnType<LegalParameterService['fotografia']>>, s: ContingenciaTickSummary): void {
     const corrente = doc.attempts.find((a) => a.attemptNo === doc.currentAttemptNo);
     let ide: { tpEmis?: unknown; dhEmi?: unknown } | undefined;

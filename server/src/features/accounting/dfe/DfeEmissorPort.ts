@@ -214,8 +214,12 @@ export interface EmitirInput {
 }
 
 export interface EmissaoResult {
-  /** `DENIED` = uso denegado (NF-e/NFC-e, cStat 110/301/302): protocolo gravado; terminal, sem reenvio. */
-  status: 'PROCESSING' | 'AUTHORIZED' | 'REJECTED' | 'DENIED';
+  /**
+   * `DENIED` = uso denegado (NF-e/NFC-e, cStat 110/301/302): protocolo gravado; terminal, sem reenvio (BE-INCR-DFE-DENIED-SUBSTITUIVEL:
+   * a venda é liberada por rename da `saleKey`, a reemissão leva número novo). `CANCELLED_AT_FISCO` = a consulta achou a nota já
+   * cancelada no fisco (retCancNFe cStat 101/151, `[WS-CSTAT]` ER09) — o fato do fisco: o serviço grava `CANCELLED` (F-DEN-1 a).
+   */
+  status: 'PROCESSING' | 'AUTHORIZED' | 'REJECTED' | 'DENIED' | 'CANCELLED_AT_FISCO';
   partnerRef: string;
   numero?: string;
   serie?: string;

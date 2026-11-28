@@ -207,7 +207,8 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     return this.db(tx).fiscalDocument.findMany({
       where: {
         kind: 'NFCE',
-        status: { in: ['CONTINGENCY', 'SENT', 'PROCESSING', 'REJECTED', 'PENDING_SIGNATURE'] },
+        // DENIED (BE-INCR-DFE-DENIED-SUBSTITUIVEL item 6): a denegada NÃO foi autorizada — segue no alerta até a substituta autorizar (F-DEN-3 a).
+        status: { in: ['CONTINGENCY', 'SENT', 'PROCESSING', 'REJECTED', 'PENDING_SIGNATURE', 'DENIED'] },
         deletedAt: null,
         // Revisão J: a janela é a da TENTATIVA de contingência (o documento pode ser antigo e cair em contingência hoje,
         // no reenvio da rejeitada ou da que esperava a assinatura).

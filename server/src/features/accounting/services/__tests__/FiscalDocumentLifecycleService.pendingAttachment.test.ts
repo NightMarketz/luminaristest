@@ -382,6 +382,20 @@ describe('item 11 (F-PA-7 b, F-PA-8 b) — backfill por reconsulta em todo tick'
     mockPort.consultar.mockReset();
   });
 
+  // BE-INCR-DFE-DENIED-SUBSTITUIVEL item 12 (chamador "backfill de anexo"): o resultado novo da consulta não entra por aqui.
+  it.each([
+    ['CANCELLED_AT_FISCO (101)', { status: 'CANCELLED_AT_FISCO', partnerRef: 'doc-1:1', errors: [{ code: '101', message: 'cancelada' }] }],
+    ['PROCESSING com 252 (consulta inválida)', { status: 'PROCESSING', partnerRef: 'doc-1:1', errors: [{ code: '252', message: 'x' }] }],
+  ])('consulta devolve %s → cai em "retorno sem XML": sem pendência, sem mudar o status, sem exceção', async (_nome, retorno) => {
+    const h = harness([antigo()]);
+    mockPort.consultar.mockResolvedValue(retorno);
+    await h.service.drainPendingAttachmentsOnce();
+    expect(h.onlyPending()).toHaveLength(0);
+    expect(h.docsById.get('doc-1')?.status).toBe('AUTHORIZED');
+    expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringMatching(/retorno sem XML/), { documentId: 'doc-1' });
+    mockPort.consultar.mockReset();
+  });
+
   it('rodar 2× com a 1ª drenagem falhando → uma pendência só', async () => {
     const h = harness([antigo()]);
     mockPort.consultar.mockResolvedValue(AUTH);

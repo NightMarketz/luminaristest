@@ -197,8 +197,10 @@ describe('isValidResultTransition — item 24, tabela pura (mutation target)', (
     }
   });
 
-  it('MUTATION TARGET: SENT -> CANCELLED nunca é uma transição válida via resultado da porta', () => {
-    expect(isValidResultTransition('SENT', 'CANCELLED')).toBe(false);
+  it('F-DEN-1 a (BE-INCR-DFE-DENIED-SUBSTITUIVEL): CANCELLED só é alvo a partir de SENT/PROCESSING/CONTINGENCY — e só o resultado CANCELLED_AT_FISCO o produz', () => {
+    for (const from of ['SENT', 'PROCESSING', 'CONTINGENCY'] as const) expect(isValidResultTransition(from, 'CANCELLED')).toBe(true);
+    // MUTATION TARGET: a transição AUTHORIZED -> CANCELLED direta segue só pelo cancelar() — nunca por resultado da porta.
+    for (const from of ['AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'CANCEL_ANALYSIS', 'REJECTED', 'PENDING_SIGNATURE'] as const) expect(isValidResultTransition(from, 'CANCELLED')).toBe(false);
   });
 
   it('estados terminais (AUTHORIZED/REJECTED/CANCELLED) não aceitam nenhuma transição de resultado', () => {

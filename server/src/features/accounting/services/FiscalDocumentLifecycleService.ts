@@ -61,19 +61,26 @@ import type { AccountingScope } from '../scope/AccountingScope';
  * (toda operação devolve a view atualizada via `getById`, nunca duplica `toView`).
  */
 
-/** Item 24 — única tabela de transições válidas a partir de um RESULTADO da porta (nunca aceita
- *  SENT/PROCESSING pulando direto pra CANCELLED — isso só acontece via `cancelar()`, a partir de
- *  AUTHORIZED, com seu próprio guard). Mutation target: se alguém adicionar 'CANCELLED' aqui, o
- *  teste da tabela de transições tem que acusar. */
+/** Item 24 — única tabela de transições válidas a partir de um RESULTADO da porta. `CANCELLED` entra só para pendentes
+ *  (SENT/PROCESSING/CONTINGENCY) e só pelo resultado `CANCELLED_AT_FISCO` (a consulta achou a nota já cancelada no fisco,
+ *  F-DEN-1 a); a partir de AUTHORIZED o cancelamento segue só por `cancelar()`, com seu próprio guard. Mutation target: o teste
+ *  da tabela de transições acusa qualquer outra origem de CANCELLED. */
 const VALID_RESULT_TRANSITIONS: Partial<Record<FiscalDocumentStatus, FiscalDocumentStatus[]>> = {
-  SENT: ['AUTHORIZED', 'REJECTED', 'PROCESSING', 'DENIED'],
-  PROCESSING: ['AUTHORIZED', 'REJECTED', 'PROCESSING', 'DENIED'],
+  // `CANCELLED` entra SÓ para o resultado `CANCELLED_AT_FISCO` (a consulta achou a nota já cancelada no fisco, F-DEN-1 a de
+  // BE-INCR-DFE-DENIED-SUBSTITUIVEL); a transição `AUTHORIZED → CANCELLED` direta segue só pelo `cancelar()`.
+  SENT: ['AUTHORIZED', 'REJECTED', 'PROCESSING', 'DENIED', 'CANCELLED'],
+  PROCESSING: ['AUTHORIZED', 'REJECTED', 'PROCESSING', 'DENIED', 'CANCELLED'],
   // X10a PR-9 (decisão 7): o job transmite a NFC-e off-line e o retorno da SEFAZ é aplicado daqui.
-  CONTINGENCY: ['AUTHORIZED', 'REJECTED', 'PROCESSING', 'DENIED'],
+  CONTINGENCY: ['AUTHORIZED', 'REJECTED', 'PROCESSING', 'DENIED', 'CANCELLED'],
 };
 
 export function isValidResultTransition(from: FiscalDocumentStatus, to: FiscalDocumentStatus): boolean {
   return (VALID_RESULT_TRANSITIONS[from] ?? []).includes(to);
+}
+
+/** O status do documento que o resultado da porta grava (`CANCELLED_AT_FISCO` → `CANCELLED`; o resto é o mesmo nome). */
+function statusDoResultado(result: EmissaoResult): FiscalDocumentStatus {
+  return result.status === 'CANCELLED_AT_FISCO' ? 'CANCELLED' : result.status;
 }
 
 /** Erro de código próprio (dfe_*) que o job de polling faz skip+log — nunca a classe base
@@ -116,6 +123,34 @@ function chaveDaTentativa(payloadJson: string): string | null {
 
 function isNaoConsta(result: EmissaoResult): boolean {
   return result.status === 'PROCESSING' && result.errors.some((e) => NAO_CONSTA_CODES.has(e.code));
+}
+
+/**
+ * BE-INCR-DFE-DENIED-SUBSTITUIVEL item 10 (F-DEN-2 a, dono 25/11) — rejeições da PRÓPRIA CONSULTA (não veredito sobre a nota):
+ * `[WS-CSTAT]` J01 → 252, J02 → 226, J02a → 236, J02k → 526 (chave muito antiga), J04 → 562, J05 → 561, J06 → 613
+ * (TRANSCRICAO-MOC70-webservices-NFe l.366-367; só os códigos, grau V — o texto de cada um está no Anexo I do MOC, não transcrito).
+ * A porta segue pura (devolve `PROCESSING` + o cStat, como o 217); quem decide é `consultarEAplicar`.
+ */
+const CONSULTA_INVALIDA_CODES = new Set(['252', '226', '236', '526', '562', '561', '613']);
+
+/** A consulta foi recusada por si (chave/ambiente/idade): repetir não cura. Permanente para o job; 422 na consulta manual. */
+export class DfeConsultaInvalidaError extends AppError {
+  constructor(
+    readonly cStat: string,
+    readonly xMotivo: string,
+  ) {
+    // Diz só o que a SEFAZ disse (cStat + xMotivo), sem afirmar o motivo nem orientar o operador (BRIEF §6.2/§6.3: o texto de cada
+    // código está no Anexo I do MOC, não transcrito).
+    super(`dfe_consulta_invalida:${cStat} — a SEFAZ recusou a consulta (cStat ${cStat}: ${xMotivo || 'sem xMotivo'})`, 422, 'DFE_CONSULTA_INVALIDA');
+    this.name = 'DfeConsultaInvalidaError';
+    Object.setPrototypeOf(this, DfeConsultaInvalidaError.prototype);
+  }
+}
+
+function consultaInvalidaDe(result: EmissaoResult): { cStat: string; xMotivo: string } | null {
+  if (result.status !== 'PROCESSING') return null;
+  const e = result.errors.find((x) => CONSULTA_INVALIDA_CODES.has(x.code));
+  return e ? { cStat: e.code, xMotivo: e.message } : null;
 }
 
 export interface NaoConstaContagem {
@@ -286,9 +321,9 @@ function descreverErroDePoll(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-/** Erro que nao se cura repetindo: o schema recusou o dado (ZodError). Desiste na 1a vez em vez de gastar o teto. */
+/** Erro que nao se cura repetindo: o schema recusou o dado (ZodError) ou a SEFAZ recusou a consulta (F-DEN-2 a). Desiste na 1a vez em vez de gastar o teto. */
 function isPermanentPollError(error: unknown): boolean {
-  return error instanceof ZodError;
+  return error instanceof ZodError || error instanceof DfeConsultaInvalidaError;
 }
 
 export class FiscalDocumentLifecycleService {
@@ -346,6 +381,8 @@ export class FiscalDocumentLifecycleService {
     const ref = doc.partnerRef ?? (full ? chaveDaTentativa(this.currentAttempt(full).payloadJson) : null) ?? attemptRef(doc.id, doc.currentAttemptNo);
     const ctx = full ? await this.ctxDe(scope, full, port, false) : undefined;
     const result = ctx ? await port.consultar(ref, ctx) : await port.consultar(ref);
+    const invalida = consultaInvalidaDe(result);
+    if (invalida) throw new DfeConsultaInvalidaError(invalida.cStat, invalida.xMotivo);
     if (!isNaoConsta(result)) {
       await this.applyResult(scope, doc, result);
       return;
@@ -449,7 +486,16 @@ export class FiscalDocumentLifecycleService {
           }
           continue;
         }
-        if (isDfeSkippableError(error)) {
+        if (error instanceof DfeConsultaInvalidaError) {
+          // F-DEN-2 a: a SEFAZ recusou a CONSULTA (chave/ambiente/idade), não a nota — repetir não cura. Ramo próprio ANTES do
+          // `dfe_`-skip (que contaria como `skipped` e esconderia o alerta); `isPermanentPollError` desiste na 1ª ocorrência.
+          logger.error('dfe_poll_pending: a SEFAZ recusou a consulta (cStat da própria consulta) — o job para; ação humana', {
+            documentId: doc.id,
+            cStat: error.cStat,
+            error: message,
+          });
+          summary.failed++;
+        } else if (isDfeSkippableError(error)) {
           logger.warn('dfe_poll_pending: skip (erro de código próprio)', { documentId: doc.id, error: message });
           summary.skipped++;
         } else {
@@ -1663,7 +1709,7 @@ export class FiscalDocumentLifecycleService {
     /** F-ADN-8 a — contagem das consultas "não consta", guardada na tentativa corrente. */
     naoConsta?: NaoConstaContagem,
   ): Promise<void> {
-    if (!isValidResultTransition(doc.status as FiscalDocumentStatus, result.status)) {
+    if (!isValidResultTransition(doc.status as FiscalDocumentStatus, statusDoResultado(result))) {
       throw new Error(`invalid_transition: ${doc.status} -> ${result.status}`);
     }
     const attemptResult = {
@@ -1677,15 +1723,56 @@ export class FiscalDocumentLifecycleService {
       return;
     }
 
-    if (result.status === 'REJECTED' || result.status === 'DENIED') {
-      // DENIED (uso denegado, MOC 7.0 VG §5.1.6): terminal pelo mesmo caminho da rejeição (errorsJson + auditoria), mas fora de
-      // `REENVIAVEIS` e dentro de `STATUS_QUE_OCUPAM_NUMERO` — o número foi consumido. L-20261124-054021-cbc8.
-      const denegada = result.status === 'DENIED';
+    if (result.status === 'CANCELLED_AT_FISCO') {
+      // BE-INCR-DFE-DENIED-SUBSTITUIVEL item 13 (F-DEN-1 a, dono 25/11): a consulta achou a nota já cancelada no fisco (retCancNFe
+      // 101/151, `[WS-CSTAT]` ER09). Transição PRÓPRIA (não `markCancelled`: ele exige NOTA_VALIDA_STATUSES e a nota nunca foi
+      // autorizada aqui); rename da saleKey libera o @@unique; sem `retireSourceDocument` — nunca houve proveniência.
+      const dh = result.dhProc ? new Date(result.dhProc) : null;
+      const cancelledAt = dh && !Number.isNaN(dh.getTime()) ? dh : new Date();
       await this.repo.runTransaction(async (tx) => {
         await this.repo.transition(
           scope,
           doc.id,
-          { status: result.status, errorsJson: JSON.stringify(result.errors), attemptResult, whenStatusIn: guardaDoResultado(doc) },
+          {
+            status: 'CANCELLED',
+            cancelledAt,
+            saleKey: `cancelled:${doc.id}:${doc.saleId}`,
+            chaveOuCodigo: result.partnerRef,
+            cancelEvento: 'consulta_101_151',
+            attemptResult,
+            whenStatusIn: guardaDoResultado(doc),
+          },
+          tx,
+        );
+        await this.auditService.append(tx, scope, {
+          actorUserId: scope.actorUserId,
+          eventType: 'dfe.cancelled',
+          targetType: 'fiscal_document',
+          targetId: doc.id,
+          payload: { documentId: doc.id, evento: 'consulta_101_151' },
+        });
+      });
+      return;
+    }
+
+    if (result.status === 'REJECTED' || result.status === 'DENIED') {
+      // DENIED (uso denegado, MOC 7.0 VG §5.1.6): terminal pelo mesmo caminho da rejeição (errorsJson + auditoria), mas fora de
+      // `REENVIAVEIS` e dentro de `STATUS_QUE_OCUPAM_NUMERO` (esta última é premissa em gate humano 9b9d — não tocada aqui).
+      // L-20261124-054021-cbc8. BE-INCR-DFE-DENIED-SUBSTITUIVEL item 1 (db50/4eaa): a denegada libera a `saleKey` por rename
+      // (`denied:<id>:<saleId>`, como o `cancelled:`), então a venda aceita a nota nova — número novo — sem P2002.
+      const denegada = result.status === 'DENIED';
+      const alvo: 'REJECTED' | 'DENIED' = result.status;
+      await this.repo.runTransaction(async (tx) => {
+        await this.repo.transition(
+          scope,
+          doc.id,
+          {
+            status: alvo,
+            errorsJson: JSON.stringify(result.errors),
+            attemptResult,
+            ...(denegada ? { saleKey: `denied:${doc.id}:${doc.saleId}` } : {}),
+            whenStatusIn: guardaDoResultado(doc),
+          },
           tx,
         );
         await this.auditService.append(tx, scope, {
