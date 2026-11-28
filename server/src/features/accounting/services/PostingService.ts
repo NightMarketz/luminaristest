@@ -631,6 +631,19 @@ export class PostingService {
       throw new NotFoundError(`Lançamento '${input.lancamentoId}' não foi encontrado.`);
     }
 
+    // Lacuna 6449: lançamento de subrazão (ar.* / ap.*) é do serviço do título; só ele estorna, pela porta interna
+    // `automaticWriter` (fora do DTO HTTP, o Zod a descarta). Estorno por fora deixaria o recibo/pagamento ACTIVE com o
+    // razão Reversed, que o reconcile leria como crash entre os dois commits. O sourceType de lançamento postado não muda,
+    // então a leitura fora da tx é autoritativa.
+    if (!input.automaticWriter && /^(ar|ap)\./.test(original.sourceType ?? '')) {
+      throw new AppError(
+        `O ${describeLancamento(original)} pertence ao subrazão (${original.sourceType}); estorne pelo título ` +
+          '(cancelar recebimento, pagamento ou título).',
+        409,
+        'SUBLEDGER_OWNED_ENTRY',
+      );
+    }
+
     // IDEMPOTENCY — must come BEFORE the status gate: a reversed entry has status 'Reversed',
     // so checking status first would throw instead of returning the prior reversal.
     if (original.reversedById) {
@@ -1014,6 +1027,11 @@ export class PostingService {
     const { userId, unitId } = accountingScopeWhere(scope);
     try {
       return await this.postingRepo.runTransaction(async (tx) => {
+        // Lacuna 79a9 (F-PBF1-6, etapa b): a superior pode ter sido apagada depois da pré-checagem; relida na tx.
+        await this.chartStructureRule.assertNewAccount(
+          { code: dto.code, nature: dto.nature, acceptsEntries: dto.acceptsEntries ?? true },
+          (code) => this.accountRepo.findByCode(scope, code, tx),
+        );
         const account = await this.accountRepo.create({
           userId,
           unitId,
@@ -1081,6 +1099,10 @@ export class PostingService {
     }
 
     await this.postingRepo.runTransaction(async (tx) => {
+      // Lacuna c1b9: o "sem lançamentos" acima é pré-checagem; um postEntry pode commitar antes desta tx. Autoritativo aqui.
+      if (await this.postingRepo.existsForAccount(scope, accountId, tx)) {
+        throw new AppError('Conta possui lançamentos e não pode ser excluída.', 409, 'CONFLICT');
+      }
       // Gate autoritativo DENTRO da tx (item 16): o que mais depende da conta (BR: ajuste vivo do e-Lalur, ECF 3C item 19)
       // vem pela porta AccountDeletionGuard — o núcleo não conhece o fiscal.
       await this.accountDeletionGuard.assertAccountDeletable(scope, accountId, tx);
