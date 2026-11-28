@@ -3,7 +3,8 @@
 **Tipo:** BRIEF de grupo de lacunas da caixa (não é BRIEF de nó do plano). **Data:** 26/11/2026. **Sessão:** planejamento,
 worktree `unruffled-mcnulty-17caaf`. **Estado:** **com fork**. A execução espera a resposta do dono (ver "Forks pendentes").
 **Emenda de 27/11:** as lacunas 17fd e 4747 (consumidores que leem a DRE incompleta) entram no grupo por decisão do dono
-(itens 18–20, fork F-DRM-4). O PR-1 de contenção (itens 1, 2, 4 e 5), liberado pelo dono em 26/11, está no #1438.
+(itens 18–20, fork F-DRM-4). No mesmo dia entra a 9ee3, o J100 da ECD que não lê o BP `INVALID` (item 21, fork F-DRM-5).
+O PR-1 de contenção (itens 1, 2, 4 e 5), liberado pelo dono em 26/11, está no #1438.
 
 ## Contexto fixo
 
@@ -22,11 +23,18 @@ worktree `unruffled-mcnulty-17caaf`. **Estado:** **com fork**. A execução espe
       `reportStatus`. Com uma conta de resultado sem regra, a base do e-Lalur e o lucro da DEFIS saem incompletos.
     - `L-20261127-074909-4747`: o LAIR (`AccountingReportService.ts:789`, `resultadoAntesIrpjCsllPorConta`) chama
       `computeDreNet` direto e não tem `reportStatus`. A conta sem regra some da base de IRPJ/CSLL do Real sem aviso.
+  - **Emenda de 27/11 (2ª)**, outra filha da 5235, registrada pela sessão que a corrige (#1444):
+    `L-20261127-192711-9ee3` (defeito, P1, fiscal G2·E1·silencioso·inferido, geração 3). O J100 da ECD
+    (`SpedGenerationService.ts:517`) lê `balanceSheet()` sem olhar o `reportStatus`. O BP diagnostica toda a história até
+    `asOf` (`AccountingReportService.ts:719`, `:741`); a DRE, só o ano (`:720`). Uma conta de resultado sem regra com saldo
+    de exercício anterior não encerrado deixa o BP `INVALID` com a DRE do ano `OK`. A guarda do #1444, que lê só
+    `dre.reportStatus`, não recusa, e o J100 sai sem esse saldo.
   - **Fica fora:**
     - `L-20261127-074910-cc8d` (DFC e exportação consomem DRE `INVALID`) é fork, segue com o dono e **não** é ratificado
       aqui; é citado em "Forks pendentes".
-    - A contenção da ECD (J150) é da sessão de correção da 5235, no PR #1444 (hoje só o guarda vermelho
-      `spedController.ecdDreInvalid.integration.test.ts`). Este BRIEF não a repete.
+    - A contenção da ECD pela DRE (J150) é da sessão de correção da 5235, no PR #1444: a guarda
+      `dre.reportStatus === 'INVALID'` em `SpedGenerationService.ts` (depois da `:517`) e o teste
+      `spedController.ecdDreInvalid.integration.test.ts`. Este BRIEF não a repete; o item 21 cobre só o lado do BP.
 - **Autorização:**
   - Planejar o grupo: `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`, emenda de 21/11, item 6 ("Grupo vai a
     planejamento macro": *"Planeja como resolver tudo no macro em vez de vários remendos"*).
@@ -35,8 +43,10 @@ worktree `unruffled-mcnulty-17caaf`. **Estado:** **com fork**. A execução espe
     antes da resposta do dono.**
   - PR-1 de contenção (itens 1, 2, 4 e 5): dono, chat, 26/11, *"Libera o PR-1 de contenção"* → PR #1438.
   - Incluir a 17fd e a 4747: dono, chat da sessão de dreno, 27/11, *"Entram no BRIEF #1435"* (repassado pela sessão
-    "Classificar a caixa legada de lacunas"). A frase autoriza **planejar** as duas aqui. Executar os itens 18–20 ainda pede a
+    "Classificar a caixa legada de lacunas"). A frase autoriza **planejar** as duas aqui. Executar os itens 18–21 ainda pede a
     liberação (ver "Pergunta ao dono").
+  - Incluir a 9ee3: dono, chat da sessão de dreno, 27/11, *"Entra no BRIEF #1435"* (repassado pela mesma sessão). Mesmo
+    alcance: planejar o item 21; executar pede a liberação.
 - **Insumos (fato consumado):**
   - `docs/adr/ADR-INCR4-bp-dre.md`. Q4 ratificou o mapeamento por regras declarativas com a ordem *"accountId → codePrefix →
     nature → fallback"*. Q4.1: mudança de mapeamento exige bump de versão. Q7: conta com saldo sem mapeamento deixa o
@@ -180,7 +190,7 @@ Cada passo deixa a DRE idêntica à de hoje até o dono ou o usuário classifica
    `statementSection === findMappingRule(nature, code, 'DRE').section`. Toca `ChartOfAccountsFixture.ts`, então vai depois do
    #1427.
 9. **A3. Retroatividade** (depende de F-DRM-2):
-   - (a) a troca do item 6 é recusada (409 nomeado) quando a conta tem partida em período fechado. O gate é o mesmo do
+   - (a) a troca do item 6 é recusada (422, no precedente da `AccountingPeriodNotOpenError` de `lib/errors.ts`) quando a conta tem partida em período fechado. O gate é o mesmo do
      `assertPeriodOpenTx` (`EntryApprovalService.ts:493`, `PostingService.ts:131`), re-checado dentro da tx;
    - (b) a classificação é versionada com vigência, e a DRE lê a vigente em `asOf` (molde f974);
    - (c) nenhuma guarda.
@@ -223,7 +233,7 @@ Cada passo deixa a DRE idêntica à de hoje até o dono ou o usuário classifica
 - renomear uma folha no fixture (achado 3 do BRIEF irmão) muda a DRE de todo escopo existente;
 - o papel do insumo continua sendo a única camada `accountId`, e a próxima lacuna da cadeia (geração 5) é previsível.
 
-### Itens comuns da emenda de 27/11: quem apura tributo não lê DRE incompleta (17fd, 4747)
+### Itens comuns da emenda de 27/11: quem apura tributo ou gera declaração não lê demonstrativo incompleto (17fd, 4747, 9ee3)
 
 Valem em A, B e C. A F-DRM-3 (c) depende deles: com (c), o `INVALID` passa a ser o estado normal de uma receita sem seção, e
 quem o ignora gera tributo com base errada. A numeração continua a do checklist para não mexer nas referências acima.
@@ -236,14 +246,15 @@ quem o ignora gera tributo com base errada. A numeração continua a do checklis
       - o LAIR (item 20).
 
       Não nasce uma segunda cópia da regra "o que é conta sem regra".
-    - **Erro:** `DreIncompletaError extends ConflictError` (409, código `DRE_INCOMPLETA`). Leva `contas` (código, nome,
+    - **Erro:** `DreIncompletaError` em `server/src/lib/errors.ts`, onde moram os erros de domínio (código `DRE_INCOMPLETA`;
+      o status é a F-DRM-5). Leva `contas` (código, nome,
       natureza, saldo) e uma mensagem que diz os códigos ("a DRE de <data> tem conta de resultado sem seção: 3.7 …").
-      - É 409, não 400: o pedido é válido; o estado do razão é que impede a apuração.
       - É uma classe própria, não um `Error` genérico: um job que pule e registre pega só ela (memória "Skip+log só com erro
         próprio").
-      - **Coordenação com o #1444:** se a correção da 5235 (ECD) entrar antes e criar a classe de recusa dela, este item
-        **reusa** essa classe. Se este item entrar antes, a correção da ECD adota a `DreIncompletaError`. Uma recusa só para
-        os três consumidores que geram declaração (ECD, LALUR, DEFIS) e para o LAIR.
+      - **Coordenação com o #1444 (lido em 27/11):** a guarda da ECD lança um `ValidationError` (400) inline, sem classe
+        própria. O PR-2 troca esse `throw` pela `DreIncompletaError`, e o teste `ecdDreInvalid` passa a afirmar o status
+        que a F-DRM-5 escolher. Uma recusa só para quem gera declaração ou apura tributo: ECD (J150 e J100), LALUR, DEFIS e
+        LAIR.
 19. **[direto] LALUR e DEFIS recusam a DRE `INVALID` (17fd).**
     - **LALUR:** `LalurService.resultadoDoTrimestre` (`:942-949`). Cada uma das duas leituras de `incomeStatement` (o YTD e
       o fim do trimestre anterior) com `reportStatus === 'INVALID'` lança `DreIncompletaError` com o
@@ -251,16 +262,16 @@ quem o ignora gera tributo com base errada. A numeração continua a do checklis
       a `runTransaction` (`:1062`).
     - **DEFIS:** `SimplesDeclaracaoService.defis` (`:104-114`) recusa do mesmo jeito.
       - O `upsertDefis` (`:139-144`) grava o digitado (`repo.upsert`) **antes** de chamar `defis()`. A checagem da DRE sobe
-        para antes do `repo.upsert`. Sem isso, a resposta seria 409 com o digitado já gravado, e o usuário leria "não salvou"
+        para antes do `repo.upsert`. Sem isso, a resposta seria a recusa com o digitado já gravado, e o usuário leria "não salvou"
         quando salvou (memória "Efeito irreversível antes do gate").
     - **`WARNING` não recusa.** O resultado do ano anterior não encerrado não muda a DRE do ano; a recusa é só do `INVALID`.
     - **Testes (integração, `--runInBand`)**, no cenário do guarda da ECD: receita do usuário em `3.7` "Outra Receita", com
       saldo.
-      - Perfil Real: `POST /lalur/parte-b/close` do `A00` → 409 `DRE_INCOMPLETA`, que nomeia a `3.7`, e nenhum
+      - Perfil Real: `POST /lalur/parte-b/close` do `A00` → recusa `DRE_INCOMPLETA` (status da F-DRM-5), que nomeia a `3.7`, e nenhum
         `LalurClosing` criado.
       - Perfil Simples:
-        - `GET` da DEFIS do ano → 409;
-        - `PUT` da DEFIS → 409, com o digitado de antes intacto.
+        - `GET` da DEFIS do ano → recusa;
+        - `PUT` da DEFIS → recusa, com o digitado de antes intacto.
       - Controle: a mesma receita em `3.1` → 200 nas três rotas.
 20. **LAIR recusa a base incompleta (4747; depende de F-DRM-4).** `resultadoAntesIrpjCsllPorConta`
     (`AccountingReportService.ts:789-806`) roda o detector do item 18 nas mesmas `rows` que alimentam o `computeDreNet`
@@ -279,8 +290,26 @@ quem o ignora gera tributo com base errada. A numeração continua a do checklis
     - **Testes:**
       - unitário de `AccountingReportService`: `Revenue` `3.7` com saldo na janela → (a) lança `DreIncompletaError` com a `3.7`;
         (b) `contasSemRegra` com a `3.7` e `netCents` sem ela;
-      - integração: preview IRPJ trimestral, perfil Real, `3.7` com saldo → 409, sem nenhum `TaxAssessment` gravado; controle em
+      - integração: preview IRPJ trimestral, perfil Real, `3.7` com saldo → recusa, sem nenhum `TaxAssessment` gravado; controle em
         `3.1` → 200.
+21. **[direto] A ECD recusa o BP `INVALID` (9ee3).** Em `SpedGenerationService` (o `Promise.all` da `:516-519`), ao lado da
+    guarda da DRE do #1444: `bp.reportStatus === 'INVALID'` lança `DreIncompletaError` com o `bp.diagnostics.unmappedAccounts`.
+    - **Por que o BP basta:** no BP, `INVALID` só nasce de conta de resultado com saldo e sem `findDreRule`. Ativo, passivo e PL
+      casam por natureza (`bp.assets`/`bp.liabilities`/`bp.equity`), e a conta de natureza `?` dá `WARNING`
+      (`AccountingReportService.ts:349-371`). São as mesmas contas do detector do item 18, só que na janela da história
+      inteira. O item não cria uma segunda regra.
+    - **A mensagem diz de onde vem o saldo:** a conta tem saldo de exercício anterior não encerrado, fora da DRE do ano. O
+      remédio é reclassificar ou encerrar o exercício, não mexer no ano da ECD.
+    - **Ordem:** a guarda da DRE vem primeiro. Se as duas falharem, a mensagem é a da DRE, que é o caso mais comum.
+    - **Sem escrita antes da recusa:** a `composeFile` roda antes do `createJob` (comentário da guarda do #1444).
+    - **`WARNING` não recusa:** o resultado do ano anterior não encerrado, sozinho, continua gerando a ECD, como hoje.
+    - **Testes:**
+      - unitário de `AccountingReportService`: `Revenue` `3.7` com saldo em 2024, sem encerramento e sem movimento em 2025 →
+        `balanceSheet(31/12/2025).reportStatus === 'INVALID'` com a `3.7` e `incomeStatement(31/12/2025).reportStatus` diferente
+        de `INVALID`. Fixa a premissa da lacuna;
+      - integração (`--runInBand`): o mesmo cenário, `POST` da ECD 2025 → recusa com `DRE_INCOMPLETA`, que nomeia a `3.7`, e
+        nenhum job da ECD criado. Controle: a mesma receita em `3.1` → 201 (BP `WARNING`, não recusa). Grau do 201 do
+        controle: **inferido** do `comoProvar` da 9ee3; a sessão de feature confirma.
 
 ## Contratos
 
@@ -293,22 +322,26 @@ export function isCodeUnder(code: string, prefix: string): boolean; // code === 
 export const STATEMENT_MAPPING_VERSION = 'statement-mapping.v9';
 ```
 
-Emenda de 27/11 (itens 18–20). O único contrato HTTP novo é a resposta 409:
+Emenda de 27/11 (itens 18–21). O único contrato HTTP novo é a resposta de recusa (status pela F-DRM-5; `<s>` abaixo):
 
 ```ts
 // AccountingReportService.ts
 private contasSemRegraDre(rows: TrialBalanceRow[]): DiagnosticsShape['unmappedAccounts']; // o ramo DRE do buildDiagnostics, um só
-export class DreIncompletaError extends ConflictError {               // 409, code 'DRE_INCOMPLETA' (ou a classe da correção da 5235, se vier antes)
-  constructor(asOf: Date, readonly contas: DiagnosticsShape['unmappedAccounts']);
+// server/src/lib/errors.ts (onde moram os erros de domínio da casa)
+export class DreIncompletaError extends AppError { // super(msg, 422 /* F-DRM-5 a */ | 400 /* F-DRM-5 b */, 'DRE_INCOMPLETA')
+  constructor(asOf: Date, readonly contas: { code: string; name: string; nature: string; balanceCents: number }[], origem: 'DRE' | 'BP');
 }
 // F-DRM-4 (a): resultadoAntesIrpjCsllPorConta(...) lança DreIncompletaError; retorno igual ao de hoje
 // F-DRM-4 (b): resultadoAntesIrpjCsllPorConta(...): Promise<{ netCents; contas; contasSemRegra: DiagnosticsShape['unmappedAccounts'] }>
 
 // HTTP (mudam só pela recusa)
-POST /api/accounting/lalur/parte-b/close        → 409 DRE_INCOMPLETA
-GET|PUT /api/accounting/simples/defis/:ano       → 409 DRE_INCOMPLETA   (routes/simples.ts:48-49)
-POST preview|confirm da apuração IRPJ/CSLL (Real) → 409 DRE_INCOMPLETA  (F-DRM-4 a ou b)
+POST /api/accounting/lalur/parte-b/close        → <s> DRE_INCOMPLETA
+GET|PUT /api/accounting/simples/defis/:ano       → <s> DRE_INCOMPLETA   (routes/simples.ts:48-49)
+POST preview|confirm da apuração IRPJ/CSLL (Real) → <s> DRE_INCOMPLETA  (F-DRM-4 a ou b)
+POST da ECD (J150 pelo #1444; J100 pelo item 21) → <s> DRE_INCOMPLETA  (o #1444 entra com 400 ValidationError)
 ```
+
+O `origem` só escolhe a mensagem (item 21: "saldo de exercício anterior não encerrado"); o corpo e o código são os mesmos.
 
 Caminho A (itens 6–13):
 
@@ -340,7 +373,7 @@ findDreRule(row: DreRow, custoServicosAccountIds: ReadonlySet<string>): Statemen
 unmappedAccounts[i].reason?: 'NO_STATEMENT_SECTION'
 
 // HTTP
-PATCH /api/accounting/accounts/:id/statement-section  → 200 Account | 403 | 404 | 409 SECTION_NATURE_MISMATCH | 409 PERIOD_CLOSED (F-DRM-2 a)
+PATCH /api/accounting/accounts/:id/statement-section  → 200 Account | 403 | 404 | 409 SECTION_NATURE_MISMATCH | 422 ACCOUNTING_PERIOD_NOT_OPEN (F-DRM-2 a)
 ```
 
 Caminho A com F-DRM-2 (b), em vez da coluna:
@@ -421,12 +454,34 @@ Presumido, que é uma decisão com efeito fiscal. A única razão para (b) é o 
 é a mesma pergunta que a cc8d faz para a DFC e a exportação. Se o dono responder (b) lá, a mesma resposta serve aqui para a
 simulação.
 
+### F-DRM-5 — o status HTTP da recusa `DRE_INCOMPLETA` (itens 18–21; emenda de 27/11) — RATIFICAÇÃO PENDENTE
+
+A guarda da ECD no #1444 lança `ValidationError` (400). A versão anterior deste BRIEF previa `ConflictError` (409), e essa
+premissa caiu. O `CompanyFiscalProfileService.ts:292`, único leitor do `INVALID` na `main`, não lança: devolve `null`. O
+precedente que vale está em `server/src/lib/errors.ts` (lido em 27/11): a recusa porque o estado dos dados impede gerar a
+declaração ou o lançamento é um `AppError` próprio com **422**. Exemplos: `AccountingPeriodNotOpenError`
+(`ACCOUNTING_PERIOD_NOT_OPEN`), `MitNadaAExportarError`, `AtividadeSemAnexoError`, `SimplesRegraNaoRegulamentadaError`,
+`SubstituicaoBloqueadaError`. O 409 da casa fica para concorrência e pendência (`PackageConsumptionPendingError`,
+`PolicyApprovalRequiredError`).
+
+- **(a) 422 em todos, pelo precedente.** `DreIncompletaError extends AppError` em `lib/errors.ts`. O PR-2 troca o
+  `ValidationError` da ECD por ela, e o teste `ecdDreInvalid` do #1444 passa a afirmar 422. O custo é uma linha de código e
+  uma asserção.
+- **(b) 400 em todos**, alinhado ao #1444, que está aberto e pode entrar antes. A ECD não muda. Só que o 400 diz "pedido mal
+  formado", e um cliente que trata 400 como erro de campo mostraria a recusa como erro do formulário.
+
+**Recomendação: (a).** A classe e o código `DRE_INCOMPLETA` são os mesmos nos dois; só muda o status. O 422 segue a casa e diz a
+causa. Se o #1444 entrar antes, o PR-2 só ajusta o `throw` e o teste dele.
+
 ### Fork de fora deste BRIEF (com o dono, não ratificado aqui)
 
 - `L-20261127-074910-cc8d`: a DFC (`CashFlowReportService.ts:239/276`) e a exportação `EXPORT_INCOME_STATEMENT`
   (`DataExchangeExportService.ts:284`) consomem DRE `INVALID`. As opções são recusar, como a ECD, ou propagar o
-  `INVALID`/diagnóstico ao relatório gerencial. Segue na caixa, aberta, sem decisão. Os itens 18–20 não a tocam; só o erro do
+  `INVALID`/diagnóstico ao relatório gerencial. Segue na caixa, aberta, sem decisão. Os itens 18–21 não a tocam; só o erro do
   item 18 fica disponível se a resposta for "recusar".
+- `L-20261128-000550-e5db` (registrada nesta emenda): a exportação `EXPORT_BALANCE_SHEET`
+  (`DataExchangeExportService.ts:268-279`) lê o BP e ignora o `INVALID` da 9ee3. É a mesma pergunta da cc8d, que cita só a
+  exportação da DRE. A resposta da cc8d decide as duas.
 
 ### Pergunta ao dono sobre o que não depende de fork
 
@@ -435,9 +490,10 @@ A regra do item 6 da emenda de 21/11 é binária, então este BRIEF não os libe
 itens já, como PR-1 de contenção, antes de responder F-DRM-1..3? **Respondida:** dono, 26/11, *"Libera o PR-1 de contenção"*
 → PR #1438.
 
-**Pergunta da emenda de 27/11:** liberar os itens 18–20 como **PR-2 de contenção**, com a F-DRM-4 respondida?
-- As duas lacunas são P0, então o PR é próprio e vai direto na `main` (`D-2026-11-25-BRANCH-LONGA-E-TURNOS`).
-- Os itens 18 e 19 não dependem de fork e podem ir antes; o 20 espera a F-DRM-4.
+**Pergunta da emenda de 27/11:** liberar os itens 18–21 como **PR-2 de contenção**, com a F-DRM-4 e a F-DRM-5 respondidas?
+- A 17fd e a 4747 são P0, então o PR é próprio e vai direto na `main` (`D-2026-11-25-BRANCH-LONGA-E-TURNOS`). A 9ee3 (P1)
+  vai junto porque usa o mesmo erro e encosta na mesma guarda da ECD.
+- Os itens 18, 19 e 21 dependem só da F-DRM-5 (o status); o 20 espera também a F-DRM-4.
 - Nenhum deles depende de F-DRM-1..3.
 
 ## Pendente de validação externa
@@ -460,7 +516,7 @@ itens já, como PR-1 de contenção, antes de responder F-DRM-1..3? **Respondida
 2. **Gate de período fechado (só para F-DRM-2 a).** Localizei `assertPeriodOpenTx` (`EntryApprovalService.ts:493`) e o comentário
    do `PostingService.ts:131`; não li a assinatura nem se ele responde "a conta tem partida em período fechado" (ele responde
    "esta data está fechada"). A sessão de feature confirma, ou o item ganha uma consulta de repositório nova.
-3. **Corpo da resposta 409 (itens 18–20).** Não li como o middleware de erro serializa os campos extras de um `AppError`, nem
+3. **Corpo da resposta de recusa (itens 18–21).** Não li como o middleware de erro serializa os campos extras de um `AppError`, nem
    se `contas` chega ao corpo. Se não chegar, a mensagem com os códigos basta para o usuário e para o aviso da cascata. A
    sessão de feature confirma no primeiro teste de integração.
 
@@ -471,7 +527,10 @@ itens já, como PR-1 de contenção, antes de responder F-DRM-1..3? **Respondida
    `CompanyFiscalProfileService.ts:292` recusa `INVALID`. → caixa (`L-20261126-205932-5235`, P0: G1·E2·silencioso·inferido).
    Vizinha no mesmo arquivo: `L-20261125-110220-8862` (rótulo `DRE_CMV` do J150).
    **Desdobramento de 27/11:** a 5235 ficou com a ECD (#1444). As filhas 17fd (LALUR, DEFIS) e 4747 (LAIR) entraram neste
-   BRIEF (itens 18–20). A cc8d (DFC, exportação) é fork com o dono.
+   BRIEF (itens 18–20), e depois a 9ee3 (J100 pelo BP, item 21). A cc8d (DFC, exportação) é fork com o dono.
+5. **A exportação `EXPORT_BALANCE_SHEET` ignora o BP `INVALID`** (`DataExchangeExportService.ts:268-279`), achado ao listar os
+   leitores de `balanceSheet()` para o item 21. Os outros são a tela (`accountingController.ts:262`), o perfil fiscal (`:291`, já
+   lê o `INVALID`), a ECD (item 21) e o seed. → caixa (`L-20261128-000550-e5db`, fork, irmã da cc8d).
 2. **Coerência seção × referencial RFB.** Conta classificada numa seção cujo grupo referencial diz outra (ex.: seção `expenses`
    com referencial `3.01.01.03.*` de custo) → aviso na cobertura do referencial. Só faz sentido com F-DRM-1 = A; fica descrito
    aqui, sem entrada na caixa (depende do fork).
@@ -488,8 +547,9 @@ itens já, como PR-1 de contenção, antes de responder F-DRM-1..3? **Respondida
 | 9b46, metade `Expense` | 1, 2, 4 | `npx jest src/features/accounting/services/__tests__/emenda33.financialResult.test.ts src/features/accounting/fixtures/__tests__/ChartOfAccountsFixture.custoServicos.test.ts --selectProjects unit` (`'4.30'` → `dre.expenses`; v9) |
 | 9b46, metade `Revenue` | 3 (+ item da F-DRM-3) | **condicional:** o mesmo comando, com `'3.10'` `Revenue` → a seção da F-DRM-3 (a/b) ou `INVALID` com `reason` (c) |
 | guarda de totalidade | 5 | `npx jest src/features/accounting/services/__tests__/AccountingReportService.bp-dre.test.ts --selectProjects unit -t totalidade` |
-| 17fd | 18, 19 | `npx jest src/controllers/__tests__/dreIncompletaLalurDefis.integration.test.ts --runInBand` (cenário `3.7`: close da Parte B `A00` e DEFIS → 409 `DRE_INCOMPLETA`, sem `LalurClosing` e com o digitado intacto; controle em `3.1` → 200) |
-| 4747 | 18, 20 (+ F-DRM-4) | `npx jest src/features/accounting/services/__tests__/AccountingReportService.bp-dre.test.ts --selectProjects unit -t LAIR` e `npx jest src/controllers/__tests__/dreIncompletaLair.integration.test.ts --runInBand` (preview IRPJ Real com `3.7` → 409, nenhum `TaxAssessment`) |
+| 17fd | 18, 19 | `npx jest src/controllers/__tests__/dreIncompletaLalurDefis.integration.test.ts --runInBand` (cenário `3.7`: close da Parte B `A00` e DEFIS → recusa `DRE_INCOMPLETA`, sem `LalurClosing` e com o digitado intacto; controle em `3.1` → 200) |
+| 4747 | 18, 20 (+ F-DRM-4) | `npx jest src/features/accounting/services/__tests__/AccountingReportService.bp-dre.test.ts --selectProjects unit -t LAIR` e `npx jest src/controllers/__tests__/dreIncompletaLair.integration.test.ts --runInBand` (preview IRPJ Real com `3.7` → recusa, nenhum `TaxAssessment`) |
+| 9ee3 | 18, 21 (+ F-DRM-5) | `npx jest src/features/accounting/services/__tests__/AccountingReportService.bp-dre.test.ts --selectProjects unit -t 9ee3` e `npx jest src/controllers/__tests__/spedController.ecdBpInvalid.integration.test.ts --runInBand` (`3.7` com saldo em 2024 sem encerramento: BP `INVALID`, DRE de 2025 não `INVALID`, ECD 2025 → recusa que nomeia a `3.7`, nenhum job; controle em `3.1` → 201) |
 | 618f | **condicional à F-DRM-1/3** — A: 6–13; C: 15–17 | A: `npx jest src/controllers/__tests__/dreSecaoDaConta.integration.test.ts --runInBand` (receita do usuário em `3.2` "Outra Receita": sem seção → `INVALID` com `reason`; com `PATCH … grossRevenue` → em `grossRevenue`, fora de `revenueDeductions`). C: `npx jest …custoServicos.test.ts --selectProjects unit -t Revenue` (a conta alheia em `3.2` não cai em `dre.deductions`) |
 
 ## Write-set
@@ -497,7 +557,7 @@ itens já, como PR-1 de contenção, antes de responder F-DRM-1..3? **Respondida
 | PR | Arquivos |
 |---|---|
 | PR-1 (itens 1, 2, 4, 5; contenção) | `server/src/features/accounting/fixtures/ChartOfAccountsFixture.ts` (só `isCodeUnder`), `server/src/features/accounting/services/StatementMappingFixture.ts`, `server/src/features/accounting/services/CashFlowReportService.ts` (:42), `server/src/features/accounting/services/ProfitDistributionService.ts` (:395), `server/src/features/accounting/services/__tests__/{emenda33.financialResult,AccountingReportService.bp-dre}.test.ts`, `server/src/features/accounting/fixtures/__tests__/ChartOfAccountsFixture.custoServicos.test.ts` |
-| PR-2 (itens 18–20; contenção, P0, direto na `main`) | `server/src/features/accounting/services/AccountingReportService.ts` (detector, erro, LAIR), `LalurService.ts` (`resultadoDoTrimestre`), `SimplesDeclaracaoService.ts` (`defis`, `upsertDefis`), `TaxSimulationService.ts` (só com F-DRM-4 b), `server/src/features/accounting/services/__tests__/AccountingReportService.bp-dre.test.ts`, `server/src/controllers/__tests__/dreIncompleta{LalurDefis,Lair}.integration.test.ts`. Encosta no #1444 (a recusa da ECD): ver item 18, "Coordenação" |
+| PR-2 (itens 18–21; contenção, P0, direto na `main`) | `server/src/features/accounting/services/AccountingReportService.ts` (detector, LAIR), `server/src/lib/errors.ts` (`DreIncompletaError`), `LalurService.ts` (`resultadoDoTrimestre`), `SimplesDeclaracaoService.ts` (`defis`, `upsertDefis`), `SpedGenerationService.ts` (guarda do BP; troca do `throw` do #1444), `TaxSimulationService.ts` (só com F-DRM-4 b), `server/src/features/accounting/services/__tests__/AccountingReportService.bp-dre.test.ts`, `server/src/controllers/__tests__/dreIncompleta{LalurDefis,Lair}.integration.test.ts`, `server/src/controllers/__tests__/spedController.ecdBpInvalid.integration.test.ts` (novo), `spedController.ecdDreInvalid.integration.test.ts` (só a asserção do status, com F-DRM-5 a). Encosta no #1444, que edita o mesmo trecho de `SpedGenerationService.ts`: o PR-2 entra depois dele (ver item 18, "Coordenação") |
 | A0 (item 6) | `server/prisma/schema.prisma` + migração nova, `server/src/features/accounting/dtos/PostingDto.ts`, rota/controller/serviço/repositório de conta (`PostingService.ts`, `IAccountRepository.ts`, `AccountRepository.ts`), `auditCanonical.ts`, `dtoShapeSnapshot`, `public/openapi.json`, `docs.paths.ts`, `docs/adr/ADR-INCR4-bp-dre.md` (emenda), locales pt/en |
 | A1–A2 (itens 7–8) | `StatementMappingFixture.ts`, `AccountingReportService.ts` (`TrialBalanceRow`, leitores), `ChartOfAccountsFixture.ts` (`statementSection` nas folhas; **depois do #1427**), `PostingService.ts` (`ensureChartOfAccounts`), testes |
 | A3 (item 9) | `PostingService.ts`, repositório de conta; com F-DRM-2 (b), também `schema.prisma` + modelo novo |
