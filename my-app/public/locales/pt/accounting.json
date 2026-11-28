@@ -2695,7 +2695,7 @@
       "rearm": "Re-armar consulta",
       "rearmError": "Não foi possível re-armar a consulta.",
       "stopped": "A consulta automática desta nota ao parceiro parou",
-      "stoppedHint": "O sistema tenta de novo a cada 6 horas por até 7 dias; você pode antecipar."
+      "stoppedHint": "Para o sistema consultar o parceiro de novo, use “Re-armar consulta”."
     },
     "reenviar": {
       "error": "Não foi possível reenviar.",

@@ -7,6 +7,8 @@ import { FiscalDocumentsSection } from '../FiscalDocumentsSection';
 import { dfeService, type FiscalDocumentView, type Releitura } from '../../../../../lib/services/dfe.service';
 import { accountingService } from '../../../../../lib/services/accounting.service';
 import { doc, ficha } from './fixtures';
+import pt from '../../../../../public/locales/pt/accounting.json';
+import en from '../../../../../public/locales/en/accounting.json';
 
 /**
  * FiscalDocumentsSection (FE-INCR-DFE itens 16, 17, 21, 22, 24, 25): ações certas para cada um dos 6 status; parceiro
@@ -242,7 +244,7 @@ describe('SOT F-18.1 — FiscalDocumentsSection conhece os 9 status do servidor'
   });
   afterEach(async () => { await new Promise((r) => setTimeout(r, 0)); cleanup(); });
 
-  // Lacunas cf36/3cf5/92c5 (dono 25/11) — o job de polling desistiu / adiou: a tela mostra e deixa antecipar o re-arme.
+  // Lacunas cf36/3cf5/92c5 (dono 25/11) — o job de polling desistiu / adiou: a tela mostra e deixa re-armar.
   const GAVE_UP = '2026-11-20T10:00:00.000Z';
   const parado = (over: Partial<FiscalDocumentView> = {}) =>
     doc({ partner: 'null', status: 'PROCESSING', poll: { attempts: 8, gaveUpAt: GAVE_UP, lastError: 'sefaz_http: HTTP 503', deferredSince: null, alertedAt: null }, ...over });
@@ -257,6 +259,21 @@ describe('SOT F-18.1 — FiscalDocumentsSection conhece os 9 status do servidor'
     fireEvent.click(within(aviso).getByRole('button', { name: /Re-armar consulta/ }));
     await vi.waitFor(() => expect(within(card()).queryByTestId('fiscal-doc-poll-parado')).not.toBeInTheDocument());
     expect(dfeService.rearmarPolling).toHaveBeenCalledWith('d1', { unitId: 'u1' });
+  });
+
+  // A1 (revisão de 28/11 do #1410): o servidor não devolve o abandonado à fila sozinho (`listPending` filtra `pollGaveUpAt: null`);
+  // a tela não pode prometer re-arme automático ("tenta de novo a cada 6 horas…"), senão o operador não aperta o botão.
+  it('A1: o aviso de "parou" não promete nova tentativa automática (fallback do componente, pt e en)', async () => {
+    renderSection([parado()]);
+    await screen.findByTestId('fiscal-doc-d1');
+    const aviso = within(card()).getByTestId('fiscal-doc-poll-parado');
+    const promessa = /tenta de novo|a cada \d+ horas|por até \d+ dias|retries|every \d+ hours|up to \d+ days|sozinha|by itself/i;
+    expect(aviso.textContent).not.toMatch(promessa);
+    expect(aviso).toHaveTextContent('use “Re-armar consulta”');
+    expect(pt.dfe.poll.stoppedHint).not.toMatch(promessa);
+    expect(en.dfe.poll.stoppedHint).not.toMatch(promessa);
+    expect(pt.dfe.poll.stoppedHint).toContain(pt.dfe.poll.rearm);
+    expect(en.dfe.poll.stoppedHint).toContain(en.dfe.poll.rearm);
   });
 
   it('cf36/3cf5: falha do re-arme mostra a mensagem do servidor e o aviso fica', async () => {

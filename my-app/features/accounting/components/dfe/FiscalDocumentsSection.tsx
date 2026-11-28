@@ -36,7 +36,7 @@ const STATUS_TONE: Record<FiscalDocumentView['status'], string> = {
 };
 
 const emVoo = (d: FiscalDocumentView) => d.status === 'SENT' || d.status === 'PROCESSING';
-/** Lacunas cf36/3cf5: o job de polling parou de consultar a nota que ainda está em voo (o re-arme automático é do servidor; o botão antecipa). */
+/** Lacunas cf36/3cf5: o job de polling parou de consultar a nota que ainda está em voo (a tela não promete re-arme automático — o servidor não devolve o abandonado à fila sozinho; o botão re-arma). */
 const pollParado = (d: FiscalDocumentView) => d.partner !== 'manual' && emVoo(d) && !!d.poll?.gaveUpAt;
 /** Lacuna 92c5: nota em voo adiada porque o assinador local está indisponível. Só enquanto o job não desistiu (153d: estado velho em nota terminal não aparece). */
 const pollAdiado = (d: FiscalDocumentView) => d.partner !== 'manual' && emVoo(d) && !d.poll?.gaveUpAt && !!d.poll?.deferredSince;
@@ -208,7 +208,7 @@ export function FiscalDocumentsSection({ unitId, saleId, emitted }: FiscalDocume
               <div className={`${warnBox} space-y-1`} data-testid="fiscal-doc-poll-parado">
                 <p>
                   {t('dfe.poll.stopped', 'A consulta automática desta nota ao parceiro parou')} ({dataLocal(doc.poll.gaveUpAt)}).{' '}
-                  {t('dfe.poll.stoppedHint', 'O sistema tenta de novo a cada 6 horas por até 7 dias; você pode antecipar.')}
+                  {t('dfe.poll.stoppedHint', 'Para o sistema consultar o parceiro de novo, use “Re-armar consulta”.')}
                 </p>
                 {doc.poll.lastError && <p className="font-mono text-[11px]">{doc.poll.lastError}</p>}
                 <button type="button" className={btn} disabled={busy === doc.id} onClick={() => void rearmarPolling(doc)}>

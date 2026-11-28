@@ -2695,7 +2695,7 @@
       "rearm": "Re-arm check",
       "rearmError": "Could not re-arm the check.",
       "stopped": "The automatic status check of this invoice with the partner has stopped",
-      "stoppedHint": "The system retries every 6 hours for up to 7 days; you can bring it forward."
+      "stoppedHint": "To have the system check with the partner again, use “Re-arm check”."
     },
     "reenviar": {
       "error": "Could not resend.",
