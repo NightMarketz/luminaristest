@@ -82,6 +82,32 @@ Grau: **verificado** quanto ao leiaute lido.
 - O Anexo VI [D08] é inconsistente internamente: a nota da linha L54 fala em "códigos 105 a 199", e as RN L94-L95 listam 101 a 105 e 199.
 - O Regulamento do IBS não foi lido para responsáveis. O Dec. 12.955 [D05] cobre só a CBS.
 - Não foi conferido se o profissional pessoa física sem CNPJ consegue emitir NFS-e nacional ao salão. Sem isso, o tipo 199 fica inviável para ele.
+### Releitura Res. CGSN 196 (27/11/2026)
+
+Item 6 do BRIEF `BE-INCR-SIMPLES-CGSN-196` (lacuna `L-20261125-195503-a785`). Este adendo só acrescenta; o texto acima
+fica como estava.
+- **Base.** A cópia deste dossiê, [D03], é a mesma das outras sete (SHA-256 do texto `b5a02304…`, anterior à Res. 196).
+  Conferi contra a Res. CGSN 140 multivigente de 25/11/2026,
+  `pesquisas-legais/dp-tabelas-irrf-das-sst/docs/D24_rfb-92278-multivigente.txt` (`6683e711…`). Também usei a Res. CGSN 196,
+  `…/D10_rfb-154694-multivigente.txt` (`37ff4316…`), e a Res. CGSN 190 já com as revogações da 196,
+  `…/D09_rfb-152832-multivigente.txt` (`a5692faa…`). Um diff das duas cópias da 140 mostra só quatro trocas de texto
+  vigente: art. 21 II "c", art. 121 § 4º e os novos arts. 144-C e 144-F. Os arts. 144-D e 144-E, da 190, também aparecem
+  agora como vigentes. O resto são marcas `[AGENDADO]` que passaram da 190 para a 196.
+- **Como conferi.** Rodei `python ~/.claude/tools/pesquisa-legal/legal.py trecho dp-tabelas-irrf-das-sst D24 "<termo>"` por
+  dispositivo (D10 e D09 no lugar de D24 para a redação de 2027). Para o vigente, o critério é o texto da linha na D24.
+  Para 2027, o critério é constar ou não dos arts. 1º, 2º, 5º e 7º da 196. A marca na linha não serve de critério, porque o
+  `[AGENDADO]` fica na linha vizinha.
+- **Estados.** **igual**: o texto vigente não mudou. **2027 trocada**: a redação de 2027 que o dossiê citou foi revogada ou
+  reeditada pela 196. **novo**: dispositivo novo que confirma ou contraria uma leitura do dossiê.
+
+| Dispositivo | Como o dossiê citou | Estado | Conclusão |
+|---|---|---|---|
+| art. 59 § 2º | nota unificada com as duas cotas e o CNPJ do parceiro | igual (D24 L982) | não muda |
+| art. 59 § 3º | nota do parceiro ao salão pela cota | igual (D24 L983) | não muda |
+| art. 2º § 5º VI | cota do parceiro com CNPJ fora da receita do salão | igual (D24 L57); em 2027 a 196 revoga só o inciso II do § 5º (art. 7º I) | não muda: o achado lateral do tipo 9 / regApIBSCBSSN = 3 segue de pé |
+| art. 59 § 9º (red. 190 [D04]) | "Documento eletrônico em 2027": base de cálculo e tributos "nos campos próprios" do manual | **2027 trocada.** A 196 art. 5º VI revogou a redação da 190 (D09 L210, riscada), e o art. 7º V revoga o próprio § 9º da 140 em 01/01/2027. A regra vai para os §§ 4º e 4º-A novos (D10 L102-108): o documento eletrônico traz, "nos campos próprios definidos no respectivo leiaute", a condição de optante, o regime de IBS/CBS, o direito a crédito e o impedimento, e os campos de base, alíquota e valor seguem "a situação tributária da operação" | **o fundamento muda e a substância fica:** os tributos vão nos campos do leiaute. A linha 59 acima ("A 190 dá nova redação ao § 9º do art. 59") fica histórica. O que os §§ 4º e 4º-A pedem do emissor já é a lacuna `L-20261126-210839-b9d5` |
+
+Nenhuma lacuna nova.
 <!-- /ANALISE -->
 
 ## Fontes consultadas

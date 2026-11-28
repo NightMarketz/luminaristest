@@ -60,6 +60,33 @@ Nenhuma sobre o teto de 5%.
   - se a sobra do ISS acima de 5% continua sendo levada aos federais na parcela acima do sublimite.
   Se algo mudar, o simulador (função `taxasExc`) e esta conclusão precisam ser revistos.
 - Fora do escopo do salão: segundo um fórum, quando o ISS é retido na fonte o PGDAS-D não redistribui a sobra. A pista não foi conferida em fonte oficial, e o salão que vende a pessoa física não tem retenção.
+### Releitura Res. CGSN 196 (27/11/2026)
+
+Item 6 do BRIEF `BE-INCR-SIMPLES-CGSN-196` (lacuna `L-20261125-195503-a785`). Este adendo só acrescenta; o texto acima
+fica como estava.
+- **Base.** A cópia deste dossiê, [D03], é a mesma das outras sete (SHA-256 do texto `b5a02304…`, anterior à Res. 196).
+  Conferi contra a Res. CGSN 140 multivigente de 25/11/2026,
+  `pesquisas-legais/dp-tabelas-irrf-das-sst/docs/D24_rfb-92278-multivigente.txt` (`6683e711…`). Também usei a Res. CGSN 196,
+  `…/D10_rfb-154694-multivigente.txt` (`37ff4316…`), e a Res. CGSN 190 já com as revogações da 196,
+  `…/D09_rfb-152832-multivigente.txt` (`a5692faa…`). Um diff das duas cópias da 140 mostra só quatro trocas de texto
+  vigente: art. 21 II "c", art. 121 § 4º e os novos arts. 144-C e 144-F. Os arts. 144-D e 144-E, da 190, também aparecem
+  agora como vigentes. O resto são marcas `[AGENDADO]` que passaram da 190 para a 196.
+- **Como conferi.** Rodei `python ~/.claude/tools/pesquisa-legal/legal.py trecho dp-tabelas-irrf-das-sst D24 "<termo>"` por
+  dispositivo (D10 e D09 no lugar de D24 para a redação de 2027). Para o vigente, o critério é o texto da linha na D24.
+  Para 2027, o critério é constar ou não dos arts. 1º, 2º, 5º e 7º da 196. A marca na linha não serve de critério, porque o
+  `[AGENDADO]` fica na linha vizinha.
+- **Estados.** **igual**: o texto vigente não mudou. **2027 trocada**: a redação de 2027 que o dossiê citou foi revogada ou
+  reeditada pela 196. **novo**: dispositivo novo que confirma ou contraria uma leitura do dossiê.
+
+| Dispositivo | Como o dossiê citou | Estado | Conclusão |
+|---|---|---|---|
+| art. 21 III "a" (2026) | teto de 5% do ISS e sobra aos federais | igual (D24 L402) | não muda |
+| art. 24 I "a", I "b" 2 e § 1º I (2026) | federais da parcela acima; fórmula do sublimite de 3,6 mi | igual (D24 L435-441) | não muda |
+| art. 21 III (2027, red. 190 [D08]) | sobra "aos tributos federais e IBS" | 2027 trocada: a 196 art. 5º III revogou a redação da 190 (D09 L94, riscada) e o art. 2º deu outra (D10 L49): "observado, quanto ao ISS, o limite máximo fixado nos referidos Anexos", com a diferença "distribuída, de forma proporcional, entre os tributos federais e o IBS correspondentes à mesma faixa" | **não muda para 2027**: o destino é o mesmo, e a nota (*) do Anexo III da 196 fixa 5% em 2027 com 0,26% ao IBS (`…/D13_87479.txt` L21 e L38). O teto deixa de ser 5% fixo no texto do artigo e passa a ser o de cada Anexo. No Anexo III da 196 há notas de 4,5% e de 4% (L66 e L99) para os anos seguintes. O dossiê só afirmou o de 2027 |
+| art. 24 I "b" (2027, red. 190) | "tributada conjuntamente com a parcela que não o exceder" | igual: a 196 não revoga nem reedita o art. 24 (D09 L113, sem risco) | não muda |
+
+A divisão da sobra na 6ª faixa de 2027 (pesos da nota da 5ª × repartição da 6ª) não é conclusão deste dossiê. Ela é a
+lacuna `L-20261125-195439-09b7` (F-196-1, PR #1439). Nenhuma lacuna nova.
 <!-- /ANALISE -->
 
 ## Fontes consultadas
