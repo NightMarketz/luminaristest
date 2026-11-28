@@ -1,0 +1,73 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Normas",
+      "url": "https://normas.receita.fazenda.gov.br/sijut2consulta/consulta.action?facetsExistentes=&orgaosSelecionados=Cosit&tiposAtosSelecionados=72&numero_ato=153&ano_ato=2026&termoBusca=",
+      "url_final": "https://normas.receita.fazenda.gov.br/sijut2consulta/consulta.action?facetsExistentes=&orgaosSelecionados=Cosit&tiposAtosSelecionados=72&numero_ato=153&ano_ato=2026&termoBusca=",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-26T21:41:30-03:00",
+      "sha256": "9f9413e20884b24680269927744a2abbf407243127ba5087a1489fd91fc8153a",
+      "arquivo": "docs/D01_consulta-action.html",
+      "texto": "docs/D01_consulta-action.txt",
+      "bytes": 45247,
+      "captura": {
+        "anterior": {
+          "slug": "fila-2026-10-27-p-ret-6-8",
+          "id": "D02",
+          "baixado_em": "2026-10-27T02:31:04-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Solução de Consulta Cosit nº 153, de 19 de agosto de 2026",
+      "url": "rfb:152980",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152980/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/152980/visao/multivigente",
+      "id_normativo": "rfb:152980",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-26T21:53:17-03:00",
+      "sha256": "e4b70e2b65aa555960d1e85f17cdc2f991e5e8d823d6e746424e3a1bbb8450d0",
+      "arquivo": "docs/D02_rfb-152980-multivigente.json",
+      "texto": "docs/D02_rfb-152980-multivigente.txt",
+      "bytes": 5633,
+      "sha256_texto": "d84bdb48ac0240d3557900ac41c8d2cebc1db358197d5b1bc31d735eeb12cb00",
+      "anexos": [
+        {
+          "nome": "SC Cosit nº 153-2026.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152980/anexo/85906"
+        }
+      ],
+      "captura": {
+        "tipo": "PRIMEIRA"
+      },
+      "alertas": [
+        "1 anexo binário não baixado (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D03",
+      "titulo": "D03_85906",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152980/anexo/85906",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152980/anexo/85906",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-26T21:53:26-03:00",
+      "sha256": "14377746b9a583a56ef5b5f34b7d34ce652499be0b00f4a1ea0738ddcf1d15e0",
+      "arquivo": "docs/D03_85906.pdf",
+      "texto": "docs/D03_85906.txt",
+      "bytes": 392780,
+      "sha256_texto": "277529ae221892dd8be2ef95e65723c43a766724e51cc1155cc6808f0c58f172",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "pendencias-vault-ad6e",
+  "pergunta": "24 linhas 'não conferido' do RELATORIO-PENDENCIAS-VAULT-2026-11-24: vigência de norma (RBT12, § 3º, Anexos XVIII-XXII, art. 25/DEFIS, Lei 10.147, compilação Res. CGSN 140), fontes fora do acervo e estado de BRIEF",
+  "criado": "2026-11-26T21:41:30-03:00"
+}
