@@ -63,6 +63,37 @@ O Simples não classifica por subitem da LC 116, e sim pela atividade. O ponto d
 - Não há norma nem solução de consulta sobre massagem, sauna, banhos ou duchas no Simples. A busca no SIJUT, só em SC, cobriu os termos massagem, massagens, massagista, massoterapia, sauna, banhos, duchas, spa e 9609-2.
 - Nenhum ato lido atribui anexo do Simples por CNAE. Os Anexos VI e VII da Res. 140 tratam de impeditivos e ambíguos.
 - A divergência do acervo no § 5º-I XII da LC 123 foi registrada na caixa de lacunas, com destino à ferramenta e ao acervo.
+### Releitura Res. CGSN 196 (27/11/2026)
+
+Item 6 do BRIEF `BE-INCR-SIMPLES-CGSN-196` (lacuna `L-20261125-195503-a785`). Este adendo só acrescenta; o texto acima
+fica como estava.
+- **Base.** A cópia deste dossiê, [D02], é a mesma das outras sete (SHA-256 do texto `b5a02304…`, anterior à Res. 196).
+  Conferi contra a Res. CGSN 140 multivigente de 25/11/2026,
+  `pesquisas-legais/dp-tabelas-irrf-das-sst/docs/D24_rfb-92278-multivigente.txt` (`6683e711…`). Também usei a Res. CGSN 196,
+  `…/D10_rfb-154694-multivigente.txt` (`37ff4316…`), e a Res. CGSN 190 já com as revogações da 196,
+  `…/D09_rfb-152832-multivigente.txt` (`a5692faa…`). Um diff das duas cópias da 140 mostra só quatro trocas de texto
+  vigente: art. 21 II "c", art. 121 § 4º e os novos arts. 144-C e 144-F. Os arts. 144-D e 144-E, da 190, também aparecem
+  agora como vigentes. O resto são marcas `[AGENDADO]` que passaram da 190 para a 196.
+- **Como conferi.** Rodei `python ~/.claude/tools/pesquisa-legal/legal.py trecho dp-tabelas-irrf-das-sst D24 "<termo>"` por
+  dispositivo (D10 e D09 no lugar de D24 para a redação de 2027). Para o vigente, o critério é o texto da linha na D24.
+  Para 2027, o critério é constar ou não dos arts. 1º, 2º, 5º e 7º da 196. A marca na linha não serve de critério, porque o
+  `[AGENDADO]` fica na linha vizinha.
+- **Estados.** **igual**: o texto vigente não mudou. **2027 trocada**: a redação de 2027 que o dossiê citou foi revogada ou
+  reeditada pela 196. **novo**: dispositivo novo que confirma ou contraria uma leitura do dossiê.
+
+| Dispositivo | Como o dossiê citou | Estado | Conclusão |
+|---|---|---|---|
+| art. 25 § 1º III "m" | Anexo III residual | igual (D24 L486-488) | não muda |
+| art. 25 § 1º V "x" | Anexo V residual | igual (D24 L517) | não muda |
+| art. 25 § 18 I | parceria no Anexo III | igual (D24 L574-575) | não muda |
+| art. 25 (segregação) | revenda segregada pela atividade | igual; a 196 não altera o art. 25, só inclui o art. 25-A | não muda |
+| art. 25 § 1º III "l" (red. 190, linha 43 acima) | "a 190 altera o III 'l'" | igual: a 196 não revoga essa alteração (D09 L124, sem risco) | não muda |
+| Anexos VI e VII da 140 | CNAE impeditivos e ambíguos | igual: a 196 art. 3º substitui só os Anexos I a V | não muda |
+
+Dispositivo que o dossiê não citou: a 196 art. 7º III revoga, em 01/01/2027, os incisos I a III do art. 26 § 6º (fator r
+do mês de início, por FSPA e RPAr). A pergunta aqui é qual anexo vale para o 6.02 e o 6.03, não o cálculo do r. A resposta
+(Anexo III, sem fator r) não depende desse parágrafo. No produto, o caso está coberto pela janela `LC214-art517`
+(BRIEF §2, "coberto"). Nenhuma lacuna nova.
 <!-- /ANALISE -->
 
 ## Fontes consultadas

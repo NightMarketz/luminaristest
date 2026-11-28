@@ -83,6 +83,43 @@ calendário precisa de uma **regra por obrigação**, não de um único parâmet
 - **IBS.** O prazo segue DRAFT até o regulamento do CG-IBS (P-IBS-5).
 - **Quotas do IRPJ/CSLL (Lei 9.430 art. 5º § 1º).** A lei permite até 3 quotas, mas o X7 só modela a quota única. O
   calendário mostra só a quota única até o X7 modelar as quotas (lacuna registrada na caixa).
+### Releitura Res. CGSN 196 (27/11/2026)
+
+Item 6 do BRIEF `BE-INCR-SIMPLES-CGSN-196` (lacuna `L-20261125-195503-a785`). Este adendo só acrescenta; o texto acima
+fica como estava.
+- **Base.** A cópia deste dossiê, [D04], é a mesma das outras sete (SHA-256 do texto `b5a02304…`, anterior à Res. 196).
+  Conferi contra a Res. CGSN 140 multivigente de 25/11/2026,
+  `pesquisas-legais/dp-tabelas-irrf-das-sst/docs/D24_rfb-92278-multivigente.txt` (`6683e711…`). Também usei a Res. CGSN 196,
+  `…/D10_rfb-154694-multivigente.txt` (`37ff4316…`), e a Res. CGSN 190 já com as revogações da 196,
+  `…/D09_rfb-152832-multivigente.txt` (`a5692faa…`). Um diff das duas cópias da 140 mostra só quatro trocas de texto
+  vigente: art. 21 II "c", art. 121 § 4º e os novos arts. 144-C e 144-F. Os arts. 144-D e 144-E, da 190, também aparecem
+  agora como vigentes. O resto são marcas `[AGENDADO]` que passaram da 190 para a 196.
+- **Como conferi.** Rodei `python ~/.claude/tools/pesquisa-legal/legal.py trecho dp-tabelas-irrf-das-sst D24 "<termo>"` por
+  dispositivo (D10 e D09 no lugar de D24 para a redação de 2027). Para o vigente, o critério é o texto da linha na D24.
+  Para 2027, o critério é constar ou não dos arts. 1º, 2º, 5º e 7º da 196. A marca na linha não serve de critério, porque o
+  `[AGENDADO]` fica na linha vizinha.
+- **Estados.** **igual**: o texto vigente não mudou. **2027 trocada**: a redação de 2027 que o dossiê citou foi revogada ou
+  reeditada pela 196. **novo**: dispositivo novo que confirma ou contraria uma leitura do dossiê.
+
+O [D04] deste dossiê não está em `docs/` (só no `manifest.json`). O SHA do texto é o mesmo das outras sete cópias, então o
+diff acima vale para ele.
+
+| Dispositivo | Como o dossiê citou | Estado | Conclusão |
+|---|---|---|---|
+| art. 40 caput e § 3º | DAS no dia 20, adiado para o dia útil seguinte | igual (D24 L772-775) | não muda |
+| art. 40-A | prorrogação por calamidade | igual (D24 L776) | não muda |
+| art. 38 § 2º II | PGDAS-D até o vencimento do DAS | igual (D24 L724) | não muda |
+| art. 109 | DASN-SIMEI até o último dia de maio | igual (D24 L1645) | não muda |
+| art. 72 § 1º e revogação pela 190 art. 8º XXI | "DEFIS (anos até 2026)", 31/03 do ano seguinte | igual: a revogação de 01/01/2027 segue de pé (D09 L359) | **muda o fundamento, não a data.** A DEFIS do ano-calendário 2026 vence depois de o art. 72 cair. A base dela passa a ser o novo art. 144-F (D24 L2076; incluído pela 196, vigente desde 24/11/2026): "até 31 de março de 2027, por meio do módulo do aplicativo PGDAS-D 2018". A data de 31/03/2027 fica |
+| art. 38-B § 1º (red. 190) | "bloco anual do PGDAS-D (desde 2027)", de janeiro a março | igual: a 196 não o revoga (D09 L174); só acrescenta o § 2º-A | **precisa de leitura mais estreita:** como o ano-calendário 2026 vai pela DEFIS (144-F), a primeira janela do bloco anual é jan–mar/**2028**, para o ano-calendário 2027. A regra vale desde 2027, mas a primeira entrega é em 2028 |
+| linha 59: "Res. CGSN 190 e 195 … mudam a Res. 140 a partir de 01/01/2027" | vigência da 190 | novo: a 196 art. 4º reescreveu o art. 9º da 190, e os arts. 144-D e 144-E valem desde 24/11/2026 | **muda:** há dois prazos do Simples fora da tabela. São as "Receitas Anteriores à Opção" (144-E), até 20/12/2026 (competências de dez/2025 a nov/2026) e até 20/01/2027 (dez/2026). Valem para quem entra no Simples em 01/01/2027 sem ter estado nele em todo o ano de 2026, ou sai do Simei em 2026 (144-D I e II). Sem manifestação, valem os pré-preenchidos da RFB (144-E p.ú.) |
+
+Lacunas:
+- **Nova: `L-20261127-184105-7694`** (feature · fiscal · G3 · E2 · silencioso · verificado; P1, geração 3, vai ao dono pela
+  regra da caixa). A obrigação do 144-E não está em `ObrigacaoSped` (`server/src/features/accounting/models/obrigacoesPorRegime.ts:23`).
+- **Já cobertas:** a DEFIS de 2026 é o item 5 do PR #1439 (a `fonte` de `sn7-obr-defis-simples` passa a citar o 144-F;
+  lacuna `L-20261125-195502-411d`). O bloco anual a partir de 2028 é a `L-20261127-005504-79dc`, que já dá jan–mar/2028
+  como primeiro prazo.
 <!-- /ANALISE -->
 
 ## Fontes consultadas

@@ -783,6 +783,45 @@ da leitura segura:
 - **eSocial: eventos não periódicos** (admissão, afastamento, desligamento) não foram lidos. O parecer cobre o mês
   normal (S-1200/S-1299).
 - **Odontológico, PCMSO e exames da CCT** [D56, cl. 28ª, 69ª e 70ª] não têm valor na norma e ficam fora do simulador.
+### Releitura Res. CGSN 196 (27/11/2026)
+
+Item 6 do BRIEF `BE-INCR-SIMPLES-CGSN-196` (lacuna `L-20261125-195503-a785`). Este adendo só acrescenta; o texto acima
+fica como estava.
+- **Base.** A cópia deste dossiê, [D13], é a mesma das outras sete (SHA-256 do texto `b5a02304…`, anterior à Res. 196).
+  Conferi contra a Res. CGSN 140 multivigente de 25/11/2026,
+  `pesquisas-legais/dp-tabelas-irrf-das-sst/docs/D24_rfb-92278-multivigente.txt` (`6683e711…`). Também usei a Res. CGSN 196,
+  `…/D10_rfb-154694-multivigente.txt` (`37ff4316…`), e a Res. CGSN 190 já com as revogações da 196,
+  `…/D09_rfb-152832-multivigente.txt` (`a5692faa…`). Um diff das duas cópias da 140 mostra só quatro trocas de texto
+  vigente: art. 21 II "c", art. 121 § 4º e os novos arts. 144-C e 144-F. Os arts. 144-D e 144-E, da 190, também aparecem
+  agora como vigentes. O resto são marcas `[AGENDADO]` que passaram da 190 para a 196.
+- **Como conferi.** Rodei `python ~/.claude/tools/pesquisa-legal/legal.py trecho dp-tabelas-irrf-das-sst D24 "<termo>"` por
+  dispositivo (D10 e D09 no lugar de D24 para a redação de 2027). Para o vigente, o critério é o texto da linha na D24.
+  Para 2027, o critério é constar ou não dos arts. 1º, 2º, 5º e 7º da 196. A marca na linha não serve de critério, porque o
+  `[AGENDADO]` fica na linha vizinha.
+- **Estados.** **igual**: o texto vigente não mudou. **2027 trocada**: a redação de 2027 que o dossiê citou foi revogada ou
+  reeditada pela 196. **novo**: dispositivo novo que confirma ou contraria uma leitura do dossiê.
+
+| Dispositivo | Como o parecer citou | Estado | Conclusão |
+|---|---|---|---|
+| art. 40 | DAS no dia 20 | igual (D24 L772) | não muda |
+| art. 59 § 1º, I e II (red. 191) | NFS-e nacional por emissor web ou API | igual (D24 L970-972). Em 2027 a 196 reescreve os incisos I e II do **caput** do art. 59, não os do § 1º | não muda |
+| art. 59 §§ 2º e 3º | quem emite qual nota na parceria | igual (D24 L982-983) | não muda |
+| art. 25 § 18 I e II | Anexo III para serviço e produto empregado; Anexo I para revenda | igual (D24 L574-576) | não muda |
+| art. 2º § 5º VI | cota do parceiro com CNPJ fora da receita | igual (D24 L57) | não muda |
+| art. 100 §§ 6º e 7º | parceiro MEI; salão não pode ser MEI | igual (D24 L1479-1480) | não muda |
+| art. 63 I e § 3º | Livro Caixa dispensado pela escrituração | igual (D24 L1046) | não muda |
+| art. 145 § 1º | só o IRPJ do DAS sai do limite isento | igual (D24 L2082) | não muda |
+| art. 2º § 8º, 16, 19 I, 20 e 77 § 3º (2026) | receita no regime de caixa e de competência em 2026 | igual (D24 L66, L381, L1136) | não muda para 2026 |
+| art. 18 caput e § 1º | venda cancelada | igual (D24 L373). Novo art. 144-C § 2º: devolução ou cancelamento a partir de 01/01/2027 de operação tributada até 2026 se ajusta "no período de apuração original" | não muda: o parecer já deduz "no período em que foi tributado" |
+| art. 72 § 1º e §1.5 (linhas 141-146): "os dados de 2026 já são prestados assim, de janeiro a março de 2027" pelo art. 38-B (I) | DEFIS de 2026 | **novo: art. 144-F** (D24 L2076, vigente desde 24/11/2026). A DEFIS do ano-calendário 2026 vai "até 31 de março de 2027, por meio do módulo do aplicativo PGDAS-D 2018" | **muda:** a leitura (I) sai. O ano 2026 vai pela DEFIS, no PGDAS-D 2018, até 31/03/2027. O bloco do art. 38-B começa pelo ano-calendário 2027, em jan–mar/2028. A data de entrega fica a mesma. A triagem do contador de 21/10 (`docs/accounting/TRIAGEM-RESPOSTA-CONTADOR-2026-10-21-AMBIGUIDADES.md`, A3) confirmou a leitura antiga, e o 144-F a supera |
+| §1.5 e §5 (linhas 196-197 e 779-781): saldo do regime de caixa em dez/2026 vai ao DAS de dezembro, "leitura segura" apoiada no art. 20 II "b" (I) | saída do caixa | **novo: art. 144-C caput e § 1º** (D24 L2061; vigente desde 24/11/2026). Os valores não recebidos até 31/12/2026, "ainda que de parcelas não vencidas", entram na base de cálculo de dezembro de 2026, e o recebimento posterior não volta à receita | **a conclusão fica, o grau sobe de I para V.** O "Conferir no PGDAS-D de dezembro" da linha 781 está respondido pelo texto |
+| art. 2º §§ 8º e 9º-A (red. 190 [D37]; linhas 434-436 e 648): receita "no momento do faturamento", que é a emissão do documento fiscal | momento da receita em 2027 | **2027 trocada.** A 196 art. 5º I revogou a redação da 190 (D09 L29 e L32, riscadas), e o art. 2º deu outra (D10 L35-43). § 8º: auferida "I - no momento do faturamento"; "II - no momento da efetiva realização da operação, quando constatada a ausência de emissão de documento fiscal correspondente ou sua emissão intempestiva"; III - na presunção legal de omissão. § 9º: adiantamento também no faturamento. § 9º-A: faturamento é a emissão do documento, "inclusive quando o fornecimento ocorrer em momento posterior", ou do documento complementar | **não muda para o salão:** a NFS-e sai no serviço (linha 437), então o mês do faturamento é o do serviço, e a cota do salão continua receita desse mês. A exceção nova (nota faltando ou emitida fora do prazo → mês da realização) é o F-196-2 do BRIEF (item 7, PR-2) |
+| art. 40-D I e II (red. 190 [D37]; linha 318) | prazos da opção pelo regime regular de IBS/CBS | igual: a 196 reedita só o § 2º, que trata do cancelamento (D10 L77-79). Os incisos do caput seguem | não muda |
+| art. 38-A e art. 38 § 2º II (red. 190) | PGDAS-D assistido até o dia 10; entrega até o vencimento | igual: fora das listas da 196 (D09 L169, sem risco) | não muda |
+
+Lacunas: nenhuma nova. A DEFIS de 2026 está no item 5 do PR #1439 (`L-20261125-195502-411d`; o produto já aceita a DEFIS
+do ano 2026, `SimplesDeclaracaoService.ts:147-150`). O bloco anual de 2028 em diante é a `L-20261127-005504-79dc`. O
+momento da receita é o F-196-2 (`L-20261125-195502-411d`, PR-2). O caixa não tem cliente: o go-live é em 2027 (BRIEF §2).
 <!-- /ANALISE -->
 
 ## Fontes consultadas

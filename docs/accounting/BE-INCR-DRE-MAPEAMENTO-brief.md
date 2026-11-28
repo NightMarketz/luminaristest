@@ -1,0 +1,558 @@
+# BE-INCR-DRE-MAPEAMENTO — BRIEF do grupo `StatementMappingFixture.ts` da caixa de lacunas
+
+**Tipo:** BRIEF de grupo de lacunas da caixa (não é BRIEF de nó do plano). **Data:** 26/11/2026. **Sessão:** planejamento,
+worktree `unruffled-mcnulty-17caaf`. **Estado:** **com fork**. A execução espera a resposta do dono (ver "Forks pendentes").
+**Emenda de 27/11:** as lacunas 17fd e 4747 (consumidores que leem a DRE incompleta) entram no grupo por decisão do dono
+(itens 18–20, fork F-DRM-4). No mesmo dia entra a 9ee3, o J100 da ECD que não lê o BP `INVALID` (item 21).
+O PR-1 de contenção (itens 1, 2, 4 e 5), liberado pelo dono em 26/11, está no #1438.
+
+## Contexto fixo
+
+- **Item a planejar:** o grupo da caixa ligado pelo arquivo `server/src/features/accounting/services/StatementMappingFixture.ts`.
+  `lacunas.mjs list --grupos` em 26/11 mostra um grupo de 2, só estas duas:
+  - `L-20261126-194050-9b46` (defeito, P1, G3·E1·silencioso·verificado). `matchesByTable` casa `codePrefix` com
+    `code.startsWith(prefix)` sem fronteira de ponto (`StatementMappingFixture.ts:57`; a lacuna cita `:60`, a linha de antes
+    do #1337). `'4.3'` captura `'4.30'`, `'3.1'` captura `'3.10'`. Estado: `em-sessao`, destino "planejamento do grupo dre-prefixo".
+  - `L-20261124-035944-618f` (fork, `com-dono`, **geração 4**, destino "repensar a abordagem (a cadeia não está convergindo)").
+    Uma receita do usuário num código de folha do plano padrão (3.1–3.4) segue o prefixo na DRE. Não há regra genérica de
+    `Revenue`. A seção de uma receita sem regra pede o contador. Fica `com-dono` e entra aqui como fork.
+  - **Emenda de 27/11**, duas filhas da `L-20261126-205932-5235` (o achado 1 deste BRIEF), as duas P0 (defeito,
+    G1·E2·silencioso·inferido, geração 3):
+    - `L-20261127-074908-17fd`: o LALUR (`LalurService.ts:946-947`, `resultadoDoTrimestre`) e a DEFIS
+      (`SimplesDeclaracaoService.ts:108-114`, lucro = `dre.netResult`) leem `incomeStatement().netResult` sem olhar o
+      `reportStatus`. Com uma conta de resultado sem regra, a base do e-Lalur e o lucro da DEFIS saem incompletos.
+    - `L-20261127-074909-4747`: o LAIR (`AccountingReportService.ts:789`, `resultadoAntesIrpjCsllPorConta`) chama
+      `computeDreNet` direto e não tem `reportStatus`. A conta sem regra some da base de IRPJ/CSLL do Real sem aviso.
+  - **Emenda de 27/11 (2ª)**, outra filha da 5235, registrada pela sessão que a corrige (#1444):
+    `L-20261127-192711-9ee3` (defeito, P1, fiscal G2·E1·silencioso·inferido, geração 3). O J100 da ECD
+    (`SpedGenerationService.ts:517`) lê `balanceSheet()` sem olhar o `reportStatus`. O BP diagnostica toda a história até
+    `asOf` (`AccountingReportService.ts:719`, `:741`); a DRE, só o ano (`:720`). Uma conta de resultado sem regra com saldo
+    de exercício anterior não encerrado deixa o BP `INVALID` com a DRE do ano `OK`. A guarda do #1444, que lê só
+    `dre.reportStatus`, não recusa, e o J100 sai sem esse saldo.
+  - **Fica fora:**
+    - `L-20261127-074910-cc8d` (DFC e exportação consomem DRE `INVALID`) é fork, segue com o dono e **não** é ratificado
+      aqui; é citado em "Forks pendentes".
+    - A contenção da ECD pela DRE (J150) é da sessão de correção da 5235, no PR #1444: a guarda
+      `dre.reportStatus === 'INVALID'` em `SpedGenerationService.ts` (depois da `:517`) e o teste
+      `spedController.ecdDreInvalid.integration.test.ts`. Este BRIEF não a repete; o item 21 cobre só o lado do BP.
+- **Autorização:**
+  - Planejar o grupo: `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`, emenda de 21/11, item 6 ("Grupo vai a
+    planejamento macro": *"Planeja como resolver tudo no macro em vez de vários remendos"*).
+  - Executar: a mesma emenda, item 6 (dono, chat, 21/11: "Sim, executa"), vale **só** para BRIEF sem fork **e** sem lacuna
+    `com-dono`. Este BRIEF falha nas duas condições: a 618f é `com-dono` e há forks abaixo. **Nenhuma `sessao-feature` abre
+    antes da resposta do dono.**
+  - PR-1 de contenção (itens 1, 2, 4 e 5): dono, chat, 26/11, *"Libera o PR-1 de contenção"* → PR #1438.
+  - Incluir a 17fd e a 4747: dono, chat da sessão de dreno, 27/11, *"Entram no BRIEF #1435"* (repassado pela sessão
+    "Classificar a caixa legada de lacunas"). A frase autoriza **planejar** as duas aqui. Executar os itens 18–21 ainda pede a
+    liberação (ver "Pergunta ao dono").
+  - Incluir a 9ee3: dono, chat da sessão de dreno, 27/11, *"Entra no BRIEF #1435"* (repassado pela mesma sessão). Mesmo
+    alcance: planejar o item 21; executar pede a liberação.
+- **Insumos (fato consumado):**
+  - `docs/adr/ADR-INCR4-bp-dre.md`. Q4 ratificou o mapeamento por regras declarativas com a ordem *"accountId → codePrefix →
+    nature → fallback"*. Q4.1: mudança de mapeamento exige bump de versão. Q7: conta com saldo sem mapeamento deixa o
+    relatório `INVALID`, *"nunca ignorada silenciosamente"*.
+  - `D-2026-11-21-DRE-INSUMO-PELO-PAPEL`, PR #1318 (038d): o papel `insumoExpenseAccountId` vence o prefixo. Emenda f974: a
+    DRE lê o papel da **versão de política vigente em `asOf`**.
+  - `D-2026-11-21-FORKS-DA-CAIXA` (13dd: *"Identificar pelo papel/natureza, não só pelo código"*), PR #1300 (ad40:
+    *"Nome/natureza + recusar"*), BRIEF irmão `docs/accounting/BE-INCR-CONTA-CANONICA-PAPEL-brief.md` e PR #1337 (13dd parte
+    DRE): `findDreRule` com a identidade da folha, **só para `Expense`**. `STATEMENT_MAPPING_VERSION` = `statement-mapping.v8`.
+  - Precedente de atributo por conta com rota própria: `requiresDimension` (`SetAccountRequiresDimensionSchema`,
+    `PostingDto.ts:230`, atrás de `canManage`, com evento de auditoria a cada troca).
+  - Técnica de prefixo com fronteira já em uso, copiada à mão: `CashFlowReportService.ts:42`,
+    `ProfitDistributionService.ts:395` e `ChartOfAccountsFixture.plano4niveis.test.ts:66` (`code === p || code.startsWith(p + '.')`).
+- **Nós vizinhos:**
+  - `ITEM-DESTINATION`, o nó da 618f e da cadeia de origem.
+  - PR #1427 (aberto, sessão `item-28-da-ponte-contas` trabalhando). Ele edita `ChartOfAccountsFixture.ts` (contas de pessoal,
+    a 4.10 que a 9b46 cita). Todo item deste BRIEF que tocar o fixture vai **depois** do merge dele.
+  - PR #1146: aparece em `gh pr list` com diff em `StatementMappingFixture.ts` e `AccountingReportService.ts`. É a base
+    `integration/x10a` atrás da `main`. `git diff --stat origin/main origin/claude/x10a-al-pr3-fila-tarefas -- <os dois>`
+    sai vazio (verificado em 26/11), então **nenhum PR aberto muda de fato os arquivos deste grupo**.
+  - Leitores da DRE (a regra muda para todos de uma vez):
+    - por `findDreRule`, dentro de `AccountingReportService`: `computeDreNet` (:294), `buildSection` (:325), o diagnóstico
+      (:356–363) e o LAIR (:801);
+    - por `incomeStatement`: J150 (`SpedGenerationService.ts:518`), LALUR (`LalurService.ts:946`), Simples
+      (`SimplesDeclaracaoService.ts:108`), DFC (`CashFlowReportService.ts:239`), exportação (`DataExchangeExportService.ts:284`)
+      e perfil fiscal (`CompanyFiscalProfileService.ts:291`);
+    - por `resultadoAntesIrpjCsll*`: `TaxAssessmentService` e `TaxSimulationService`.
+
+## Por que a cadeia não converge (a causa comum)
+
+**O código da conta carrega o papel dela na demonstração.** O código é um endereço que o usuário escolhe livremente. A seção
+da DRE é um fato contábil (Lei 6.404 art. 187). A tabela `STATEMENT_MAPPING_RULES` deriva o segundo do primeiro por prefixo
+textual. Cada lacuna da cadeia é um caso em que endereço e papel se separam, e cada correção acrescentou mais uma exceção ao
+`findDreRule`:
+
+| Lacuna | Onde o código e o papel se separaram | Remendo aplicado |
+|---|---|---|
+| 35d3 (20/11) | o custo do serviço não tinha código | regra nova `4.7` |
+| 051e/038d (21/11) | o insumo numa folha fora de 4.2/4.7 (4.1.9) | o papel vence o prefixo, só para o insumo |
+| ad40/13dd (21–24/11) | a conta do usuário ocupa o código canônico 4.7 | identidade (nome + natureza) no código exato, só para `Expense` |
+| **618f** (24/11) | o mesmo da 13dd, em `Revenue` | nenhum: sem regra genérica de `Revenue` a seguir, a conta sairia da DRE |
+| **9b46** (26/11) | o prefixo textual sem fronteira (`4.30` "está em" `4.3`) | — |
+
+O histórico do fixture mostra o mesmo padrão: toda folha nova do plano padrão (3.3, 3.4, 3.5.x, 3.6, 4.3, 4.7) exigiu uma
+regra nova, com o comentário *"sem regra, a conta sumiria da DRE em silêncio"* (`StatementMappingFixture.ts:22-32`).
+
+**O fato que liga as duas lacunas** (verificado, `StatementMappingFixture.ts:115-121` e `AccountingReportService.ts:293-311`):
+todas as regras da DRE dão `−rawBalance` (`credit_positive` e `debit_negative` são a mesma conta). Por isso **a seção não
+muda o resultado líquido; só a ausência de regra muda.** Conta sem regra sai do `computeDreNet`, e com ela saem:
+
+- o resultado da DRE;
+- a linha de resultado do BP;
+- o LAIR do X7;
+- o J150, que passa a divergir do I355, porque o encerramento fecha por natureza.
+
+Daí:
+- **Seção errada** (9b46 e 618f hoje) é erro de apresentação: o líquido está certo e a DRE está errada por linha.
+- **Sem regra** (receita fora dos prefixos) é erro de valor. Hoje o relatório fica `INVALID`, mas **nenhum consumidor além do
+  `CompanyFiscalProfileService` lê o `reportStatus`** (grep de 26/11): o J150, o LALUR e o Simples seguem com o líquido
+  incompleto (achado 1).
+- **A fronteira de ponto sozinha transforma o primeiro erro no segundo para `Revenue`.** Uma receita do usuário em `3.10`, hoje
+  receita bruta, ficaria sem regra. Para `Expense` não há esse efeito, porque `dre.expenses` pega tudo. É por isso que a 9b46
+  se divide em duas metades abaixo.
+
+**ADR-INCR4 já previa a camada que falta.** A ordem ratificada em Q4 começa por `accountId`, e essa camada nunca foi
+construída. O papel do insumo (#1318) é uma instância dela, para um papel só. Cada lacuna posterior da cadeia pediu a mesma
+camada, para outro caso.
+
+## Conceito novo no centro? (D-2026-11-24 §6, "país na borda")
+
+- **Caminho A (recomendado):** sim, um conceito. A **seção da demonstração** passa a ser um atributo da conta. Ele é universal:
+  receita, dedução, custo, resultado financeiro e despesa existem em qualquer DRE, IFRS ou BR GAAP. O nome segue em inglês
+  (`statementSection`, F-PB-4 b), e os valores são os ids de seção que já existem (`grossRevenue`, `revenueDeductions`,
+  `costOfGoodsSold`, `financialResult`, `expenses`). Nada de país entra no centro.
+- **Caminho B:** usaria o referencial RFB, que é borda, como fonte do centro. É contra o §6 (ver F-DRM-1).
+- **Caminho C:** nenhum conceito novo. Mantém o código como portador do papel.
+
+## Checklist numerado
+
+Os itens marcados **[direto]** não dependem de fork. Os outros dizem de qual fork e de qual caminho dependem. Os itens de um
+caminho não escolhido somem quando o dono responder.
+
+### Itens comuns a todos os caminhos
+
+1. **[direto] Prefixo com fronteira, função canônica.** Função pura `isCodeUnder(code: string, prefix: string): boolean`
+   (`code === prefix || code.startsWith(prefix + '.')`). Mora ao lado de `isCodigoDoPlanoPadrao`, em `ChartOfAccountsFixture.ts`.
+   `matchesByTable` (`StatementMappingFixture.ts:57`), `CashFlowReportService.ts:42` e `ProfitDistributionService.ts:395` passam
+   a chamá-la; as cópias inline saem. Pelo critério de reuso, é o mesmo objeto (mesma forma, mesma derivação, os dois lados
+   vivos); uma quarta cópia seria a técnica re-inlinada que a memória "Critério reuso × divergência" registra.
+2. **[direto] 9b46, metade `Expense`.** Com o item 1, uma despesa em `4.30` sai de `financialResult` e cai em `expenses` (regra
+   por natureza). Unitário: `findMappingRule('Expense', '4.30', 'DRE')?.id === 'dre.expenses'`; `'4.3.3'` continua em
+   `financialResult`; `'4.20'` continua fora de `costOfGoodsSold`. O resultado líquido não muda (mesmo sinal).
+3. **9b46, metade `Revenue` (depende de F-DRM-3).** Com o item 1, uma receita do usuário em `3.10`/`3.20`/`3.60` deixa de
+   casar `3.1`/`3.2`/`3.6` e fica **sem regra**. Por isso a fronteira para `Revenue` só entra junto com a resposta da F-DRM-3:
+   - F-DRM-3 (a): cai na regra genérica de receita bruta. Não perde o líquido.
+   - F-DRM-3 (b): cai na seção nova de outras receitas. Não perde o líquido.
+   - F-DRM-3 (c): fica `INVALID`, com o diagnóstico acionável do item 13 e a guarda do item 5.
+
+   Até lá, `isCodeUnder` vale para as regras de `Expense` e as de `Revenue` seguem `startsWith` (o comportamento de hoje),
+   com um teste que fixa o limite.
+4. **[direto] `STATEMENT_MAPPING_VERSION` → `statement-mapping.v9`** no PR dos itens 1–2 (ADR-INCR4 Q4.1; precedentes #1296,
+   #1318, #1337). Os testes que fixam `v8` sobem junto (`emenda33.financialResult.test.ts:112-113` ganha a linha do v9).
+5. **[direto] Guarda de totalidade da DRE** (teste, sem código de aplicação). Em `AccountingReportService.bp-dre.test.ts`,
+   uma fixture **com naturezas misturadas** (memória "Teste BP/DRE mistura naturezas"):
+   - um Ativo com saldo;
+   - receitas em 3.1, 3.5.1 e num código do usuário fora da tabela;
+   - despesas em 4.2, 4.3.1 e 4.30.
+
+   Afirma que Σ das seções da DRE + Σ do `unmappedAccounts` = Σ dos saldos `Revenue`/`Expense` (a base do I355), e que
+   `reportStatus` é `INVALID` se, e só se, alguma conta de resultado com saldo ficar sem seção. É o invariante que a 618f e a
+   metade `Revenue` da 9b46 não podem quebrar, qualquer que seja o caminho.
+
+### Caminho A — seção da demonstração como atributo da conta (versão incremental)
+
+Cada passo deixa a DRE idêntica à de hoje até o dono ou o usuário classificar. A tabela por prefixo vira **fallback legado**
+(passo A2) e depois só **sugestão** na criação (passo A5).
+
+6. **A0. PR-0 de contrato** (depende de F-DRM-1 = A). Contém:
+   - `StatementSectionSchema = z.enum([...5 seções de DRE])` e a coluna `Account.statementSection String?`, nula, migração
+     `ADD COLUMN` com prólogo defensivo (memória "Migração SQLite sem transação");
+   - `SetAccountStatementSectionSchema` (`.strict()`, `{ unitId, statementSection: StatementSection | null }`) e
+     `PATCH /api/accounting/accounts/:id/statement-section`, no molde de `requiresDimension`, na cadeia Route → Controller →
+     `PostingService.setAccountStatementSection` → `AccountRepository` → Prisma;
+   - `canManage`, e 409 se a seção não pertence à natureza (`Revenue` → `grossRevenue|revenueDeductions|financialResult`;
+     `Expense` → `costOfGoodsSold|financialResult|expenses`);
+   - evento `account.statement_section_set` na allowlist do `auditCanonical.ts`, com payload `{ accountId, code, from, to }` e
+     sem PII;
+   - snapshot de shape dos DTOs, `openapi.json` com guarda de path-count, paridade i18n pt/en das mensagens;
+   - emenda ao ADR-INCR4 Q4: a camada `accountId` ganha forma (atributo persistido) e ordem (item 7).
+7. **A1. Ordem única da regra da DRE** (`findDreRule`):
+   1. o papel do insumo (038d, versão vigente em `asOf`);
+   2. o `statementSection` explícito da conta, conforme F-DRM-2;
+   3. a tabela legada (prefixo com `isCodeUnder` e identidade da folha, como no v8);
+   4. a natureza (`Expense` → `expenses`).
+
+   `TrialBalanceRow` passa a trazer `statementSection`. A regra devolvida para o passo 2 é a regra sintética da seção (mesmo
+   `sign` da regra de tabela da seção). Bump para `v10`.
+8. **A2. Plano padrão declara a seção.** `CanonicalAccount` ganha `statementSection?` em toda folha `Revenue`/`Expense`.
+   `ensureChartOfAccounts` grava a seção **só na linha que ele cria ou restaura como canônica**; a conta alheia nunca a recebe,
+   o que respeita o 13dd e o ad40 sem reabri-los. Teste zero-diff: para cada folha de resultado do fixture,
+   `statementSection === findMappingRule(nature, code, 'DRE').section`. Toca `ChartOfAccountsFixture.ts`, então vai depois do
+   #1427.
+9. **A3. Retroatividade** (depende de F-DRM-2):
+   - (a) a troca do item 6 é recusada (422, código a definir; precedente `AccountingPeriodNotOpenError` de `lib/errors.ts`, reuso **inferido**) quando a conta tem partida em período fechado. O gate é o mesmo do
+     `assertPeriodOpenTx` (`EntryApprovalService.ts:493`, `PostingService.ts:131`), re-checado dentro da tx;
+   - (b) a classificação é versionada com vigência, e a DRE lê a vigente em `asOf` (molde f974);
+   - (c) nenhuma guarda.
+10. **A4. Kits.** A instalação de kit (publicado, não se edita) grava `statementSection` pela tabela (sugestão) na conta que
+    cria. Teste: kit v3 instalado → as contas 3.6.x e 4.5.x têm a seção que a tabela dá hoje.
+11. **A5. Backfill e aposentadoria do fallback.** Um CLI idempotente (molde `jobs/migratePlano4NiveisCli.ts`, não migração SQL:
+    memória "Smoke-gate S6 × migração de dado"):
+    - grava em toda conta de resultado sem seção a que o `findDreRule` v10 dá hoje (zero-diff);
+    - imprime as que ficam nulas: receita sem regra e receita alheia em código de folha, as duas pela F-DRM-3.
+
+    Depois do backfill rodado (gate humano: o dono roda e cola a saída), o passo 3 da ordem do item 7 sai da DRE e a tabela
+    fica só como sugestão de criação (item 12). Bump para `v11`. **Fecha a classe:** o código deixa de carregar o papel.
+12. **A6. Criação de conta.** `CreateAccountSchema` aceita `statementSection` opcional; ausente, o serviço grava a sugestão da
+    tabela. Para `Revenue` sem sugestão, a regra depende de F-DRM-3:
+    - (a): grava `grossRevenue`;
+    - (b): grava a seção nova;
+    - (c): 400 `STATEMENT_SECTION_REQUIRED`.
+
+    O FE (seletor da seção no cadastro de conta) é nó vizinho, `FE-INCR-*`, fora deste BRIEF.
+13. **A7. Diagnóstico acionável.** `unmappedAccounts[]` ganha `reason: 'NO_STATEMENT_SECTION'` e a rota do item 6 vira a ação
+    sugerida. Shape novo no DTO de resposta, com snapshot.
+
+### Caminho B — seção derivada do referencial RFB (se o dono escolher B em F-DRM-1)
+
+14. **B1.** Uma tabela de grupo referencial → seção, por leiaute e versão: L300A para o Real, P150A para o Presumido; por
+    exemplo `3.01.01.03` → custo. `findDreRule` lê o `ReferentialMapping` da versão do ano de `asOf`; sem mapeamento, cai na
+    tabela por prefixo. É **pendente de validação externa** (a tabela de grupos exige o catálogo oficial carregado e o
+    contador), e para o Simples ver "Insumos ausentes".
+
+### Caminho C — manter o prefixo e remendar (se o dono escolher C em F-DRM-1)
+
+15. **C1.** Os itens 1–5, com a metade `Revenue` pela F-DRM-3.
+16. **C2.** A identidade da folha estendida a `Revenue`: a conta alheia num código de folha 3.1–3.4 cai na regra genérica de
+    `Revenue` da F-DRM-3 (a) ou (b), ou fica `INVALID` na (c).
+17. **C3.** A regra genérica `dre.revenue_other` por natureza, ao fim das regras de `Revenue`, na seção da F-DRM-3.
+
+**O que o C deixa aberto:**
+- toda folha nova do plano padrão ou de kit exige uma regra nova;
+- uma conta do usuário fora da tabela continua recebendo a seção por adivinhação;
+- renomear uma folha no fixture (achado 3 do BRIEF irmão) muda a DRE de todo escopo existente;
+- o papel do insumo continua sendo a única camada `accountId`, e a próxima lacuna da cadeia (geração 5) é previsível.
+
+### Itens comuns da emenda de 27/11: quem apura tributo ou gera declaração não lê demonstrativo incompleto (17fd, 4747, 9ee3)
+
+Valem em A, B e C. A F-DRM-3 (c) depende deles: com (c), o `INVALID` passa a ser o estado normal de uma receita sem seção, e
+quem o ignora gera tributo com base errada. A numeração continua a do checklist para não mexer nas referências acima.
+
+18. **[direto] Um detector e um erro só para a DRE incompleta.**
+    - **Detector:** o ramo DRE do laço de `buildDiagnostics` (`AccountingReportService.ts:349-371`) vira um método só,
+      `contasSemRegraDre(rows: TrialBalanceRow[]): UnmappedAccount[]`. São as contas com saldo, sem `findDreRule` e sem regra
+      de BP; as de natureza `?` ficam de fora, como hoje, porque dão `WARNING` e não `INVALID`. Quem chama:
+      - o `buildDiagnostics('DRE')`, que continua dando o `unmappedAccounts` e o `INVALID` de hoje (zero-diff);
+      - o LAIR (item 20).
+
+      Não nasce uma segunda cópia da regra "o que é conta sem regra".
+    - **Erro:** `DreIncompletaError extends AppError` em `server/src/lib/errors.ts`, onde moram os erros de domínio:
+      **422**, código `DRE_INCOMPLETA`. Leva `contas` (código, nome, natureza, saldo) e uma mensagem que diz os códigos ("a DRE
+      de <data> tem conta de resultado sem seção: 3.7 …").
+      - **Por que 422 (precedente lido em `lib/errors.ts`, 27/11):** a recusa porque o estado dos dados impede gerar a
+        declaração ou o lançamento é um `AppError` próprio com 422 na casa (`AccountingPeriodNotOpenError`,
+        `MitNadaAExportarError`, `AtividadeSemAnexoError`, `SimplesRegraNaoRegulamentadaError`, `SubstituicaoBloqueadaError`).
+        O 409 fica para concorrência e pendência (`PackageConsumptionPendingError`, `PolicyApprovalRequiredError`), e o 400,
+        para pedido mal formado. A versão anterior deste item dizia 409; a premissa ("o mesmo caso do período fechado") estava
+        errada, porque o período fechado é 422.
+      - É uma classe própria, não um `Error` genérico: um job que pule e registre pega só ela (memória "Skip+log só com erro
+        próprio").
+      - **Coordenação com o #1444 (lido em 27/11):** a guarda da ECD lança um `ValidationError` (400) inline, sem classe
+        própria. O PR-2 troca esse `throw` pela `DreIncompletaError`, e o teste `ecdDreInvalid` passa a afirmar 422 em
+        vez de 400. Se o #1444 entrar antes, é uma linha de código e uma asserção. Uma recusa só para quem gera declaração ou apura tributo: ECD (J150 e J100), LALUR, DEFIS e
+        LAIR.
+19. **[direto] LALUR e DEFIS recusam a DRE `INVALID` (17fd).**
+    - **LALUR:** `LalurService.resultadoDoTrimestre` (`:942-949`). Cada uma das duas leituras de `incomeStatement` (o YTD e
+      o fim do trimestre anterior) com `reportStatus === 'INVALID'` lança `DreIncompletaError` com o
+      `diagnostics.unmappedAccounts` dela. Não há escrita antes do gate: o `closeParteB` lê o resultado (`:1059`) antes de abrir
+      a `runTransaction` (`:1062`).
+    - **DEFIS:** `SimplesDeclaracaoService.defis` (`:104-114`) recusa do mesmo jeito.
+      - O `upsertDefis` (`:139-144`) grava o digitado (`repo.upsert`) **antes** de chamar `defis()`. A checagem da DRE sobe
+        para antes do `repo.upsert`. Sem isso, a resposta seria a recusa com o digitado já gravado, e o usuário leria "não salvou"
+        quando salvou (memória "Efeito irreversível antes do gate").
+    - **`WARNING` não recusa.** O resultado do ano anterior não encerrado não muda a DRE do ano; a recusa é só do `INVALID`.
+    - **Testes (integração, `--runInBand`)**, no cenário do guarda da ECD: receita do usuário em `3.7` "Outra Receita", com
+      saldo.
+      - Perfil Real: `POST /lalur/parte-b/close` do `A00` → 422 `DRE_INCOMPLETA`, que nomeia a `3.7`, e nenhum
+        `LalurClosing` criado.
+      - Perfil Simples:
+        - `GET` da DEFIS do ano → 422;
+        - `PUT` da DEFIS → 422, com o digitado de antes intacto.
+      - Controle: a mesma receita em `3.1` → 200 nas três rotas.
+20. **LAIR recusa a base incompleta (4747; depende de F-DRM-4).** `resultadoAntesIrpjCsllPorConta`
+    (`AccountingReportService.ts:789-806`) roda o detector do item 18 nas mesmas `rows` que alimentam o `computeDreNet`
+    (depois do filtro `excluir`, que só tira as despesas da provisão, contas com regra).
+    - **F-DRM-4 (a):** com conta sem regra, lança `DreIncompletaError`. Recusam juntos:
+      - a apuração IRPJ/CSLL do Real (`TaxAssessmentService.ts:811`, trimestral; `:843`, anual), no `preview`, no `confirm` e
+        no recálculo do sistema. A recusa sai do `calcular` (`:729`), antes da `runTransaction` da confirmação (`:346`), sem
+        escrita;
+      - a simulação de regime (`TaxSimulationService.ts:267`, pelo `resultadoAntesIrpjCsll` escalar, que delega ao
+        `PorConta`).
+
+      A cascata de recálculo (`TaxAssessmentRecalcService.ts:203`) já pega qualquer erro e avisa o dono com "caiu em cascata e
+      não foi refeita: <mensagem>". Por isso a mensagem do item 18 tem de nomear as contas.
+    - **F-DRM-4 (b):** o retorno ganha `contasSemRegra: UnmappedAccount[]`. A apuração recusa quando a lista não está vazia; a
+      simulação segue e põe um aviso.
+    - **Testes:**
+      - unitário de `AccountingReportService`: `Revenue` `3.7` com saldo na janela → (a) lança `DreIncompletaError` com a `3.7`;
+        (b) `contasSemRegra` com a `3.7` e `netCents` sem ela;
+      - integração: preview IRPJ trimestral, perfil Real, `3.7` com saldo → 422, sem nenhum `TaxAssessment` gravado; controle em
+        `3.1` → 200.
+21. **[direto] A ECD recusa o BP `INVALID` (9ee3).** Em `SpedGenerationService` (o `Promise.all` da `:516-519`), ao lado da
+    guarda da DRE do #1444: `bp.reportStatus === 'INVALID'` lança `DreIncompletaError` com o `bp.diagnostics.unmappedAccounts`.
+    - **Por que o BP basta:** no BP, `INVALID` só nasce de conta de resultado com saldo e sem `findDreRule`. Ativo, passivo e PL
+      casam por natureza (`bp.assets`/`bp.liabilities`/`bp.equity`), e a conta de natureza `?` dá `WARNING`
+      (`AccountingReportService.ts:349-371`). São as mesmas contas do detector do item 18, só que na janela da história
+      inteira. O item não cria uma segunda regra.
+    - **A mensagem diz de onde vem o saldo:** a conta tem saldo de exercício anterior não encerrado, fora da DRE do ano. O
+      remédio é reclassificar ou encerrar o exercício, não mexer no ano da ECD.
+    - **Ordem:** a guarda da DRE vem primeiro. Se as duas falharem, a mensagem é a da DRE, que é o caso mais comum.
+    - **Sem escrita antes da recusa:** a `composeFile` roda antes do `createJob`. Grau: **inferido** do comentário da guarda
+      do #1444, não da leitura do `createJob`; a sessão de feature confirma no teste (nenhum job criado).
+    - **`WARNING` não recusa:** o resultado do ano anterior não encerrado, sozinho, continua gerando a ECD, como hoje.
+    - **Testes:**
+      - unitário de `AccountingReportService`: `Revenue` `3.7` com saldo em 2024, sem encerramento e sem movimento em 2025 →
+        `balanceSheet(31/12/2025).reportStatus === 'INVALID'` com a `3.7` e `incomeStatement(31/12/2025).reportStatus` diferente
+        de `INVALID`. Fixa a premissa da lacuna;
+      - integração (`--runInBand`): o mesmo cenário, `POST` da ECD 2025 → 422 `DRE_INCOMPLETA`, que nomeia a `3.7`, e
+        nenhum job da ECD criado. Controle: a mesma receita em `3.1` → 201 (BP `WARNING`, não recusa). Grau do 201 do
+        controle: **inferido** do `comoProvar` da 9ee3; a sessão de feature confirma.
+
+## Contratos
+
+Comuns a todos os caminhos (itens 1–5). Nenhum contrato HTTP muda:
+
+```ts
+// ChartOfAccountsFixture.ts
+export function isCodeUnder(code: string, prefix: string): boolean; // code === prefix || code.startsWith(`${prefix}.`)
+// StatementMappingFixture.ts
+export const STATEMENT_MAPPING_VERSION = 'statement-mapping.v9';
+```
+
+Emenda de 27/11 (itens 18–21). O único contrato HTTP novo é a resposta 422:
+
+```ts
+// AccountingReportService.ts
+private contasSemRegraDre(rows: TrialBalanceRow[]): DiagnosticsShape['unmappedAccounts']; // o ramo DRE do buildDiagnostics, um só
+// server/src/lib/errors.ts (onde moram os erros de domínio da casa)
+export class DreIncompletaError extends AppError { // super(msg, 422, 'DRE_INCOMPLETA')
+  constructor(asOf: Date, readonly contas: { code: string; name: string; nature: string; balanceCents: number }[], origem: 'DRE' | 'BP');
+}
+// F-DRM-4 (a): resultadoAntesIrpjCsllPorConta(...) lança DreIncompletaError; retorno igual ao de hoje
+// F-DRM-4 (b): resultadoAntesIrpjCsllPorConta(...): Promise<{ netCents; contas; contasSemRegra: DiagnosticsShape['unmappedAccounts'] }>
+
+// HTTP (mudam só pela recusa)
+POST /api/accounting/lalur/parte-b/close        → 422 DRE_INCOMPLETA
+GET|PUT /api/accounting/simples/defis/:ano       → 422 DRE_INCOMPLETA   (routes/simples.ts:48-49)
+POST preview|confirm da apuração IRPJ/CSLL (Real) → 422 DRE_INCOMPLETA  (F-DRM-4 a ou b)
+POST da ECD (J150 pelo #1444; J100 pelo item 21) → 422 DRE_INCOMPLETA  (o #1444 entra com 400 ValidationError; o PR-2 alinha)
+```
+
+O `origem` só escolhe a mensagem (item 21: "saldo de exercício anterior não encerrado"); o corpo e o código são os mesmos.
+
+Caminho A (itens 6–13):
+
+```ts
+// dtos/PostingDto.ts
+export const StatementSectionSchema = z.enum(['grossRevenue', 'revenueDeductions', 'costOfGoodsSold', 'financialResult', 'expenses']);
+export type StatementSection = z.infer<typeof StatementSectionSchema>;
+export const SECTIONS_BY_NATURE: Record<'Revenue' | 'Expense', readonly StatementSection[]> = {
+  Revenue: ['grossRevenue', 'revenueDeductions', 'financialResult'],
+  Expense: ['costOfGoodsSold', 'financialResult', 'expenses'],
+};
+export const SetAccountStatementSectionSchema = z
+  .object({ unitId: z.string().min(1), statementSection: StatementSectionSchema.nullable() })
+  .strict();
+// CreateAccountSchema += statementSection: StatementSectionSchema.optional()
+
+// schema.prisma — model Account
+statementSection String? // seção da DRE (StatementSection); null = sem classificação (fallback legado até o A5)
+
+// StatementMappingFixture.ts
+interface DreRow { accountId: string; code: string; name: string; nature: string; statementSection: StatementSection | null }
+findDreRule(row: DreRow, custoServicosAccountIds: ReadonlySet<string>): StatementMappingRule | undefined
+// ordem: papel → statementSection → tabela legada (até o A5) → natureza (Expense)
+
+// AuditEvent (allowlist auditCanonical.ts)
+'account.statement_section_set': { accountId: string; code: string; from: StatementSection | null; to: StatementSection | null }
+
+// Resposta da DRE (diagnostics)
+unmappedAccounts[i].reason?: 'NO_STATEMENT_SECTION'
+
+// HTTP
+PATCH /api/accounting/accounts/:id/statement-section  → 200 Account | 403 | 404 | 409 SECTION_NATURE_MISMATCH | 422 (código a definir; F-DRM-2 a)
+```
+
+Caminho A com F-DRM-2 (b), em vez da coluna:
+
+```ts
+model AccountStatementClassification { id; userId; unitId; accountId; statementSection; validFrom DateTime; createdById; createdAt; deletedAt
+  @@unique([userId, unitId, accountId, validFrom]) }
+```
+
+## Forks pendentes de ratificação
+
+### F-DRM-1 — onde mora a seção da DRE de uma conta (a 618f "repensar a abordagem") — RATIFICAÇÃO PENDENTE
+
+- **(A) Atributo da conta, persistido** (`Account.statementSection`). O plano padrão e os kits o declaram, e o usuário ou o
+  contador o define por conta. A tabela por prefixo vira fallback legado e depois só sugestão. Fecha a classe inteira, porque
+  o código deixa de carregar o papel. Materializa a camada `accountId` que o ADR-INCR4 Q4 já ratificou. **Não reabre**
+  "Nome/natureza" (ad40/13dd): a identidade da conta canônica continua derivada para o papel fiscal, o referencial e o delete,
+  e só a DRE passa a ler um atributo gravado. Efeito lateral favorável: renomear uma folha no fixture deixa de mudar a DRE.
+  É o modelo dos ERPs de referência (Odoo `account.account.account_type`; grau **inferido**, de memória de treino, não lido
+  nesta sessão).
+- **(B) Derivar do referencial RFB** (`ReferentialMapping`). É a única classificação por conta já gravada, versionada por ano
+  e desenhada pela lei. Contra:
+  - é borda de país usada como fonte do centro (§6);
+  - é opcional por conta (`coverage().unmappedAccounts`) e por versão, com catálogo que pode estar vazio
+    (`ReferentialMappingService.ts:214-217`);
+  - depende do regime (L300A × P150A);
+  - para o Simples, ver "Insumos ausentes".
+
+  Serve bem como **validação de coerência** (seção × grupo referencial → aviso), que fica como achado 2.
+- **(C) Manter o prefixo e remendar** (itens 15–17). Menor diff; deixa aberto o que a seção "O que o C deixa aberto" lista.
+
+**Recomendação: (A), na versão incremental A0 → A5**, com os itens 1–5 como etapa de contenção declarada. A0–A4 são opt-in e
+zero-diff; o A5 aposenta o fallback depois do backfill.
+
+### F-DRM-2 — a troca da seção reclassifica período fechado? (só se F-DRM-1 = A ou B) — RATIFICAÇÃO PENDENTE
+
+- **(a) Atributo único; a troca é recusada se a conta tem partida em período fechado** (o gate de período fechado que o
+  lançamento já usa). Mudar período fechado passa a exigir a reabertura formal, que é o caminho que a escrituração já tem para
+  alterar período fechado. A ECD transmitida não muda por baixo.
+- **(b) Versionado com vigência; a DRE lê a classificação vigente em `asOf`.** É o precedente do f974 (o papel do insumo é
+  lido da versão de política vigente). Permite reclassificar dali em diante sem reabrir. Custo: tabela nova e leitura por
+  janela em todo leitor (o LAIR lê por trimestre).
+- **(c) Atributo único, retroativo, sem guarda.** O líquido não muda, mas o J150 de um exercício transmitido sairia diferente
+  se regerado.
+
+**Recomendação: (a).** É mais simples que (b), não muda período entregue e usa o gate que já existe. (b) é a opção coerente com
+o f974, se o dono preferir a mesma regra para os dois papéis.
+
+### F-DRM-3 — a seção de uma receita sem classificação (a decisão de conteúdo da 618f) — RATIFICAÇÃO PENDENTE
+
+Vale para a receita do usuário fora dos prefixos, para a receita alheia num código de folha (3.1–3.4) e para a metade
+`Revenue` da 9b46 (`3.10`).
+
+- **(a) Receita bruta** (`grossRevenue`). Mantém o líquido. Pode inflar a receita bruta, que é a base do Simples e da
+  presunção.
+- **(b) Seção nova "outras receitas e outras despesas"** (Lei 6.404 art. 187 IV). Mantém o líquido, mas pede seção nova no
+  relatório, no J150 e no FE, e a definição do contador (ver "Pendente de validação externa" 1 e 2).
+- **(c) Nenhuma por adivinhação.** A conta fica sem seção e o relatório fica `INVALID` (Q7, como hoje), agora com caminho:
+  diagnóstico acionável (item 13), criação exige a seção (item 12) e a guarda de totalidade (item 5).
+
+**Recomendação: (c).** Não decide pelo contador o que é dele; a decisão vira, por conta, do usuário que conhece a receita. O
+risco de (c) é o `INVALID` não ser lido por quem consome a DRE; ele fica coberto pelo achado 1, que deve entrar antes ou
+junto.
+
+### F-DRM-4 — onde o LAIR recusa a base incompleta (4747; emenda de 27/11) — RATIFICAÇÃO PENDENTE
+
+O LAIR não tem `reportStatus` para ler, então recusar exige decidir quem recusa.
+
+- **(a) O leitor recusa.** `resultadoAntesIrpjCsllPorConta` lança `DreIncompletaError`, e todo consumidor recusa de uma vez:
+  a apuração do Real (trimestral e anual), a confirmação, o recálculo do sistema e a simulação de regime. A regra "conta sem
+  regra" fica num lugar só, no serviço que é dono do mapeamento. Um leitor novo do LAIR nasce protegido.
+- **(b) O leitor informa e cada consumidor decide.** O retorno ganha `contasSemRegra[]`. A apuração recusa; a simulação mostra o
+  número parcial com aviso. Custo: cada leitor novo precisa lembrar de olhar a lista, que é exatamente o defeito da 5235 (só
+  um consumidor lia o `reportStatus`).
+
+**Recomendação: (a).** A simulação existe para escolher o regime, e um LAIR sem uma receita desvia a comparação Real ×
+Presumido, que é uma decisão com efeito fiscal. A única razão para (b) é o dono querer que a simulação mostre o parcial. Essa
+é a mesma pergunta que a cc8d faz para a DFC e a exportação. Se o dono responder (b) lá, a mesma resposta serve aqui para a
+simulação.
+
+### Fork de fora deste BRIEF (com o dono, não ratificado aqui)
+
+- `L-20261127-074910-cc8d`: a DFC (`CashFlowReportService.ts:239/276`) e a exportação `EXPORT_INCOME_STATEMENT`
+  (`DataExchangeExportService.ts:284`) consomem DRE `INVALID`. As opções são recusar, como a ECD, ou propagar o
+  `INVALID`/diagnóstico ao relatório gerencial. Segue na caixa, aberta, sem decisão. Os itens 18–21 não a tocam; só o erro do
+  item 18 fica disponível se a resposta for "recusar".
+- `L-20261128-000550-e5db` (registrada nesta emenda): a exportação `EXPORT_BALANCE_SHEET`
+  (`DataExchangeExportService.ts:268-279`) lê o BP e ignora o `INVALID` da 9ee3. É a mesma pergunta da cc8d, que cita só a
+  exportação da DRE. A resposta da cc8d decide as duas.
+
+### Pergunta ao dono sobre o que não depende de fork
+
+Os itens 1, 2, 4 e 5 (metade `Expense` da 9b46, a função `isCodeUnder`, o bump e a guarda de totalidade) valem em A, B e C.
+A regra do item 6 da emenda de 21/11 é binária, então este BRIEF não os libera sozinho. **Pergunta:** liberar esses quatro
+itens já, como PR-1 de contenção, antes de responder F-DRM-1..3? **Respondida:** dono, 26/11, *"Libera o PR-1 de contenção"*
+→ PR #1438.
+
+**Pergunta da emenda de 27/11:** liberar os itens 18–21 como **PR-2 de contenção**, com a F-DRM-4 respondida?
+- A 17fd e a 4747 são P0, então o PR é próprio e vai direto na `main` (`D-2026-11-25-BRANCH-LONGA-E-TURNOS`). A 9ee3 (P1)
+  vai junto porque usa o mesmo erro e encosta na mesma guarda da ECD.
+- Os itens 18, 19 e 21 não dependem de fork e podem ir antes; o 20 espera a F-DRM-4.
+- Nenhum deles depende de F-DRM-1..3.
+
+## Pendente de validação externa
+
+1. **A seção da receita sem classificação.** Se o dono escolher F-DRM-3 (a) ou (b), a escolha é do contador: base da receita
+   bruta para o Simples e para a presunção, e o J150 × I355. Com (c), o contador classifica conta a conta.
+2. **A DRE não tem a linha "outras receitas e outras despesas".** A Lei 6.404 art. 187 IV (*"o lucro ou prejuízo operacional,
+   as outras receitas e as outras despesas"*, redação da Lei 11.941/2009) a discrimina; o enum de seções de hoje não. Acervo:
+   [lei-6404-1976-12-15.md](https://github.com/ctresb/leis/blob/main/federal/leis-ordinarias/1976/lei-6404-1976-12-15.md),
+   `versao_texto` "compilada (texto vigente)", `baixado_em` 2026-10-13; fonte:
+   https://normas.leg.br/?urn=urn:lex:br:federal:lei:1976-12-15;6404. A 3.4 (receita de pacotes não utilizados) já espera essa
+   resposta (PE-1 do BRIEF PACOTE-VALIDADE: receita bruta ou outras receitas operacionais). A seção nova é frente adjacente
+   (achado 3), não item deste BRIEF.
+3. **Caminho B:** a tabela de grupo referencial → seção (L300A/P150A) exige o catálogo oficial e o contador.
+
+## Insumos ausentes
+
+1. **Simples × referencial (só para o caminho B).** Não li a norma que diz se a empresa do Simples entrega ECF e, portanto, se
+   mantém mapeamento referencial. Grau: **assumido** que não entrega. Se o dono considerar o B, confirmar no acervo antes.
+2. **Gate de período fechado (só para F-DRM-2 a).** Localizei `assertPeriodOpenTx` (`EntryApprovalService.ts:493`) e o comentário
+   do `PostingService.ts:131`; não li a assinatura nem se ele responde "a conta tem partida em período fechado" (ele responde
+   "esta data está fechada"). A sessão de feature confirma, ou o item ganha uma consulta de repositório nova.
+3. **Corpo da resposta 422 (itens 18–21).** Não li como o middleware de erro serializa os campos extras de um `AppError`, nem
+   se `contas` chega ao corpo. Se não chegar, a mensagem com os códigos basta para o usuário e para o aviso da cascata. A
+   sessão de feature confirma no primeiro teste de integração.
+
+## Achados fora de escopo (vão à caixa)
+
+1. **Os consumidores da DRE não leem o `reportStatus`.** J150 (`SpedGenerationService.ts:516-522`), LALUR, Simples, DFC,
+   exportação, LAIR: conta de resultado sem regra sai do líquido e o arquivo é gerado assim. Só o
+   `CompanyFiscalProfileService.ts:292` recusa `INVALID`. → caixa (`L-20261126-205932-5235`, P0: G1·E2·silencioso·inferido).
+   Vizinha no mesmo arquivo: `L-20261125-110220-8862` (rótulo `DRE_CMV` do J150).
+   **Desdobramento de 27/11:** a 5235 ficou com a ECD (#1444). As filhas 17fd (LALUR, DEFIS) e 4747 (LAIR) entraram neste
+   BRIEF (itens 18–20), e depois a 9ee3 (J100 pelo BP, item 21). A cc8d (DFC, exportação) é fork com o dono.
+5. **A exportação `EXPORT_BALANCE_SHEET` ignora o BP `INVALID`** (`DataExchangeExportService.ts:268-279`), achado ao listar os
+   leitores de `balanceSheet()` para o item 21. Os outros são a tela (`accountingController.ts:262`), o perfil fiscal (`:291`, já
+   lê o `INVALID`), a ECD (item 21) e o seed. → caixa (`L-20261128-000550-e5db`, fork, irmã da cc8d).
+2. **Coerência seção × referencial RFB.** Conta classificada numa seção cujo grupo referencial diz outra (ex.: seção `expenses`
+   com referencial `3.01.01.03.*` de custo) → aviso na cobertura do referencial. Só faz sentido com F-DRM-1 = A; fica descrito
+   aqui, sem entrada na caixa (depende do fork).
+3. **Seção "outras receitas e outras despesas" (art. 187 IV) ausente na DRE e no J150.** → caixa (`L-20261126-205940-3411`).
+   Por estar no mesmo arquivo, ela entra no grupo deste BRIEF. Se o dono responder F-DRM-3 (b), esta lacuna vira item do
+   BRIEF; com (a) ou (c), segue isolada, à espera do contador.
+4. **Identidade derivada do nome do fixture** (achado 3 do BRIEF irmão, já descrito na 618f): o caminho A a torna irrelevante
+   para a DRE, mas não para o papel fiscal, o referencial e o delete. Citado, não absorvido.
+
+## Prova por lacuna
+
+| Lacuna | Itens | Comando que prova |
+|---|---|---|
+| 9b46, metade `Expense` | 1, 2, 4 | `npx jest src/features/accounting/services/__tests__/emenda33.financialResult.test.ts src/features/accounting/fixtures/__tests__/ChartOfAccountsFixture.custoServicos.test.ts --selectProjects unit` (`'4.30'` → `dre.expenses`; v9) |
+| 9b46, metade `Revenue` | 3 (+ item da F-DRM-3) | **condicional:** o mesmo comando, com `'3.10'` `Revenue` → a seção da F-DRM-3 (a/b) ou `INVALID` com `reason` (c) |
+| guarda de totalidade | 5 | `npx jest src/features/accounting/services/__tests__/AccountingReportService.bp-dre.test.ts --selectProjects unit -t totalidade` |
+| 17fd | 18, 19 | `npx jest src/controllers/__tests__/dreIncompletaLalurDefis.integration.test.ts --runInBand` (cenário `3.7`: close da Parte B `A00` e DEFIS → 422 `DRE_INCOMPLETA`, sem `LalurClosing` e com o digitado intacto; controle em `3.1` → 200) |
+| 4747 | 18, 20 (+ F-DRM-4) | `npx jest src/features/accounting/services/__tests__/AccountingReportService.bp-dre.test.ts --selectProjects unit -t LAIR` e `npx jest src/controllers/__tests__/dreIncompletaLair.integration.test.ts --runInBand` (preview IRPJ Real com `3.7` → 422, nenhum `TaxAssessment`) |
+| 9ee3 | 18, 21 | `npx jest src/features/accounting/services/__tests__/AccountingReportService.bp-dre.test.ts --selectProjects unit -t 9ee3` e `npx jest src/controllers/__tests__/spedController.ecdBpInvalid.integration.test.ts --runInBand` (`3.7` com saldo em 2024 sem encerramento: BP `INVALID`, DRE de 2025 não `INVALID`, ECD 2025 → 422 que nomeia a `3.7`, nenhum job; controle em `3.1` → 201) |
+| 618f | **condicional à F-DRM-1/3** — A: 6–13; C: 15–17 | A: `npx jest src/controllers/__tests__/dreSecaoDaConta.integration.test.ts --runInBand` (receita do usuário em `3.2` "Outra Receita": sem seção → `INVALID` com `reason`; com `PATCH … grossRevenue` → em `grossRevenue`, fora de `revenueDeductions`). C: `npx jest …custoServicos.test.ts --selectProjects unit -t Revenue` (a conta alheia em `3.2` não cai em `dre.deductions`) |
+
+## Write-set
+
+| PR | Arquivos |
+|---|---|
+| PR-1 (itens 1, 2, 4, 5; contenção) | `server/src/features/accounting/fixtures/ChartOfAccountsFixture.ts` (só `isCodeUnder`), `server/src/features/accounting/services/StatementMappingFixture.ts`, `server/src/features/accounting/services/CashFlowReportService.ts` (:42), `server/src/features/accounting/services/ProfitDistributionService.ts` (:395), `server/src/features/accounting/services/__tests__/{emenda33.financialResult,AccountingReportService.bp-dre}.test.ts`, `server/src/features/accounting/fixtures/__tests__/ChartOfAccountsFixture.custoServicos.test.ts` |
+| PR-2 (itens 18–21; contenção, P0, direto na `main`) | `server/src/features/accounting/services/AccountingReportService.ts` (detector, LAIR), `server/src/lib/errors.ts` (`DreIncompletaError`), `LalurService.ts` (`resultadoDoTrimestre`), `SimplesDeclaracaoService.ts` (`defis`, `upsertDefis`), `SpedGenerationService.ts` (guarda do BP; troca do `throw` do #1444), `TaxSimulationService.ts` (só com F-DRM-4 b), `server/src/features/accounting/services/__tests__/AccountingReportService.bp-dre.test.ts`, `server/src/controllers/__tests__/dreIncompleta{LalurDefis,Lair}.integration.test.ts`, `server/src/controllers/__tests__/spedController.ecdBpInvalid.integration.test.ts` (novo), `spedController.ecdDreInvalid.integration.test.ts` (só a asserção do status: 400 → 422). Encosta no #1444, que edita o mesmo trecho de `SpedGenerationService.ts`: o PR-2 entra depois dele (ver item 18, "Coordenação") |
+| A0 (item 6) | `server/prisma/schema.prisma` + migração nova, `server/src/features/accounting/dtos/PostingDto.ts`, rota/controller/serviço/repositório de conta (`PostingService.ts`, `IAccountRepository.ts`, `AccountRepository.ts`), `auditCanonical.ts`, `dtoShapeSnapshot`, `public/openapi.json`, `docs.paths.ts`, `docs/adr/ADR-INCR4-bp-dre.md` (emenda), locales pt/en |
+| A1–A2 (itens 7–8) | `StatementMappingFixture.ts`, `AccountingReportService.ts` (`TrialBalanceRow`, leitores), `ChartOfAccountsFixture.ts` (`statementSection` nas folhas; **depois do #1427**), `PostingService.ts` (`ensureChartOfAccounts`), testes |
+| A3 (item 9) | `PostingService.ts`, repositório de conta; com F-DRM-2 (b), também `schema.prisma` + modelo novo |
+| A4 (item 10) | o instalador de kit (`SectorKit*`), testes |
+| A5–A7 (itens 11–13) | `server/src/jobs/` (CLI novo), `StatementMappingFixture.ts`, `AccountingReportService.ts`, `PostingDto.ts`, snapshot |
+
+Choke points da PAR-001: `schema.prisma` (A0, A3 b), `docs.paths.ts` e `openapi.json` (A0), `ChartOfAccountsFixture.ts`
+(PR-1 e A2, em conflito com o #1427). Com 2+ PRs nos mesmos arquivos, o grupo vai para `integration/dre-mapeamento`
+(`D-2026-11-10-BRANCH-DE-INTEGRACAO-E-GAP-MAP-POR-FEATURE`), com o PR-1 primeiro. O grupo não tem nota de nó própria, então o
+write-set fica aqui.

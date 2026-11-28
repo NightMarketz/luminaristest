@@ -147,6 +147,33 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
      - A IN 2.121 art. 178 e as SC Cosit 496/2017 e 16/2024 dão crédito de 9,25%, inclusive na compra do distribuidor. Reabrir o padrão é decisão do dono.
      - A lacuna 123e, que tratava isso como defeito, foi descartada e substituída por esta.
 
+### Releitura Res. CGSN 196 (27/11/2026)
+
+Item 6 do BRIEF `BE-INCR-SIMPLES-CGSN-196` (lacuna `L-20261125-195503-a785`). Este adendo só acrescenta; o texto acima
+fica como estava.
+- **Base.** A cópia deste dossiê, [D10], é a mesma das outras sete (SHA-256 do texto `b5a02304…`, anterior à Res. 196).
+  Conferi contra a Res. CGSN 140 multivigente de 25/11/2026,
+  `pesquisas-legais/dp-tabelas-irrf-das-sst/docs/D24_rfb-92278-multivigente.txt` (`6683e711…`). Também usei a Res. CGSN 196,
+  `…/D10_rfb-154694-multivigente.txt` (`37ff4316…`), e a Res. CGSN 190 já com as revogações da 196,
+  `…/D09_rfb-152832-multivigente.txt` (`a5692faa…`). Um diff das duas cópias da 140 mostra só quatro trocas de texto
+  vigente: art. 21 II "c", art. 121 § 4º e os novos arts. 144-C e 144-F. Os arts. 144-D e 144-E, da 190, também aparecem
+  agora como vigentes. O resto são marcas `[AGENDADO]` que passaram da 190 para a 196.
+- **Como conferi.** Rodei `python ~/.claude/tools/pesquisa-legal/legal.py trecho dp-tabelas-irrf-das-sst D24 "<termo>"` por
+  dispositivo (D10 e D09 no lugar de D24 para a redação de 2027). Para o vigente, o critério é o texto da linha na D24.
+  Para 2027, o critério é constar ou não dos arts. 1º, 2º, 5º e 7º da 196. A marca na linha não serve de critério, porque o
+  `[AGENDADO]` fica na linha vizinha.
+- **Estados.** **igual**: o texto vigente não mudou. **2027 trocada**: a redação de 2027 que o dossiê citou foi revogada ou
+  reeditada pela 196. **novo**: dispositivo novo que confirma ou contraria uma leitura do dossiê.
+
+| Dispositivo | Como o dossiê citou | Estado | Conclusão |
+|---|---|---|---|
+| art. 25 § 18 I e II | produto empregado no serviço vai ao Anexo III; o kit revendido, ao Anexo I | igual (D24 L574-576); a 196 não altera o art. 25, só inclui o art. 25-A (contrato com a administração pública) | não muda |
+| art. 59 § 2º | nota do salão-parceiro com "o total das receitas de serviços e produtos neles empregados" | igual (D24 L982) | não muda |
+| art. 59 § 3º | nota do parceiro ao salão | igual (D24 L983) | não muda |
+
+Em 2027 a 196 reescreve o caput do art. 59 (incisos I e II) e os §§ 4º, 4º-A e 6º–8º, e revoga os §§ 5º, 9º, 11 e 12
+(D10 art. 2º e art. 7º V). Os §§ 2º e 3º ficam fora das duas listas. Releitura das linhas 104 e 112 acima: o "TEXTO MUDOU"
+de agora vem da 196, e a conclusão continua a mesma. Nenhuma lacuna nova.
 <!-- /ANALISE -->
 
 ## Fontes consultadas
