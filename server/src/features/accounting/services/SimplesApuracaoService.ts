@@ -57,6 +57,9 @@ import type { SimplesEntradasService } from './SimplesEntradasService';
 import { excluirDoMotivo, type AlertaSimples, type ChecklistParceria, type BaseCaixa, type CodigoAlertaSimples, type ImpedimentoCaixa, type SimplesDasRegistro, type SimplesSegregacaoParcela } from '../dtos/SimplesDto';
 import { SOURCE_TYPE_SIMPLES_DAS, type DocumentoRef } from '../dtos/SourceDocumentUploadDto';
 import type { SourceDocumentUploadService } from './SourceDocumentUploadService';
+// BE-INCR-DP-PONTE-RAZAO itens 35–38: legado BR (ADR-PAIS-NA-BORDA §3.1, LEGADO_BR) consome a borda do fator r.
+import type { FolhaFatorRPort } from '../paises/br/ports/FolhaFatorRPort';
+import { precedenciaFolhaFatorR } from '../paises/br/models/folhaFatorRPrecedencia';
 
 export const SIMPLES_DAS_PROVISION_SOURCE_TYPE = 'simples.das.provision';
 /** BRIEF item 24: SIMPLES_DAS_REGISTRADO / SIMPLES_DAS_SUBSTITUIDO, no padrão de nome da allowlist. */
@@ -341,6 +344,8 @@ export class SimplesApuracaoService {
     private readonly productFiscalRepo: Pick<IProductFiscalProfileRepository, 'findManyByProductRefs'>,
     /** EFICIENCIA-FISCAL PR-4 (item 20): sócios e as participações informadas, para o aviso de interdependência. */
     private readonly partnerRepo: Pick<IPartnerRepository, 'list'>,
+    /** BE-INCR-DP-PONTE-RAZAO item 35 (F-PNT-6 a): a folha do fator r vinda do DP; o factory monta o adaptador. */
+    private readonly folhaFatorR: FolhaFatorRPort,
   ) {}
 
   /** EFICIENCIA-FISCAL PR-2 (item 13): NCM e CSOSN dos produtos das linhas de revenda do PA. */
@@ -510,8 +515,20 @@ export class SimplesApuracaoService {
     // subrazão (decisão do dono 07/10 pelo BRIEF item 10: o histórico é da PRÉ-adoção). Os dois no mesmo mês ⇒ alerta.
     const janela = janelaRbt12(competencia);
     const todos = meses(`${ano - 1}-01` < janela.de ? `${ano - 1}-01` : janela.de, competencia);
-    const [historico, subrazao] = await Promise.all([this.entradasRepo.findHistorico(scope, todos, tx), this.receitaRepo.somaPorCompetencia(scope, todos, tx)]);
+    const [historico, subrazao, folhaDp] = await Promise.all([
+      this.entradasRepo.findHistorico(scope, todos, tx),
+      this.receitaRepo.somaPorCompetencia(scope, todos, tx),
+      this.folhaFatorR.folhaPorMes(scope, todos),
+    ]);
     const hist = new Map(historico.map((h) => [h.competencia, h]));
+    // BE-INCR-DP-PONTE-RAZAO itens 37–38: a folha do mês completa no DP prevalece sobre a digitada; os alertas só olham
+    // a janela do RBT12 e o PA (os meses cuja folha entra no FS12/FSPA).
+    const folhaUsada = precedenciaFolhaFatorR(
+      todos.filter((m) => m >= janela.de),
+      new Map(historico.map((h) => [h.competencia, h.folhaCents ?? null])),
+      folhaDp,
+    );
+    const folhaDoMes = (m: string): bigint | null => (folhaUsada.folha.has(m) ? (folhaUsada.folha.get(m) ?? null) : (hist.get(m)?.folhaCents ?? null));
     const receitas: Receitas = new Map();
     const historicoMes: MesReceita[] = [];
     const ignorados: string[] = [];
@@ -523,10 +540,12 @@ export class SimplesApuracaoService {
         if (h) ignorados.push(m);
       } else if (h) receitas.set(m, h.receitaBrutaCents);
       if (m < competencia && receitas.has(m)) {
-        historicoMes.push({ competencia: m, receitaBrutaCents: Number(receitas.get(m)), folhaCents: h?.folhaCents === null || h?.folhaCents === undefined ? null : Number(h.folhaCents) });
+        const folha = folhaDoMes(m);
+        historicoMes.push({ competencia: m, receitaBrutaCents: Number(receitas.get(m)), folhaCents: folha === null ? null : Number(folha) });
       }
     }
     if (ignorados.length > 0) alertas.push({ severity: 'WARNING', codigo: 'HISTORICO_IGNORADO', detalhe: `histórico ignorado em ${ignorados.join(', ')} — o subrazão do mês prevalece` });
+    alertas.push(...folhaUsada.alertas);
 
     // Atividades do PA a partir do subrazão (VENDA e linhas negativas de cancelamento/devolução).
     const linhasPa = await this.receitaRepo.findByCompetencia(scope, competencia, tx);
@@ -579,6 +598,8 @@ export class SimplesApuracaoService {
       segregacao: seg.parcelas,
       beneficiosIss: { codMun, linhas: cadastrados },
       caixa: caixa?.impressao ?? null,
+      // Item 37: a folha do DP entra no gate do registro do DAS; sem folha do DP a impressão fica a de antes.
+      ...(folhaDp.size > 0 ? { folhaDp: [...folhaDp.values()].map((d) => [d.mes, String(d.folhaCents), d.completa]).sort() } : {}),
     });
     // Review do PR-3 (achado 5): um grupo negativo (devolução/cancelamento de venda de outro mês) é compensado nos grupos
     // positivos — primeiro os da mesma natureza, depois o maior — para que Σ das atividades = receita do PA.
@@ -679,7 +700,7 @@ export class SimplesApuracaoService {
 
     let calculada: ApuracaoCalculada;
     const receitaPa = caixa ? caixa.baseCents : (receitas.get(competencia) ?? 0n);
-    const folhaPa = hist.get(competencia)?.folhaCents ?? null;
+    const folhaPa = folhaDoMes(competencia);
     let apuracaoInput: ApuracaoInput | null = {
       competencia,
       historico: historicoMes,
