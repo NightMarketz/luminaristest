@@ -28,9 +28,9 @@ describe('DP-F2 item 24 — mapa rubrica → calculadora', () => {
     expect([RUBRICA_CALCULO.FALTAS, RUBRICA_CALCULO.DSR_PERDIDO, RUBRICA_CALCULO.AFASTAMENTO_EMPRESA_15D, RUBRICA_CALCULO.ADIANTAMENTO, RUBRICA_CALCULO.DESCONTO_ADIANTAMENTO, RUBRICA_CALCULO.SALARIO_FAMILIA]).toEqual([
       ['descontoFaltas'],
       ['dsrPerdido'],
-      ['afastamentoEmpresa'],
+      ['proporcionalMensalista'], // PR-4: por fatia
       ['adiantamento'],
-      ['descontoAdiantamento'],
+      ['valorInformado'], // PR-4: a escolha da execução (descontoAdiantamento) é do leitor do PR-5
       ['salarioFamilia'],
     ]);
     expect(RUBRICA_CALCULO.COMPLEMENTO_PISO).toEqual(['complementoMinimo', 'pisoProporcional']);

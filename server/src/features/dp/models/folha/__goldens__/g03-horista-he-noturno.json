@@ -1,0 +1,83 @@
+{
+  "cenario": "G3 — horista 101 a R$ 15,00/h, escala 6×1 de 440 min, 26 dias × 440 min de horas normais, 10 h de HE 50% e 20 h de relógio noturnas",
+  "dataRef": "2026-03-15",
+  "conferidoPor": null,
+  "fonte": "pesquisas-legais/brief-pes4-f2-contador/relatorio.md §10",
+  "entradas": {
+    "competencia": "2026-03",
+    "dataPagamento": "2026-04-06",
+    "vinculos": [
+      {
+        "id": "g3",
+        "matricula": "G3",
+        "categoria": "101",
+        "dataInicio": "2025-01-02",
+        "salarioCents": "1500",
+        "unidadeSalario": "1",
+        "jornada": {
+          "diasTrabalho": [
+            "SEG",
+            "TER",
+            "QUA",
+            "QUI",
+            "SEX",
+            "SAB"
+          ],
+          "minutosPorDia": 440
+        },
+        "lancamentos": [
+          {
+            "rubrica": "HORAS_NORMAIS",
+            "quantidadeMin": 11440
+          },
+          {
+            "rubrica": "HORA_EXTRA_50",
+            "quantidadeMin": 600
+          },
+          {
+            "rubrica": "ADICIONAL_NOTURNO",
+            "quantidadeMin": 1200
+          }
+        ]
+      }
+    ]
+  },
+  "conta": [
+    "Tabelas de 2026: INSS 7,5% até 1.621,00; 9% até 2.902,84; 12% até 4.354,27; 14% até o teto de 8.475,55. Mínimo 1.621,00. IRRF desde 05/2025 com a redução do art. 3º-A desde 01/2026; dependente 189,59; simplificado 607,20. FGTS 8% (aprendiz 2%).",
+    "INSS em TRUNCAR_POR_FAIXA (linha ARREDONDAMENTO_INSS vigente, F-DPF-3 revisto): cada faixa truncada ao centavo, depois a soma. O dossiê §10 mostra em negrito a forma antiga (arredonda no total).",
+    "Março/2026: 26 dias de segunda a sábado (trabalho) e 5 domingos (repouso), sem feriado nacional.",
+    "HORAS_NORMAIS (L2): 11.440 min = 190h40 × 15,00 = 2.860,00.",
+    "DSR do horista (item 37): 5 × 440 min = 36h40 × 15,00 = 550,00.",
+    "HE 50%: 10 h × 15,00 × 1,5 = 225,00.",
+    "Noturno: 1.200 min × 60/3.150 = 22,857143 h noturnas × 15,00 × 20% = 68,5714 → 68,57.",
+    "DSR sobre HE e noturno: (225,00 + 68,57) × 5/26 = 56,4558 → 56,46; linha DSR_VARIAVEIS = 550,00 + 56,46 = 606,46.",
+    "Bruto: 2.860,00 + 225,00 + 68,57 + 606,46 = 3.760,03.",
+    "INSS: 121,57 + 115,36 + (857,19 × 12% = 102,8628 → 102,86) = 339,79.",
+    "IRRF: base 3.152,83 × 15% − 394,16 = 78,76; a redução do art. 3º-A (rendimento ≤ 5.000) zera → 0.",
+    "FGTS: 3.760,03 × 8% = 300,8024 → 300,80.",
+    "Líquido: 3.760,03 − 339,79 = 3.420,24."
+  ],
+  "esperado": {
+    "g3": {
+      "linhas": {
+        "HORAS_NORMAIS": "286000",
+        "HORA_EXTRA_50": "22500",
+        "ADICIONAL_NOTURNO": "6857",
+        "DSR_VARIAVEIS": "60646",
+        "INSS_SEGURADO": "33979",
+        "FGTS_MES": "30080"
+      },
+      "bases": {
+        "cp": "376003",
+        "irrf": "376003",
+        "fgts": "376003"
+      },
+      "totais": {
+        "proventos": "376003",
+        "descontos": "33979",
+        "liquido": "342024"
+      },
+      "pendencias": []
+    }
+  }
+}

@@ -10,13 +10,12 @@
  * 35 (PR-4), que o teste de lá cobre contra este mapa.
  */
 import type { RubricaCodigo } from '../rubricas/catalogo';
-import { adiantamento, descontoAdiantamento } from './adiantamento';
-import { afastamentoEmpresa } from './afastamento';
+import { adiantamento } from './adiantamento';
 import { fgtsDaCategoria, inssContribuinteIndividual, inssEmpregado, irrfMensal } from './encargos';
 import { descontoFaltas, dsrPerdido } from './faltas';
 import { proporcionalMensalista, salarioHorista } from './salario';
 import { salarioFamilia } from './salarioFamilia';
-import { adicionalNoturno, complementoMinimo, dsrSobreVariaveis, horaExtra, pisoProporcional, valorInformado } from './variaveis';
+import { adicionalNoturno, complementoMinimo, dsrDoHorista, dsrSobreVariaveis, horaExtra, pisoProporcional, valorInformado } from './variaveis';
 
 /** As calculadoras que dão valor de rubrica (`salarioHora`, `divisorHoras`, `horasNoturnas` e afins são passos internos). */
 export const CALCULADORAS = {
@@ -29,14 +28,13 @@ export const CALCULADORAS = {
   horaExtra, // item 9
   adicionalNoturno, // item 10
   dsrSobreVariaveis, // item 11
+  dsrDoHorista, // item 37
   complementoMinimo, // item 12
   pisoProporcional, // item 12 / F-DPF-6
   valorInformado, // item 38
   descontoFaltas, // item 36
   dsrPerdido, // item 36
-  afastamentoEmpresa, // item 32
   adiantamento, // item 42
-  descontoAdiantamento, // item 43
   salarioFamilia, // item 15 / F-DPF-7
 } as const;
 
@@ -47,23 +45,24 @@ export type CalculadoraNome = keyof typeof CALCULADORAS;
  * individual pela linha `DP_CATEGORIA_ENCARGO`, mínimo × piso da CCT).
  */
 export const RUBRICA_CALCULO = {
-  SALARIO_BASE: ['proporcionalMensalista', 'salarioHorista'],
+  SALARIO_BASE: ['proporcionalMensalista'],
   BOLSA_ESTAGIO: ['proporcionalMensalista'],
   PRO_LABORE: ['proporcionalMensalista'],
   INSS_SEGURADO: ['inssEmpregado', 'inssContribuinteIndividual'],
   IRRF: ['irrfMensal'],
   FGTS_MES: ['fgtsDaCategoria'],
+  HORAS_NORMAIS: ['salarioHorista'], // L2 (21/11): a linha paga do horista é a das horas normais, não o SALARIO_BASE
   HORA_EXTRA_50: ['horaExtra'],
   HORA_EXTRA_100: ['horaExtra'],
   ADICIONAL_NOTURNO: ['adicionalNoturno'],
   COMISSAO: ['valorInformado'],
   FALTAS: ['descontoFaltas'],
-  DSR_VARIAVEIS: ['dsrSobreVariaveis'],
+  DSR_VARIAVEIS: ['dsrSobreVariaveis', 'dsrDoHorista'],
   DSR_PERDIDO: ['dsrPerdido'],
   COMPLEMENTO_MINIMO: ['complementoMinimo'],
   COMPLEMENTO_PISO: ['complementoMinimo', 'pisoProporcional'],
-  AFASTAMENTO_EMPRESA_15D: ['afastamentoEmpresa'],
+  AFASTAMENTO_EMPRESA_15D: ['proporcionalMensalista'], // PR-4: por fatia (o fatiamento já cortou o trecho pago pela empresa, item 32)
   ADIANTAMENTO: ['adiantamento'],
-  DESCONTO_ADIANTAMENTO: ['descontoAdiantamento'],
+  DESCONTO_ADIANTAMENTO: ['valorInformado'], // PR-4: o valor vem do snapshot; a escolha da execução mais recente (descontoAdiantamento) é do leitor do PR-5
   SALARIO_FAMILIA: ['salarioFamilia'],
 } as const satisfies Record<RubricaCodigo, readonly [CalculadoraNome, ...CalculadoraNome[]]>;

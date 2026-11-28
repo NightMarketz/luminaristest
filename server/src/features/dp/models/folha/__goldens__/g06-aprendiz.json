@@ -1,0 +1,57 @@
+{
+  "cenario": "G6 — aprendiz 103, 20 h por semana em 5 dias, 03/2026 (SALARIO_HORA_DIVISOR = SEMANA_SEIS_DIAS)",
+  "dataRef": "2026-03-15",
+  "conferidoPor": null,
+  "fonte": "pesquisas-legais/brief-pes4-f2-contador/relatorio.md §10",
+  "entradas": {
+    "competencia": "2026-03",
+    "dataPagamento": "2026-04-06",
+    "vinculos": [
+      {
+        "id": "g6",
+        "matricula": "G6",
+        "categoria": "103",
+        "dataInicio": "2025-01-02",
+        "salarioCents": "73682",
+        "unidadeSalario": "5",
+        "jornada": {
+          "diasTrabalho": [
+            "SEG",
+            "TER",
+            "QUA",
+            "QUI",
+            "SEX"
+          ],
+          "minutosPorDia": 240
+        }
+      }
+    ]
+  },
+  "conta": [
+    "Tabelas de 2026: INSS 7,5% até 1.621,00; 9% até 2.902,84; 12% até 4.354,27; 14% até o teto de 8.475,55. Mínimo 1.621,00. IRRF desde 05/2025 com a redução do art. 3º-A desde 01/2026; dependente 189,59; simplificado 607,20. FGTS 8% (aprendiz 2%).",
+    "INSS em TRUNCAR_POR_FAIXA (linha ARREDONDAMENTO_INSS vigente, F-DPF-3 revisto): cada faixa truncada ao centavo, depois a soma. O dossiê §10 mostra em negrito a forma antiga (arredonda no total).",
+    "Mínimo-hora × horas (CLT art. 428 § 2º): 1.621,00 × 1.200/2.640 min semanais = 736,8182 → 736,82 (o mesmo que 1.621/220 × 100 h); o salário contratual 736,82 não pede complemento.",
+    "INSS: 736,82 × 7,5% = 55,2615 → 55,26. IRRF 0. FGTS 2% = 14,7364 → 14,74.",
+    "Líquido: 736,82 − 55,26 = 681,56."
+  ],
+  "esperado": {
+    "g6": {
+      "linhas": {
+        "SALARIO_BASE": "73682",
+        "INSS_SEGURADO": "5526",
+        "FGTS_MES": "1474"
+      },
+      "bases": {
+        "cp": "73682",
+        "irrf": "73682",
+        "fgts": "73682"
+      },
+      "totais": {
+        "proventos": "73682",
+        "descontos": "5526",
+        "liquido": "68156"
+      },
+      "pendencias": []
+    }
+  }
+}

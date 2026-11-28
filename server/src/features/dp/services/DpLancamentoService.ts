@@ -75,6 +75,7 @@ export class DpLancamentoService {
       rubrica: input.rubrica,
       quantidadeMin: input.quantidadeMin ?? null,
       valorCents: input.valorCents ?? null,
+      data: input.data ?? null,
       origem: 'MANUAL',
       moduloKey: null,
       observacao: input.observacao ?? null,
@@ -93,8 +94,8 @@ export class DpLancamentoService {
     return this.repo.runTransaction(async (tx) => {
       const v = achado(await this.vinculos.findVinculo(scope.ownerUserId, vinculoId, tx), 'Vínculo');
       const atual = achado(await this.repo.findLancamento(vinculoId, id, tx), 'Lançamento');
-      const patch = pick(input, ['competencia', 'rubrica', 'quantidadeMin', 'valorCents', 'observacao'] as const);
-      const novo = { competencia: atual.competencia as Competencia, rubrica: atual.rubrica, quantidadeMin: atual.quantidadeMin, valorCents: atual.valorCents, ...patch };
+      const patch = pick(input, ['competencia', 'rubrica', 'quantidadeMin', 'valorCents', 'observacao', 'data'] as const);
+      const novo = { competencia: atual.competencia as Competencia, rubrica: atual.rubrica, quantidadeMin: atual.quantidadeMin, valorCents: atual.valorCents, data: atual.data, ...patch };
       assertLancamentoValido(novo, v);
       const r = await this.repo.updateLancamento(id, patch, tx);
       await this.auditLancamento(tx, scope, 'dp.lancamento.updated', r, chave);

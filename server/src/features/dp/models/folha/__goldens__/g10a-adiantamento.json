@@ -1,0 +1,54 @@
+{
+  "cenario": "G10 (adiantamento) — 40% de R$ 3.000,00 pago em 20/03/2026",
+  "dataRef": "2026-03-15",
+  "conferidoPor": null,
+  "fonte": "pesquisas-legais/brief-pes4-f2-contador/relatorio.md §10",
+  "entradas": {
+    "competencia": "2026-03",
+    "roteiro": "ADIANTAMENTO",
+    "dataPagamento": "2026-03-20",
+    "adiantamentoBp": 4000,
+    "vinculos": [
+      {
+        "id": "g10",
+        "matricula": "G10",
+        "categoria": "101",
+        "dataInicio": "2025-01-02",
+        "salarioCents": "300000",
+        "unidadeSalario": "5",
+        "jornada": {
+          "diasTrabalho": [
+            "SEG",
+            "TER",
+            "QUA",
+            "QUI",
+            "SEX",
+            "SAB"
+          ],
+          "minutosPorDia": 440
+        }
+      }
+    ]
+  },
+  "conta": [
+    "ADIANTAMENTO = 4.000 bp × 3.000,00 = 1.200,00; sem INSS, sem FGTS e sem IRRF (incidência IRRF 9 do catálogo; F-DPF-10, mesmo mês)."
+  ],
+  "esperado": {
+    "g10": {
+      "linhas": {
+        "ADIANTAMENTO": "120000"
+      },
+      "bases": {
+        "cp": "0",
+        "irrf": "0",
+        "fgts": "0"
+      },
+      "totais": {
+        "proventos": "120000",
+        "descontos": "0",
+        "liquido": "120000"
+      },
+      "pendencias": []
+    }
+  }
+}

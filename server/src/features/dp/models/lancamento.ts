@@ -3,6 +3,7 @@
  * (G4); a precedência MANUAL × MODULO (item 19) vira pendência, nunca soma silenciosa.
  */
 import type { JornadaApurada } from '../ports/JornadaApuradaPort';
+import { isValidDateOnly } from '../../accounting/models/dates';
 import { primeiroDia, ultimoDia, type Competencia } from './competencia';
 import { dpValidationError } from './erros';
 import type { DpPendenciaFolha } from './folha/pendencias';
@@ -16,6 +17,7 @@ export type RubricaInformada = Extract<(typeof DP_RUBRICAS)[number], { calculo: 
  * inteiro = os minutos do dia da escala; leitura registrada no PR).
  */
 export const LANCAMENTO_UNIDADE = {
+  HORAS_NORMAIS: 'MINUTOS', // L2 (dono, 21/11): as horas normais do horista
   HORA_EXTRA_50: 'MINUTOS',
   HORA_EXTRA_100: 'MINUTOS',
   ADICIONAL_NOTURNO: 'MINUTOS',
@@ -23,8 +25,8 @@ export const LANCAMENTO_UNIDADE = {
   COMISSAO: 'VALOR',
 } as const satisfies Record<RubricaInformada, 'MINUTOS' | 'VALOR'>;
 
-/** Item 19 — as rubricas de jornada (HE, noturno, faltas): as que o `DP-PONTO` apura. */
-export const RUBRICAS_DE_JORNADA = ['HORA_EXTRA_50', 'HORA_EXTRA_100', 'ADICIONAL_NOTURNO', 'FALTAS'] as const satisfies readonly RubricaInformada[];
+/** Item 19 — as rubricas de jornada (horas normais, HE, noturno, faltas): as que o `DP-PONTO` apura (L2: HORAS_NORMAIS). */
+export const RUBRICAS_DE_JORNADA = ['HORAS_NORMAIS', 'HORA_EXTRA_50', 'HORA_EXTRA_100', 'ADICIONAL_NOTURNO', 'FALTAS'] as const satisfies readonly RubricaInformada[];
 
 export const LANCAMENTO_ORIGENS = ['MANUAL', 'MODULO'] as const;
 export type LancamentoOrigem = (typeof LANCAMENTO_ORIGENS)[number];
@@ -34,6 +36,8 @@ export interface DadosLancamento {
   competencia: Competencia;
   quantidadeMin: number | null;
   valorCents: bigint | null;
+  /** L1 — o dia (`YYYY-MM-DD`); obrigatório na `FALTAS`. */
+  data: string | null;
 }
 export interface VinculoDoLancamento {
   categoria: string;
@@ -63,11 +67,39 @@ export function assertLancamentoValido(l: DadosLancamento, v: VinculoDoLancament
   if (l[outro] !== null) throw invalido(outro, `A rubrica ${l.rubrica} se informa em ${campo}, não em ${outro}.`);
   const q = l[campo];
   if (q === null || q <= 0) throw invalido(campo, `${campo} tem de ser maior que zero para a rubrica ${l.rubrica}.`);
+  assertDataDoLancamento(l, v);
+}
+
+/** L1 — a rubrica que exige o dia: o DSR perdido (Lei 605 art. 6º [D01], item 36) precisa da semana da falta. */
+export const RUBRICAS_COM_DATA_OBRIGATORIA = ['FALTAS'] as const satisfies readonly RubricaInformada[];
+/** L1 — "um lançamento por dia de falta": a falta não passa de um dia de relógio. */
+const MINUTOS_DO_DIA = 24 * 60;
+
+/**
+ * L1 (cédula `D-2026-11-21-PES4-F2-PR3-PR4-LACUNAS`, dono 21/11: "Data na falta") — a `FALTAS` exige a data, um
+ * lançamento por dia (até 1.440 minutos); a data, quando vem, é um dia real dentro da competência e do vínculo.
+ */
+function assertDataDoLancamento(l: DadosLancamento, v: VinculoDoLancamento): void {
+  const exige = (RUBRICAS_COM_DATA_OBRIGATORIA as readonly string[]).includes(l.rubrica);
+  if (l.data === null) {
+    if (exige) throw invalido('data', `A rubrica ${l.rubrica} exige a data do dia (um lançamento por dia), para o DSR da semana.`);
+    return;
+  }
+  if (!isValidDateOnly(l.data) || l.data.slice(0, 7) !== l.competencia) {
+    throw invalido('data', `A data ${l.data} não é um dia da competência ${l.competencia}.`);
+  }
+  if (l.data < v.dataInicio || (v.dataTermino !== null && l.data > v.dataTermino)) {
+    throw invalido('data', `A data ${l.data} está fora do vínculo (${v.dataInicio} a ${v.dataTermino ?? 'em aberto'}).`);
+  }
+  if (exige && l.quantidadeMin !== null && l.quantidadeMin > MINUTOS_DO_DIA) {
+    throw invalido('quantidadeMin', `A ${l.rubrica} é um lançamento por dia: até ${MINUTOS_DO_DIA} minutos.`);
+  }
 }
 
 /** Item 18 — o lançamento manual vivo que a precedência compara com o que o ponto apurou. */
 export interface LancamentoParaPrecedencia {
   id: string;
+  data?: string | null;
   rubrica: string;
   origem: LancamentoOrigem;
 }
@@ -90,7 +122,8 @@ export function conflitosComPonto(
       codigo: 'LANCAMENTO_DUPLICADO_COM_PONTO' as const,
       vinculoId,
       bloqueante: true,
-      dado: `${l.rubrica} (lançamento ${l.id})`,
+      // Item 44 / A3: o `dado` é o rótulo que o usuário vê, nunca cuid (a rubrica e, na falta, o dia).
+      dado: l.data ? `${l.rubrica} de ${l.data}` : l.rubrica,
       mensagem: `O lançamento manual de ${l.rubrica} em ${competencia} duplica o que o DP-PONTO apurou; apague um dos dois.`,
     }));
 }

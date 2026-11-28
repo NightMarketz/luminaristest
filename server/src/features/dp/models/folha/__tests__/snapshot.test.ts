@@ -10,6 +10,7 @@ import {
   DpSnapshotSchema,
   formaCanonica,
   lerOuAusente,
+  linhasIrrfNaData,
   parametrosDeJson,
   parametrosParaJson,
   regrasParaJson,
@@ -67,6 +68,7 @@ const snapshot = (vinculos: VinculoSnapshot[]): DpSnapshot =>
     parametros: {
       competencia: { ok: true, valor: parametrosParaJson(params(REAL, '2026-03-31')) },
       pagamento: { ok: true, valor: parametrosParaJson(params(REAL, '2026-04-06')) },
+      irrfPagamento: linhasIrrfNaData(REAL, '2026-04-06'),
     },
     regras: { ok: true, valor: regrasParaJson(regras(REAL, '2026-03-31')) },
     feriados: { u1: ['2026-03-01', '2026-03-19'], u2: [] },
@@ -100,6 +102,7 @@ describe('snapshot (itens 28 e 53)', () => {
           ...base,
           feriados: Object.fromEntries(embaralhar(Object.entries(base.feriados), semente).map(([u, ds]) => [u, embaralhar(ds, semente + 7)])),
           modulosAtivos: embaralhar(base.modulosAtivos, semente + 5),
+          parametros: { ...base.parametros, irrfPagamento: embaralhar(base.parametros.irrfPagamento, semente + 6) },
           vinculos: embaralhar(base.vinculos, semente).map((v, i) => ({
             ...v,
             versoes: embaralhar(v.versoes, semente + i),
@@ -120,6 +123,7 @@ describe('snapshot (itens 28 e 53)', () => {
       ...base,
       feriados: { u2: [], u1: rev(base.feriados.u1) },
       modulosAtivos: rev(base.modulosAtivos),
+      parametros: { ...base.parametros, irrfPagamento: rev(base.parametros.irrfPagamento) },
       vinculos: rev(base.vinculos).map((v) => ({ ...v, cct: rev(v.cct), outrasRemuneracoes: rev(v.outrasRemuneracoes), versoes: rev(v.versoes), afastamentos: rev(v.afastamentos), lancamentos: rev(v.lancamentos) })),
     };
     expect(snapshotSha256(invertido)).toBe(h);

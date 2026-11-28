@@ -6,7 +6,7 @@
 import type { Competencia } from '../../competencia';
 import type { EscalaJornada } from '../../escala';
 import { adiantamento, descontoAdiantamento } from '../adiantamento';
-import { afastamentoEmpresa, trechoPagoPelaEmpresa } from '../afastamento';
+import { trechoPagoPelaEmpresa } from '../afastamento';
 import { provaIncoerente } from '../calcNode';
 import { descontoFaltas, diasRepousoPerdidos, dsrPerdido } from '../faltas';
 import { fracao } from '../fracao';
@@ -56,19 +56,16 @@ describe('DP-F2 item 32 — afastamento pago pela empresa (Lei 8.213 art. 60 § 
   const regras15 = r;
   const regras5 = regras(alterada({ AFASTAMENTO_DIAS_EMPRESA: 5 }));
 
-  it('começa no mês: os dias até o fim do mês, na base do mensalista; a linha AFASTAMENTO_DIAS_EMPRESA muda o trecho', () => {
-    expect(afastamentoEmpresa(300000n, MARCO, { inicio: '2026-03-20', fim: null }, regras15)?.valor).toBe(110000n);
+  // PR-4: o valor do trecho é pago pelo motor por fatia (`proporcionalMensalista`); o golden G5 cobre os 15 dias.
+  it('começa no mês: o trecho vai até o N-ésimo dia; a linha AFASTAMENTO_DIAS_EMPRESA muda o trecho', () => {
+    expect(trechoPagoPelaEmpresa(MARCO, { inicio: '2026-03-20', fim: null }, regras15.afastamentoDiasEmpresa)).toEqual({ inicio: '2026-03-20', fim: '2026-03-31' });
     expect(trechoPagoPelaEmpresa(MARCO, { inicio: '2026-03-20', fim: null }, regras5.afastamentoDiasEmpresa)).toEqual({ inicio: '2026-03-20', fim: '2026-03-24' });
-    expect(afastamentoEmpresa(300000n, MARCO, { inicio: '2026-03-20', fim: null }, regras5)?.valor).toBe(50000n);
   });
 
-  it('atravessa a competência; o fim do afastamento corta o trecho; fora do mês não há linha', () => {
+  it('atravessa a competência; o fim do afastamento corta o trecho; fora do mês não há trecho', () => {
     expect(trechoPagoPelaEmpresa(ABRIL, { inicio: '2026-03-20', fim: null }, regras15.afastamentoDiasEmpresa)).toEqual({ inicio: '2026-04-01', fim: '2026-04-03' });
-    expect(afastamentoEmpresa(300000n, ABRIL, { inicio: '2026-03-20', fim: null }, regras15)?.valor).toBe(30000n);
-    expect(afastamentoEmpresa(300000n, MARCO, { inicio: '2026-03-10', fim: '2026-03-12' }, regras15)?.valor).toBe(30000n);
-    expect(afastamentoEmpresa(300000n, MARCO, { inicio: '2026-02-01', fim: null }, regras15)).toBeNull();
-    const c = afastamentoEmpresa(300000n, MARCO, { inicio: '2026-03-20', fim: null }, regras15)!;
-    expect(provaIncoerente(c.prova)).toEqual([]);
+    expect(trechoPagoPelaEmpresa(MARCO, { inicio: '2026-03-10', fim: '2026-03-12' }, regras15.afastamentoDiasEmpresa)).toEqual({ inicio: '2026-03-10', fim: '2026-03-12' });
+    expect(trechoPagoPelaEmpresa(MARCO, { inicio: '2026-02-01', fim: null }, regras15.afastamentoDiasEmpresa)).toBeNull();
   });
 });
 

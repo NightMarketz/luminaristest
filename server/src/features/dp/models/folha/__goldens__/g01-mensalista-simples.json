@@ -1,0 +1,61 @@
+{
+  "cenario": "G1 — mensalista 101, R$ 3.000,00, 03/2026, sem dependente",
+  "dataRef": "2026-03-15",
+  "conferidoPor": null,
+  "fonte": "pesquisas-legais/brief-pes4-f2-contador/relatorio.md §10",
+  "entradas": {
+    "competencia": "2026-03",
+    "dataPagamento": "2026-04-06",
+    "vinculos": [
+      {
+        "id": "g1",
+        "matricula": "G1",
+        "categoria": "101",
+        "dataInicio": "2025-01-02",
+        "salarioCents": "300000",
+        "unidadeSalario": "5",
+        "jornada": {
+          "diasTrabalho": [
+            "SEG",
+            "TER",
+            "QUA",
+            "QUI",
+            "SEX",
+            "SAB"
+          ],
+          "minutosPorDia": 440
+        }
+      }
+    ]
+  },
+  "conta": [
+    "Tabelas de 2026: INSS 7,5% até 1.621,00; 9% até 2.902,84; 12% até 4.354,27; 14% até o teto de 8.475,55. Mínimo 1.621,00. IRRF desde 05/2025 com a redução do art. 3º-A desde 01/2026; dependente 189,59; simplificado 607,20. FGTS 8% (aprendiz 2%).",
+    "INSS em TRUNCAR_POR_FAIXA (linha ARREDONDAMENTO_INSS vigente, F-DPF-3 revisto): cada faixa truncada ao centavo, depois a soma. O dossiê §10 mostra em negrito a forma antiga (arredonda no total).",
+    "Salário: 3.000,00 × 30/30 = 3.000,00.",
+    "INSS: 1.621,00 × 7,5% = 121,575 → 121,57; 1.281,84 × 9% = 115,3656 → 115,36; 97,16 × 12% = 11,6592 → 11,65; total 248,58.",
+    "IRRF (tabela de 06/04/2026): o simplificado 607,20 é maior que o INSS; base 2.392,80 na faixa zero → 0 (sem linha).",
+    "FGTS: 3.000,00 × 8% = 240,00.",
+    "Mínimo de referência 1.621,00 (30/30): sem complemento.",
+    "Líquido: 3.000,00 − 248,58 = 2.751,42."
+  ],
+  "esperado": {
+    "g1": {
+      "linhas": {
+        "SALARIO_BASE": "300000",
+        "INSS_SEGURADO": "24858",
+        "FGTS_MES": "24000"
+      },
+      "bases": {
+        "cp": "300000",
+        "irrf": "300000",
+        "fgts": "300000"
+      },
+      "totais": {
+        "proventos": "300000",
+        "descontos": "24858",
+        "liquido": "275142"
+      },
+      "pendencias": []
+    }
+  }
+}

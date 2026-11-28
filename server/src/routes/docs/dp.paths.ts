@@ -275,6 +275,7 @@
  *                 descricao: { type: string, nullable: true, maxLength: 999 }
  *                 diasTrabalho: { type: array, minItems: 1, maxItems: 7, uniqueItems: true, items: { type: string, enum: [SEG, TER, QUA, QUI, SEX, SAB, DOM] } }
  *                 minutosPorDia: { type: integer, minimum: 1, maximum: 1440 }
+ *                 tempoParcial: { type: boolean, description: 'tmpParc of S-2200 (CLT art. 58-A); default false; only then the CCT floor is proportional (F-DPF-6)' }
  *       responses:
  *         '201': { description: 'DpJornadaView + avisos[] (JORNADA_ACIMA_DO_LIMITE, REPOUSO_ABAIXO_DO_MINIMO against FOLHA_REGRA today; warning, not 400)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
@@ -314,12 +315,13 @@
  *                 descricao: { type: string, nullable: true, maxLength: 999 }
  *                 diasTrabalho: { type: array, minItems: 1, maxItems: 7, uniqueItems: true, items: { type: string, enum: [SEG, TER, QUA, QUI, SEX, SAB, DOM] } }
  *                 minutosPorDia: { type: integer, minimum: 1, maximum: 1440 }
+ *                 tempoParcial: { type: boolean, description: 'tmpParc of S-2200 (CLT art. 58-A); default false; only then the CCT floor is proportional (F-DPF-6)' }
  *       responses:
  *         '200': { description: 'DpJornadaView + avisos[]' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { description: 'Record or unit not found' }
- *         '409': { description: 'DP_JORNADA_EM_USO — referenced by a contract version: minutosSemanais, tipoJornada, diasTrabalho and minutosPorDia are locked (D-5)' }
+ *         '409': { description: 'DP_JORNADA_EM_USO — referenced by a contract version: minutosSemanais, tipoJornada, diasTrabalho, minutosPorDia and tempoParcial are locked (D-5)' }
  *     delete:
  *       summary: Soft-delete a DP working schedule (horContratual of S-2200) record (audited)
  *       tags: [DP]
@@ -1127,7 +1129,8 @@
  *                 unitId: { type: string }
  *                 competencia: { type: string, pattern: '^\d{4}-(0[1-9]|1[0-2])$' }
  *                 rubrica: { type: string, description: 'catalog code with calculo INFORMADO that applies to the contract category' }
- *                 quantidadeMin: { type: integer, minimum: 1, description: 'minutes (HORA_EXTRA_50, HORA_EXTRA_100, ADICIONAL_NOTURNO, FALTAS)' }
+ *                 quantidadeMin: { type: integer, minimum: 1, description: 'minutes (HORAS_NORMAIS, HORA_EXTRA_50, HORA_EXTRA_100, ADICIONAL_NOTURNO, FALTAS; FALTAS at most 1440, one per day)' }
+ *                 data: { type: string, format: date, description: 'YYYY-MM-DD inside the competencia; required for FALTAS (the lost weekly rest needs the week), optional otherwise' }
  *                 valorCents: { type: string, pattern: '^\d+$', description: 'cents (COMISSAO); exactly one of quantidadeMin and valorCents, by the rubrica' }
  *                 observacao: { type: string, maxLength: 500 }
  *       responses:
@@ -1157,7 +1160,8 @@
  *                 unitId: { type: string }
  *                 competencia: { type: string, pattern: '^\d{4}-(0[1-9]|1[0-2])$' }
  *                 rubrica: { type: string, description: 'catalog code with calculo INFORMADO that applies to the contract category' }
- *                 quantidadeMin: { type: integer, minimum: 1, description: 'minutes (HORA_EXTRA_50, HORA_EXTRA_100, ADICIONAL_NOTURNO, FALTAS)' }
+ *                 quantidadeMin: { type: integer, minimum: 1, description: 'minutes (HORAS_NORMAIS, HORA_EXTRA_50, HORA_EXTRA_100, ADICIONAL_NOTURNO, FALTAS; FALTAS at most 1440, one per day)' }
+ *                 data: { type: string, format: date, description: 'YYYY-MM-DD inside the competencia; required for FALTAS (the lost weekly rest needs the week), optional otherwise' }
  *                 valorCents: { type: string, pattern: '^\d+$', description: 'cents (COMISSAO); exactly one of quantidadeMin and valorCents, by the rubrica' }
  *                 observacao: { type: string, maxLength: 500 }
  *       responses:

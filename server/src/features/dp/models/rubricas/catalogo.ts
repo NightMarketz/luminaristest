@@ -103,6 +103,19 @@ export const DP_RUBRICAS = [
   // `pesquisas-legais/brief-pes4-f2-contador/relatorio.md` §9 (linha da Tabela 03 em [F1-D10]); escolha do executor, vai
   // ao contador com as outras (BRIEF §5). Categorias: só empregado (101) e aprendiz (103) — as 723/901 não têm jornada
   // nem comissão no núcleo; a HE fica só no 101 porque a CLT art. 432 veda a prorrogação da jornada do aprendiz [D02].
+  // L2 (cédula D-2026-11-21-PES4-F2-PR3-PR4-LACUNAS, dono 21/11: "Rubrica HORAS_NORMAIS"): as horas normais do horista
+  // (`unidadeSalario` 1), em minutos, lançadas pelo operador ou vindas do ponto. É a linha paga do horista (no lugar do
+  // SALARIO_BASE do mensalista): valor = minutos × salário-hora contratual (item 37). Natureza e incidência = as do
+  // salário (proposta do executor; vai ao contador com as outras, BRIEF §5: o catálogo passa a 20).
+  {
+    codigo: 'HORAS_NORMAIS',
+    nome: { pt: 'Horas normais (horista)', en: 'Regular hours (hourly worker)' },
+    tipo: 'PROVENTO',
+    natureza: '1000', // "Salário, vencimento, soldo" [F1-D10 linha 402], como o SALARIO_BASE
+    incidencia: { cp: '11', irrf: '11', fgts: '11' },
+    categorias: ['101', '103'],
+    calculo: 'INFORMADO',
+  },
   {
     codigo: 'HORA_EXTRA_50',
     nome: { pt: 'Horas extras (dia útil)', en: 'Overtime (working day)' },

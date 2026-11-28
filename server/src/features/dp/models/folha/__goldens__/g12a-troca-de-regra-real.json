@@ -1,0 +1,121 @@
+{
+  "cenario": "Itens 47 e 70 — 44 h em 6 dias (G3) e 40 h em 5 dias com 10 h de HE, 03/2026, fotografia real",
+  "dataRef": "2026-03-15",
+  "conferidoPor": null,
+  "fonte": "pesquisas-legais/brief-pes4-f2-contador/relatorio.md §10",
+  "entradas": {
+    "competencia": "2026-03",
+    "dataPagamento": "2026-04-06",
+    "vinculos": [
+      {
+        "id": "g3",
+        "matricula": "G3",
+        "categoria": "101",
+        "dataInicio": "2025-01-02",
+        "salarioCents": "1500",
+        "unidadeSalario": "1",
+        "jornada": {
+          "diasTrabalho": [
+            "SEG",
+            "TER",
+            "QUA",
+            "QUI",
+            "SEX",
+            "SAB"
+          ],
+          "minutosPorDia": 440
+        },
+        "lancamentos": [
+          {
+            "rubrica": "HORAS_NORMAIS",
+            "quantidadeMin": 11440
+          },
+          {
+            "rubrica": "HORA_EXTRA_50",
+            "quantidadeMin": 600
+          },
+          {
+            "rubrica": "ADICIONAL_NOTURNO",
+            "quantidadeMin": 1200
+          }
+        ]
+      },
+      {
+        "id": "t40",
+        "matricula": "T40",
+        "categoria": "101",
+        "dataInicio": "2025-01-02",
+        "salarioCents": "300000",
+        "unidadeSalario": "5",
+        "jornada": {
+          "diasTrabalho": [
+            "SEG",
+            "TER",
+            "QUA",
+            "QUI",
+            "SEX"
+          ],
+          "minutosPorDia": 480
+        },
+        "lancamentos": [
+          {
+            "rubrica": "HORA_EXTRA_50",
+            "quantidadeMin": 600
+          }
+        ]
+      }
+    ]
+  },
+  "conta": [
+    "Tabelas de 2026: INSS 7,5% até 1.621,00; 9% até 2.902,84; 12% até 4.354,27; 14% até o teto de 8.475,55. Mínimo 1.621,00. IRRF desde 05/2025 com a redução do art. 3º-A desde 01/2026; dependente 189,59; simplificado 607,20. FGTS 8% (aprendiz 2%).",
+    "INSS em TRUNCAR_POR_FAIXA (linha ARREDONDAMENTO_INSS vigente, F-DPF-3 revisto): cada faixa truncada ao centavo, depois a soma. O dossiê §10 mostra em negrito a forma antiga (arredonda no total).",
+    "g3 = G3.",
+    "t40: divisor SEMANA_SEIS_DIAS = 2.400/6 × 30/60 = 200 h; hora 15,00; HE 10 × 15 × 1,5 = 225,00.",
+    "Março/2026 em 5×2: 22 dias de trabalho, 9 de repouso; DSR 225,00 × 9/22 = 92,0455 → 92,05.",
+    "Bruto 3.317,05. INSS: 121,57 + 115,36 + (414,21 × 12% = 49,7052 → 49,70) = 286,63. IRRF 0. FGTS 265,364 → 265,36.",
+    "Líquido: 3.317,05 − 286,63 = 3.030,42."
+  ],
+  "esperado": {
+    "g3": {
+      "linhas": {
+        "HORAS_NORMAIS": "286000",
+        "HORA_EXTRA_50": "22500",
+        "ADICIONAL_NOTURNO": "6857",
+        "DSR_VARIAVEIS": "60646",
+        "INSS_SEGURADO": "33979",
+        "FGTS_MES": "30080"
+      },
+      "bases": {
+        "cp": "376003",
+        "irrf": "376003",
+        "fgts": "376003"
+      },
+      "totais": {
+        "proventos": "376003",
+        "descontos": "33979",
+        "liquido": "342024"
+      },
+      "pendencias": []
+    },
+    "t40": {
+      "linhas": {
+        "SALARIO_BASE": "300000",
+        "HORA_EXTRA_50": "22500",
+        "DSR_VARIAVEIS": "9205",
+        "INSS_SEGURADO": "28663",
+        "FGTS_MES": "26536"
+      },
+      "bases": {
+        "cp": "331705",
+        "irrf": "331705",
+        "fgts": "331705"
+      },
+      "totais": {
+        "proventos": "331705",
+        "descontos": "28663",
+        "liquido": "303042"
+      },
+      "pendencias": []
+    }
+  }
+}
