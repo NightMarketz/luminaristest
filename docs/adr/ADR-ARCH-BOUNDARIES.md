@@ -29,6 +29,8 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
 | B1 | motor `features/dynamicTables/**` não importa `accounting`, `accountingBinding`, `legalParameters`, `fx`, `sectorKits` (`AC-2.1-B1`) | **0** |
 | B7 | motor `features/dynamicTables/**` não importa `features/(chat\|analytics\|integration)/services/` — "o motor nunca chama o consumidor" (Contrato §2.1). Emenda 2026-10-20, BE-INCR-DT-NO-CONSUMER-CALLS (dono, chat, 19/10: opção (b), F5 → β). Baseline antes/depois: 2 → **0** (as duas arestas `DynamicTableService → KnowledgeGraphService/KpiCacheService` removidas no mesmo PR; nunca entraram no arquivo de known violations). Prova de que morde: import plantado em `DynamicTableService.ts` → `B7` exit 1 | **0** |
 | C1 | núcleo do razão (`PostingService`, `PeriodService`, `AuditService`, `ExerciseClosingService`, `ReconciliationService` e os repositórios do razão) só importa uma **lista fechada** (§1.2): fiscal e localização (`paises/**`, `TaxAssessment*`, `ILalurRepository`, `lib/ofx\|cnab\|sped\|ecf…`) entram por porta de `ports/LedgerPorts.ts`. Emenda 2026-11-24 (§1.2) | **0** (5 → 0 no PR) |
+| P1 | o centro (`features/<d>/` fora de `paises/`) não importa `paises/<cc>/**`; exceção nomeada `LEGADO_BR` (legado brasileiro fora da pasta, ADR-PAIS-NA-BORDA §3.1, só encolhe). Emenda 2026-11-26 (§1.3) | **0** (em 26/11) |
+| P2 | `paises/<cc>/**` não importa `paises/<outro>/**`. Emenda 2026-11-26 (§1.3) | **0** (em 26/11) |
 | F1 | libs fiscais puras (`lib/{sped,ecf,ecfReal,nfe*,nfse*,mit,cnab,ofx,cnpj,cpf,referentialCatalog}.ts`) só leem `features/*/models/` — nada de service/repository/Prisma/HTTP | 0 |
 | X1 | `lib/` (exceto `factory.ts`) não importa lógica de feature (models permitidos) | 0 |
 | X2 | produção não importa teste | 0 |
@@ -96,6 +98,58 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
      estender o `from` é emenda.
   3. A regra lê **import**, não texto: comentários e nomes de domínio brasileiros (NF-e na proveniência, "ECD/I350" no cabeçalho do encerramento) permanecem no núcleo, e a lógica que passou
      para a porta só é protegida contra regressão pelos testes (`ledgerPortsBr.test.ts`, `PostingService.test.ts`, as integrações), não pelo depcruise.
+
+### 1.3 Emenda 2026-11-26 — P1/P2, país na borda (fatia F0 do ADR-PAIS-NA-BORDA)
+
+- **Decisão:** [`ADR-PAIS-NA-BORDA`](ADR-PAIS-NA-BORDA.md) **Accepted** em 24/11 (R1–R7 e F-PBA-1..7 ratificados, todos (a),
+  [`D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS`](../plano/decisoes/D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS.md)). A guarda é o item 0 do PR-F3-0 do BRIEF
+  `BE-INCR-PAIS-NA-BORDA-F3` (F-F3-4 a, dono, 26/11, [`D-2026-11-26-PAIS-NA-BORDA-F3-FORKS`](../plano/decisoes/D-2026-11-26-PAIS-NA-BORDA-F3-FORKS.md):
+  *"(a) F3 carrega o item 0"*), que andou antes do PR-0 do montador único; o montador a recebe pronta. O texto e o diff partem do rascunho não commitado
+  do worktree `claude/montador-pr0` (25/11), conferido aqui e com as provas refeitas em 26/11. A pasta `features/accounting/paises/br/` já existia desde
+  o #1356 (C1, 24/11), sem esta guarda. O ADR do país dizia "§1.2 nova"; a §1.2 já tinha sido ocupada pela C1, por isso esta é a §1.3. Cobertura: exceção de 13/10 (§4), gate estático que lê o código; não reabre bancada, rodada nem revisor.
+- **Regras** (erro): `P1-center-not-country` (`from` = `^src/features/[^/]+/(?!paises/)` fora de teste e de `LEGADO_BR`; `to` = `^src/features/[^/]+/paises/`) e
+  `P2-country-not-other-country` (`from` = `paises/<cc>/`; `to` = `paises/` fora do mesmo `<cc>`). **Import `type` conta.** Nascem em **0** e nunca entram no
+  `.dependency-cruiser-known-violations.json`.
+- **Escopo `LEGADO_BR`** (F-PBA-5 a; lista do ADR-PAIS-NA-BORDA §3.1, conferida em 25/11 com `ls` de cada caminho e de novo em 26/11): em `features/accounting/`,
+  `services/{SimplesApuracaoService,TaxSimulationService,TaxAssessmentService,PisCofinsAssessmentService,IbsCbsAssessmentService,TaxAssessmentPeriodosService,`
+  `CompanyFiscalProfileService,FiscalDocumentEmissionService,FiscalDocumentLifecycleService,FiscalProfileService}.ts`, `models/issCompetencia.ts` e a pasta
+  `dfe/`. `legalParameters/models/formatoLinha.ts` **não** entra (só entraria pelo ramo (b) do F-PBA-7, que foi (a)). Só encolhe: cada item sai na fatia
+  F5/F6 que o move; entrada nova é emenda datada do ADR-PAIS-NA-BORDA com sinal do dono.
+- **Ajustes que a pasta nova exige** (G1–G5 do ADR-PAIS-NA-BORDA §3):
+  - **G1:** `FEATURE_LOGIC` = `'^src/features/[^/]+/(?!models/|paises/[^/]+/models/).+'` — `paises/<cc>/models/` é folha de dado puro como `models/`
+    (sem isso `F1`/`X1` reprovam `lib/sped.ts` lendo modelo brasileiro movido).
+  - **G2:** `dtoShapeSnapshot.test.ts` descobre também `features/<d>/paises/<cc>/dtos/`, gravados no mesmo `__dto-shapes__.json` do domínio com a chave
+    POSIX `paises/<cc>/<arquivo>`; o `.gen.ts` vai para `my-app/types/contracts/<d>/paises/<cc>/`, e as varreduras de órfão ficaram recursivas.
+  - **G3:** `atomicUntil.boundary.test.ts` varre também `features/<x>/paises/<cc>/services/`.
+  - **G4 (lido, sem mudança):** `scripts/classe-risco.mjs:13` (`server/src/features/accounting/**`) já cobre `accounting/paises/**`; `features/dp/**`
+    não está no `VERMELHO` hoje (nem o núcleo do DP), então `dp/paises/**` segue a classe do DP; mudar isso é decisão de classe, não desta guarda.
+  - **G5 (lido, sem mudança):** `server/eslint.config.mjs` casa `src/**/*.ts` e `src/**/services/**/*.ts` (alcança `paises/*/services/`); o `testMatch` do
+    jest é `**/__tests__/**/*.{spec,test}.ts` e `**/__tests__/**/*.integration.test.ts`; `scripts/paralelo.mjs` usa os globs do `write_set` por `globToRegex`,
+    sem lista de pastas.
+- **Baseline antes/depois (medido em 25/11 e em 26/11):** **11 → 11** (todas `X3-no-circular`; `--no-ignore-known` lista as mesmas 11). O G1 não mudou contagem.
+- **Prova por plantio (refeita em 26/11 sobre a main `40b6ab8f4`, plantios removidos antes do commit):**
+  1. `paises/br/__sondaP1.ts` + `services/__sondaP1.ts` importando-o, e 2. `paises/zz/__sondaP2.ts` + `paises/br/__sondaP2.ts` importando-o ⇒
+     `check:arch` exit 2, `x 2 dependency violations`: `error P1-center-not-country: …services/__sondaP1.ts → …paises/br/__sondaP1.ts` e
+     `error P2-country-not-other-country: …paises/br/__sondaP2.ts → …paises/zz/__sondaP2.ts`.
+  3. `lib/sped.ts` importando `paises/br/models/__sondaG1.ts` ⇒ exit 0 com o G1; com o `FEATURE_LOGIC` antigo, `error X1-lib-not-feature-logic` e
+     `error F1-fiscal-lib-is-pure` na mesma aresta.
+  4. DTO de sonda `paises/br/dtos/SondaG2Dto.ts` ⇒ `dtoShapeSnapshot` vermelho ("ARQUIVO NOVO SEM SNAPSHOT") e, com `UPDATE_DTO_SNAPSHOT=1`, a chave
+     `paises/br/SondaG2Dto.ts` no `__dto-shapes__.json` do accounting e `my-app/types/contracts/accounting/paises/br/SondaG2Dto.gen.ts`.
+  5. Sem plantios: exit 0, "no dependency violations found", 11 conhecidas ignoradas.
+  6. (extra, G3) `paises/br/services/__sondaG3.ts` com `.postEntry(` e sem cabeçalho ⇒ `atomicUntil.boundary` vermelho com o arquivo nomeado.
+- **Pontos cegos declarados:** os do ADR-PAIS-NA-BORDA §1 ("o que a guarda enxerga, e o que não"): regra de país escrita no centro sem import, instância de
+  país guardada como valor, coluna de país em model do centro e o legado BR fora de `paises/` (que é "centro" para a regra até a fatia dele). `src/jobs/`,
+  `src/controllers/`, `src/routes/` e `src/lib/factory.ts` ficam fora do `from` da `P1` (camada de aplicação, F-PBA-3 a).
+
+### 1.4 Emenda 2026-11-26 — a plataforma de parâmetros legais não conhece domínio (fatia F3 do ADR-PAIS-NA-BORDA)
+
+- **Decisão:** F-F3-3 (a), dono, 26/11 ([`D-2026-11-26-PAIS-NA-BORDA-F3-FORKS`](../plano/decisoes/D-2026-11-26-PAIS-NA-BORDA-F3-FORKS.md)):
+  *"(a) LP1 + L6 no check:arch"*. Cobertura: exceção de 13/10 (§4), gate estático.
+- **L6 estendida (PR-F3-0, item 12):** o `from` passa a casar também `/paises/[^/]+/legalParameters/`. O registro de formato que cada domínio e país
+  declara é folha como `models/`: regra pura, sem repositório, serviço, controller, rota nem Prisma. Sem isso a pasta nova (que não é subpasta de camada)
+  poderia ler dado sem reprovar. Baseline 11 → 11. **Prova por plantio (26/11):** `accounting/paises/br/legalParameters/__sonda.ts` com
+  `import type { IAccountRepository }` ⇒ `error L6-model-dto-are-leaves: …/__sonda.ts → …/repositories/IAccountRepository.ts`, `x 1 dependency violations`;
+  sem o plantio, "no dependency violations found".
 
 ## 2. Fronteiras aprovadas — my-app (`my-app/.dependency-cruiser.cjs`)
 

@@ -6,9 +6,14 @@
 import { pushTestSchema, resetDb, disconnectDb } from '@test/helpers';
 import { LEGAL_PARAMS_SEED_FILE_IBS_CBS_TABELAS, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { getFactory } from '@/lib/factory';
-import { erroDeFormato } from '../models/formatoLinha';
+import { createFormatRegistry } from '../models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../accounting/paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../dp/paises/br/legalParameters';
 import type { LegalParameterTabela, LinhaLegal } from '../models/legalParameter';
 import { TABELAS_IBS_CBS, buscarCClassTrib, buscarCst, tabelasIbsCbsDe } from '@/features/accounting/models/ibsCbsTabelas';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 let fot: LinhaLegal[];
 

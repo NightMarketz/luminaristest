@@ -8,6 +8,12 @@
  */
 import type { LegalParameter } from 'generated/prisma';
 import { LegalParameterService } from '../LegalParameterService';
+import { createFormatRegistry } from '../../models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../../accounting/paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
+
+// PAIS-NA-BORDA-F3 item 6: o 5º argumento é o registro composto da borda.
+const formatos = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]);
 import { AppError } from '../../../../lib/errors';
 
 function linha(id: string, valorJson: string | null): LegalParameter {
@@ -24,7 +30,7 @@ describe('BRD F-69.1 — valorJson ilegível na leitura central', () => {
     const repo = { findMany: jest.fn().mockResolvedValue([linha('lp_ok', '{"a":1}'), linha('lp_ruim', '{"a": ')]) };
     const policy = { canRead: () => true, canManage: () => false };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colaboradores não usados pela listagem
-    const svc = new LegalParameterService(repo as any, policy, {} as any, {} as any);
+    const svc = new LegalParameterService(repo as any, policy, {} as any, {} as any, formatos);
 
     const err = await svc.list({ userId: 'u' } as never, {} as never).catch((e: unknown) => e);
 

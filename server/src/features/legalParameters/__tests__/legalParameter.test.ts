@@ -7,8 +7,13 @@ import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V8, legalParamsSeedRows, tabelaApuracaoSemente } from '@test/helpers/legalParams';
 import anexoFixture from '../../accounting/fixtures/anexo-iii-in-1700-2017.json';
 import { LEGAL_PARAMETER_TABELAS, TABELAS_MIGRADAS, linhaLegalVigente, linhasEmVigor, type LinhaLegal } from '../models/legalParameter';
-import { erroDeFormato, type LinhaParaFormato } from '../models/formatoLinha';
+import { createFormatRegistry, type LinhaParaFormato } from '../models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../accounting/paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../dp/paises/br/legalParameters';
 import { LegalParameterPolicy } from '../policies/LegalParameterPolicy';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 const MIGRATION = path.resolve(__dirname, '../../../../prisma/migrations/20261007150000_add_legal_parameters/migration.sql');
 const MIGRATION_V2 = path.resolve(__dirname, '../../../../prisma/migrations/20261007160000_add_legal_parameters_v2/migration.sql');

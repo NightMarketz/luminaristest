@@ -5,8 +5,13 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { erroDeFormato, type LinhaParaFormato } from '../models/formatoLinha';
+import { createFormatRegistry, type LinhaParaFormato } from '../models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../accounting/paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../dp/paises/br/legalParameters';
 import { SemLinhaVigenteError, linhasVigentesDaTabela, type LinhaLegal } from '../models/legalParameter';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 const L = (o: Partial<LinhaLegal>): LinhaLegal => ({
   id: 'a', tabela: 'CFOP_IMOBILIZADO', chave: '1551', discriminador: null, valorInt: null, valorTexto: 'ENTRADA_IMOBILIZADO', valorJson: null,

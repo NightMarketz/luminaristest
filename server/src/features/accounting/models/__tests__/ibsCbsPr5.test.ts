@@ -9,7 +9,7 @@ import path from 'path';
 import type { ConsumptionTaxAssessment } from 'generated/prisma';
 import { LEGAL_PARAMS_SEED_FILE_IBS_CBS_V2, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { matrizObrigacoesDe, resolverObrigacoes } from '../obrigacoesPorRegime';
-import { ObrigacaoRegimeJson } from '../../../legalParameters/models/formatoLinha';
+import { ObrigacaoRegimeJson } from '../obrigacoesPorRegime';
 import { tabelaIbsCbsDe, vencimentoIbsCbsDe } from '../ibsCbsParams';
 import { AVISO_RESUMO_IBS_CBS, montarEnvioApuracaoIbsCbs, resumoIbsCbs, ultimoDiaUtilDoMesSeguinte, type ApuracaoParaResumo } from '../../../../lib/ibsCbsApuracao';
 import { IbsCbsResumoSchema } from '../../dtos/IbsCbsAssessmentDto';

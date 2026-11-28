@@ -123,8 +123,8 @@ código guarda só a **forma** da regra; o número, a vigência e a fonte chegam
 **Fica em código:** a forma de cada calculadora, a ordem de avaliação, o catálogo de rubricas com natureza e incidência
 (F-DP-5 revisto) e as regras de forma lidas na lei (IRRF pela data de pagamento, HE do comissionista pela Súm. 340,
 complemento do mínimo sem compensação). **Limite declarado:** lei com regra de forma nova ainda pede PR de código; as
-chaves e as formas de texto aceitas estão fechadas em `legalParameters/models/formatoLinha.ts`
-(`FOLHA_REGRA_CHAVES_INT`, `FOLHA_REGRA_CHAVES_TEXTO`). Linha nova entra pelo fluxo `DRAFT → PUBLISHED → REVOKED` do
+chaves e as formas de texto aceitas estão fechadas em `dp/models/regrasFolha.ts`
+(`FOLHA_REGRA_CHAVES_INT`, `FOLHA_REGRA_CHAVES_TEXTO`), e o formato da linha em `dp/paises/br/legalParameters/` (PAIS-NA-BORDA-F3). Linha nova entra pelo fluxo `DRAFT → PUBLISHED → REVOKED` do
 `LegalParameter`, sem rota nova. Linha ausente na data ⇒ `PARAMETRO_LEGAL_AUSENTE`, nunca valor padrão.
 
 ## Calculadoras da folha (`models/folha/`, BE-INCR-DP-F2 PR-0, itens 1–12)

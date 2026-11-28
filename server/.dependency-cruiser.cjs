@@ -8,7 +8,24 @@
 
 const TEST = '(__tests__|\\.test\\.ts$)';
 const PRISMA = '^src/lib/prisma\\.ts$';
-const FEATURE_LOGIC = '^src/features/[^/]+/(?!models/).+';
+// G1 (ADR-PAIS-NA-BORDA §3, 25/11): `paises/<cc>/models/` também é folha de dado puro (lib/ fiscal pode lê-la). Sem
+// isso, `F1`/`X1` reprovariam `lib/sped.ts` lendo um modelo brasileiro movido para a borda. Alternância no MESMO
+// lookahead: um grupo opcional com lookahead próprio deixa o motor recuar e casar.
+const FEATURE_LOGIC = '^src/features/[^/]+/(?!models/|paises/[^/]+/models/).+';
+// ADR-PAIS-NA-BORDA R2/R3 — a borda de país mora em features/<domínio>/paises/<cc>/.
+const PAIS = '^src/features/[^/]+/paises/';
+// R7 + F-PBA-5 (a): legado brasileiro que ainda mora FORA de paises/br e consome a borda nova. Lista fechada do ADR §3.1
+// (25/11: os 13 itens BR; `legalParameters/models/formatoLinha.ts` fica fora porque o F-PBA-7 foi (a)). Só encolhe: cada
+// item sai na fatia que o move (F5/F6); entrada nova = emenda datada do ADR-PAIS-NA-BORDA com sinal do dono. Nenhum
+// arquivo do centro entra aqui: o centro usa porta.
+const LEGADO_BR =
+  '^src/features/accounting/(' +
+  'services/(SimplesApuracaoService|TaxSimulationService|TaxAssessmentService|PisCofinsAssessmentService|IbsCbsAssessmentService' +
+  '|TaxAssessmentPeriodosService|CompanyFiscalProfileService|FiscalDocumentEmissionService|FiscalDocumentLifecycleService' +
+  '|FiscalProfileService)\\.ts$' +
+  '|models/issCompetencia\\.ts$' +
+  '|dfe/' +
+  ')';
 const FISCAL_LIB =
   '^src/lib/(sped|ecf|ecfReal|nfe|nfeCost|nfeSignature|nfse|nfseEvento|nfseReadback|nfseSignature|mit|cnab|ofx|cnpj|cpf|referentialCatalog)\\.ts$';
 
@@ -80,8 +97,10 @@ module.exports = {
     {
       name: 'L6-model-dto-are-leaves',
       severity: 'error',
-      comment: 'models/ e dtos/ são folhas de tipo/contrato: não importam camada executável.',
-      from: { path: '/(models|dtos)/', pathNot: TEST },
+      comment:
+        'models/ e dtos/ são folhas de tipo/contrato: não importam camada executável. PAIS-NA-BORDA-F3 item 12 (F-F3-3 a, ' +
+        '26/11): o registro de formato da borda (paises/<cc>/legalParameters/) também é folha — declara regra pura, nunca lê dado.',
+      from: { path: '(/(models|dtos)/|/paises/[^/]+/legalParameters/)', pathNot: TEST },
       to: { path: `(/repositories/|/services/|/controllers/|^src/routes/|${PRISMA})` },
     },
     // ---- §2.1 DynamicTable × Prisma first-class ----
@@ -148,6 +167,24 @@ module.exports = {
         'entra no known-violations; precisar de algo novo = emenda datada no ADR com a porta, não item na lista.',
       from: { path: LEDGER_CORE },
       to: { path: '^src/', pathNot: LEDGER_CORE_ALLOWED },
+    },
+    // ---- ADR-PAIS-NA-BORDA (R3): a dependência aponta para dentro — emenda 2026-11-25 (ADR-ARCH-BOUNDARIES §1.3) ----
+    {
+      name: 'P1-center-not-country',
+      severity: 'error',
+      comment:
+        'ADR-PAIS-NA-BORDA R3: o centro (features/<d>/ fora de paises/) não importa paises/<cc>/. Precisa do país? Porta em ' +
+        'features/<d>/ports/ + adaptador em paises/<cc>/, ligados no lib/factory.ts. LEGADO_BR = legado brasileiro fora da ' +
+        'pasta, cada um com a fatia que o move (ADR §3.1); só encolhe. Import type conta. Nasce em 0: nunca entra no known-violations.',
+      from: { path: '^src/features/[^/]+/(?!paises/)', pathNot: `(${TEST}|${LEGADO_BR})` },
+      to: { path: PAIS },
+    },
+    {
+      name: 'P2-country-not-other-country',
+      severity: 'error',
+      comment: 'ADR-PAIS-NA-BORDA R3: paises/<cc>/ não importa paises/<outro>/. Nasce em 0.',
+      from: { path: '^src/features/[^/]+/paises/([^/]+)/', pathNot: TEST },
+      to: { path: PAIS, pathNot: '^src/features/[^/]+/paises/$1/' },
     },
     // ---- lib/ é infraestrutura ----
     {

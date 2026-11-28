@@ -5,7 +5,12 @@
 import type { LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { creditoIbsCbsEntrada, listaUsoConsumoDe, usoConsumoDoNcm, type ItemEntradaIbsCbs } from '../ibsCbsCredito';
 import { tabelaProvisoriaCbsDe } from '../ibsCbsParams';
-import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
+import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 const linha = (over: Partial<LinhaLegal>): LinhaLegal => ({
   id: 'l1', tabela: 'IBS_CBS_USO_CONSUMO', chave: '2203', discriminador: null, valorInt: null, valorTexto: null, valorJson: null,

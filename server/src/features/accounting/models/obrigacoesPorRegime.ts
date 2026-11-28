@@ -1,3 +1,4 @@
+import { z } from 'zod';
 /**
  * BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, BRIEF itens 3–4, §4.2; PRE-ADR F-OBP-3/4 → a; F-XP-7 → a).
  *
@@ -112,3 +113,24 @@ export function resolverObrigacoes(perfil: PerfilParaObrigacoes, matriz: readonl
     return linha.perguntaBase && base.status === 'CONDICIONAL' && !base.perguntaPendente ? { ...base, perguntaPendente: linha.perguntaBase } : base;
   });
 }
+
+/** Achado 4 do #861 — o `valorJson` da `OBRIGACAO_REGIME`. BE-INCR-PAIS-NA-BORDA-F3 item 5: veio do `legalParameters/models/formatoLinha.ts` (o schema mora com quem o lê; a borda o registra). */
+const statusObrigacao = z.enum(STATUS_OBRIGACAO);
+const textoObrigacao = z.string().trim().min(1);
+export const ObrigacaoRegimeJson = z
+  .object({
+    statusBase: statusObrigacao,
+    condicoes: z.array(
+      z
+        .object({
+          chave: z.enum(['aporteInvestidorAnjo', 'livroCaixaSemEscrituracao', 'distribuicaoAcimaBase']),
+          quandoTrue: statusObrigacao,
+          pergunta: textoObrigacao,
+          fonte: textoObrigacao,
+        })
+        .strict(),
+    ),
+    perguntaBase: textoObrigacao.optional(),
+    inativa: z.object({ status: statusObrigacao, fonte: textoObrigacao, pergunta: textoObrigacao.optional() }).strict(),
+  })
+  .strict();

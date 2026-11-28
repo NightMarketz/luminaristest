@@ -11,7 +11,12 @@ import { existsSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { LEGAL_PARAMS_SEED_FILE_V6, legalParamsSeedRows } from '@test/helpers/legalParams';
-import { erroDeFormato, type LinhaParaFormato } from '../../../legalParameters/models/formatoLinha';
+import { createFormatRegistry, type LinhaParaFormato } from '../../../legalParameters/models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 const REPO_ROOT = path.resolve(__dirname, '../../../../../..');
 const PDF = path.join(REPO_ROOT, 'docs/accounting/fontes-oficiais/Res-CGSN-140-2018-Anexo-XI.pdf');

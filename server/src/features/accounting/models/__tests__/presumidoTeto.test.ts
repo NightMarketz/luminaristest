@@ -3,10 +3,15 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { erroDeFormato, type LinhaParaFormato } from '../../../legalParameters/models/formatoLinha';
+import { createFormatRegistry, type LinhaParaFormato } from '../../../legalParameters/models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
 import { mesesAtividadeAnterior, tetoCents, tetoPresumido, type TetoPresumidoInput } from '../presumidoTeto';
 import { UpsertCompanyFiscalProfileSchema } from '../../dtos/CompanyFiscalProfileDto';
 import { LEGAL_PARAMS_SEED_FILE_PRESUMIDO_TETO, legalParamsSeedRows, tabelaApuracaoSemente } from '@test/helpers/legalParams';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 const T = tabelaApuracaoSemente();
 const MIGRATION = path.resolve(__dirname, '../../../../../prisma/migrations/20261024120000_presumido_teto_78mi/migration.sql');

@@ -126,7 +126,8 @@ o do PR que o cria.
 ## 3. A guarda (emenda de `ADR-ARCH-BOUNDARIES`, §1.2 nova) — plano, não executado
 
 **Quem implementa:** o item 0 do primeiro PR de código, entre os cinco BRIEFs emendados, que receber `executa` (pela ordem
-do F-MU-13, o PR-0 do montador único). O `executa` desse BRIEF cobre o item 0 porque o item está no BRIEF emendado. A
+do F-MU-13, o PR-0 do montador único). **Emenda 26/11 (F-F3-4 a, D-2026-11-26-PAIS-NA-BORDA-F3-FORKS):** o PR-F3-0 da fatia F3
+andou antes e carrega o item 0; o montador o recebe pronto (ADR-ARCH-BOUNDARIES §1.3). O `executa` desse BRIEF cobre o item 0 porque o item está no BRIEF emendado. A
 cobertura é a exceção de 13/10 do `check:arch` (ADR-ARCH-BOUNDARIES §4): gate estático que lê o código, como a `B7` e a
 `D1`. Não reabre bancada, rodada nem revisor.
 

@@ -1,6 +1,7 @@
 /**
  * checkLegalParamsFormatoCli — lacuna deixada fora do #870: o `publish` passou a conferir o formato da linha, mas a linha
- * que JÁ estava publicada não é revalidada. O caso não é impossível: toda vez que a regra de `formatoLinha.ts` aperta (ex.:
+ * que JÁ estava publicada não é revalidada. O caso não é impossível: toda vez que uma regra de formato aperta (registradas pela borda de cada domínio em
+ * `features/<d>/paises/<cc>/legalParameters/`, PAIS-NA-BORDA-F3) (ex.:
  * o discriminador das alíquotas de IBS_CBS), a linha publicada sob a regra anterior continua em vigor. Este comando só LÊ:
  * lista as linhas PUBLISHED fora do formato de hoje e sai 1 se houver alguma. Não corrige nem revoga — a correção de dado
  * é decisão do dono (propor a linha certa com `supersedesId`).

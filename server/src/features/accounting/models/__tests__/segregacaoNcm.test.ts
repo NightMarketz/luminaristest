@@ -1,9 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 import { LEGAIS_SEMENTE, LEGAL_PARAMS_SEED_FILE_ICMS_ST_NCM_UF, legalParamsSeedRows } from '@test/helpers/legalParams';
-import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
+import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
 import { ParametroLegalAusenteError, type LegalParameterTabela, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { fimMonofasicoPisCofins, icmsStDaNcm, segregacaoPorNcm } from '../segregacaoNcm';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 /**
  * BE-INCR-EFICIENCIA-FISCAL PR-2 (nó EFICIENCIA-FISCAL, BRIEF itens 11–12; ADR D7, I-9) e as decisões do dono de 27/10

@@ -8,9 +8,14 @@ import fs from 'fs';
 import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE_DP_REGRAS, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { ParametroLegalAusenteError, TABELAS_MIGRADAS, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
-import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
+import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../../accounting/paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
 import { CATEGORIAS_NUCLEO } from '../vinculo';
 import { encargoDaCategoria, regrasFolha, regraInt } from '../regrasFolha';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 const norm = (s: string) => s.replace(/\r\n/g, '\n');
 const LINHAS = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_DP_REGRAS) as (LinhaLegal & { fonteSha256: string | null; fonteUrl: string | null })[];

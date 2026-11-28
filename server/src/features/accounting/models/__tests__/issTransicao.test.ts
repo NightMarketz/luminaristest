@@ -8,13 +8,18 @@ import fs from 'fs';
 import path from 'path';
 import { LEGAIS_SEMENTE, LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { FimDeVigenciaNaoPublicadoError, ParametroLegalAusenteError, SemLinhaVigenteError, type LegalParameterTabela } from '../../../legalParameters/models/legalParameter';
-import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
+import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
 import { issAliquotaMaxBp } from '../issLimite';
 import { exigirIssNaoExtinto, fatorReducaoIssBp, fimIss, IssExtintoError, issExtinto, ISS_EXTINTO_MENSAGEM } from '../issTransicao';
 import { parametroIbsCbsVigente, tabelaIbsCbsDe } from '../ibsCbsParams';
 import { apurarIbsCbsMes } from '../ibsCbsCompetencia';
 import { agregarIssPorCompetencia, type IssDocInput } from '../issCompetencia';
 import { UpsertFiscalProfileSchema } from '../../dtos/FiscalProfileDto';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 const pr1 = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO);
 const todas = legalParamsSeedRows(); // todas as sementes: a lp2-iss-aliquota_max_bp original + a versão nova

@@ -1,9 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE_INUT_NAO_SE_APLICA, legalParamsSeedRows } from '@test/helpers/legalParams';
-import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
+import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
 import type { LegalParameterTabela, LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { NFCE_PRESUNCAO, STATUS_QUE_OCUPAM_NUMERO, avisoDeInutilizacao, guardaDaFaixa, lacunasDeNumeracao } from '../inutilizacao';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 /**
  * BE-INCR-NFCE (nó X10a, PR-4) — itens 24 (guardas `[NFE-INUT-REGRAS]`), 25 (lacunas) e EMENDA-3 E3-2 (a) (aviso por UF a

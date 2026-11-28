@@ -8,6 +8,12 @@
  */
 import type { LegalParameter } from 'generated/prisma';
 import { LegalParameterService } from '../LegalParameterService';
+import { createFormatRegistry } from '../../models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../../accounting/paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
+
+// PAIS-NA-BORDA-F3 item 6: o 5º argumento é o registro composto da borda.
+const formatos = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]);
 import { ValidationError } from '../../../../lib/errors';
 import type { ProposeLegalParameterInput } from '../../dtos/LegalParameterDto';
 
@@ -36,7 +42,7 @@ function montar(rascunho: LegalParameter) {
   const audit = { append: jest.fn().mockResolvedValue(undefined) };
   const recalc = { create: jest.fn().mockResolvedValue(undefined) };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colaboradores falsos, só o que o caminho toca
-  const svc = new LegalParameterService(repo as any, policy, audit as any, recalc as any);
+  const svc = new LegalParameterService(repo as any, policy, audit as any, recalc as any, formatos);
   return { svc, repo };
 }
 

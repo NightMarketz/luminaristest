@@ -7,7 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE_REINF, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { matrizObrigacoesDe, ORDEM_OBRIGACOES, resolverObrigacoes } from '../obrigacoesPorRegime';
-import { ObrigacaoRegimeJson } from '../../../legalParameters/models/formatoLinha';
+import { ObrigacaoRegimeJson } from '../obrigacoesPorRegime';
 
 const pr3 = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_REINF);
 const todas = legalParamsSeedRows();

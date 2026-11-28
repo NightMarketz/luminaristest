@@ -12,13 +12,18 @@ import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE_IBS_CBS, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL_V2, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { ValidationError } from '../../../../lib/errors';
 import { ParametroLegalAusenteError, SemLinhaVigenteError, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
-import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
+import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
 import { UpsertCompanyFiscalProfileSchema } from '../../dtos/CompanyFiscalProfileDto';
 import { tabelaIbsCbsDe } from '../../models/ibsCbsParams';
 import { dataDoMarco } from '../../models/marcoLegal';
 import { aliquotasIbsCbsVigentes } from '../../models/nfeIbsCbsMontagem';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import { CompanyFiscalProfileService, ibsCbsNoDas } from '../CompanyFiscalProfileService';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 const SEMENTE: LinhaLegal[] = legalParamsSeedRows([LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL_V2]);
 type Chave = 'INICIO_OPCAO_IBS_CBS_DAS' | 'FIM_REGIME_CAIXA_SIMPLES' | 'INICIO_IBS_MUNICIPAL';

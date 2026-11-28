@@ -8,13 +8,13 @@
  * Datas date-only (`YYYY-MM-DD`), contadas no número de dia UTC (memória date-only-rendering-utc-shift).
  */
 import { dateOnlyFromDayNumber, dayNumberFromDateOnly } from '../../accounting/models/dates';
-import { DIAS_SEMANA } from '../../legalParameters/models/formatoLinha';
 import type { LinhaLegal } from '../../legalParameters/models/legalParameter';
 import { isHoliday, weekdayOf } from '../../packages/models/validity';
 import { primeiroDia, ultimoDia, type Competencia } from './competencia';
 import { dpValidationError } from './erros';
 
-export { DIAS_SEMANA };
+/** Os dias da semana na ordem da `FOLHA_REGRA/SEMANA_DSR_INICIO`. BE-INCR-PAIS-NA-BORDA-F3 item 5: veio do `legalParameters/models/formatoLinha.ts` (o schema mora com quem o lê; a borda o registra). */
+export const DIAS_SEMANA = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB', 'DOM'] as const;
 
 /** `tpJornada` 2 do S-2200 (12 × 36): não se descreve por dias fixos da semana — fica para o `DP-PONTO` (F6). */
 export const TP_JORNADA_IRREGULAR = ['2'] as const;

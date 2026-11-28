@@ -2,7 +2,8 @@
 
 - **Data:** 2026-11-24
 - **Nó:** [[PAIS-NA-BORDA]], fatia **F3** (`docs/adr/ADR-PAIS-NA-BORDA.md` §5).
-- **Estado:** BRIEF escrito, **forks F-F3-1..5 com RATIFICAÇÃO PENDENTE**, sem `executa`. Nenhum código.
+- **Estado:** forks F-F3-1..5 **ratificados em 26/11, todos (a)**, e `executa` do BRIEF inteiro, sem merge na `main`
+  ([[D-2026-11-26-PAIS-NA-BORDA-F3-FORKS]]). Execução pela `sessao-feature`.
 - **Base:** branch `claude/adr-pais-na-borda-emendas` (PR #1338, aberto em 24/11). Este BRIEF depende do texto do ADR que
   aquele PR traz.
 - **Sessão:** `sessao-planejamento`.
@@ -378,9 +379,12 @@ continuam onde estão. Só quem os importa muda: deixa de ser a plataforma e pas
 
 ---
 
-## 7. Forks — RATIFICAÇÃO PENDENTE
+## 7. Forks — RATIFICADOS em 26/11 (todos (a))
 
-A recomendação é a estrutural (D-2026-11-21-RECOMENDAR-SOLUCAO-ESTRUTURAL). Nenhum fork se ratifica nesta sessão.
+Dono, chat, 26/11/2026, dois questionários: F-F3-1 *"(a) Registro é o catálogo (Recomendado)"*; F-F3-2 *"(a) Contabilidade
+nas 5 (Recomendado)"*; F-F3-3 *"(a) LP1 + L6 no check:arch (Recomendado)"*; F-F3-4 *"(a) F3 carrega o item 0
+(Recomendado)"*; F-F3-5 *"(a) Toda a vigência (Recomendado)"*. Cédula: [[D-2026-11-26-PAIS-NA-BORDA-F3-FORKS]]. Valem os
+ramos (a) de todo o BRIEF; os ramos (b)/(c) abaixo ficam como histórico.
 
 | Fork | Evidência | Caminhos | Recomendação | Trava |
 |---|---|---|---|---|

@@ -1,7 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE_ENCARGO_FOLHA, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, SIMPLES_SEED_FILES, legalParamsSeedRows, tabelaApuracaoSemente, tabelaPisCofinsSemente, fotografiaSemente } from '@test/helpers/legalParams';
-import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
+import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
 import type { LegalParameterTabela, LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { tabelaIbsCbsDe, tabelaProvisoriaCbsDe } from '../ibsCbsParams';
 import type { ApuracaoInput, MesReceita } from '../simplesCalc';
@@ -16,6 +18,9 @@ import {
   type EntradaRegime,
   type MesRegimeEntrada,
 } from '../taxSimulation';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 /**
  * BE-INCR-EFICIENCIA-FISCAL PR-3 (nó EFICIENCIA-FISCAL, BRIEF itens 15–17; ADR D8; decisões do dono de 28/10 em

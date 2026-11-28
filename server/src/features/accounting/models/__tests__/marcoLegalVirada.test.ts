@@ -9,9 +9,14 @@ import fs from 'fs';
 import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { ParametroLegalAusenteError, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
-import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
+import { createFormatRegistry } from '../../../legalParameters/models/formatRegistry';
+import { ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS } from '../../paises/br/legalParameters';
+import { DP_BR_LEGAL_PARAMETER_FORMATS } from '../../../dp/paises/br/legalParameters';
 import { apurar, type ApuracaoInput, type MesReceita } from '../simplesCalc';
 import { dataDoMarco, inicioLc214Competencia } from '../marcoLegal';
+
+// PAIS-NA-BORDA-F3 item 8: a mesma regra de antes, agora declarada pela borda (contabilidade BR + DP BR).
+const erroDeFormato = createFormatRegistry([...ACCOUNTING_BR_LEGAL_PARAMETER_FORMATS, ...DP_BR_LEGAL_PARAMETER_FORMATS]).formatError;
 
 const SEMENTE: LinhaLegal[] = legalParamsSeedRows([...SIMPLES_SEED_FILES, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL]);
 /** A mesma fotografia, só com o `valorTexto` da linha do marco trocado — a "virada" é publicar linha, não editar código. */

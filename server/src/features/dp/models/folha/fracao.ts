@@ -6,7 +6,7 @@
  * ponto que o item declara, pelo modo lido de `FOLHA_REGRA` (`ARREDONDAMENTO`, item 65). Nenhuma operação usa `number`;
  * os inteiros de entrada (bp, minutos, dias) entram por `inteiro()`, que recusa o que não é inteiro seguro.
  */
-import type { FOLHA_REGRA_CHAVES_TEXTO } from '../../../legalParameters/models/formatoLinha';
+import type { FOLHA_REGRA_CHAVES_TEXTO } from '../regrasFolha';
 
 export interface Fracao {
   readonly num: bigint;

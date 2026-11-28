@@ -1,10 +1,21 @@
+import { z } from 'zod';
 /**
  * SIMPLES-PISO-ANEXO-XI bloco 2 (BRIEF §3 itens 12-15; decisões do dono, chat, 10/10) — leitura PURA da tabela de
  * plataforma `MEI_ANEXO_XI` (Res. CGSN 140/2018 Anexo XI, Tabelas A e B) para o perfil e a apuração do SIMEI.
  * Guarda só a consulta; a consequência (400, bloqueio, alerta) fica no serviço que a chama.
  */
 import { linhasEmVigor, type LinhaLegal } from '../../legalParameters/models/legalParameter';
-import { MeiAnexoXiJson } from '../../legalParameters/models/formatoLinha';
+
+/** SIMPLES-PISO-ANEXO-XI bloco 2 (BRIEF §4 `MeiAnexoXiLinha`) — linha do Anexo XI da Res. CGSN 140. BE-INCR-PAIS-NA-BORDA-F3 item 5: veio do `legalParameters/models/formatoLinha.ts` (o schema mora com quem o lê; a borda o registra). */
+export const MeiAnexoXiJson = z
+  .object({
+    ocupacao: z.string().trim().min(1),
+    cnae: z.string().regex(/^\d{4}-\d\/\d{2}$/),
+    descricaoCnae: z.string().trim().min(1),
+    iss: z.boolean(),
+    icms: z.boolean(),
+  })
+  .strict();
 
 export const TABELA_ANEXO_XI = 'MEI_ANEXO_XI' as const;
 

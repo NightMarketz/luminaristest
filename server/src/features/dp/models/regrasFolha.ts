@@ -1,3 +1,4 @@
+import { z } from 'zod';
 /**
  * Regras da folha como dado — BE-INCR-DP-F2 item 67 (PR-0R; regra de parâmetro do dono, 06/11: "uma mudança em escala
  * ou em leis não pode mudar de fato alguma coisa além de fórmulas pra nós").
@@ -8,15 +9,54 @@
  * literal numérico de regra legal.
  */
 import { exigirLinhaVigente, ParametroLegalAusenteError, type LegalParameterTabela, type LinhaLegal } from '../../legalParameters/models/legalParameter';
-import {
-  DpCategoriaEncargoJson,
-  FOLHA_REGRA_CHAVES_TEXTO,
-  type FolhaRegraChaveInt,
-  type FolhaRegraChaveTexto,
-} from '../../legalParameters/models/formatoLinha';
 import { CATEGORIAS_NUCLEO, CHAVES_IDADE_POR_CATEGORIA, type CategoriaNucleo, type RegrasIdade } from './vinculo';
 import type { MesesFerias } from './ferias';
-import type { DiaSemana } from './escala';
+import { DIAS_SEMANA, type DiaSemana } from './escala';
+
+/**
+ * BE-INCR-DP-F2 PR-0R item 65 — chaves fechadas da `FOLHA_REGRA` e o valor de cada uma. `int` = número inteiro (bp,
+ * minutos, segundos, dias, anos ou meses, conforme o nome); `texto` = uma das formas que o código conhece. O código guarda
+ * a forma da regra; o número e a escolha da forma chegam por linha com vigência (§0.1 do BRIEF). BE-INCR-PAIS-NA-BORDA-F3 item 5: veio do `legalParameters/models/formatoLinha.ts` (o schema mora com quem o lê; a borda o registra).
+ */
+export const FOLHA_REGRA_CHAVES_INT = {
+  HE_ADICIONAL_BP: { min: 0, max: 100_000 },
+  HE_REPOUSO_ADICIONAL_BP: { min: 0, max: 100_000 },
+  NOTURNO_ADICIONAL_BP: { min: 0, max: 100_000 },
+  NOTURNO_HORA_SEGUNDOS: { min: 1, max: 3600 },
+  NOTURNO_INICIO_MIN: { min: 0, max: 1439 },
+  NOTURNO_FIM_MIN: { min: 0, max: 1439 },
+  AFASTAMENTO_DIAS_EMPRESA: { min: 0, max: 366 },
+  MENSALISTA_BASE_DIAS: { min: 1, max: 31 },
+  JORNADA_LIMITE_SEMANAL_MIN: { min: 1, max: 10_080 },
+  REPOUSO_DIAS_MIN: { min: 0, max: 7 },
+  SALARIO_FAMILIA_IDADE_MAX: { min: 0, max: 120 },
+  EMPREGADO_IDADE_MIN: { min: 0, max: 120 },
+  APRENDIZ_IDADE_MIN: { min: 0, max: 120 },
+  APRENDIZ_IDADE_MAX: { min: 0, max: 120 },
+  APRENDIZ_PRAZO_MAX_MESES: { min: 1, max: 1200 },
+  FERIAS_AQUISITIVO_MESES: { min: 1, max: 120 },
+  FERIAS_CONCESSIVO_MESES: { min: 1, max: 120 },
+} as const;
+export const FOLHA_REGRA_CHAVES_TEXTO = {
+  SEMANA_DSR_INICIO: DIAS_SEMANA,
+  // Item 3 / F-DPF-1: as duas formas do divisor do salário-hora que existem em código.
+  SALARIO_HORA_DIVISOR: ['SEMANA_SEIS_DIAS', 'DIAS_DE_TRABALHO_DA_ESCALA'],
+  // F-DPF-3 (revisto 06/11): truncar em cada faixa, como o MOS do S-5001 item 2.13, ou a soma exata arredondada no total.
+  ARREDONDAMENTO_INSS: ['TRUNCAR_POR_FAIXA', 'MEIO_PARA_CIMA_NO_TOTAL'],
+  // Demais pontos declarados de arredondamento.
+  ARREDONDAMENTO: ['MEIO_PARA_CIMA_CENTAVO', 'TRUNCA_CENTAVO'],
+} as const;
+export type FolhaRegraChaveInt = keyof typeof FOLHA_REGRA_CHAVES_INT;
+export type FolhaRegraChaveTexto = keyof typeof FOLHA_REGRA_CHAVES_TEXTO;
+
+/** Item 66 — o que a categoria do núcleo recolhe (INSS de empregado, de contribuinte individual ou nenhum; qual FGTS). */
+export const DpCategoriaEncargoJson = z
+  .object({
+    inss: z.enum(['EMPREGADO', 'CONTRIBUINTE_INDIVIDUAL', 'NENHUM']),
+    fgtsChave: z.enum(['FGTS_BP', 'FGTS_APRENDIZ_BP']).nullable(),
+    irrf: z.boolean(),
+  })
+  .strict();
 
 /** As tabelas que o leitor consome — o que o serviço pede à `fotografia`. */
 export const TABELAS_REGRAS_FOLHA = ['FOLHA_REGRA', 'DP_CATEGORIA_ENCARGO'] as const satisfies readonly LegalParameterTabela[];
